@@ -9365,8 +9365,9 @@ function imgEngine() {
 /* Stable Horde: бесплатные чужие видеокарты. Без ключа — аноним, 512 px и низкий приоритет;
    с бесплатным ключом (stablehorde.net → Register → API Key) — 1024 px и быстрее. */
 const HORDE_API = "https://stablehorde.net/api/v2";
-async function hordeImage(prompt, opts) {
+async function hordeImage(prompt, opts, onNote) {
   const o = opts || genImageOpts();
+  const note = typeof onNote === "function" ? onNote : () => {};
   const personal = (settings.hordeKey || "").trim();
   const key = personal || "0000000000";
   const cap = personal ? 1024 : 512;
@@ -9397,10 +9398,15 @@ async function hordeImage(prompt, opts) {
   if (!id) throw new ApiError(503, "Stable Horde не вернул номер задания", "horde-id");
 
   const deadline = Date.now() + 150000;
+  note("Stable Horde: задание принято, ищем свободную видеокарту…");
   while (Date.now() < deadline) {
     await wait(2500);
     let chk = {};
     try { chk = await (await fetch(HORDE_API + "/generate/check/" + id)).json(); } catch (e) { continue; }
+    if (chk && (chk.queue_position > 0 || chk.wait_time > 0)) {
+      note("Stable Horde: в очереди " + (chk.queue_position ? chk.queue_position + "-й, " : "") +
+        "ещё ~" + Math.max(1, Math.round(chk.wait_time || 0)) + " с. Держись, это бесплатные чужие видеокарты.");
+    }
     if (chk && chk.faulted) throw new ApiError(503, "Stable Horde не смог собрать картинку", "horde-fault");
     if (chk && chk.is_possible === false) throw new ApiError(503, "Stable Horde не нашёл свободную видеокарту", "horde-noworker");
     if (chk && chk.done) {
@@ -9474,62 +9480,128 @@ async function puterImage(prompt, opts) {
   } catch (e) { return src; }
 }
 
-/* Запасной вариант: бесплатный Pollinations.
-   - nologo=true убирает знак только при бесплатном токене (settings.pollinationsToken);
-   - enhance выключен: он переписывал промпт и подменял сюжет (просили овчарку — рисовал девочку);
-   - жёлтая заглушка «Free limit reached» прилетает как обычная картинка, её ловим по цвету. */
+/* Бесплатный Pollinations. Главная беда сервиса — вместо картинки он отдаёт
+   рекламный плакат «Free limit reached» с кодом 200, то есть выглядит как успех.
+   Поэтому сначала пробуем fetch: он при лимите получает 402 + Retry-After,
+   а при удаче — сами байты картинки (по ним видно, плакат это или рисунок).
+   Если fetch режет CORS — падаем на <img> и проверяем цвет по холсту. */
+const IMG_COOLDOWN_KEY = "iskra.imgNextAt";
+function imgCooldown() {
+  const left = (parseInt(localStorage.getItem(IMG_COOLDOWN_KEY) || "0", 10) || 0) - Date.now();
+  return left > 0 ? Math.ceil(left / 1000) : 0;
+}
+function imgCooldownSet(sec) {
+  try { localStorage.setItem(IMG_COOLDOWN_KEY, String(Date.now() + sec * 1000)); } catch (e) {}
+}
+function imgLimitError(sec) {
+  const e = new ApiError(429, "бесплатный Pollinations держит лимит: одна картинка в 45 секунд", "img-limit");
+  e.retryAfter = sec || 45;
+  return e;
+}
+const asLimit = imgLimitError;
+const toDataUrl = (blob) => new Promise((res, rej) => {
+  const fr = new FileReader();
+  fr.onload = () => res(String(fr.result)); fr.onerror = rej; fr.readAsDataURL(blob);
+});
+/* Плакат «Free limit reached» — это почти однотонная жёлто-белая картинка с текстом.
+   true — точно плакат, false — точно рисунок, null — холст «испачкан» CORS, судить нельзя. */
+function bannerPixels(im) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 24; c.height = 24;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.drawImage(im, 0, 0, 24, 24);
+    const d = ctx.getImageData(0, 0, 24, 24).data;
+    let flat = 0, total = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      total++;
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const warm = r > 180 && g > 150 && b < 170;   // жёлтый плакат
+      const white = r > 225 && g > 225 && b > 225;  // белый фон плаката
+      if (warm || white) flat++;
+    }
+    return total > 0 && flat / total > 0.72;
+  } catch (e) { return null; }
+}
+function loadImg(src) {
+  return new Promise((res, rej) => {
+    const i = new Image();
+    let done = false;
+    const fin = (fn, v) => { if (!done) { done = true; fn(v); } };
+    i.onload = () => fin(res, i);
+    i.onerror = () => fin(rej, new Error("img"));
+    i.src = src;
+    setTimeout(() => fin(rej, new Error("img-timeout")), 8000);
+  });
+}
+async function looksLikeBannerData(src) {
+  try { return (await bannerPixels(await loadImg(src))) === true; } catch (e) { return false; }
+}
+
 async function pollinationsImage(prompt, opts) {
   const o = opts || genImageOpts();
-  const seed = Math.floor(Math.random() * 1e9);
   const token = (settings.pollinationsToken || "").trim();
-  // Важно: через fetch() сервис отвечает 503 (режет CORS), а через <img> — работает.
+  // без токена сервис разрешает одну картинку в 45 секунд — не жжём лимит зря
+  if (!token) {
+    const left = imgCooldown();
+    if (left > 0) { const e = asLimit(left); throw e; }
+  }
+  const seed = Math.floor(Math.random() * 1e9);
   const makeUrl = (model) => "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) +
-    "?width=" + o.width + "&height=" + o.height + "&model=" + model + "&nologo=true&safe=true&seed=" + seed +
+    "?width=" + o.width + "&height=" + o.height + "&model=" + model +
+    (token ? "&nologo=true" : "") + "&safe=true&seed=" + seed +
     (token ? "&token=" + encodeURIComponent(token) : "");
 
-  /* Заглушка «Free limit reached» — жёлтый плакат. Смотрим пиксели: если холст
-     «чистый» (CORS разрешил) и картинка почти вся жёлтая — это не картинка, а лимит. */
-  const looksLikeLimit = (im) => {
-    try {
-      const c = document.createElement("canvas");
-      c.width = 16; c.height = 16;
-      const ctx = c.getContext("2d", { willReadFrequently: true });
-      if (!ctx) return false;
-      ctx.drawImage(im, 0, 0, 16, 16);
-      const d = ctx.getImageData(0, 0, 16, 16).data;
-      let yellow = 0, total = 0;
-      for (let i = 0; i < d.length; i += 4) {
-        total++;
-        if (d[i] > 190 && d[i + 1] > 165 && d[i + 2] < 130) yellow++;
-      }
-      return total > 0 && yellow / total > 0.62;
-    } catch (e) { return false; } // холст «испачкан» CORS — судить не можем
-  };
+  // 1) fetch: получаем либо 402 «лимит» с Retry-After, либо сами байты картинки.
+  //    Плакат «Free limit reached» приходит как обычная картинка, поэтому смотрим вес и цвет.
+  try {
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const t = setTimeout(() => { try { ctrl && ctrl.abort(); } catch (e) {} }, 70000);
+    let r;
+    try { r = await fetch(makeUrl("flux"), { cache: "no-store", signal: ctrl ? ctrl.signal : undefined }); }
+    finally { clearTimeout(t); }
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const retry = parseInt(r.headers.get("retry-after") || "0", 10) || 0;
+    if (r.status === 429 || r.status === 402) throw asLimit(retry || 45);
+    if (ct.includes("json") || ct.includes("text")) throw asLimit(retry || 45);
+    if (r.ok) {
+      const blob = await r.blob();
+      // плакат — лёгкий файл: настоящий рисунок 1024 px весит сотни килобайт
+      if (!blob || !blob.size) throw new Error("пусто");
+      if (blob.size < 45000) throw asLimit(retry || 45);
+      const data = await toDataUrl(blob);
+      if (await looksLikeBannerData(data)) throw asLimit(retry || 45);
+      if (!token) imgCooldownSet(45);
+      return { url: data, model: "flux" };
+    }
+  } catch (e) {
+    if (e && e.kind === "img-limit") throw e;
+    // CORS или сеть — ниже единственная попытка через <img>
+  }
 
+  // 2) <img>: работает даже когда fetch режут по CORS. Плакат ловим по цвету холста,
+  //    а если холст «испачкан» — остаётся только честное предупреждение в подписи.
   const works = (url) => new Promise((resolve) => {
     const im = new Image();
     let done = false;
     const finish = (v) => { if (!done) { done = true; resolve(v); } };
     im.onload = () => {
       if (!im.naturalWidth) return finish("error");
-      if (looksLikeLimit(im)) return finish("limit");
+      if (bannerPixels(im) === true) return finish("limit");
       finish("ok");
     };
     im.onerror = () => finish("error");
     im.src = url;
-    setTimeout(() => finish("error"), 60000);
+    setTimeout(() => finish("error"), 70000);
   });
 
-  // flux рисует по промпту заметно точнее, чем sana; sana оставлен последней попыткой
-  const order = o.pro ? ["flux", "turbo", "sana"] : ["flux", "turbo", "sana"];
-  let sawLimit = false;
-  for (const model of order) {
+  for (const model of ["flux", "turbo"]) {
     const url = makeUrl(model);
     const st = await works(url);
-    if (st === "ok") return { url, model };
-    if (st === "limit") sawLimit = true;
+    if (st === "ok") { if (!token) imgCooldownSet(45); return { url, model }; }
+    if (st === "limit") throw asLimit(45);
   }
-  if (sawLimit) throw new ApiError(429, "бесплатный Pollinations держит лимит: одна картинка в 45 секунд", "img-limit");
   throw new ApiError(503, "бесплатный движок картинок сейчас занят", "img-busy");
 }
 
@@ -9605,7 +9677,11 @@ async function generateImage(prompt, attempt = 0) {
   const el = appendMessage(aiMsg);
   const contentEl = el.querySelector(".content");
   const imgOpts = genImageOpts();
-  contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note">${imgOpts.pro
+  const prog = (text) => {
+    const p = contentEl.querySelector(".gen-progress");
+    if (p) p.textContent = text || "";
+  };
+  contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note gen-progress">${imgOpts.pro
     ? "Рисую в Pro-качестве: " + esc(imgOpts.style.name) + " · " + esc(imgOpts.aspect.id) + " · " + esc(imgOpts.quality.name) + "… до 40 секунд"
     : "Рисую… это занимает до 30 секунд"}</p>`;
 
@@ -9665,6 +9741,7 @@ async function generateImage(prompt, attempt = 0) {
   // 1) Puter — лучшее качество и ни водяного знака, ни лимита (нужен бесплатный вход)
   if (engine.id !== "pollinations") {
     try {
+      prog("Puter · gpt-image-2: рисую… (до 45 секунд)");
       const src = await puterImage(finalPrompt, imgOpts);
       showImage(src, "puter", "Puter · gpt-image-2" + (imgOpts.pro ? " · " + imgOpts.quality.name : "") +
         " · " + imgOpts.width + "×" + imgOpts.height + " · промпт: " + finalPrompt);
@@ -9678,7 +9755,8 @@ async function generateImage(prompt, attempt = 0) {
   // 2) Stable Horde — бесплатные чужие видеокарты, SDXL, без водяного знака
   if (engine.id !== "pollinations") {
     try {
-      const got = await hordeImage(finalPrompt, imgOpts);
+      prog("Stable Horde: отправляю задание…");
+      const got = await hordeImage(finalPrompt, imgOpts, prog);
       const note = (got.personal ? "Stable Horde · SDXL · " : "Stable Horde (аноним, 512 px) · ") +
         got.width + "×" + got.height + " · без водяного знака. Промпт: " + finalPrompt +
         (got.personal ? "" : " · Впиши бесплатный ключ Horde в ⚙ — будет 1024 px и быстрее.");
@@ -9690,6 +9768,7 @@ async function generateImage(prompt, attempt = 0) {
   }
 
   // 3) Pollinations — самый быстрый, но с лимитом и водяным знаком на бесплатном слое
+  prog("Pollinations: рисую…");
   try {
     const got = await pollinationsImage(finalPrompt, imgOpts);
     const modelName = got.model === "flux" ? "Flux" : got.model === "turbo" ? "Turbo" : "Sana";
@@ -9698,7 +9777,8 @@ async function generateImage(prompt, attempt = 0) {
       ? "Искра Pro · " + modelName + " · " + imgOpts.width + "×" + imgOpts.height + " · " + imgOpts.style.name + " · " + imgOpts.quality.name +
         ". Промпт: " + finalPrompt
       : "Pollinations · " + modelName + " · " + imgOpts.width + "×" + imgOpts.height +
-        (token ? "" : " · бесплатный слой ставит водяной знак. Убрать: бесплатный токен Pollinations в ⚙ или Stable Horde") +
+        (errors.length ? " · запасной движок (Puter и Stable Horde не ответили)" : "") +
+        (token ? "" : " · бесплатный слой: водяной знак и лимит одна картинка в 45 с. Если вместо рисунка плакат «Free limit reached» — это лимит сервера, а не ошибка Искры") +
         ". Промпт: " + finalPrompt;
     showImage(got.url, got.model, note);
   } catch (e) {
