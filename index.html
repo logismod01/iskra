@@ -6210,6 +6210,9 @@ let lastModelVision = guessVision(settings.model);
     settings.mode = "study"; saveSettings();
   }
   if (!settings.modeChats || typeof settings.modeChats !== "object") settings.modeChats = {};
+  /* Ключ в настройках есть, а провайдер «Без ключа» — частая жалоба «ключ есть, а не отвечает».
+     При запуске приводим их в соответствие один раз. */
+  try { syncProviderWithKey(); ensureModelForProvider(); } catch (e) {}
   /* Движок картинок: по умолчанию авто (Puter → Stable Horde → Pollinations) */
   if (!settings.imageEngine) settings.imageEngine = "auto";
   if (typeof settings.hordeKey !== "string") settings.hordeKey = "";
@@ -7290,52 +7293,147 @@ function offlineAnswer(question) {
 /* Карточка ошибки прямо в чате, с кнопками решения */
 function baseAnswerExists(q) { return kbSearch(q, 1).length > 0 || learnedList().length > 0; }
 
+/* К какому провайдеру относится модель (по id) */
+function modelOwner(id) {
+  const m = String(id || "");
+  if (!m) return "";
+  for (const [prov, list] of Object.entries(FALLBACK_MODELS)) {
+    if ((list || []).some(x => x.id === m)) return prov;
+  }
+  for (const [prov, list] of Object.entries(BRAND_MODELS || {})) {
+    if ((list || []).some(x => x.id === m)) return prov;
+  }
+  for (const [prov, cfg] of Object.entries(PROVIDERS)) {
+    if ((cfg.models || []).some(x => x.id === m)) return prov;
+  }
+  return "";
+}
+
+/* Главная причина «ключ есть, а Искра молчит»: ключ лежал в настройках,
+   но провайдер оставался «Без ключа», и ключ вообще не использовался.
+   Эта функция сверяет ключ, провайдера и модель и приводит их в порядок. */
+function syncProviderWithKey() {
+  const key = String(settings.apiKey || "").trim();
+  const kind = detectKeyKind(key);
+  let changed = null;
+  if (kind && settings.provider !== "custom" && settings.provider !== kind.provider) {
+    changed = { from: settings.provider, to: kind.provider };
+    settings.provider = kind.provider;
+    const owner = modelOwner(settings.model);
+    if (!owner || owner !== kind.provider) settings.model = kind.model;
+    lastModelVision = guessVision(settings.model);
+    saveSettings();
+    return changed;
+  }
+  // ключ не опознан, но провайдер требует ключ, а его нет — не падаем: остаёмся как есть
+  return changed;
+}
+
+/* Модель от другого провайдера — частая причина 404. Подставляем родную. */
+function ensureModelForProvider() {
+  const prov = settings.provider;
+  if (!prov || prov === "custom") return false;
+  const owner = modelOwner(settings.model);
+  if (!owner || owner === prov) return false;
+  const def = (FALLBACK_MODELS[prov] || [])[0] || (PROVIDERS[prov].models || [])[0];
+  if (!def) return false;
+  settings.model = def.id;
+  lastModelVision = guessVision(settings.model);
+  saveSettings();
+  return true;
+}
+
+/* Рабочая модель по умолчанию для провайдера — берём из нашего же списка,
+   чтобы ключ никогда не включал модель, которой уже нет */
+function defaultModelFor(provider) {
+  const a = (FALLBACK_MODELS[provider] || [])[0];
+  if (a && a.id) return a.id;
+  const b = ((PROVIDERS[provider] && PROVIDERS[provider].models) || [])[0];
+  return b && b.id ? b.id : "";
+}
+
 /* Какой это ключ — по началу строки */
 function detectKeyKind(key) {
   const k = String(key || "").trim();
-  if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", model: "llama-3.3-70b-versatile" };
-  if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", model: "meta-llama/Llama-3.3-70B-Instruct" };
-  if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free" };
+  if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", model: defaultModelFor("groq") || "llama-3.3-70b-versatile" };
+  if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", model: defaultModelFor("huggingface") || "meta-llama/Llama-3.3-70B-Instruct" };
+  if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", model: defaultModelFor("openrouter") || "meta-llama/llama-3.3-70b-instruct:free" };
   return null;
 }
 
-function showFailCard(contentEl, aiMsg, question, reason) {
-  const hits = kbSearch(question, 1);
+/* Что именно случилось — своими словами и без выдумок */
+function describeFailure(err) {
+  if (!err) return "нет ответа от модели";
+  if (err.kind === "custom-empty") return "в настройках выбран «Свой URL», но адрес пустой";
+  if (err.kind === "all-busy") return "бесплатные движки без ключа заняты — общий лимит на всех";
+  const st = Number(err.status) || 0;
+  if (st === 0) return "нет связи с сервером (интернет, блокировка или CORS)";
+  if (st === 400) return "сервер не принял запрос (400) — чаще всего модель не та";
+  if (st === 401) return "ключ не принят (401) — он неверный, обрезанный или отозван";
+  if (st === 402) return "на ключе кончились кредиты (402)";
+  if (st === 403) return "ключ есть, но доступ закрыт (403) — модель недоступна аккаунту";
+  if (st === 404) return "модель не найдена (404) — её нет у этого провайдера";
+  if (st === 413) return "запрос слишком длинный (413) — сократи текст или переписку";
+  if (st === 422) return "сервер не понял поля запроса (422)";
+  if (st === 429) return "лимит запросов (429) — слишком часто для этого ключа";
+  if (st === 500 || st === 502 || st === 503 || st === 504) return "сервер провайдера занят или упал (" + st + ")";
+  return "HTTP " + st;
+}
+function failureRaw(err) {
+  const raw = String((err && (err.body || err.message)) || "").replace(/\s+/g, " ").trim();
+  return raw && !/^HTTP \d+$/.test(raw) ? raw.slice(0, 180) : "";
+}
+
+function showFailCard(contentEl, aiMsg, question, err) {
   const baseAnswer = offlineAnswer(question);
-  aiMsg.content = baseAnswer
+  const reason = typeof err === "string" ? err : describeFailure(err);
+  const raw = typeof err === "string" ? "" : failureRaw(err);
+  const hasKey = !!String(settings.apiKey || "").trim();
+  const provName = (PROVIDERS[settings.provider] && PROVIDERS[settings.provider].name) || settings.provider || "модель";
+  const head = baseAnswer
     ? `Модель сейчас недоступна (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}`
-    : `Сейчас не могу ответить: обе бесплатные модели заняты (у них общий лимит на всех людей), а в моей базе знаний ответа на этот вопрос нет.\n\nЭто не поломка — просто подожди 20–30 секунд и нажми «Повторить запрос». Или вставь бесплатный ключ ниже: с ним лимита почти не бывает и отвечаю я гораздо умнее.`;
+    : hasKey
+      ? `Ключ есть, но ${provName} не ответил: ${reason}. Запасные бесплатные движки я тоже попробовала — они сейчас молчат.\n\nЧто можно сделать: проверь ключ кнопкой ниже (это 2 секунды), выбери другую модель или нажми «Повторить запрос» — часто помогает со второго раза.`
+      : `Сейчас не могу ответить: бесплатные движки без ключа не ответили — ${reason}.\n\nПодожди 20–30 секунд и нажми «Повторить запрос». Или вставь бесплатный ключ — с ним лимита почти не бывает и отвечаю я гораздо умнее.`;
+  aiMsg.content = head;
   aiMsg.failedSoft = true;
   contentEl.innerHTML = renderMarkdown(aiMsg.content);
   const box = document.createElement("div");
   box.className = "fail-actions";
   box.innerHTML = `
-    <div class="fail-note">${baseAnswer ? "Это ответ из моей базы — без интернета." : "Модель не ответила."} Чтобы работали сильные модели, нужен бесплатный ключ — 5 минут.</div>
+    <div class="fail-note">${baseAnswer ? "Это ответ из моей базы — без интернета." : raw ? "Что ответил сервер: " + esc(raw) : "Модель не ответила."}</div>
     <div class="fail-btns">
-      <button data-fail="groq">Ввести ключ</button>
+      ${hasKey
+        ? `<button data-fail="check">Проверить ключ</button><button data-fail="groq">Сменить ключ</button>`
+        : `<button data-fail="groq">Ввести ключ</button>`}
       <button data-fail="puter">Войти в Puter</button>
       <button data-fail="retry">Повторить запрос</button>
     </div>
-    <div class="fail-key" id="failKeyBox" style="display:none">
-      <input id="failKeyInput" placeholder="gsk_… или hf_…" autocomplete="off" spellcheck="false">
+    <div class="fail-key" id="failKeyBox" style="${hasKey ? "" : "display:none"}">
+      <input id="failKeyInput" placeholder="gsk_… · hf_… · sk-or-v1-…" autocomplete="off" spellcheck="false" value="${hasKey ? "" : ""}">
       <button id="failKeySave">Включить</button>
     </div>
-    <div class="fail-note" style="margin-top:8px">Подходит любой бесплатный ключ: <b>Groq</b> (gsk_…) или <b>Hugging Face</b> (hf_…) — второй проще, регистрация без карты и почти никогда не блокируется. <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Взять ключ Hugging Face</a> · <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Взять ключ Groq</a></div>`;
+    <div class="fail-note" style="margin-top:8px">Подходит любой бесплатный ключ: <b>Groq</b> (gsk_…) или <b>Hugging Face</b> (hf_…). Совсем без ключа тоже работает, но с лимитом на всех. <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Взять ключ Hugging Face</a> · <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Взять ключ Groq</a></div>`;
   contentEl.appendChild(box);
+
+  const checkBtn = box.querySelector('[data-fail="check"]');
+  if (checkBtn) checkBtn.onclick = () => { openSettings(); setTimeout(() => { try { testConnection(); } catch (e) {} }, 250); };
   const keyBox = box.querySelector("#failKeyBox");
   box.querySelector('[data-fail="groq"]').onclick = () => {
     keyBox.style.display = keyBox.style.display === "none" ? "flex" : "none";
     const inp = box.querySelector("#failKeyInput");
-    if (inp) inp.focus();
+    if (inp) { inp.value = ""; inp.focus(); }
   };
   box.querySelector('[data-fail="puter"]').onclick = () => puterSignIn();
   box.querySelector('[data-fail="retry"]').onclick = () => sendMessage(question, [], false, true);
   box.querySelector("#failKeySave").onclick = async () => {
     const key = (box.querySelector("#failKeyInput").value || "").trim();
     const pick = detectKeyKind(key);
-    if (!pick) { toast("Ключ должен начинаться на gsk_ (Groq) или hf_ (Hugging Face)", "err"); return; }
+    if (!pick) { toast("Ключ должен начинаться на gsk_ (Groq), hf_ (Hugging Face) или sk-or-v1- (OpenRouter)", "err"); return; }
     settings.provider = pick.provider; settings.apiKey = key; settings.model = pick.model;
-    lastModelVision = false; saveSettings(); syncProviderUI && syncProviderUI(); updateModelChip && updateModelChip();
+    lastModelVision = guessVision(pick.model); saveSettings();
+    try { syncProviderWithKey(); } catch (e) {}
+    syncProviderUI && syncProviderUI(); updateModelChip && updateModelChip();
     toast("Ключ сохранён — повторяю вопрос", "ok");
     sendMessage(question, [], false, true);
   };
@@ -8009,6 +8107,54 @@ async function streamChat(payload, onDelta, signal) {
   }
 }
 
+/* ===== Если основной провайдер не ответил — пробуем другие пути =====
+   Человеку нужен ответ, а не карточка с ошибкой. Порядок:
+   1) провайдер, к которому относится сохранённый ключ;
+   2) бесплатный движок без ключа (llm7 → Pollinations).
+   Настройки пользователя при этом не меняются — всё возвращаем на место. */
+async function attemptWith(attempt, payload, onDelta, signal) {
+  const before = { provider: settings.provider, model: settings.model, apiKey: settings.apiKey };
+  if (signal && signal.aborted) return false;
+  const ctrl = new AbortController();
+  const onAbort = () => { try { ctrl.abort(); } catch (e) {} };
+  if (signal) signal.addEventListener("abort", onAbort);
+  const timer = setTimeout(onAbort, 45000);
+  let got = 0;
+  try {
+    settings.provider = attempt.provider;
+    settings.model = attempt.model;
+    settings.apiKey = attempt.key;
+    await streamChat(payload, (d) => { got += String(d || "").length; onDelta(d); }, ctrl.signal);
+    return got > 0;
+  } catch (e) {
+    return false;
+  } finally {
+    clearTimeout(timer);
+    if (signal) signal.removeEventListener("abort", onAbort);
+    settings.provider = before.provider;
+    settings.model = before.model;
+    settings.apiKey = before.apiKey;
+  }
+}
+
+async function rescueAnswer(payload, onDelta, signal) {
+  const attempts = [];
+  const key = String(settings.apiKey || "").trim();
+  const kind = detectKeyKind(key);
+  if (kind && kind.provider !== settings.provider) {
+    attempts.push({ provider: kind.provider, model: kind.model, key, label: PROVIDERS[kind.provider].name + " (по твоему ключу)" });
+  }
+  if (settings.provider !== "llm7") {
+    attempts.push({ provider: "llm7", model: "gpt-oss:20b", key: "", label: "llm7 (без ключа)" });
+  }
+  for (const a of attempts) {
+    if (signal && signal.aborted) return false;
+    const ok = await attemptWith(a, payload, onDelta, signal);
+    if (ok) { toast("Ответила запасная модель: " + a.label, "ok"); return true; }
+  }
+  return false;
+}
+
 class ApiError extends Error {
   constructor(status, body, kind) {
     super(body && typeof body === "string" ? body : "HTTP " + status);
@@ -8078,6 +8224,19 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     autoresize();
     return generateImage(trimmed);
   }
+  /* Ключ, провайдер и модель должны совпадать: иначе ключ лежит без дела,
+     а Искра отвечает бесплатным движком с лимитом на всех. */
+  try {
+    const switched = syncProviderWithKey();
+    if (switched) {
+      toast("Нашла твой ключ — переключилась на " + (PROVIDERS[switched.to]?.name || switched.to), "ok");
+      updateModelChip && updateModelChip();
+      syncProviderUI && syncProviderUI();
+      updateComposerNote && updateComposerNote();
+    }
+    ensureModelForProvider();
+  } catch (e) {}
+
   /* Прямая просьба «нарисуй кота» или «сделай видео закат» — даже в обычном чате.
      Раньше такой запрос уходил в текстовую модель, и она рисовала ASCII-картинку
      символами вместо настоящего изображения. */
@@ -8187,6 +8346,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   const signal = abortCtrl.signal;
 
   let acc = "";
+  let payload = null;
   try {
     // умный поиск: если это вопрос — сначала смотрим в Википедии
     _lastSearch = null;
@@ -8201,7 +8361,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     }
 
     const recent = chat.messages.slice(-20);
-    const payload = apiPayload(recent);
+    payload = apiPayload(recent);
     await streamChat(payload, (delta) => {
       acc += delta;
       el.classList.remove("thinking");
@@ -8257,12 +8417,32 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       streamEl().innerHTML = renderMarkdown(aiMsg.content);
       saveChats();
     } else {
-      const { status, hint } = friendlyError(err);
-      const hadBase = baseAnswerExists(trimmed);
-      showFailCard(contentEl, aiMsg, trimmed, hint || ("ошибка " + (status || "сети")));
-      // если ответ всё-таки есть (из базы) — не пугаем красной ошибкой
-      if (!hadBase) toast(`Ошибка${status ? " " + status : ""}: ${hint}`, "err");
-      if (status === 401 && !hadBase) openSettings();
+      /* Сначала честно пробуем другие движки — человеку нужен ответ, а не ошибка */
+      let rescued = false;
+      if (!acc.trim() && payload) {
+        streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
+          `<p class="gen-note">${esc((PROVIDERS[settings.provider] && PROVIDERS[settings.provider].name) || "Модель")} не ответила — пробую запасной движок…</p>`;
+        try {
+          rescued = await rescueAnswer(payload, (d) => {
+            acc += d;
+            const t = streamEl();
+            if (t) t.innerHTML = renderMarkdown(acc);
+            scrollToBottom();
+          }, signal);
+        } catch (e) { rescued = false; }
+      }
+      if (rescued && acc.trim()) {
+        aiMsg.content = acc;
+        streamEl().innerHTML = renderMarkdown(acc);
+        saveChats();
+        toast("Ответила запасная модель", "ok");
+      } else {
+        const { status, hint } = friendlyError(err);
+        const hadBase = baseAnswerExists(trimmed);
+        showFailCard(contentEl, aiMsg, trimmed, err);
+        if (!hadBase) toast(`Не ответило${status ? " (HTTP " + status + ")" : ""}: ${describeFailure(err)}`, "err");
+        if (status === 401 && !hadBase && !String(settings.apiKey || "").trim()) openSettings();
+      }
     }
   } finally {
     sendBtn.classList.remove("stop");
@@ -9364,6 +9544,7 @@ async function toEnglishPrompt(text) {
     stream: true, temperature: 0.3, max_tokens: 120
   };
   let acc = "";
+  let payload = null;
   try { await streamChat(body, (d) => { acc += d; }); } catch (e) { return ""; }
   const line = acc.trim().split("\n").filter(Boolean)[0] || "";
   return line.replace(/^["'`«]+|["'`»]+$/g, "").replace(/\s+/g, " ").trim().slice(0, 300);
@@ -9757,9 +9938,18 @@ function renderModelsBox(list) {
 function updateComposerNote() {
   const n = document.querySelector(".composer-note");
   if (!n) return;
-  n.textContent = settings.provider === "demo" && !settings.apiKey
-    ? "Демо-режим без ключа: 1 ответ в 30 секунд. Для нормальной работы добавь бесплатный ключ в ⚙"
-    : "Искра может ошибаться — важное проверяй сам. Ключ хранится только в твоём браузере.";
+  const key = String(settings.apiKey || "").trim();
+  const prov = (PROVIDERS[settings.provider] && PROVIDERS[settings.provider].name) || settings.provider;
+  if (settings.provider === "demo" && !key) {
+    n.textContent = "Демо-режим без ключа: 1 ответ в 30 секунд. Для нормальной работы добавь бесплатный ключ в ⚙";
+    return;
+  }
+  if (settings.provider === "llm7" && !key) {
+    n.textContent = "Бесплатный движок без ключа. Если молчит — добавь бесплатный ключ Hugging Face в ⚙";
+    return;
+  }
+  n.textContent = "Отвечает: " + prov + (settings.model ? " · " + modelDisplayName(settings.model) : "") +
+    ". Ключ хранится только в твоём браузере. Важное проверяй сам.";
 }
 
 function updateModelChip() {
@@ -11705,6 +11895,7 @@ async function aiLearnSummary(title, sourceText) {
     stream: true, temperature: 0.2, max_tokens: 420
   };
   let acc = "";
+  let payload = null;
   try {
     await Promise.race([
       streamChat(body, (d) => { acc += d; }),
@@ -13094,6 +13285,9 @@ function wire() {
     settings.apiKey = $("#apiKey").value.trim();
     settings.model = $("#model").value.trim() || (FALLBACK_MODELS[settings.provider]?.[0]?.id) || "";
     lastModelVision = guessVision(settings.model);
+    const switched = syncProviderWithKey();
+    if (switched) toast("Ключ от " + (PROVIDERS[switched.to]?.name || switched.to) + " — переключилась на него", "ok");
+    ensureModelForProvider();
     settings.baseUrl = $("#baseUrl").value.trim();
     settings.customPersona = $("#customPersona").value.trim();
     settings.memoryOn = $("#memoryOn").checked;
