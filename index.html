@@ -1325,6 +1325,13 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .console-line { display: flex; align-items: center; gap: 8px; padding: 10px 16px 14px; border-top: 1px solid #16303a; background: #0b1418; }
 .console-prompt { font-size: 12.5px; color: #4fa882; white-space: nowrap; }
 .console-line input { flex: 1; background: none; border: none; outline: none; color: #7dffb0; font-family: inherit; font-size: 13px; caret-color: #7dffb0; }
+
+.puter-alt { margin-top: 16px; padding: 12px; border: 1px dashed rgba(226,122,95,.4); border-radius: 12px; background: rgba(226,122,95,.05); }
+.puter-alt-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.puter-alt-steps { margin: 0 0 10px; padding-left: 18px; font-size: 12.5px; line-height: 1.6; color: var(--text-dim); }
+.puter-alt-steps code { background: rgba(255,255,255,.07); padding: 1px 4px; border-radius: 4px; }
+.auth-field-input { background: var(--bg-soft-2); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit; outline: none; }
+.auth-field-input:focus { border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -3924,17 +3931,65 @@ async function puterStream(payload, onDelta, signal) {
 }
 
 
+
+/* ---------- Puter: предзагрузка и вход по клику (без блокировки окон) ---------- */
+let puterPreloaded = false;
+let puterSignInPromise = null;
+
+function preloadPuter() {
+  if (puterPreloaded) return;
+  puterPreloaded = true;
+  const sc = document.createElement("script");
+  sc.src = "https://js.puter.com/v2/";
+  sc.async = true;
+  sc.onload = () => { try { window.puter.quiet = true; } catch (e) {} };
+  document.head.appendChild(sc);
+}
+
+/* Вызывается СИНХРОННО из обработчика клика — тогда браузер не блокирует окно */
+function startPuterSignInNow() {
+  if (!window.puter || !window.puter.auth) return false;
+  try {
+    puterSignInPromise = window.puter.auth.signIn();
+    puterSignInPromise.catch(() => {});
+    return true;
+  } catch (e) { return false; }
+}
+
 /* ---------- Объяснение про Puter (чтобы окно не пугало) ---------- */
 function askPuterFirst() {
+  preloadPuter();
   return new Promise((resolve) => {
     const m = $("#puterModal");
     if (!m) return resolve(true);
     m.classList.add("open");
     const done = (v) => { m.classList.remove("open"); resolve(v); };
     const go = $("#puterGo"), skip = $("#puterSkip"), cl = $("#puterClose");
-    if (go) go.onclick = () => done(true);
+    if (go) go.onclick = () => { startPuterSignInNow(); done(true); };
     if (skip) skip.onclick = () => { done(false); useNoKeyMode(); };
     if (cl) cl.onclick = () => done(false);
+    const groqSave = $("#groqSave");
+    if (groqSave) groqSave.onclick = async () => {
+      const key = ($("#groqKeyInput").value || "").trim();
+      if (!/^gsk_[A-Za-z0-9]{20,}$/.test(key)) { toast("Ключ Groq начинается на gsk_ — проверь, что скопировала целиком", "err"); return; }
+      settings.provider = "groq";
+      settings.apiKey = key;
+      settings.model = "llama-3.3-70b-versatile";
+      lastModelVision = false;
+      saveSettings();
+      syncProviderUI && syncProviderUI();
+      updateModelChip && updateModelChip();
+      done(true);
+      toast("Готово: работаю через Groq — быстро и без окон входа", "ok");
+      // проверяем ключ живым запросом
+      try {
+        const r = await fetch("https://api.groq.com/openai/v1/models", { headers: { Authorization: "Bearer " + key } });
+        if (!r.ok) toast("Ключ сохранён, но Groq ответил ошибкой " + r.status + ". Проверь, что ключ активен.", "err");
+        else toast("Ключ рабочий — модели доступны", "ok");
+      } catch (e) {}
+    };
+    const groqOpen = $("#groqOpen");
+    if (groqOpen) groqOpen.onclick = () => window.open("https://console.groq.com/keys", "_blank", "noopener");
     const tab = $("#puterTab");
     if (tab) tab.onclick = () => window.open("https://puter.com/?action=sign-in", "_blank", "noopener");
     const chk = $("#puterCheck");
@@ -3968,7 +4023,26 @@ async function puterSignIn() {
   }
   try {
     const puter = await loadPuter();
-    await puter.auth.signIn();
+    if (puterSignInPromise) {
+      try { await Promise.race([puterSignInPromise, new Promise(r => setTimeout(r, 120000))]); } catch (e) {}
+    } else {
+      await puter.auth.signIn();
+    }
+    // Этап 2: подтвердился ли вход на самом деле
+    let signed = false;
+    try {
+      signed = await Promise.race([
+        puter.auth.isSignedIn(),
+        new Promise(r => setTimeout(() => r(false), 6000))
+      ]);
+    } catch (e) { signed = false; }
+    if (!signed) {
+      // окно закрылось, но браузер не отдал вход приложению — почти всегда это cookie
+      toast("Окно Puter закрылось, но браузер не передал вход обратно. Это блокировка сторонних cookies в Firefox. Решение: значок щита у адреса → «Выключить защиту на этом сайте», либо взять бесплатный ключ Groq.", "err");
+      settings.puterExplained = false;
+      saveSettings();
+      return false;
+    }
     toast("Вход в Puter выполнен — модели доступны", "ok");
     return true;
   } catch (e) {
@@ -7359,6 +7433,19 @@ document.addEventListener("DOMContentLoaded", wire);
         <button class="auth-btn ghost" id="puterCheck" style="flex:1">Проверить вход</button>
       </div>
       <button class="auth-btn ghost" id="puterSkip" style="margin-top:8px">Без Puter — отвечать на своих знаниях</button>
+      <div class="puter-alt">
+        <div class="puter-alt-title">Не получается с Puter? Есть путь без окон — бесплатный ключ Groq</div>
+        <ol class="puter-alt-steps">
+          <li>Открой <b>console.groq.com/keys</b> (вход через Google — тот же аккаунт).</li>
+          <li>Нажми <b>Create API Key</b> и скопируй ключ (начинается на <code>gsk_</code>).</li>
+          <li>Вставь сюда — Искра сама переключится, карта не нужна.</li>
+        </ol>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="groqKeyInput" class="auth-field-input" placeholder="gsk_..." style="flex:1;min-width:180px">
+          <button class="auth-btn" id="groqSave" style="width:auto;padding:0 16px">Включить</button>
+        </div>
+        <button class="auth-link" id="groqOpen" style="margin-top:6px">Открыть console.groq.com/keys</button>
+      </div>
       <details class="puter-help">
         <summary>Не пускает в Puter? Что делать по шагам</summary>
         <ol>
