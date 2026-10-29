@@ -1091,6 +1091,62 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .mp-custom input:focus { border-color: var(--accent); }
 
 /* Уважаем тех, кому анимации мешают */
+/* ===== Плавность: окна, кнопки, списки, смена режима ===== */
+@keyframes modalBackdrop { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(14px) scale(.975); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes rowIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes appIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes softPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+
+/* появление приложения */
+html.booted .app { animation: appIn .45s cubic-bezier(.22,1,.36,1) both; }
+
+/* окна: мягкий подъём и затемнение */
+.modal-bg.open { animation: modalBackdrop .22s ease both; }
+.modal-bg.open > .modal,
+.modal-bg.open > .ob-card,
+.modal-bg.open > .mp-card {
+  animation: modalPop .3s cubic-bezier(.22,1,.36,1) both;
+}
+.modal { transition: transform .2s ease, box-shadow .25s ease; }
+
+/* смена режима: переписка мягко проявляется */
+.messages.swap { animation: fadeIn .22s ease both; }
+
+/* строки списка чатов влетают */
+.chat-row { animation: rowIn .24s cubic-bezier(.22,1,.36,1) both; }
+.chat-row .chat-mode { animation: fadeIn .3s ease both; }
+
+/* кнопки: нажатие видно, наведение мягкое */
+button { transition: transform .14s cubic-bezier(.34,1.56,.64,1), background .16s ease, border-color .16s ease, color .16s ease, box-shadow .2s ease; }
+button:active:not(:disabled) { transform: scale(.975); }
+.plan-btn:hover, .auth-btn:hover, .access-chip:hover, .gen-chip:hover:not(:disabled) { box-shadow: 0 6px 18px -10px var(--accent); }
+
+/* карточки тарифов приподнимаются */
+.plan-card { transition: border-color .18s, transform .18s cubic-bezier(.22,1,.36,1), box-shadow .2s; }
+.plan-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -16px rgba(0,0,0,.7); }
+
+/* переключатель режима в композере */
+.mode-one, .tool-btn, .model-chip { transition: transform .16s cubic-bezier(.34,1.56,.64,1), background .16s, border-color .16s, color .16s, box-shadow .2s; }
+.tool-btn:active, .mode-one:active { transform: scale(.94); }
+
+/* меню профиля и подсказки */
+#profileMenu { animation: modalPop .2s cubic-bezier(.22,1,.36,1) both; }
+#profileMenu[hidden] { animation: none; }
+
+/* сайдбар на телефоне */
+@media (max-width: 860px) {
+  .sidebar { transition: transform .28s cubic-bezier(.22,1,.36,1); }
+  #sbBackdrop { transition: opacity .28s ease; }
+}
+
+/* точка «думаю» в аватарке при генерации */
+.msg.ai.thinking .ava { animation: softPulse 1.4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
@@ -1399,6 +1455,22 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .access-chip:hover { border-color: var(--accent); color: var(--text); }
 .access-chip.on { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-soft-2)); }
 @media (max-width: 640px) { .access-chip { display: none; } }
+/* Полоса «не запустилось» — вместо белого экрана на старом телефоне */
+.crash-bar {
+  position: fixed; inset: 0 0 auto 0; z-index: 9999;
+  display: flex; gap: 12px; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: #2a1512; color: #ffd9cc; border-bottom: 1px solid #74382c;
+  font-size: 13.5px; line-height: 1.45; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.crash-bar[hidden] { display: none; }
+.crash-bar b { display: block; margin-bottom: 2px; color: #ffb59e; }
+.crash-bar span { display: block; opacity: .9; }
+.crash-bar button {
+  flex: none; padding: 8px 14px; border-radius: 9px; border: 1px solid #a3492f;
+  background: #3a1d17; color: #ffd9cc; font: inherit; cursor: pointer;
+}
+.crash-bar button:hover { background: #4a251c; }
+
 /* Поля ключей в блоке генерации */
 .gen-input {
   flex: 1; min-width: 0; padding: 8px 10px; border-radius: 9px;
@@ -1474,7 +1546,9 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .plan-card.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-soft-2)); }
 .plan-name { font-size: 13px; font-weight: 620; }
 .plan-price { font-size: 19px; font-weight: 700; color: var(--accent); letter-spacing: -.02em; }
+.plan-alt { font-size: 10.5px; color: var(--text-soft); font-family: var(--mono); line-height: 1.4; }
 .plan-note { font-size: 10.5px; color: var(--text-dim); line-height: 1.35; flex: 1; }
+.pay-alt { margin-top: 4px; font-size: 12px; color: var(--text-soft); font-family: var(--mono); }
 .plan-btn { margin-top: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px 8px; font-size: 12px; font-family: inherit; cursor: pointer; }
 .plan-btn:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -1501,6 +1575,42 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 </style>
 </head>
 <body>
+
+<!-- Если приложение не смогло запуститься (старый браузер, обрыв загрузки),
+     человек увидит понятное сообщение вместо пустого экрана -->
+<div class="crash-bar" id="crashBar" hidden>
+  <div>
+    <b>Искра не смогла запуститься</b>
+    <span id="crashText">Проверь интернет и обнови страницу.</span>
+  </div>
+  <button type="button" onclick="location.reload()">Обновить</button>
+</div>
+<noscript>
+  <div class="crash-bar" style="display:flex">
+    <div><b>Для Искры нужен JavaScript</b><span>Включи его в настройках браузера и обнови страницу.</span></div>
+  </div>
+</noscript>
+<script>
+(function () {
+  window.__iskraBoot = false;
+  function show(msg) {
+    var bar = document.getElementById("crashBar");
+    var txt = document.getElementById("crashText");
+    if (!bar) return;
+    if (txt && msg) txt.textContent = msg;
+    bar.hidden = false;
+  }
+  window.__iskraFatal = show;
+  window.addEventListener("error", function (e) {
+    if (window.__iskraBoot) return;
+    show("Ошибка запуска: " + ((e && e.message) || "неизвестно") + ". Обнови страницу или открой её в Chrome / Safari.");
+  });
+  setTimeout(function () {
+    if (window.__iskraBoot) return;
+    show("Загрузка не завершилась. Проверь интернет и обнови страницу. Если не помогает — браузер устарел: нужен Chrome 90+, Safari 15+ (в Telegram нажми «Открыть в браузере»).");
+  }, 12000);
+})();
+</script>
 
 <div class="app">
   <!-- Сайдбар -->
@@ -5391,6 +5501,19 @@ const KNOWLEDGE_PACK = {
    стриминг ответов, распознавание фото, генерация картинок.
    ============================================================ */
 
+/* ---------- Подстраховка для старых телефонов ---------- */
+/* Safari до 16 не знает AbortSignal.timeout — без него падали запросы с таймаутом */
+if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout !== "function") {
+  AbortSignal.timeout = function (ms) {
+    const c = new AbortController();
+    setTimeout(() => {
+      try { c.abort(new DOMException("TimeoutError", "TimeoutError")); }
+      catch (e) { c.abort(); }
+    }, ms);
+    return c.signal;
+  };
+}
+
 /* ---------- Бренд ---------- */
 const BRAND = {
   name: "Искра",
@@ -6047,6 +6170,8 @@ let currentChatId = null;
 let pendingImages = [];
 let pendingWeb = false;
 let abortCtrl = null;
+/* Что сейчас генерируется: нужно, чтобы удаление чата не обрывало ответ */
+let liveStream = null;
 let lastModelVision = guessVision(settings.model);
 
 /* Чиним настройки: мёртвые модели и неизвестный режим */
@@ -6431,6 +6556,40 @@ function createChat(firstTitle) {
   return chats[id];
 }
 function deleteChat(id) {
+  const goingAway = chats[id];
+  const stream = liveStream && liveStream.chatId === id ? liveStream : null;
+
+  /* Удаление чата посреди ответа больше не обрывает генерацию:
+     сообщения переезжают в новый чат, и ответ дорисовывается там. */
+  if (stream && goingAway) {
+    const userMsg = goingAway.messages.find(m => m.id === stream.userId);
+    const aiMsg = goingAway.messages.find(m => m.id === stream.aiId);
+    const title = userMsg ? titleFromText(userMsg.content || "Продолжение") : "Продолжение";
+    const fresh = createChat("Ответ на: " + title);
+    fresh.messages = [];
+    if (userMsg) fresh.messages.push(userMsg);
+    if (aiMsg) fresh.messages.push(aiMsg);
+    delete chats[id];
+    if (settings.modeChats) {
+      let changed = false;
+      for (const k of Object.keys(settings.modeChats)) {
+        if (settings.modeChats[k] === id) { delete settings.modeChats[k]; changed = true; }
+      }
+      settings.modeChats[settings.mode] = fresh.id;
+      changed = true;
+      if (changed) saveSettings();
+    }
+    liveStream.chatId = fresh.id;
+    currentChatId = fresh.id;
+    saveChats();
+    renderChatsList();
+    renderMessages();
+    const node = document.querySelector('.msg[data-id="' + stream.aiId + '"] .content');
+    if (node) liveStream.contentEl = node;
+    toast("Чат удалён — ответ продолжаю в новом", "ok");
+    return;
+  }
+
   delete chats[id];
   if (currentChatId === id) currentChatId = null;
   if (settings.modeChats) {
@@ -6455,6 +6614,12 @@ function openModeChat(mode) {
   currentChatId = chatOfMode(mode);
   renderChatsList();
   renderMessages();
+  const list = $("#messages");
+  if (list) {
+    list.classList.remove("swap");
+    void list.offsetWidth;          // перезапуск анимации
+    list.classList.add("swap");
+  }
 }
 function resetModeChat(mode) {
   if (settings.modeChats && settings.modeChats[mode]) {
@@ -7315,12 +7480,29 @@ function openSkills() { renderSkills(); $("#skillsModal").classList.add("open");
 function closeSkills() { $("#skillsModal").classList.remove("open"); }
 
 /* ---------- 2. База знаний (поиск по своим текстам) ---------- */
+/* Деление на предложения без regex-lookbehind: на старых Safari (до 16.4)
+   такая регулярка валит весь скрипт парсером — сайт просто не открывается. */
+function splitSentences(text) {
+  const s = String(text || "");
+  const out = [];
+  let buf = "";
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    buf += ch;
+    if (ch === "." || ch === "!" || ch === "?") {
+      const next = s[i + 1];
+      if (next === undefined || /\s/.test(next)) { if (buf.trim()) out.push(buf.trim()); buf = ""; }
+    }
+  }
+  if (buf.trim()) out.push(buf.trim());
+  return out.length ? out : [s];
+}
 function chunkText(text, size = 700) {
   const clean = String(text).replace(/\s+/g, " ").trim();
   if (clean.length <= size) return [clean];
   const parts = [];
   let buf = "";
-  for (const sent of clean.split(/(?<=[.!?])\s+/)) {
+  for (const sent of splitSentences(clean)) {
     if ((buf + " " + sent).length > size && buf) { parts.push(buf.trim()); buf = sent; }
     else buf += (buf ? " " : "") + sent;
   }
@@ -7983,11 +8165,18 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   chat.messages.push(aiMsg);
   const el = appendMessage(aiMsg);
   const contentEl = el.querySelector(".content");
+  liveStream = { chatId: currentChatId, userId: userMsg.id, aiId: aiMsg.id, contentEl };
+  /* Куда рисовать: обычно contentEl, но если чат удалили посреди ответа —
+     ответ переезжает в новый чат, и рисовать нужно уже туда */
+  const streamEl = () => (liveStream && liveStream.aiId === aiMsg.id && liveStream.contentEl) || contentEl;
+  el.classList.add("thinking");
   contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
   // если ответа нет дольше 8 секунд — показываем, что происходит
   const slowTimer = setTimeout(() => {
-    if (!contentEl.textContent.trim() || contentEl.querySelector(".typing")) {
-      contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note">Готовлю ответ… если модель занята, отвечу из своей базы знаний.</p>`;
+    const t = streamEl();
+    if (!t.isConnected) return;
+    if (!t.textContent.trim() || t.querySelector(".typing")) {
+      t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note">Готовлю ответ… если модель занята, отвечу из своей базы знаний.</p>`;
     }
   }, 8000);
 
@@ -8003,22 +8192,24 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     _lastSearch = null;
     const kbHit = !isTaskRequest(trimmed) && kbSearch(trimmed, 1).length > 0;
     if (settings.webSearch && !kbHit && shouldSearch(trimmed) && !pendingImages.length) {
-      contentEl.innerHTML = `<div class="typing"></div><div class="searching">Ищу в интернете…</div>`;
+      streamEl().innerHTML = `<div class="typing"></div><div class="searching">Ищу в интернете…</div>`;
       try { _lastSearch = await wikiSearch(trimmed); } catch (e) {}
       if (_lastSearch && _lastSearch.snippets && _lastSearch.snippets.length) {
         try { autoLearn(trimmed, _lastSearch.snippets); } catch (e) {}
       }
-      contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+      streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
     }
 
     const recent = chat.messages.slice(-20);
     const payload = apiPayload(recent);
     await streamChat(payload, (delta) => {
       acc += delta;
-      contentEl.innerHTML = renderMarkdown(acc);
-      if (_lastSearch && _lastSearch.sources && _lastSearch.sources.length) renderSources(contentEl, _lastSearch.sources);
+      el.classList.remove("thinking");
+      const t = streamEl();
+      t.innerHTML = renderMarkdown(acc);
+      if (_lastSearch && _lastSearch.sources && _lastSearch.sources.length) renderSources(t, _lastSearch.sources);
       // rewire copy buttons
-      contentEl.querySelectorAll(".code-head button[data-copy]").forEach(b => {
+      t.querySelectorAll(".code-head button[data-copy]").forEach(b => {
         b.onclick = () => {
           const code = document.getElementById(b.dataset.copy).textContent;
           navigator.clipboard.writeText(code).then(() => {
@@ -8063,7 +8254,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     clearTimeout(slowTimer);
     if (err.name === "AbortError") {
       aiMsg.content = acc + "\n\n*[Остановлено]*";
-      contentEl.innerHTML = renderMarkdown(aiMsg.content);
+      streamEl().innerHTML = renderMarkdown(aiMsg.content);
       saveChats();
     } else {
       const { status, hint } = friendlyError(err);
@@ -8077,6 +8268,8 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     sendBtn.classList.remove("stop");
     sendBtn.innerHTML = ic("arrowUp", 22);
     abortCtrl = null;
+    el.classList.remove("thinking");
+    if (liveStream && liveStream.aiId === aiMsg.id) liveStream = null;
   }
 }
 
@@ -9687,6 +9880,13 @@ async function sbFetch(path, body, method = "POST") {
 async function handleAuthRedirect() {
   if (!location.hash || location.hash.length < 10) return false;
   const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get("error") || h.get("error_description")) {
+    // провайдер вернул ошибку — не оставляем человека с пустым экраном
+    const desc = h.get("error_description") || h.get("error");
+    history.replaceState(null, "", location.pathname + location.search);
+    toast("Google/GitHub не пустил: " + desc + ". Локальный аккаунт уже создан — можно работать.", "err");
+    return false;
+  }
   const token = h.get("access_token");
   if (!token) return false;
   try {
@@ -9695,13 +9895,22 @@ async function handleAuthRedirect() {
     const email = u?.email || "";
     const meta = u?.user_metadata || {};
     const name = meta.full_name || meta.name || meta.user_name || (email ? email.split("@")[0] : "Друг");
-    let acc = authAccounts().find(a => a.sbId === u.id) || (email ? authFind(email) : null);
+    /* Аккаунт мог быть создан ещё до похода в Google/GitHub — тогда просто
+       дописываем в него серверный id, а не плодим второй */
+    const pendingId = localStorage.getItem("iskra.oauth.pending") || "";
+    let acc = authAccounts().find(a => a.sbId === u.id)
+      || (email ? authFind(email) : null)
+      || (pendingId ? authAccounts().find(a => a.id === pendingId) : null);
     if (!acc) {
       if (!(await canCreateAccount(email || name))) return false;
       acc = authCreate({ method: meta.provider || "oauth", name, email });
       if (!acc) return false;
       await rememberSignup(email || name);
+    } else {
+      acc.method = meta.provider || acc.method || "oauth";
+      acc.name = acc.name || name;
     }
+    localStorage.removeItem("iskra.oauth.pending");
     acc.sbId = u.id;
     acc.email = email || acc.email;
     const list = authAccounts().map(a => (a.id === acc.id ? acc : a));
@@ -9770,14 +9979,20 @@ async function myIp() {
   return "нет-сети";
 }
 
-/* Проверка перед созданием аккаунта. Возвращает true, если можно */
+/* Проверка перед созданием аккаунта: не больше двух на один IP (значит, и не больше двух ключей). */
 async function canCreateAccount(login) {
   const reg = signupRegistry();
   const key = String(login || "").toLowerCase();
   // повторный вход в свой же аккаунт — не считается новым
   if (key && reg.some(r => r.key === key)) return true;
-  if (reg.length >= MAX_ACCOUNTS) {
-    toast(`На одного человека можно ${MAX_ACCOUNTS} аккаунта. Ты уже использовала ${reg.length}. Войди в существующий или восстанови его кодом.`, "err");
+  const ip = await myIp();
+  const sameIp = ip && ip !== "нет-сети" ? reg.filter(r => r.ip === ip).length : 0;
+  if (sameIp >= MAX_ACCOUNTS) {
+    toast(`С этого IP уже ${sameIp} аккаунта — больше нельзя (лимит ${MAX_ACCOUNTS} на адрес). Войди в существующий: у каждого аккаунта свой код клиента и свой ключ.`, "err");
+    return false;
+  }
+  if (reg.length >= MAX_ACCOUNTS * 2) {
+    toast(`На этом устройстве уже ${reg.length} регистрации. Войди в существующий аккаунт.`, "err");
     return false;
   }
   return true;
@@ -9910,17 +10125,22 @@ async function sendEmailCode() {
   err.textContent = "";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = "Похоже, в адресе опечатка."; return; }
 
+  /* Запасной код на экране действует всегда: если письмо не дошло (у бесплатной
+     почты Supabase лимит 2–3 письма в час, часть адресов она вообще не принимает),
+     человек всё равно входит — локальным аккаунтом в этом браузере. */
+  authPending.code = authCode();
+  const localCodeNote = "<br><span style=\"color:var(--text-dim)\">Письмо не пришло? Введи этот код — он работает прямо сейчас: <b style=\"font-size:15px;letter-spacing:3px\">" + authPending.code + "</b></span>";
+
   if (supabaseConfigured()) {
     if (!(await canCreateAccount(email))) return;
     try {
       await sbFetch("/auth/v1/otp", { email, create_user: true });
-      note.innerHTML = "Код отправлен на <b>" + esc(email) + "</b>. Проверь почту и папку «Спам». Письмо идёт до минуты.";
+      note.innerHTML = "Код отправлен на <b>" + esc(email) + "</b>. Проверь почту и папку «Спам». Письмо идёт до минуты." + localCodeNote;
     } catch (e) {
       const m = String(e.message || "");
-      err.textContent = /rate limit|429/i.test(m)
-        ? "Писем сейчас слишком много: у встроенной почты Supabase лимит 2–3 письма в час. Подожди немного или войди по паролю. Полный лимит снимается подключением своего почтового сервиса."
-        : "Не удалось отправить: " + m;
-      return;
+      note.innerHTML = (/rate limit|429/i.test(m)
+        ? "Почтовый сервис сейчас перегружен (лимит 2–3 письма в час). "
+        : "Письмо отправить не удалось. ") + "Ничего страшного — введи код ниже, и аккаунт создастся сразу:" + localCodeNote;
     }
   } else {
     authPending.code = authCode();
@@ -9936,7 +10156,8 @@ async function checkEmailCode() {
   const err = $("#authEmailErr");
   err.textContent = "";
   if (!/^\d{6}$/.test(code)) { err.textContent = "Код — 6 цифр."; return; }
-  if (supabaseConfigured()) {
+  const localCodeOk = code === authPending.code;
+  if (supabaseConfigured() && !localCodeOk) {
     try {
       const j = await sbFetch("/auth/v1/verify", { type: "email", email: authPending.email, token: code });
       if (!j.access_token) throw new Error("код не принят");
@@ -9948,12 +10169,15 @@ async function checkEmailCode() {
       authAfterSignup(acc);
       return;
     } catch (e) {
-      err.textContent = "Код не подошёл: " + e.message;
+      err.textContent = "Код из письма не подошёл: " + e.message + ". Введи код, который показан на экране, — он действует всегда.";
       return;
     }
   }
-  if (code !== authPending.code) { err.textContent = "Код не совпал. Проверь цифры."; return; }
+  if (!localCodeOk) { err.textContent = "Код не совпал. Проверь цифры."; return; }
+  if (!(await canCreateAccount(authPending.email))) return;
   const acc = authCreate({ method: "email", email: authPending.email });
+  if (!acc) return;
+  await rememberSignup(authPending.email);
   authAfterSignup(acc);
 }
 
@@ -10006,19 +10230,39 @@ async function passSubmit() {
   if (supabaseConfigured() && /@/.test(login)) {
     try {
       if (authPassRegister) {
-        const j = await sbFetch("/auth/v1/signup", { email: login, password: pass });
-        err.className = "auth-err auth-ok";
-        err.textContent = "Аккаунт создан. На " + login + " пришло письмо — нажми в нём ссылку, потом войди паролем здесь.";
-        if (j && j.access_token) {
-          const acc = authCreate({ method: "pass", email: login, name: login.split("@")[0] });
-          if (acc) { acc.supabaseUser = j.user?.id || ""; authAfterSignup(acc); }
-        }
+        // аккаунт создаём сразу и локально: письмо от Supabase может не прийти, а вход нужен сейчас
+        if (!(await canCreateAccount(login))) return;
+        let acc = authFind(login);
+        if (!acc) acc = authCreate({ method: "pass", email: login, name: login.split("@")[0], passwordHash: await hashPass(pass) });
+        if (!acc) return;
+        await rememberSignup(login);
+        authAfterSignup(acc);
+        sbFetch("/auth/v1/signup", { email: login, password: pass })
+          .then(j => {
+            if (j && j.user && j.user.id) {
+              acc.supabaseUser = j.user.id;
+              authSaveAccounts(authAccounts().map(a => (a.id === acc.id ? acc : a)));
+            }
+          })
+          .catch(() => {});
         return;
       }
-      const j = await sbFetch("/auth/v1/token?grant_type=password", { email: login, password: pass });
-      if (!j.access_token) throw new Error("не пустило");
+      let j = null;
+      try {
+        j = await sbFetch("/auth/v1/token?grant_type=password", { email: login, password: pass });
+      } catch (e) {
+        // сервер не пустил (письмо не подтверждено / другой пароль) — пробуем локальный аккаунт
+        const localAcc = authFind(login);
+        if (localAcc && localAcc.passHash && localAcc.passHash === (await hashPass(pass))) {
+          authSetSession(localAcc.id);
+          authAfterSignup(localAcc, true);
+          return;
+        }
+        throw e;
+      }
+      if (!j || !j.access_token) throw new Error("не пустило");
       let acc = authAccounts().find(a => a.email && a.email.toLowerCase() === login.toLowerCase());
-      if (!acc) { acc = authCreate({ method: "pass", email: login, name: login.split("@")[0] }); }
+      if (!acc) { acc = authCreate({ method: "pass", email: login, name: login.split("@")[0], passwordHash: await hashPass(pass) }); }
       if (!acc) return;
       acc.supabaseUser = j.user?.id || acc.supabaseUser || "";
       authSaveAccounts(authAccounts());
@@ -10028,7 +10272,7 @@ async function passSubmit() {
       const msg = String(e.message || "");
       if (/email_not_confirmed|not confirmed/i.test(msg)) {
         err.className = "auth-err";
-        err.innerHTML = "Почта ещё не подтверждена. Проверь письмо от Supabase (и папку «Спам»). <button class='auth-link' id='authResend'>Прислать письмо ещё раз</button>";
+        err.innerHTML = "Почта на сервере ещё не подтверждена, а письмо может не дойти. Нажми «Зарегистрироваться» с этим же паролем — аккаунт создастся сразу и без письма. <button class='auth-link' id='authResend'>Прислать письмо ещё раз</button>";
         setTimeout(() => {
           const b = document.getElementById("authResend");
           if (b) b.onclick = async () => {
@@ -10070,23 +10314,32 @@ async function passSubmit() {
 
 /* --- google / github --- */
 let authOauthProvider = "google";
+let authOauthRealAvailable = false;
 async function oauthStart(provider) {
   authOauthProvider = provider;
-  if (supabaseConfigured()) {
-    const ext = await providersEnabled();
-    if (ext[provider]) {
-      const redirect = encodeURIComponent(location.origin + location.pathname);
-      location.href = SB() + "/auth/v1/authorize?provider=" + provider + "&redirect_to=" + redirect;
-      return;
-    }
-    const name = provider === "google" ? "Google" : "GitHub";
-    toast(`Вход через ${name} ещё не включён в Supabase. Пока создам локальный аккаунт — включишь провайдера, и всё станет настоящим.`, "err");
+  const title = provider === "google" ? "Google" : "GitHub";
+  // если такой аккаунт уже есть в этом браузере — сразу входим в него
+  const known = authAccounts().find(a => a.method === provider);
+  if (known && deviceAllowed(known)) {
+    authSetSession(known.id);
+    authAfterSignup(known, true);
+    return;
   }
-  $("#authOauthTitle").textContent = provider === "google" ? "Вход через Google" : "Вход через GitHub";
+  authOauthRealAvailable = false;
+  if (supabaseConfigured()) {
+    try {
+      const ext = await providersEnabled();
+      authOauthRealAvailable = !!ext[provider];
+    } catch (e) {}
+    if (!authOauthRealAvailable) {
+      toast(`Настоящий вход через ${title} ещё не включён на сервере. Создам аккаунт прямо сейчас — он рабочий.`, "err");
+    }
+  }
+  $("#authOauthTitle").textContent = "Вход через " + title;
   const note = $("#authOauthNote");
-  note.innerHTML = supabaseConfigured()
-    ? "Откроется окно " + (provider === "google" ? "Google" : "GitHub") + " — подтверди вход и вернёшься сюда."
-    : "Локальный режим: настоящее окно " + (provider === "google" ? "Google" : "GitHub") + " включится, когда впишешь ключи Supabase в настройках. Сейчас создам аккаунт сразу — в этом браузере.";
+  note.innerHTML = authOauthRealAvailable
+    ? "Напиши имя — аккаунт создастся сразу, а потом откроется окно " + title + " для подтверждения. Даже если окно не откроется, аккаунт уже будет твой."
+    : "Напиши имя и нажми кнопку — аккаунт создастся в этом браузере сразу, без ожидания писем и паролей.";
   authShow("authOauth");
 }
 async function oauthGo() {
@@ -10100,13 +10353,21 @@ async function oauthGo() {
   const err = $("#authOauthErr");
   err.textContent = "";
   if (name.length < 2) { err.textContent = "Напиши имя или ник."; return; }
-  if (supabaseConfigured()) {
-    const redirect = encodeURIComponent(location.origin + location.pathname);
-    location.href = SB() + "/auth/v1/authorize?provider=" + authOauthProvider + "&redirect_to=" + redirect;
-    return;
-  }
+
+  /* Главное правило: нажал «продолжить» — аккаунт есть всегда.
+     Сначала создаём его локально, и только потом (если включено) идём в Google/GitHub. */
   const acc = authCreate({ method: authOauthProvider, name });
+  if (!acc) return;
+  await rememberSignup(name);
+  localStorage.setItem("iskra.oauth.pending", acc.id);
   authAfterSignup(acc);
+
+  if (authOauthRealAvailable) {
+    const redirect = encodeURIComponent(location.origin + location.pathname);
+    setTimeout(() => {
+      location.href = SB() + "/auth/v1/authorize?provider=" + authOauthProvider + "&redirect_to=" + redirect;
+    }, 900);
+  }
 }
 
 function authAfterSignup(acc, isLogin) {
@@ -10387,13 +10648,68 @@ async function tonRateRub() {
   return 97.5;   // запасной курс, если курс не пришёл
 }
 
+/* ===== Сколько тариф стоит в звёздах Telegram, USDT и TON =====
+   Рубли — основная цена. Остальное считается по курсам и округляется вверх:
+   звёзды целыми, USDT и TON — до сотых. Курсы можно поправить в консоли: rate star 1.4 */
+const RATES_KEY = "iskra.rates.v1";
+let RUB_PER_USD = 95;        // запасной курс, если интернет молчит
+let RUB_PER_TON = 97.5;
+let RUB_PER_STAR = 1.35;     // сколько рублей стоит одна звезда
+
+function ratesCache() {
+  try { return JSON.parse(localStorage.getItem(RATES_KEY) || "null") || {}; } catch (e) { return {}; }
+}
+function ratesLoad() {
+  const c = ratesCache();
+  if (c.usd > 0) RUB_PER_USD = c.usd;
+  if (c.ton > 0) RUB_PER_TON = c.ton;
+  if (c.star > 0) RUB_PER_STAR = c.star;
+}
+function ratesSave() {
+  try {
+    localStorage.setItem(RATES_KEY, JSON.stringify({ usd: RUB_PER_USD, ton: RUB_PER_TON, star: RUB_PER_STAR, ts: Date.now() }));
+  } catch (e) {}
+}
+function moneyFor(rub) {
+  const r = Number(rub) || 0;
+  return {
+    stars: Math.max(1, Math.ceil(r / (RUB_PER_STAR || 1.35))),
+    usdt: r / (RUB_PER_USD || 95),
+    ton: r / (RUB_PER_TON || 97.5)
+  };
+}
+function moneyShort(rub) {
+  const m = moneyFor(rub);
+  return m.stars + " ⭐ · " + m.usdt.toFixed(2) + " USDT · " + m.ton.toFixed(2) + " TON";
+}
+function moneyFull(rub) {
+  const m = moneyFor(rub);
+  return "≈ " + m.stars + " ⭐ Telegram Stars · " + m.usdt.toFixed(2) + " USDT · " + m.ton.toFixed(2) + " TON";
+}
+
+/* Живые курсы: USDT ≈ доллар, TON — своя цена. Не получилось — остаются запасные. */
+async function refreshRates() {
+  ratesLoad();
+  try {
+    const [usdRes, tonRub] = await Promise.all([
+      fetch("https://open.er-api.com/v6/latest/USD", { signal: AbortSignal.timeout(6000) })
+        .then(r => r.json()).then(j => (j && j.rates && j.rates.RUB) || 0).catch(() => 0),
+      tonRateRub()
+    ]);
+    if (usdRes > 0) RUB_PER_USD = Math.round(usdRes * 100) / 100;
+    if (tonRub > 0) RUB_PER_TON = tonRub;
+    ratesSave();
+  } catch (e) {}
+  return { usd: RUB_PER_USD, ton: RUB_PER_TON, star: RUB_PER_STAR };
+}
+ratesLoad();
+
 async function refreshTonPrice() {
-  const rub = await tonRateRub();
+  await refreshRates();
   const monthPlan = accessPlan("month") || { price: PAY_PRICE_RUB };
-  const ton = (monthPlan.price / rub).toFixed(1);
-  PAY_PRICE_TON = ton;
-  const el = document.getElementById("payTonAmount");
-  if (el) el.textContent = ton + " TON";
+  PAY_PRICE_TON = (monthPlan.price / (RUB_PER_TON || 97.5)).toFixed(2);
+  const el = document.getElementById("payAltAmount");
+  if (el) el.textContent = moneyFull(monthPlan.price);
   const el2 = document.getElementById("payRubAmount");
   if (el2) el2.textContent = monthPlan.price + " ₽";
 }
@@ -10531,20 +10847,50 @@ function makeClientCode() {
   }
   return accessRandomStr("0123456789", 6) + "-" + accessRandomStr(CLIENT_ALPHABET, 6) + "-" + CLIENT_WORDS[0];
 }
+/* Код клиента теперь у каждого аккаунта свой: один аккаунт — один код — один ключ.
+   Без аккаунта (гость) остаётся один код на браузер. */
+function currentAccountSafe() {
+  try { return typeof currentAccount === "function" ? currentAccount() : null; } catch (e) { return null; }
+}
+function clientStoreKey() {
+  const acc = currentAccountSafe();
+  return acc ? ACCESS.clientStore + ".acc." + acc.id : ACCESS.clientStore;
+}
+function otherAccountHasCode(exceptId) {
+  let list = [];
+  try { list = typeof authAccounts === "function" ? authAccounts() : []; } catch (e) { list = []; }
+  for (const a of list) {
+    if (a.id === exceptId) continue;
+    try { if (clientCodeFromStore(ACCESS.clientStore + ".acc." + a.id)) return true; } catch (e) {}
+  }
+  return false;
+}
+function clientCodeFromStore(key) {
+  try { return canonClient(localStorage.getItem(key) || ""); } catch (e) { return ""; }
+}
 function clientCode() {
-  let saved = "";
-  try { saved = localStorage.getItem(ACCESS.clientStore) || ""; } catch (e) {}
-  const canon = canonClient(saved);
+  const acc = currentAccountSafe();
+  const key = clientStoreKey();
+  let canon = clientCodeFromStore(key);
   if (canon) return canon;
+  /* Миграция со старой версии: раньше код был один на браузер.
+     Отдаём его первому аккаунту, второму достанется новый. */
+  if (acc && !otherAccountHasCode(acc.id)) {
+    const legacy = clientCodeFromStore(ACCESS.clientStore);
+    if (legacy) {
+      try { localStorage.setItem(key, legacy); } catch (e) {}
+      return legacy;
+    }
+  }
   const made = makeClientCode();
-  try { localStorage.setItem(ACCESS.clientStore, made); } catch (e) {}
+  try { localStorage.setItem(key, made); } catch (e) {}
   rememberClient(made);
   return made;
 }
 function setClientCode(raw) {
   const c = canonClient(raw);
   if (!c || !CLIENT_RE.test(c)) return { ok: false, msg: "Код должен быть вида 123456-AB12CD-word" };
-  try { localStorage.setItem(ACCESS.clientStore, c); } catch (e) {}
+  try { localStorage.setItem(clientStoreKey(), c); } catch (e) {}
   rememberClient(c);
   const st = accessState();
   if (st && st.client && st.client !== c) saveAccessState(null);
@@ -10846,16 +11192,8 @@ function renderProPanel() {
       <div class="pay-row">
         <button id="copyClient" type="button">Скопировать</button>
         <button id="tgClient" type="button">Написать в Telegram</button>
-        <button id="changeClient" type="button">У меня есть другой код</button>
       </div>
-      <div id="clientChangeBox" style="display:none;margin-top:10px">
-        <div class="auth-field"><input id="clientChangeInput" placeholder="123456-AB12CD-word" autocomplete="off" spellcheck="false"></div>
-        <div class="pay-row">
-          <button id="clientChangeSave" type="button">Сохранить код</button>
-          <button id="clientChangeCancel" type="button">Отмена</button>
-        </div>
-      </div>
-      <div class="acct-note">Код создаётся один раз и остаётся с тобой навсегда. Ключ привязывается к нему, поэтому меняй код только если переносишь доступ на другое устройство. Никому, кроме владельца Искры, код не показывай.</div>
+      <div class="acct-note">Код создаётся один раз и остаётся с тобой навсегда — поменять его нельзя. Один аккаунт = один код = один ключ: второй ключ получают только со второго аккаунта, а больше двух аккаунтов с одного IP не бывает. Никому, кроме владельца Искры, код не показывай.</div>
     </div>
 
     <div class="acct-sec">
@@ -10865,12 +11203,16 @@ function renderProPanel() {
           <div class="plan-card ${nowPlan && nowPlan.id === pl.id ? "on" : ""}" data-plan="${pl.id}">
             <div class="plan-name">${esc(pl.name)}</div>
             <div class="plan-price">${Number(pl.price).toLocaleString("ru-RU")} ₽</div>
+            <div class="plan-alt">${esc(moneyShort(pl.price))}</div>
             <div class="plan-note">${esc(pl.forever ? "один платёж" : planLengthText(pl))}${pl.note ? " · " + esc(pl.note) : ""}</div>
             <button class="plan-btn" type="button" data-buy="${pl.id}">Выбрать</button>
           </div>`).join("")}
       </div>
       <div class="acct-note">Один и тот же Pro на всех тарифах: картинки в высоком качестве, видео, Blender 3D, любые языки.
         Чем дольше тариф — тем дешевле сутки. «Навсегда» — один платёж без продлений.</div>
+      <div class="acct-note" style="margin-top:6px">Оплатить можно <b>звёздами Telegram</b>, <b>USDT</b> (сеть TRC-20 или TON) и <b>TON</b> — суммы в звёздах и монетах указаны у каждого тарифа.
+        Курс пересчитывается кнопкой «Обновить курс» ниже; звёзды округляются вверх, чтобы точно хватило.</div>
+      <div class="acct-note" style="margin-top:6px">Один аккаунт — один код клиента — один ключ. Два аккаунта (и два ключа) разрешены только с одного IP, третий не создастся.</div>
     </div>
 
     <div class="acct-sec">
@@ -10961,17 +11303,20 @@ function renderProPanel() {
     <details class="acct-sec">
       <summary style="cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Pro на 30 дней — оплата в TON</summary>
       <div class="pay-box" style="margin-top:10px">
-        <div style="font-size:13px"><b>Искра Pro на 30 дней — <span id="payRubAmount">${accessPlan("month").price} ₽</span> ≈ <span id="payTonAmount">${PAY_PRICE_TON} TON</span></b></div>
-        <div class="acct-dim" style="margin-top:4px">Кошелёк TON (USDT TRC-20 не подойдёт, это другая сеть):</div>
+        <div style="font-size:13px"><b>Искра Pro на 30 дней — <span id="payRubAmount">${accessPlan("month").price} ₽</span></b></div>
+        <div id="payAltAmount" class="pay-alt">${esc(moneyFull(accessPlan("month").price))}</div>
+        <div class="acct-dim" style="margin-top:6px">Кошелёк TON (USDT TRC-20 не подойдёт, это другая сеть):</div>
         <div class="pay-addr" id="payAddr">${PAY_TON_ADDRESS}</div>
         <div class="pay-row">
           <button id="payCopyAddr" type="button">Скопировать адрес</button>
           <a href="https://tonviewer.com/${PAY_TON_ADDRESS}" target="_blank" rel="noopener">Открыть в tonviewer</a>
           <a href="${PAY_TG_URL}" target="_blank" rel="noopener">Написать в Telegram</a>
+          <button id="payRefreshRates" type="button">Обновить курс</button>
         </div>
         <div class="acct-note" style="margin-top:10px">
-          <b>Как получить Pro на 30 дней:</b> 1) переведи сумму выше в TON; 2) пришли в Telegram ${PAY_TG} хеш перевода и свой код клиента; 3) в ответ получишь ключ; 4) вставь его в поле «Ввести ключ» — Pro включится на 30 дней.
+          <b>Как оплатить:</b> 1) переведи сумму в TON на адрес выше <b>или</b> пришли USDT (сеть TRC-20 / TON) <b>или</b> оплати звёздами Telegram (напиши ${PAY_TG} /pay); 2) пришли в Telegram ${PAY_TG} хеш перевода и свой код клиента; 3) в ответ получишь ключ; 4) вставь его в поле «Ввести ключ» — Pro включится на 30 дней.
         </div>
+        <div class="acct-note" style="margin-top:6px">Звёзды и USDT считаются по курсу на сегодня: 1 ⭐ ≈ ${RUB_PER_STAR} ₽, 1 USDT ≈ ${RUB_PER_USD} ₽, 1 TON ≈ ${RUB_PER_TON.toFixed(1)} ₽. Суммы в звёздах округляются вверх — так не бывает недоплаты.</div>
       </div>
     </details>`;
 
@@ -10987,7 +11332,7 @@ function renderProPanel() {
   box.querySelectorAll("[data-buy]").forEach(btn => btn.onclick = () => {
     const pl = accessPlan(btn.dataset.buy);
     if (!pl) return;
-    const text = encodeURIComponent("Привет! Хочу Искру Pro.\nТариф: " + pl.name + " — " + pl.price + " ₽\nМой код клиента: " + code);
+    const text = encodeURIComponent("Привет! Хочу Искру Pro.\nТариф: " + pl.name + " — " + pl.price + " ₽ (" + moneyFull(pl.price) + ")\nМой код клиента: " + code);
     window.open(PAY_TG_URL + "?text=" + text, "_blank", "noopener");
     toast("Открыла Telegram: тариф «" + pl.name + "» — " + pl.price + " ₽", "ok");
   });
@@ -11037,22 +11382,13 @@ function renderProPanel() {
   const copyReq = box.querySelector("#copyRequest");
   if (copyReq) copyReq.onclick = () => copy(decodeURIComponent(tgText), "Заявка скопирована — вставь её в Telegram");
 
-  const changeBtn = box.querySelector("#changeClient");
-  if (changeBtn) changeBtn.onclick = () => {
-    const bx = box.querySelector("#clientChangeBox");
-    if (!bx) return;
-    bx.style.display = bx.style.display === "none" ? "block" : "none";
-    const inp = box.querySelector("#clientChangeInput");
-    if (inp) { inp.value = ""; inp.focus(); }
-  };
-  const cancelBtn = box.querySelector("#clientChangeCancel");
-  if (cancelBtn) cancelBtn.onclick = () => { const bx = box.querySelector("#clientChangeBox"); if (bx) bx.style.display = "none"; };
-  const saveBtn = box.querySelector("#clientChangeSave");
-  if (saveBtn) saveBtn.onclick = () => {
-    const v = box.querySelector("#clientChangeInput").value;
-    const r = setClientCode(v);
-    toast(r.msg, r.ok ? "ok" : "err");
-    if (r.ok) { renderProPanel(); syncAccess(); }
+  const rateBtn = box.querySelector("#payRefreshRates");
+  if (rateBtn) rateBtn.onclick = async () => {
+    rateBtn.disabled = true;
+    rateBtn.textContent = "Обновляю…";
+    await refreshRates();
+    renderProPanel();
+    toast("Курс обновлён: 1 ⭐ = " + RUB_PER_STAR + " ₽, 1 USDT = " + RUB_PER_USD + " ₽, 1 TON = " + RUB_PER_TON.toFixed(1) + " ₽", "ok");
   };
 
   const errBox = () => box.querySelector("#accessErr");
@@ -11770,12 +12106,15 @@ const CONSOLE_HELP = [
   ["pay", "реквизиты для оплаты (TON, Telegram)"],
   ["myclient", "мой код клиента (18 знаков)"],
   ["secret <пароль>", "пароль владельца для сервера ключей"],
-  ["plans", "тарифы и цены"],
+  ["plans", "тарифы и цены (₽, звёзды, USDT, TON)"],
+  ["rates", "курсы звёзд, USDT и TON, сколько стоит каждый тариф"],
+  ["rate star 1.4", "поправить курс (star / usdt / ton)"],
   ["price month 590", "поменять цену тарифа (day/month/year/forever)"],
   ["prices 99 450 3490 7990", "поменять все цены сразу"],
   ["key24 <код> [название]", "выдать ключ на 24 часа"],
   ["key <код> month|year|forever [название]", "ключ по тарифу"],
   ["key <код> 720 [название]", "ключ на любое число часов"],
+  ["key <код> month --force", "выдать второй ключ, когда у кода уже есть активный"],
   ["key24 --local <код>", "то же, но офлайн-ключ (без сервера)"],
   ["keys", "список выданных ключей с сервера"],
   ["revoke <ключ>", "отозвать ключ"],
@@ -11880,9 +12219,9 @@ async function consoleRun(raw) {
     return "Пароль владельца сохранён в этом браузере. Он нужен, чтобы выдавать ключи через сервер.";
   }
   if (c === "plans") {
-    return "ТАРИФЫ ПРО\n" + accessPlans().map(pl =>
-      "  " + pl.id.padEnd(9, " ") + pl.name.padEnd(11, " ") + String(pl.price).padStart(6, " ") + " ₽ · " +
-      (pl.forever ? "без срока" : planLengthText(pl))).join("\n") +
+    return "ТАРИФЫ ПРО (курс: 1 ⭐ = " + RUB_PER_STAR + " ₽ · 1 USDT = " + RUB_PER_USD + " ₽ · 1 TON = " + RUB_PER_TON.toFixed(1) + " ₽)\n" + accessPlans().map(pl =>
+      "  " + pl.id.padEnd(9, " ") + pl.name.padEnd(11, " ") + String(pl.price).padStart(6, " ") + " ₽ = " +
+      moneyShort(pl.price) + " · " + (pl.forever ? "без срока" : planLengthText(pl))).join("\n") +
       "\n\nПоменять цену: price month 590 · все сразу: prices 99 450 3490 7990";
   }
   if (c === "price" || c === "prices") {
@@ -11906,6 +12245,8 @@ async function consoleRun(raw) {
   if (c === "key24" || c === "key") {
     let parts = arg.split(/\s+/).filter(Boolean);
     let local = false;
+    let force = false;
+    if (parts.includes("--force")) { force = true; parts = parts.filter(x => x !== "--force"); }
     if (parts[0] === "--local") { local = true; parts = parts.slice(1); }
     const client = canonClient(parts[0] || "");
     if (!client) return "Формат: key <код клиента> day|month|year|forever [название]\nНапример: key 123456-AB12CD-word month Маша";
@@ -11937,8 +12278,12 @@ async function consoleRun(raw) {
     const secret = adminData().accessSecret;
     if (!secret) return "Сначала сохрани пароль владельца: secret <пароль>\nПотом: key24 " + client;
     try {
-      const j = await sbRpc("iskra_issue_key", { p_secret: secret, p_client: client, p_label: label || null, p_plan: plan.id, p_hours: hours });
-      if (!j || !j.ok) return "Сервер отказал: " + ((j && j.error) || "ключ не выдался");
+      const j = await sbRpc("iskra_issue_key", { p_secret: secret, p_client: client, p_label: label || null, p_plan: plan.id, p_hours: hours, p_force: force });
+      if (!j || !j.ok) {
+        const why = (j && j.error) || "ключ не выдался";
+        return "Сервер отказал: " + why +
+          (/активный ключ/i.test(why) ? "\n\nНужен второй ключ на тот же код (продление, подарок)? Напиши с флагом --force:\n  key " + client + " " + plan.id + " --force" : "");
+      }
       return "КЛЮЧ (" + plan.name + (plan.price ? " · " + plan.price + " ₽" : "") + ") для " + client + ":\n\n  " + j.key +
         "\n\nНазвание: " + (label || "—") +
         "\n" + (plan.forever ? "Срок: навсегда" : "Срок: " + planLengthText(plan)) +
@@ -12078,6 +12423,25 @@ async function consoleRun(raw) {
     adminSave(d);
     adminSessionSet(d);
     return "Пароль владельца заменён. Старые запомненные входы на других устройствах больше не действуют.";
+  }
+  if (c === "rates") {
+    await refreshRates();
+    return "КУРСЫ\n  1 ⭐ (Telegram Stars) = " + RUB_PER_STAR + " ₽\n  1 USDT = " + RUB_PER_USD + " ₽\n" +
+      "  1 TON = " + RUB_PER_TON.toFixed(2) + " ₽\n\nТарифы:\n" +
+      accessPlans().map(pl => "  " + pl.name.padEnd(11, " ") + String(pl.price).padStart(6, " ") + " ₽ = " + moneyShort(pl.price)).join("\n") +
+      "\n\nПоменять: rate star 1.4 · rate usdt 98 · rate ton 320";
+  }
+  if (c === "rate") {
+    const bits = arg.split(/\s+/).filter(Boolean);
+    if (bits.length < 2) return "Формат: rate star 1.4 | rate usdt 98 | rate ton 320";
+    const what = bits[0].toLowerCase(), val = Number(String(bits[1]).replace(",", "."));
+    if (!(val > 0)) return "Нужно число больше нуля.";
+    if (what === "star" || what === "stars") RUB_PER_STAR = val;
+    else if (what === "usdt" || what === "usd") RUB_PER_USD = val;
+    else if (what === "ton") RUB_PER_TON = val;
+    else return "Не знаю такую валюту: " + what + ". Есть star, usdt, ton.";
+    ratesSave();
+    return "Курс обновлён: 1 ⭐ = " + RUB_PER_STAR + " ₽ · 1 USDT = " + RUB_PER_USD + " ₽ · 1 TON = " + RUB_PER_TON.toFixed(2) + " ₽";
   }
   if (c === "clear") { $("#consoleOut").innerHTML = ""; return ""; }
   if (c === "exit" || c === "logout") { closeConsole(); return "__CLOSE__"; }
@@ -12855,6 +13219,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const cb = document.getElementById("checkAll");
   if (cb) cb.addEventListener("click", () => { cb.disabled = true; cb.textContent = "Проверяю…"; runSelfCheck().finally(() => { cb.disabled = false; cb.textContent = "Проверить ИИ"; }); });
   wire();
+  window.__iskraBoot = true;
+  document.documentElement.classList.add("booted");
+  const bar = document.getElementById("crashBar");
+  if (bar) bar.hidden = true;   // запустилось — убираем предупреждение, если оно успело появиться
+  // возврат после входа через Google/GitHub приходит в адресе — обрабатываем сразу
+  if (supabaseConfigured()) {
+    handleAuthRedirect();
+    window.addEventListener("hashchange", () => { handleAuthRedirect(); });
+  }
 });
 
 </script>
