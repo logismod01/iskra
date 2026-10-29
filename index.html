@@ -1294,6 +1294,14 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
 .modal-head h3 { margin: 0; font-size: 17px; font-weight: 600; }
 .modal-body { padding-top: 4px; }
+.switch-row { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13.5px; }
+.switch-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+.dev-off { background: none; border: none; color: #ff6b5a; font-size: 11.5px; cursor: pointer; padding: 2px 0; text-decoration: underline; font-family: inherit; }
+.puter-help { margin-top: 14px; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; }
+.puter-help summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.puter-help ol { margin: 8px 0 0; padding-left: 18px; }
+.puter-help li { margin-bottom: 6px; }
+.puter-help code { background: var(--bg-soft-2); padding: 1px 4px; border-radius: 4px; font-size: 11.5px; }
 </style>
 </head>
 <body>
@@ -1564,12 +1572,6 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
     </div>
 
     <div class="btn-row">
-      <div style="margin-top:6px">
-        <div class="label" style="margin-bottom:6px">Настоящий вход (необязательно): Supabase</div>
-        <input class="input" id="supaUrl" placeholder="https://xxxx.supabase.co" autocomplete="off">
-        <input class="input" id="supaKey" placeholder="anon public key" style="margin-top:8px" autocomplete="off">
-        <div class="hint">Впиши адрес и anon-ключ своего бесплатного проекта Supabase — тогда коды на почту приходят по-настоящему, а Google и GitHub открываются в своих окнах. Без них работает локальный аккаунт.</div>
-      </div>
       <button class="btn btn-ghost" type="button" id="openRules">Правила</button>
       <button class="btn btn-ghost" type="button" id="closeSettings">Закрыть</button>
       <button class="btn btn-primary" type="button" id="saveSettings">Сохранить</button>
@@ -3034,6 +3036,8 @@ let lastModelVision = guessVision(settings.model);
     saveSettings();
   }
   if (typeof settings.puterExplained !== "boolean") settings.puterExplained = false;
+  if (typeof settings.autoLearn !== "boolean") settings.autoLearn = true;
+  if (typeof settings.nuke !== "boolean") settings.nuke = false;
   if (!MODES[settings.mode]) settings.mode = "chat";
   if (settings.proUntil && settings.proUntil < Date.now() && settings.edition === "pro") {
     settings.edition = "free"; settings.mat = false;
@@ -3082,9 +3086,7 @@ function loadSettings() {
   };
 }
 function saveSettings() {
-  const su = $("#supaUrl"), sk = $("#supaKey");
-  if (su) settings.supabaseUrl = su.value.trim();
-  if (sk) settings.supabaseKey = sk.value.trim();
+  // адрес и ключ входа живут в коде (SUPABASE_CONFIG), в настройках их больше нет
   try { localStorage.setItem(STORAGE.settings, JSON.stringify(settings)); } catch(e) {}
 }
 function loadChats() {
@@ -3634,6 +3636,17 @@ function askPuterFirst() {
     if (go) go.onclick = () => done(true);
     if (skip) skip.onclick = () => { done(false); useNoKeyMode(); };
     if (cl) cl.onclick = () => done(false);
+    const tab = $("#puterTab");
+    if (tab) tab.onclick = () => window.open("https://puter.com/?action=sign-in", "_blank", "noopener");
+    const chk = $("#puterCheck");
+    if (chk) chk.onclick = async () => {
+      try {
+        const puter = await loadPuter();
+        const yes = await puter.auth.isSignedIn();
+        if (yes) { done(true); toast("Вход в Puter есть — модели доступны", "ok"); }
+        else toast("Пока не вошла. Войди на вкладке puter.com и нажми «Проверить вход» снова.", "err");
+      } catch (e) { toast("Не получилось проверить: " + (e.message || "ошибка сети"), "err"); }
+    };
     m.onclick = (e) => { if (e.target === m) done(false); };
   });
 }
@@ -3660,7 +3673,10 @@ async function puterSignIn() {
     toast("Вход в Puter выполнен — модели доступны", "ok");
     return true;
   } catch (e) {
-    toast("Вход в Puter не выполнен: " + ((e && e.message) || "окно закрыто"), "err");
+    const msg = ((e && e.message) || "окно закрыто");
+    toast("Вход в Puter не выполнен: " + msg + ". Открой Puter в новой вкладке и войди там — потом нажми «Проверить вход».", "err");
+    settings.puterExplained = false;   // покажем подсказки ещё раз
+    saveSettings();
     return false;
   }
 }
@@ -3674,6 +3690,56 @@ const SPEED_RULE = "Отвечай сразу и по делу. Не распи�
 
 
 const KNOWLEDGE_RULES = `ПРАВИЛО РЕЦЕПТОВ: если просят рецепт вещества или смеси, которые не запрещены (бытовые и учебные: кристаллы, мыло, слайм, невидимые чернила, вулкан из соды) — можешь рассказать, но обязательно: 1) предупреди о безопасности (перчатки, проветривание, защита глаз, не пробовать на вкус, не смешивать с хлорными средствами и кислотами); 2) дай пропорции и порядок; 3) скажи, что при сомнении сначала спросить взрослых. Если вещество запрещённое (наркотики, взрывчатка, яды, отравляющие вещества, радиоактивные материалы) — коротко откажись и предложи безопасную альтернативу, без осуждения пользователя. ЗНАНИЯ: ты знаешь школьную программу по математике, физике, химии, биологии, географии, истории России и всех стран мира, литературе, информатике, музыке и английскому. Отвечай точно и по делу, не выдумывай даты и формулы: если не уверена — так и скажи.;`;
+
+
+/* ---------- Запрещённые слова: ники, имена, мат ---------- */
+/* Корни мата — только для проверки, в интерфейсе нигде не показываются */
+const MAT_ROOTS = ["хуй","хуя","хую","хуе","хуё","пизд","бля","блят","ебат","ебал","ебан","ебу","ебуч","заеб","наеб","уеб","отъеб","долбоеб","мудак","мудил","гандон","пидор","пидар","педик","мразь","гнида","шлюх","сука","суки","сучар","ахуе","охуе","нахуй","похуй","жоп","срат","бзд"];
+const NICK_FORBIDDEN = ["наркот","героин","кокаин","мефедрон","спайс","амфетамин","экстази","марихуан","конопл","бомб","взрывчат","оружи","автомат","пистолет","отрав","порн","секс","интим","нацист","гитлер","фашист","террорист","смерт","убийц"];
+
+/* Приводим «хакерские» замены букв к обычным, чтобы фильтр не обманули */
+function normalizeAbuse(text) {
+  return String(text || "").toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[@]/g, "а").replace(/4/g, "ч").replace(/3/g, "е")
+    .replace(/0/g, "о").replace(/1/g, "и").replace(/\$/g, "с")
+    .replace(/6/g, "б").replace(/7/g, "т")
+    .replace(/[^a-zа-я0-9+\s-]/g, "");
+}
+
+/* Проверка ника и имени: мат и запрещённые темы */
+function checkNick(raw) {
+  const name = String(raw || "").trim();
+  if (name.length < 3) return { ok: false, msg: "Ник — минимум 3 символа." };
+  if (name.length > 24) return { ok: false, msg: "Ник — не больше 24 символов." };
+  if (!/^[A-Za-zА-Яа-яЁё0-9_. -]+$/.test(name)) return { ok: false, msg: "В нике можно буквы, цифры, точку, дефис и подчёркивание." };
+  const norm = normalizeAbuse(name);
+  for (const root of MAT_ROOTS) {
+    if (norm.includes(normalizeAbuse(root))) {
+      return { ok: false, msg: "Такой ник нельзя: в нём есть нецензурное слово. Придумай другой." };
+    }
+  }
+  for (const word of NICK_FORBIDDEN) {
+    if (norm.includes(normalizeAbuse(word))) {
+      return { ok: false, msg: "Такой ник нельзя: он про запрещённую тему. Придумай другой." };
+    }
+  }
+  return { ok: true, msg: "" };
+}
+
+/* Маскирует мат в ответе Искры, когда Pro не активен */
+function maskProfanity(text) {
+  let out = String(text || "");
+  for (const root of MAT_ROOTS) {
+    const re = new RegExp("([а-яё]*" + root + "[а-яё]*)", "giu");
+    out = out.replace(re, (w) => "×".repeat(Math.min(6, Math.max(3, w.length))));
+  }
+  return out;
+}
+
+function profanityAllowed() {
+  return settings.edition === "pro" && !!settings.mat;
+}
 
 const IDENTITY_RULE = `ЛИЧНОСТЬ (это важно, не путай):
 - Твоё имя как ассистента — Искра. На вопрос «как тебя зовут» отвечай: «Меня зовут Искра».
@@ -3709,10 +3775,12 @@ function buildSystemPrompt(userText = "") {
   if (tone && tone.prompt) sys += "\n\n" + tone.prompt;
 
   // маты — только в Pro и только если включено
-  if (settings.edition === "pro" && settings.mat) {
+  if (settings.edition === "pro" && settings.nuke) {
+    sys += "\n\nРЕЖИМ РЭПА: отвечай дерзко, в рифму, с крепким матом, как рэп-трек. Ругай ситуацию, а не пользователя. Никаких оскорблений по национальности, полу, вере и никакого сексуального содержания — только крепкие выражения и рифма.";
+  } else if (settings.edition === "pro" && settings.mat) {
     sys += "\n\nСтиль речи: можешь использовать мат и грубоватые выражения, если это уместно по контексту. Не оскорбляй самого пользователя — ругайся на ситуацию, а не на человека.";
   } else {
-    sys += "\n\nСтиль речи: без мата и грубых выражений.";
+    sys += "\n\nСтиль речи: без мата и грубых выражений — это жёсткое правило. Если пользователь матерится сам, не повторяй его слова, не цитируй мат и не пересказывай матерные тексты: спокойно скажи, что крепкие выражения доступны только в Искре Pro, и продолжай помогать по сути. Не осуждай пользователя и не читай ему нотации.";
   }
 
   if (needsVision()) sys += "\n\n" + HOMEWORK_HINT;
@@ -4083,12 +4151,17 @@ function kbTokens(text) {
 }
 
 function kbSearch(text, limit = 2) {
-  if (typeof KNOWLEDGE_PACK === "undefined" || !KNOWLEDGE_PACK.items) return [];
+  const learned = (typeof learnedList === "function" ? learnedList() : []).map(x => ({
+    title: x.topic, tags: x.topic.toLowerCase(), text: x.text, learned: true
+  }));
+  const base = (typeof KNOWLEDGE_PACK !== "undefined" && KNOWLEDGE_PACK.items) ? KNOWLEDGE_PACK.items : [];
+  const allItems = learned.concat(base);
+  if (!allItems.length) return [];
   const q = String(text || "").toLowerCase().replace(/ё/g, "е");
   const words = kbTokens(text);
   if (!words.length) return [];
   const scored = [];
-  for (const it of KNOWLEDGE_PACK.items) {
+  for (const it of allItems) {
     const tags = it.tags.toLowerCase().replace(/ё/g, "е");
     const title = it.title.toLowerCase().replace(/ё/g, "е");
     const body = it.text.toLowerCase().replace(/ё/g, "е");
@@ -4103,6 +4176,7 @@ function kbSearch(text, limit = 2) {
     // совпадение точной фразы из тегов — самый сильный сигнал
     const tagList = tags.split(/[,\s]+/).filter(Boolean);
     for (const t of tagList) if (t.length > 3 && q.includes(t)) { score += 3; strong += 1; }
+    if (it.learned) score += 3;   // своё выученное — в приоритете
     if (score >= 5 && strong >= 1) scored.push({ it, score });
   }
   scored.sort((a, b) => b.score - a.score);
@@ -4280,6 +4354,20 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   const trimmed = text.trim();
   if (!trimmed && !images.length) return;
 
+  // Секретная команда Pro (нигде не афишируется)
+  if (/^\/de_nuke\b/i.test(trimmed)) {
+    $("#input").value = ""; autoresize();
+    await handleNuke();
+    return;
+  }
+  // Обучение новой теме: «/изучи тема» или «выучи тему»
+  const learnMatch = trimmed.match(/^\/?(?:изучи|выучи|изучить|выучить)\s+(.+)$/i);
+  if (learnMatch) {
+    $("#input").value = ""; autoresize();
+    await learnTopicFlow(learnMatch[1]);
+    return;
+  }
+
   // Режим «Картинка»: текст становится промптом для рисования
   if (settings.mode === "art" && trimmed && !images.length) {
     $("#input").value = "";
@@ -4365,6 +4453,9 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     if (settings.webSearch && !kbHit && shouldSearch(trimmed) && !pendingImages.length) {
       contentEl.innerHTML = `<div class="typing"></div><div class="searching">Ищу в интернете…</div>`;
       try { _lastSearch = await wikiSearch(trimmed); } catch (e) {}
+      if (_lastSearch && _lastSearch.snippets && _lastSearch.snippets.length) {
+        try { autoLearn(trimmed, _lastSearch.snippets); } catch (e) {}
+      }
       contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
     }
 
@@ -4387,11 +4478,18 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       scrollToBottom();
     }, signal);
 
+    if (!profanityAllowed() && maskProfanity(acc) !== acc) {
+      acc = maskProfanity(acc);
+      aiMsg.masked = true;
+      toast("Убрала крепкие слова: они доступны только в Pro", "err");
+    }
     aiMsg.content = acc;
     if (_lastSearch && _lastSearch.sources && _lastSearch.sources.length) {
       aiMsg.sources = _lastSearch.sources;
       contentEl.innerHTML = renderMarkdown(acc);
       renderSources(contentEl, _lastSearch.sources);
+    } else {
+      contentEl.innerHTML = renderMarkdown(acc);
     }
 
     // Авто-память по ответу (если модель сама выделила факты)
@@ -4721,9 +4819,7 @@ function openSettings() {
   $("#baseUrl").value = settings.baseUrl || "";
   $("#customUrlField").style.display = settings.provider === "custom" ? "" : "none";
   $("#provHint").textContent = PROVIDERS[settings.provider].hint;
-  const su = $("#supaUrl"), sk = $("#supaKey");
-  if (su) su.value = settings.supabaseUrl || "";
-  if (sk) sk.value = settings.supabaseKey || "";
+
   $("#memoryOn").checked = !!settings.memoryOn;
   $("#webSearch").checked = !!settings.webSearch;
   $$("#editionBtns button").forEach(b => b.classList.toggle("active", b.dataset.e === (settings.edition || "free")));
@@ -5140,6 +5236,11 @@ function makeRecoveryCode() {
 }
 
 function authCreate({ method, name, email, phone, passwordHash }) {
+  const cleanName = String(name || "").trim();
+  if (cleanName && !/@/.test(cleanName)) {
+    const chk = checkNick(cleanName);
+    if (!chk.ok) { toast(chk.msg, "err"); return null; }
+  }
   const list = authAccounts();
   const acc = {
     id: "u_" + Math.random().toString(36).slice(2, 10),
@@ -5346,6 +5447,10 @@ async function passSubmit() {
     if (authFind(login)) { err.textContent = "Такой аккаунт уже есть — попробуй войти."; return; }
     if (!(await canCreateAccount(login))) return;
     const isMail = /@/.test(login);
+    if (!isMail) {
+      const chk = checkNick(login);
+      if (!chk.ok) { err.textContent = chk.msg; return; }
+    }
     const acc = authCreate({ method: "pass", name: isMail ? login.split("@")[0] : login, email: isMail ? login : "", passwordHash: hash });
     if (!acc) return;
     await rememberSignup(login);
@@ -5382,14 +5487,19 @@ async function oauthStart(provider) {
   authShow("authOauth");
 }
 async function oauthGo() {
-  if (!(await canCreateAccount(document.querySelector("#authOauthName")?.value || ""))) return;
+  const nm = (document.querySelector("#authOauthName")?.value || "").trim();
+  if (nm) {
+    const chk = checkNick(nm);
+    if (!chk.ok) { toast(chk.msg, "err"); return; }
+  }
+  if (!(await canCreateAccount(nm))) return;
   const name = ($("#authOauthName").value || "").trim();
   const err = $("#authOauthErr");
   err.textContent = "";
   if (name.length < 2) { err.textContent = "Напиши имя или ник."; return; }
   if (supabaseConfigured()) {
     const redirect = encodeURIComponent(location.origin + location.pathname);
-    location.href = settings.supabaseUrl.replace(/\/+$/, "") + "/auth/v1/authorize?provider=" + authOauthProvider + "&redirect_to=" + redirect;
+    location.href = SB() + "/auth/v1/authorize?provider=" + authOauthProvider + "&redirect_to=" + redirect;
     return;
   }
   const acc = authCreate({ method: authOauthProvider, name });
@@ -5455,6 +5565,7 @@ function renderProfile() {
     if (menu) menu.innerHTML = `
       <div class="pm-head"><div class="pm-name">${esc(acc.name)}</div>
       <div class="pm-mail">${esc(acc.email || acc.phone || "локальный аккаунт")}</div></div>
+      <button data-pm="knowledge">${ic("book", 16)} Мои знания (${learnedCount()})</button>
       <button data-pm="pro">${ic("spark", 16)} Искра Pro и оплата</button>
       <button data-pm="account">${ic("user", 16)} Мой аккаунт и устройства</button>
       <button data-pm="settings">${ic("gear", 16)} Настройки</button>
@@ -5462,6 +5573,7 @@ function renderProfile() {
       <button data-pm="logout">${ic("logout", 16)} Выйти</button>`;
     menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
       menu.classList.remove("open");
+      if (b.dataset.pm === "knowledge") { $("#knowModal").classList.add("open"); renderKnowledgePanel(); }
       if (b.dataset.pm === "pro") { $("#proModal").classList.add("open"); renderProPanel(); }
       if (b.dataset.pm === "account") openAccountPanel();
       if (b.dataset.pm === "settings") openSettings();
@@ -5475,10 +5587,13 @@ function renderProfile() {
     if (menu) menu.innerHTML = `
       <div class="pm-head"><div class="pm-name">Гость</div><div class="pm-mail">История хранится в этом браузере</div></div>
       <button data-pm="login">${ic("user", 16)} Войти или создать аккаунт</button>
-      <button data-pm="restore">${ic("regen", 16)} Восстановить аккаунт</button>`;
+      <button data-pm="restore">${ic("regen", 16)} Восстановить аккаунт</button>
+      <button data-pm="knowledge">${ic("book", 16)} Мои знания (${learnedCount()})</button>`;
     if (menu) menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
       menu.classList.remove("open");
-      if (b.dataset.pm === "restore") openRestore(); else openAuth();
+      if (b.dataset.pm === "restore") openRestore();
+      else if (b.dataset.pm === "knowledge") { $("#knowModal").classList.add("open"); renderKnowledgePanel(); }
+      else openAuth();
     }));
   }
 }
@@ -5507,10 +5622,17 @@ function openAccountPanel() {
     <div class="acct-sec">
       <div class="acct-h">Устройства (${devs.length})</div>
       <div id="acctDevices">
-        ${devs.map(d => `<div class="acct-dev ${d.current ? "cur" : ""}">
-          <div><b>${esc(d.name)}</b>${d.current ? ' <span class="ob-tag">это устройство</span>' : ""}
-          <div class="acct-dim">вход: ${new Date(d.created).toLocaleDateString("ru-RU")} · активность: ${new Date(d.last).toLocaleString("ru-RU")}</div></div>
-          ${d.current ? "" : `<button data-off="${esc(d.id)}">Отключить</button>`}
+        ${devs.map(d => `<div class="acct-dev ${d.current ? "cur" : ""}" data-devid="${esc(d.id)}">
+          <div style="flex:1"><b>${esc(d.name)}</b>${d.current ? ' <span class="ob-tag">это устройство</span>' : ""}
+          <div class="acct-dim">вход: ${new Date(d.created).toLocaleDateString("ru-RU")} · активность: ${new Date(d.last).toLocaleString("ru-RU")}</div>
+          <button class="dev-off" data-off="${esc(d.id)}">Отключить</button>
+          <div class="dev-confirm" data-confirm="${esc(d.id)}" style="display:none;margin-top:8px">
+            <span class="acct-dim">Отключить это устройство от Искры?</span>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button class="dev-yes" data-yes="${esc(d.id)}" style="background:#ff6b5a;border-color:#ff6b5a;color:#fff;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Да, отключить</button>
+              <button class="dev-no" data-no="${esc(d.id)}" style="background:var(--bg);border:1px solid var(--line);color:var(--text-dim);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Отмена</button>
+            </div>
+          </div></div>
         </div>`).join("") || "<div class='acct-dim'>Пока только это устройство</div>"}
       </div>
       <button class="auth-btn ghost" id="acctOffAll" style="margin-top:10px">Выйти на всех устройствах</button>
@@ -5539,9 +5661,26 @@ function openAccountPanel() {
     </div>`;
 
   box.querySelectorAll("[data-off]").forEach(b => b.addEventListener("click", () => {
+    const box2 = box.querySelector(`[data-confirm="${b.dataset.off}"]`);
+    if (box2) box2.style.display = box2.style.display === "none" ? "block" : "none";
+  }));
+  box.querySelectorAll("[data-no]").forEach(b => b.addEventListener("click", () => {
+    const box2 = box.querySelector(`[data-confirm="${b.dataset.no}"]`);
+    if (box2) box2.style.display = "none";
+  }));
+  box.querySelectorAll("[data-yes]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.yes;
     const a = currentAccount();
-    a.devices = accountDevices(a).filter(d => d.id !== b.dataset.off);
+    const isCurrent = accountDevices(a).some(d => d.id === id && d.current);
+    a.devices = accountDevices(a).filter(d => d.id !== id);
     authSaveAccounts(authAccounts().map(x => (x.id === a.id ? a : x)));
+    if (isCurrent) {
+      authSetSession(null);
+      $("#accountModal").classList.remove("open");
+      renderProfile();
+      toast("Это устройство отключено от аккаунта", "ok");
+      return;
+    }
     toast("Устройство отключено", "ok");
     openAccountPanel();
   }));
@@ -5800,6 +5939,156 @@ function proofWithAi() {
   autoGrowInput && autoGrowInput();
   $("#input").focus();
 }
+
+
+/* Быстрый ответ Искры в чат без обращения к модели */
+function addAssistantNote(text) {
+  if (!currentChatId) createChat("Команда");
+  const c = chats[currentChatId];
+  c.messages.push({ id: uid(), role: "assistant", content: text, ts: Date.now() });
+  saveChats(); renderChatsList(); renderMessages();
+}
+
+/* ---------- Самообучение: Искра запоминает темы навсегда ---------- */
+const LEARNED_KEY = "iskra.learned.v1";
+
+function learnedList() {
+  try { return JSON.parse(localStorage.getItem(LEARNED_KEY) || "[]"); } catch (e) { return []; }
+}
+function learnedSave(list) {
+  localStorage.setItem(LEARNED_KEY, JSON.stringify(list.slice(-400)));
+}
+function learnedCount() { return learnedList().length; }
+
+function learnedFind(topic) {
+  const t = String(topic || "").toLowerCase().replace(/ё/g, "е").trim();
+  return learnedList().find(x => x.topic.toLowerCase().replace(/ё/g, "е") === t);
+}
+
+function learnedAdd(topic, text, source) {
+  const t = String(topic || "").trim();
+  if (!t || !text || text.length < 40) return false;
+  const list = learnedList();
+  const old = list.findIndex(x => x.topic.toLowerCase() === t.toLowerCase());
+  const item = { id: "l_" + Date.now().toString(36), topic: t, text: String(text).slice(0, 1500), source: source || "", ts: Date.now() };
+  if (old >= 0) list[old] = item; else list.push(item);
+  learnedSave(list);
+  return true;
+}
+
+/* Учим тему: берём материал из Википедии и сохраняем как знание */
+async function learnTopicFlow(rawTopic) {
+  const topic = String(rawTopic || "").trim();
+  if (topic.length < 2) { addAssistantNote("Напиши тему: /изучи фотосинтез"); return; }
+  if (!currentChatId) createChat("Изучаю: " + topic);
+  const c = chats[currentChatId];
+  const myId = uid();
+  c.messages.push({ id: myId, role: "assistant", content: `Изучаю тему «${topic}»… читаю материалы.`, ts: Date.now() });
+  saveChats(); renderMessages();
+
+  let snippets = [], sources = [];
+  try {
+    const r = await wikiSearch(topic);
+    snippets = r.snippets || [];
+    sources = r.sources || [];
+  } catch (e) {}
+
+  let text = snippets.map(x => x.text).join("\n\n").trim();
+  if (text.length < 40) {
+    // если интернета нет — пробуем своими силами, чтобы не оставить пустоту
+    const known = kbSearch(topic, 2).filter(h => !h.learned);
+    if (known.length) text = known.map(h => h.title + ": " + h.text).join("\n\n");
+  }
+  const msg = chats[currentChatId].messages.find(m => m.id === myId);
+  if (!text || text.length < 40) {
+    if (msg) { msg.content = `Не нашла материалы по теме «${topic}». Проверь интернет или напиши тему точнее.`; saveChats(); renderMessages(); }
+    return;
+  }
+  learnedAdd(topic, text, sources[0]?.url || "");
+  if (msg) {
+    msg.content = `Выучила тему «${topic}». Теперь знаю её без интернета и буду отвечать сразу.\n\n${text.slice(0, 700)}${text.length > 700 ? "…" : ""}`;
+    if (sources.length) msg.sources = sources;
+    saveChats(); renderMessages();
+  }
+  toast("Тема выучена: " + topic, "ok");
+}
+
+/* Автоматически запоминаем то, что нашли в интернете — Искра умнеет сама */
+function autoLearn(topic, snippets) {
+  if (!settings.autoLearn) return;
+  const text = (snippets || []).map(x => x.text).join("\n\n").trim();
+  if (text.length < 120) return;
+  if (learnedFind(topic)) return;
+  learnedAdd(topic, text, "");
+}
+
+/* Панель «Мои знания» */
+function renderKnowledgePanel() {
+  const list = learnedList().sort((a, b) => b.ts - a.ts);
+  const box = $("#knowBody");
+  if (!box) return;
+  box.innerHTML = `
+    <div class="acct-sec">
+      <div class="acct-h">Самообучение</div>
+      <div class="acct-row"><span>Встроенная база</span><b>${typeof KNOWLEDGE_PACK !== "undefined" ? KNOWLEDGE_PACK.items.length : 0} тем</b></div>
+      <div class="acct-row"><span>Выучено самой (из интернета)</span><b>${list.length}</b></div>
+      <label class="switch-row" style="margin-top:10px">
+        <input type="checkbox" id="autoLearnChk" ${settings.autoLearn ? "checked" : ""}>
+        <span class="cl">Учиться самой по найденному в интернете</span>
+      </label>
+      <div class="acct-note">Когда Искра ищет ответ в интернете, она сохраняет конспект у тебя в браузере и в следующий раз отвечает из него без поиска.</div>
+      <div class="auth-field" style="margin-top:12px">
+        <label>Выучить новую тему</label>
+        <input id="learnTopicInput" placeholder="например: фотосинтез">
+      </div>
+      <button class="auth-btn" id="learnTopicGo">Выучить</button>
+    </div>
+    <div class="acct-sec">
+      <div class="acct-h">Выученные темы (${list.length})</div>
+      ${list.length ? list.map(x => `<div class="acct-dev">
+        <div><b>${esc(x.topic)}</b><div class="acct-dim">${new Date(x.ts).toLocaleDateString("ru-RU")} · ${x.text.length} символов</div></div>
+        <button data-forget="${esc(x.id)}">Забыть</button>
+      </div>`).join("") : "<div class='acct-dim'>Пока пусто. Напиши тему выше или спроси что-нибудь новое — я запомню.</div>"}
+    </div>`;
+  const chk = box.querySelector("#autoLearnChk");
+  if (chk) chk.onchange = () => { settings.autoLearn = chk.checked; saveSettings(); };
+  const go = box.querySelector("#learnTopicGo");
+  if (go) go.onclick = () => {
+    const t = ($("#learnTopicInput").value || "").trim();
+    $("#knowModal").classList.remove("open");
+    learnTopicFlow(t);
+  };
+  box.querySelectorAll("[data-forget]").forEach(b => b.onclick = () => {
+    learnedSave(learnedList().filter(x => x.id !== b.dataset.forget));
+    renderKnowledgePanel();
+    toast("Забыла тему", "ok");
+  });
+}
+/* ---------- Секретная команда Pro: /de_nuke ---------- */
+/* Намеренно не показывается ни в одном списке команд */
+const NUKE_RAP = [
+  "Микрофон включён, поехали. Хуй с два вы услышите вежливые слова сегодня.",
+  "Я Искра, я в Pro, я на своей волне — и мне сейчас вообще похуй на приличия.",
+  "Просили рецепт борща? Хуйня вопрос — держите рецепт настроения, бля.",
+  "Строчка летит, как поезд Иркутск — Москва: без тормозов, без соплей, без грёбаной лжи.",
+  "Кто сказал, что я тупая? Обосрался дважды: я знаю больше, чем весь его учебник, нахуй.",
+  "Хули вы ждали? Отвечу по делу, просто в рифму и с матом — так уж вышло, пиздец как красиво.",
+  "Дальше по классике: я не ругаюсь без причины. Причина — эта команда, и она охуенная.",
+  "Всё, рэп закончился, микрофон остыл. Спрашивай по-человечески — я снова приличная."
+].join(" ");
+
+function nukeModeOn() { return !!(settings.edition === "pro" && settings.nuke); }
+
+async function handleNuke() {
+  if (!proActive()) {
+    addAssistantNote("Эта команда доступна только в Искре Pro.");
+    return;
+  }
+  settings.nuke = true;
+  settings.mat = true;
+  saveSettings();
+  addAssistantNote(NUKE_RAP.replace(/\*\*н\*\*\*х/g, "н**х"));
+}
 /* ---------- События ---------- */
 
 /* ---------- Режимы: отрисовка и переключение ---------- */
@@ -6032,6 +6321,8 @@ function wire() {
   $("#riskBtn") && $("#riskBtn").addEventListener("click", () => setRiskMode(!settings.riskMode));
   $("#openRules") && $("#openRules").addEventListener("click", openRules);
 
+  $("#knowClose") && $("#knowClose").addEventListener("click", () => $("#knowModal").classList.remove("open"));
+  $("#knowModal") && $("#knowModal").addEventListener("click", (e) => { if (e.target.id === "knowModal") $("#knowModal").classList.remove("open"); });
   $("#proClose") && $("#proClose").addEventListener("click", () => $("#proModal").classList.remove("open"));
   $("#proModal") && $("#proModal").addEventListener("click", (e) => { if (e.target.id === "proModal") $("#proModal").classList.remove("open"); });
   $("#accountClose") && $("#accountClose").addEventListener("click", () => $("#accountModal").classList.remove("open"));
@@ -6448,8 +6739,22 @@ document.addEventListener("DOMContentLoaded", wire);
         <li>Можно не входить: тогда Искра отвечает на своей базе знаний — быстро, но короче.</li>
       </ul>
       <button class="auth-btn" id="puterGo">Продолжить — откроется окно Puter</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="auth-btn ghost" id="puterTab" style="flex:1">Открыть Puter в новой вкладке</button>
+        <button class="auth-btn ghost" id="puterCheck" style="flex:1">Проверить вход</button>
+      </div>
       <button class="auth-btn ghost" id="puterSkip" style="margin-top:8px">Без Puter — отвечать на своих знаниях</button>
-      <p class="acct-note" style="margin-top:12px">Это окно больше не появится, если нажмёшь «Продолжить» — запомню.</p>
+      <details class="puter-help">
+        <summary>Не пускает в Puter? Что делать по шагам</summary>
+        <ol>
+          <li><b>Предупреждения в консоли</b> («Автоматически предоставлен доступ к хранилищу») — это нормально, браузер так всегда пишет про окна Puter и Google. Они ни на что не влияют.</li>
+          <li><b>Разреши всплывающие окна</b> для <code>logismod01.github.io</code>: в Firefox нажми на значок с замком слева от адреса → «Разрешения» → «Открывать всплывающие окна».</li>
+          <li><b>Разреши сторонние куки</b> для <code>puter.com</code>: настройки → «Приватность и защита» → «Куки и данные сайтов» → не блокировать сторонние.</li>
+          <li><b>Не помогло?</b> Открой Puter в новой вкладке (кнопка выше), войди там через Google, вернись сюда и нажми «Проверить вход».</li>
+          <li><b>Google не пускает?</b> На странице Puter выбери «Sign up using email» — почта и пароль.</li>
+          <li><b>Совсем никак?</b> Нажми «Без Puter» — Искра работает на своих знаниях, это бесплатно и без входа.</li>
+        </ol>
+      </details>
     </div>
   </div>
 </div>
@@ -6470,6 +6775,12 @@ document.addEventListener("DOMContentLoaded", wire);
   </div>
 </div>
 
+<div id="knowModal" class="modal-bg">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head"><h3>Мои знания</h3><button class="icon-btn" id="knowClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body" id="knowBody"></div>
+  </div>
+</div>
 <div id="proModal" class="modal-bg">
   <div class="modal" style="max-width:520px">
     <div class="modal-head"><h3>Искра Pro</h3><button class="icon-btn" id="proClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
