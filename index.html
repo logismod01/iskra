@@ -1332,6 +1332,21 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .puter-alt-steps code { background: rgba(255,255,255,.07); padding: 1px 4px; border-radius: 4px; }
 .auth-field-input { background: var(--bg-soft-2); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit; outline: none; }
 .auth-field-input:focus { border-color: var(--accent); }
+
+/* Карточка ошибки в чате */
+.fail-actions { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg-soft-2); }
+.fail-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
+.fail-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.fail-btns button { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 8px 12px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+.fail-btns button:first-child { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fail-key { display: flex; gap: 8px; margin-top: 10px; }
+.fail-key input { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; color: var(--text); font-size: 12.5px; font-family: inherit; outline: none; }
+.fail-key button { background: var(--accent); border: none; color: #fff; border-radius: 9px; padding: 8px 14px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+/* Оплата */
+.pay-box { padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: rgba(226,122,95,.06); margin-bottom: 10px; }
+.pay-addr { font-family: ui-monospace, monospace; font-size: 11.5px; word-break: break-all; background: var(--bg); padding: 8px; border-radius: 8px; margin: 8px 0; line-height: 1.45; }
+.pay-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.pay-row button, .pay-row a { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 7px 12px; font-size: 12px; cursor: pointer; font-family: inherit; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -4236,6 +4251,59 @@ function apiPayload(chatMessages, opts = {}) {
   return body;
 }
 
+
+/* ---------- Когда модель недоступна: отвечаем из базы знаний ---------- */
+function offlineAnswer(question) {
+  const hits = kbSearch(question, 2);
+  if (!hits.length) return "";
+  const parts = hits.map(h => `**${h.title}**\n${h.text}`);
+  return parts.join("\n\n");
+}
+
+/* Карточка ошибки прямо в чате, с кнопками решения */
+function baseAnswerExists(q) { return kbSearch(q, 1).length > 0 || learnedList().length > 0; }
+function showFailCard(contentEl, aiMsg, question, reason) {
+  const hits = kbSearch(question, 1);
+  const baseAnswer = offlineAnswer(question);
+  aiMsg.content = baseAnswer
+    ? `Модель сейчас недоступна (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}`
+    : `Не смогла получить ответ: ${reason}.`;
+  aiMsg.failedSoft = true;
+  contentEl.innerHTML = renderMarkdown(aiMsg.content);
+  const box = document.createElement("div");
+  box.className = "fail-actions";
+  box.innerHTML = `
+    <div class="fail-note">${baseAnswer ? "Это ответ из моей базы — без интернета." : "Модель не ответила."} Чтобы работали сильные модели, нужен бесплатный ключ — 5 минут.</div>
+    <div class="fail-btns">
+      <button data-fail="groq">Ввести ключ Groq</button>
+      <button data-fail="puter">Войти в Puter</button>
+      <button data-fail="retry">Повторить запрос</button>
+    </div>
+    <div class="fail-key" id="failKeyBox" style="display:none">
+      <input id="failKeyInput" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+      <button id="failKeySave">Включить</button>
+    </div>`;
+  contentEl.appendChild(box);
+  const keyBox = box.querySelector("#failKeyBox");
+  box.querySelector('[data-fail="groq"]').onclick = () => {
+    keyBox.style.display = keyBox.style.display === "none" ? "flex" : "none";
+    const inp = box.querySelector("#failKeyInput");
+    if (inp) inp.focus();
+  };
+  box.querySelector('[data-fail="puter"]').onclick = () => puterSignIn();
+  box.querySelector('[data-fail="retry"]').onclick = () => sendMessage(question, [], false, true);
+  box.querySelector("#failKeySave").onclick = async () => {
+    const key = (box.querySelector("#failKeyInput").value || "").trim();
+    if (!/^gsk_[A-Za-z0-9]{20,}$/.test(key)) { toast("Ключ Groq начинается на gsk_", "err"); return; }
+    settings.provider = "groq"; settings.apiKey = key; settings.model = "llama-3.3-70b-versatile";
+    lastModelVision = false; saveSettings(); syncProviderUI && syncProviderUI(); updateModelChip && updateModelChip();
+    toast("Ключ сохранён — повторяю вопрос", "ok");
+    sendMessage(question, [], false, true);
+  };
+  saveChats();
+  scrollToBottom();
+}
+
 /* ---------- Домашка по фото ---------- */
 const HOMEWORK_HINT = "ДОМАШКА ПО ФОТО: пользователь прислал снимок. Сначала прочитай, что на нём написано (условие задачи, номер упражнения), потом: 1) кратко перескажи условие своими словами — чтобы было видно, что прочитано верно; 2) реши по шагам с пояснениями; 3) в конце дай ответ отдельной строкой. Если почерк неразборчив или фото смазано — скажи прямо, что именно не видно, и попроси переснять крупнее, а не выдумывай условие.";
 
@@ -4715,7 +4783,9 @@ function friendlyError(err) {
     405: "Сервер не принимает такой запрос. Чаще всего это значит: в настройках выбран «Свой URL», но адрес пустой или неверный — тогда запрос уходит не туда. Переключись на Groq или OpenRouter.",
     429: "Слишком много запросов. Подожди 30 секунд.",
     500: "Ошибка сервера провайдера. Попробуй ещё раз.",
-    503: "Сервис недоступен. Попробуй позже."
+    503: settings.provider === "demo"
+      ? "бесплатный движок без ключа перегружен — у него общий лимит на всех"
+      : "сервис временно недоступен"
   }[s] || (err && err.message && !/^HTTP \d+$/.test(err.message)
         ? "Не удалось получить ответ: " + err.message
         : "Не удалось получить ответ. Проверь интернет и настройки.");
@@ -4817,6 +4887,12 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   const el = appendMessage(aiMsg);
   const contentEl = el.querySelector(".content");
   contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  // если ответа нет дольше 8 секунд — показываем, что происходит
+  const slowTimer = setTimeout(() => {
+    if (!contentEl.textContent.trim() || contentEl.querySelector(".typing")) {
+      contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note">Готовлю ответ… если модель занята, отвечу из своей базы знаний.</p>`;
+    }
+  }, 8000);
 
   const sendBtn = $("#send");
   sendBtn.classList.add("stop");
@@ -4857,6 +4933,12 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       scrollToBottom();
     }, signal);
 
+    clearTimeout(slowTimer);
+    if (!acc.trim()) {
+      const emptyErr = new Error("модель вернула пустой ответ");
+      emptyErr.status = 503;
+      throw emptyErr;
+    }
     if (!profanityAllowed() && maskProfanity(acc) !== acc) {
       acc = maskProfanity(acc);
       aiMsg.masked = true;
@@ -4881,17 +4963,16 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       b.addEventListener("click", () => onMsgAction(aiMsg.id, b.dataset.act));
     });
   } catch(err) {
+    clearTimeout(slowTimer);
     if (err.name === "AbortError") {
       aiMsg.content = acc + "\n\n*[Остановлено]*";
       contentEl.innerHTML = renderMarkdown(aiMsg.content);
       saveChats();
     } else {
-      chat.messages.pop();
-      saveChats();
-      el.remove();
       const { status, hint } = friendlyError(err);
+      showFailCard(contentEl, aiMsg, trimmed, hint || ("ошибка " + (status || "сети")));
       toast(`Ошибка${status ? " " + status : ""}: ${hint}`, "err");
-      if (status === 401 || (err && err.kind === "custom-empty")) openSettings();
+      if (status === 401 && !baseAnswerExists(trimmed)) openSettings();
     }
   } finally {
     sendBtn.classList.remove("stop");
@@ -6142,6 +6223,10 @@ function openRestore() {
 
 /* ---------- Pro: коды и оплата ---------- */
 const PRO_CODES = ["ISKRA-PRO-2026", "ISKRA-FRIEND", "ISKRA-TEST-PRO"];
+/* Реквизиты владельца для оплаты */
+const PAY_TON_ADDRESS = "UQADSfhP4RZHbXY4idhdfGPItsmF0OKPuDwP9Dc9YJb0dYDA";
+const PAY_TG = "@Yehndhkw";
+const PAY_PRICE_TON = "2";        // ориентировочная цена Pro на 30 дней в TON
 const PRO_METHODS = [
   { id: "tg", name: "Звёзды Telegram", desc: "Самый простой путь: оплата внутри Telegram, без карты", status: "в разработке" },
   { id: "crypto", name: "Криптовалюта", desc: "USDT (TRC-20) или TON — перевод на кошелёк, доступ по коду", status: "в разработке" },
@@ -6153,7 +6238,8 @@ function proActive() {
 }
 function activateProCode(code) {
   const c = String(code || "").trim().toUpperCase();
-  if (!PRO_CODES.includes(c) && !/^ISKRA-PRO-[A-Z0-9]{4}$/.test(c)) {
+  const issued = (adminData().codes || []).map(x => x.code);
+  if (!PRO_CODES.includes(c) && !issued.includes(c) && !/^ISKRA-PRO-[A-Z0-9]{4}$/.test(c)) {
     return { ok: false, msg: "Код не подошёл. Проверь буквы и дефисы." };
   }
   settings.edition = "pro";
@@ -6182,14 +6268,29 @@ function renderProPanel() {
       <p class="auth-err" id="proErr"></p>
     </div>
     <div class="acct-sec">
-      <div class="acct-h">Оплата</div>
-      ${PRO_METHODS.map(m => `<div class="acct-dev">
-        <div><b>${m.name}</b><div class="acct-dim">${m.desc}</div></div>
-        <span class="ob-tag" style="opacity:.75">${m.status}</span>
-      </div>`).join("")}
-      <div class="acct-note">Оплата пока в разработке: идёт выбор платёжного пути. Крипта и звёзды Telegram — первые в очереди, обычный перевод — крайний вариант, потому что его трудно проверять. Пока Pro включается кодом.</div>
+      <div class="acct-h">Оплата криптой (TON)</div>
+      <div class="pay-box">
+        <div style="font-size:13px"><b>Pro на 30 дней — примерно ${PAY_PRICE_TON} TON</b></div>
+        <div class="acct-dim" style="margin-top:4px">Кошелёк TON (USDT TRC-20 не подойдёт, это другая сеть):</div>
+        <div class="pay-addr" id="payAddr">${PAY_TON_ADDRESS}</div>
+        <div class="pay-row">
+          <button id="payCopyAddr">Скопировать адрес</button>
+          <a href="https://tonviewer.com/${PAY_TON_ADDRESS}" target="_blank" rel="noopener">Открыть в tonviewer</a>
+          <a href="https://t.me/Yehndhkw" target="_blank" rel="noopener">Написать в Telegram</a>
+        </div>
+        <div class="acct-note" style="margin-top:10px">
+          <b>Как получить Pro:</b> 1) переведи ${PAY_PRICE_TON} TON на адрес выше; 2) пришли в Telegram ${PAY_TG} хеш перевода (или скриншот); 3) в ответ получишь код вида <code>ISKRA-PRO-XXXX</code>; 4) вставь его в поле «Ввести код доступа» выше — Pro включится на 30 дней.
+        </div>
+      </div>
+      <div class="acct-note">Телефон владельца в Telegram: ${PAY_TG}. Проверяю перевод вручную — обычно 5–30 минут. Оплата звёздами Telegram и обычным переводом — позже.</div>
     </div>`;
 
+  const cpAddr = box.querySelector("#payCopyAddr");
+  if (cpAddr) cpAddr.onclick = () => {
+    navigator.clipboard.writeText(PAY_TON_ADDRESS)
+      .then(() => { cpAddr.textContent = "Адрес скопирован"; setTimeout(() => (cpAddr.textContent = "Скопировать адрес"), 1600); })
+      .catch(() => toast("Не получилось скопировать — выдели адрес вручную", "err"));
+  };
   const btn = box.querySelector("#proActivate");
   if (btn) btn.addEventListener("click", () => {
     const r = activateProCode($("#proCodeInput").value);
@@ -6491,6 +6592,9 @@ const CONSOLE_HELP = [
   ["pro on | pro off | pro 90", "выдать или снять Pro (можно на N дней)"],
   ["mat on | mat off", "крепкие выражения"],
   ["nuke", "режим рэпа"],
+  ["pay", "реквизиты для оплаты (TON, Telegram)"],
+  ["send-code <ник>", "выдать код Pro после оплаты"],
+  ["codes", "выданные коды"],
   ["model <id>", "сменить модель"],
   ["theme <имя>", "сменить тему"],
   ["learn <тема>", "выучить тему из интернета"],
@@ -6568,6 +6672,23 @@ async function consoleRun(raw) {
   if (c === "nuke") {
     handleNuke();
     return "Рэп-режим запущен (если Pro активен).";
+  }
+  if (c === "pay" || c === "wallet") {
+    return "РЕКВИЗИТЫ ДЛЯ ОПЛАТЫ\n  TON:      " + PAY_TON_ADDRESS + "\n  Telegram: " + PAY_TG + "\n  Цена:     ~" + PAY_PRICE_TON + " TON за 30 дней\n\nВыдать Pro после оплаты: pro 30 (себе) или send-code <ник>";
+  }
+  if (c === "send-code") {
+    const who = arg || "покупатель";
+    const code = "ISKRA-PRO-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const d2 = adminData(); d2.codes = d2.codes || [];
+    d2.codes.push({ code, who, ts: Date.now(), used: false });
+    adminSave(d2);
+    if (!PRO_CODES.includes(code)) PRO_CODES.push(code);
+    return `Код для ${who}: ${code}\nОн действует в этом браузере. Отправь его человеку — вставит в «Ввести код доступа».`;
+  }
+  if (c === "codes") {
+    const d3 = adminData();
+    const list = (d3.codes || []);
+    return list.length ? "ВЫДАННЫЕ КОДЫ\n" + list.map(x => `  ${x.code} · ${x.who} · ${new Date(x.ts).toLocaleDateString("ru-RU")}`).join("\n") : "Коды ещё не выдавались.";
   }
   if (c === "model") {
     if (!arg) return "Текущая модель: " + settings.model;
