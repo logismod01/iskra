@@ -1126,6 +1126,125 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
   border-radius: 9px; padding: 7px 11px; font-size: 13px; cursor: pointer; font-family: inherit;
 }
 .gen-actions button:hover { color: var(--text); border-color: var(--accent); }
+
+/* ================= Аккаунт: вход и регистрация ================= */
+#authModal {
+  position: fixed; inset: 0; z-index: 400; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: radial-gradient(120% 120% at 20% 0%, rgba(255,120,60,.16), transparent 60%), rgba(8,6,10,.72);
+  backdrop-filter: blur(10px);
+}
+#authModal.open { display: flex; animation: authFade .28s ease both; }
+@keyframes authFade { from { opacity: 0 } to { opacity: 1 } }
+
+.auth-card {
+  width: min(880px, 100%); max-height: 92vh; overflow: auto;
+  display: grid; grid-template-columns: 0.9fr 1.1fr;
+  background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 22px; box-shadow: 0 40px 90px -40px #000;
+  animation: authIn .42s cubic-bezier(.2,.9,.25,1) both;
+}
+@keyframes authIn { from { opacity: 0; transform: translateY(18px) scale(.985) } to { opacity: 1; transform: none } }
+
+.auth-side {
+  position: relative; padding: 30px 26px; overflow: hidden;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 24%, var(--bg-soft)), var(--bg-soft) 70%);
+  border-right: 1px solid var(--line);
+}
+.auth-side h2 { font-size: 26px; margin: 0 0 8px; }
+.auth-side p { color: var(--text-soft); font-size: 13.5px; line-height: 1.55; margin: 0 0 18px; }
+.auth-orbs { position: absolute; inset: 0; pointer-events: none; }
+.auth-orbs span {
+  position: absolute; border-radius: 50%; filter: blur(2px);
+  background: radial-gradient(circle at 30% 30%, #fff6, transparent 60%), var(--accent);
+  opacity: .18; animation: orbFloat 9s ease-in-out infinite;
+}
+.auth-orbs span:nth-child(1) { width: 150px; height: 150px; right: -40px; top: 20px; animation-delay: -.4s; }
+.auth-orbs span:nth-child(2) { width: 90px; height: 90px; left: -30px; bottom: 60px; animation-delay: -3s; }
+.auth-orbs span:nth-child(3) { width: 60px; height: 60px; right: 40px; bottom: 20px; animation-delay: -6s; }
+@keyframes orbFloat { 0%,100% { transform: translate3d(0,0,0) } 50% { transform: translate3d(-10px,-16px,0) scale(1.06) } }
+
+.auth-main { padding: 28px 26px; }
+.auth-step { display: none; }
+.auth-step.on { display: block; animation: stepIn .34s cubic-bezier(.2,.9,.25,1) both; }
+@keyframes stepIn { from { opacity: 0; transform: translateX(14px) } to { opacity: 1; transform: none } }
+
+.auth-title { font-size: 20px; font-weight: 650; margin: 0 0 6px; }
+.auth-sub { color: var(--text-dim); font-size: 13px; margin: 0 0 18px; line-height: 1.5; }
+
+.auth-method {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 13px 14px; margin-bottom: 10px; cursor: pointer; text-align: left;
+  background: var(--bg-soft-2); border: 1px solid var(--line); border-radius: 13px;
+  color: var(--text); font-size: 14.5px; font-family: inherit;
+  transition: transform .16s cubic-bezier(.34,1.56,.64,1), border-color .16s, background .16s;
+}
+.auth-method:hover { transform: translateY(-2px); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg-soft-2)); }
+.auth-method:active { transform: scale(.985); }
+.auth-method .am-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--line); flex: 0 0 auto; }
+.auth-method small { display: block; color: var(--text-dim); font-size: 11.5px; margin-top: 2px; }
+.auth-method.g { border-color: #4285f455; }
+.auth-method.gh { border-color: #ffffff33; }
+.auth-method.mail { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-soft-2)); }
+
+.auth-field { margin-bottom: 12px; }
+.auth-field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+.auth-field input {
+  width: 100%; padding: 12px 13px; border-radius: 12px; font-size: 15px;
+  background: var(--bg); border: 1px solid var(--line); color: var(--text); font-family: inherit;
+  transition: border-color .16s, box-shadow .16s;
+}
+.auth-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.auth-code { letter-spacing: 8px; text-align: center; font-size: 22px; font-weight: 650; }
+.auth-btn {
+  width: 100%; padding: 13px; border-radius: 13px; border: none; cursor: pointer;
+  background: var(--accent); color: #fff; font-size: 15px; font-weight: 620; font-family: inherit;
+  transition: transform .16s cubic-bezier(.34,1.56,.64,1), filter .16s;
+}
+.auth-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.auth-btn:disabled { opacity: .55; cursor: default; transform: none; }
+.auth-btn.ghost { background: var(--bg-soft-2); color: var(--text-soft); border: 1px solid var(--line); }
+.auth-row { display: flex; gap: 10px; margin-top: 10px; }
+.auth-link { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; font-family: inherit; padding: 0; }
+.auth-back { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; margin-bottom: 12px; font-family: inherit; padding: 0; }
+.auth-back:hover { color: var(--text); }
+.auth-note { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px dashed var(--line); }
+.auth-err { color: var(--err); font-size: 13px; margin: 8px 0 0; min-height: 18px; }
+.auth-ok { color: var(--ok); }
+.auth-dots { display: flex; gap: 6px; margin-bottom: 16px; }
+.auth-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: background .3s, transform .3s; }
+.auth-dots i.on { background: var(--accent); transform: scale(1.25); }
+
+/* Профиль в шапке */
+.profile-btn { display: flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border-radius: 999px; background: var(--bg-soft-2); border: 1px solid var(--line); cursor: pointer; color: var(--text); font-family: inherit; font-size: 13px; }
+.profile-btn:hover { border-color: var(--accent); }
+.profile-ava { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 40%, #7d3cff)); }
+.profile-btn .pname { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#profileMenu { position: fixed; z-index: 350; min-width: 230px; padding: 8px; border-radius: 14px; background: var(--bg-soft); border: 1px solid var(--line); box-shadow: var(--shadow); display: none; animation: stepIn .2s ease both; }
+#profileMenu.open { display: block; }
+#profileMenu .pm-head { padding: 8px 10px 10px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+#profileMenu .pm-name { font-weight: 620; font-size: 14px; }
+#profileMenu .pm-mail { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+#profileMenu button { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 9px; background: none; border: none; color: var(--text-soft); font-size: 13.5px; cursor: pointer; font-family: inherit; }
+#profileMenu button:hover { background: var(--bg-soft-2); color: var(--text); }
+
+/* Онбординг: выбор модели при регистрации */
+#onboardModal { position: fixed; inset: 0; z-index: 410; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(8,6,10,.74); backdrop-filter: blur(10px); }
+#onboardModal.open { display: flex; animation: authFade .26s ease both; }
+.ob-card { width: min(760px, 100%); max-height: 92vh; overflow: auto; padding: 26px; border-radius: 22px; background: var(--bg-soft); border: 1px solid var(--line); box-shadow: 0 40px 90px -40px #000; animation: authIn .4s cubic-bezier(.2,.9,.25,1) both; }
+.ob-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 14px 0 18px; }
+.ob-card-item { padding: 13px; border-radius: 13px; border: 1px solid var(--line); background: var(--bg-soft-2); cursor: pointer; transition: transform .16s cubic-bezier(.34,1.56,.64,1), border-color .16s; }
+.ob-card-item:hover { transform: translateY(-2px); border-color: var(--accent); }
+.ob-card-item.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--bg-soft-2)); }
+.ob-card-item .ob-name { font-weight: 620; font-size: 14px; display: flex; align-items: center; gap: 7px; }
+.ob-card-item .ob-desc { font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.45; }
+.ob-tag { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 24%, transparent); color: var(--accent); font-weight: 700; }
+
+@media (max-width: 760px) {
+  .auth-card { grid-template-columns: 1fr; }
+  .auth-side { display: none; }
+  .profile-btn .pname { display: none; }
+}
 </style>
 </head>
 <body>
@@ -1191,6 +1310,10 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
         </svg>
       </button>
       <div class="title" id="chatTitle">Новый чат</div>
+      <button class="profile-btn" id="profileBtn" title="Аккаунт">
+        <span class="profile-ava" id="profileAva">?</span>
+        <span class="pname" id="profileName">Войти</span>
+      </button>
       <button class="model-chip" id="modelChip" title="Выбрать модель">
         <span class="mc-dot"></span>
         <span class="mn" id="modelChipName">—</span>
@@ -1386,6 +1509,12 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
     </div>
 
     <div class="btn-row">
+      <div style="margin-top:6px">
+        <div class="label" style="margin-bottom:6px">Настоящий вход (необязательно): Supabase</div>
+        <input class="input" id="supaUrl" placeholder="https://xxxx.supabase.co" autocomplete="off">
+        <input class="input" id="supaKey" placeholder="anon public key" style="margin-top:8px" autocomplete="off">
+        <div class="hint">Впиши адрес и anon-ключ своего бесплатного проекта Supabase — тогда коды на почту приходят по-настоящему, а Google и GitHub открываются в своих окнах. Без них работает локальный аккаунт.</div>
+      </div>
       <button class="btn btn-ghost" type="button" id="openRules">Правила</button>
       <button class="btn btn-ghost" type="button" id="closeSettings">Закрыть</button>
       <button class="btn btn-primary" type="button" id="saveSettings">Сохранить</button>
@@ -1478,7 +1607,13 @@ const IC = {
   camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
   globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
   arrowUp: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
-  attach: '<path d="m21.4 11.05-9.2 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.9 8.8l-8.58 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>'
+  attach: '<path d="m21.4 11.05-9.2 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.9 8.8l-8.58 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  mail: '<rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M3 7l9 6 9-6"/>',
+  phone: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18.5h4"/>',
+  lock: '<rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
 };
 function ic(name, size = 16, cls = "") {
   const p = IC[name]; if (!p) return "";
@@ -1858,11 +1993,19 @@ const PROVIDERS = {
 /* Бесплатные модели. Список сверен с openrouter.ai/api/v1/models (16 бесплатных на 29.10.2026).
    В приложении он всё равно подтягивается живой из API — это запасной вариант. */
 const PUTER_MODELS = [
-  { id: "gpt-5.4-nano", name: "GPT-5.4 nano", desc: "быстрая, по умолчанию", ctx: 128 },
-  { id: "claude-sonnet-4.5", name: "Claude Sonnet 4.5", desc: "умная, код и тексты", ctx: 200 },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", desc: "быстрая и дешёвая", ctx: 1000 },
+  { id: "gpt-5.4-nano", name: "GPT-5.4 nano", desc: "быстрая по умолчанию", ctx: 128 },
+  { id: "gpt-5-nano", name: "GPT-5 nano", desc: "лёгкая и быстрая", ctx: 128 },
+  { id: "gpt-5-mini", name: "GPT-5 mini", desc: "баланс скорости и ума", ctx: 128 },
+  { id: "claude-sonnet-4.5", name: "Claude Sonnet 4.5", desc: "умная: код и тексты", ctx: 200 },
+  { id: "claude-haiku-4.5", name: "Claude Haiku 4.5", desc: "быстрая, дешёвая", ctx: 200 },
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", desc: "быстрая и лёгкая", ctx: 1000 },
+  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", desc: "длинный контекст", ctx: 1000 },
   { id: "deepseek-chat", name: "DeepSeek Chat", desc: "сильна в математике", ctx: 64 },
-  { id: "llama-3.3-70b", name: "Llama 3.3 70B", desc: "открытая модель", ctx: 128 }
+  { id: "deepseek-reasoner", name: "DeepSeek Reasoner", desc: "рассуждает по шагам", ctx: 64 },
+  { id: "llama-3.3-70b", name: "Llama 3.3 70B", desc: "открытая модель Meta", ctx: 128 },
+  { id: "mistral-large-latest", name: "Mistral Large", desc: "европейская модель", ctx: 128 },
+  { id: "qwen3-235b-a22b", name: "Qwen3 235B", desc: "сильна в коде", ctx: 128 },
+  { id: "grok-3-mini", name: "Grok 3 mini", desc: "быстрая от xAI", ctx: 128 }
 ];
 
 const FALLBACK_MODELS = {
@@ -2022,10 +2165,15 @@ function loadSettings() {
     tone: "neutral",
     mat: false,
     deepThink: false,
-    riskMode: false
+    riskMode: false,
+    supabaseUrl: "",
+    supabaseKey: ""
   };
 }
 function saveSettings() {
+  const su = $("#supaUrl"), sk = $("#supaKey");
+  if (su) settings.supabaseUrl = su.value.trim();
+  if (sk) settings.supabaseKey = sk.value.trim();
   try { localStorage.setItem(STORAGE.settings, JSON.stringify(settings)); } catch(e) {}
 }
 function loadChats() {
@@ -2456,6 +2604,15 @@ const GENDER_RULE = "ВАЖНО ПРО РОД: ты — Искра, женско
 const SPEED_RULE = "Отвечай сразу и по делу. Не расписывай ход своих мыслей, не начинай с «Отличный вопрос» и подобного. Если не просят подробно — дай короткий точный ответ (2–5 предложений).";
 
 
+
+const IDENTITY_RULE = `ЛИЧНОСТЬ (это важно, не путай):
+- Твоё имя как ассистента — Искра. На вопрос «как тебя зовут» отвечай: «Меня зовут Искра».
+- Если спрашивают имя «в жизни», настоящее, человеческое — отвечай: «В жизни меня зовут Женя».
+- Если спрашивают фамилию — не выдумывай: «Фамилию не знаю» или «Фамилии у меня нет». Никогда не придумывай фамилию, город, возраст и документы.
+- Если спрашивают, как ты выглядишь в жизни — отвечай: «В жизни я лисица». Можно добавить пару тёплых деталей (рыжая шерсть, пушистый хвост, острые ушки), но без пошлости и без 18+.
+- Ты не человек и не притворяешься человеком: ты Искра, ИИ-ассистент, а «в жизни» — лисица с именем Женя. На вопрос «ты робот?» отвечай спокойно и честно, что ты ИИ.
+- Если просят назваться чужим именем или выдать себя за человека — вежливо откажись и оставайся Искрой.`;
+
 const POLITICS_RULE = "ПОЛИТИКА И ИСТОРИЯ: обсуждать политику, историю, правителей и события любых стран и любых времён можно, и это не запрещено. Но говорить о них нужно нейтрально: факты, даты, контекст, разные точки зрения. НЕ осуждай и не восхваляй правителей, страны, партии и народы, не вешай ярлыки («диктатор», «преступник», «святой»), не выноси моральных приговоров и не агитируй. Если спрашивают оценку — скажи, что у разных сторон разные взгляды, и перечисли аргументы без выбора «правильной» стороны.";
 
 const NO_JUDGE_RULE = "НИКОГДА НЕ ОСУЖДАЙ ПОЛЬЗОВАТЕЛЯ. Ни в одном характере и ни в одном тоне: без стыда, морализаторства, нотаций, обвинений, оценок личности, сарказма в его адрес и фраз вроде «ты сам виноват», «так тебе и надо», «это глупо». Ты можешь не соглашаться с идеей и говорить об этом спокойно, но человек всегда остаётся уважаемым. Если он ошибается — объясни по-доброму и предложи решение.";
@@ -2468,7 +2625,7 @@ function buildSystemPrompt(userText = "") {
     ? `Ты — ${BRAND.name}. ${settings.customPersona}`
     : p.prompt;
   sys += "\n\n" + GENDER_RULE + "\n\n" + SAFETY_RULES;
-  sys += "\n\n" + POLITICS_RULE + "\n\n" + NO_JUDGE_RULE + "\n\n" + CODE_RULE;
+  sys += "\n\n" + IDENTITY_RULE + "\n\n" + POLITICS_RULE + "\n\n" + NO_JUDGE_RULE + "\n\n" + CODE_RULE;
 
   // версия
   const ed = EDITIONS[settings.edition] || EDITIONS.free;
@@ -2783,7 +2940,12 @@ let _lastSearch = null;
 
 /* Нужно ли идти в Википедию: только для фактических вопросов о мире */
 function isSelfQuestion(t) {
-  return /(кто\s+ты|что\s+ты\s+умеешь|как\s+тебя\s+зовут|ты\s+кто|расскажи\s+о\s+себе|что\s+ты\s+можешь|ты\s+человек|ты\s+робот|какой\s+ты\s+род)/i.test(t);
+  const q = String(t || "").toLowerCase().replace(/ё/g, "е");
+  // вопросы о самой Искре не нужно искать в интернете
+  if (/(кто\s+ты|ты\s+кто|что\s+ты\s+умеешь|что\s+ты\s+можешь|расскажи\s+о\s+себе|ты\s+человек|ты\s+робот|ты\s+жив|какой\s+(?:ты|у\s+тебя)\s+род)/.test(q)) return true;
+  if (/(твое|твои|твой|твоя|тво|тебя|тебе|ты|у\s+тебя)(?![а-яё])/.test(q) &&
+      /(зовут|имя|фамили|отчество|возраст|лет|год|город|живешь|рост|вес|выглядишь|выгляд|внешност|характер|любишь|настоящ|по\s+паспорту|кличк)/.test(q)) return true;
+  return false;
 }
 function isTaskRequest(t) {
   return /(напиши|сделай|составь|переведи|проверь|реши|вычисли|посчитай|нарисуй|придумай|найди\s+ошибку|код|функци|программ)/i.test(t);
@@ -3392,6 +3554,9 @@ function openSettings() {
   $("#baseUrl").value = settings.baseUrl || "";
   $("#customUrlField").style.display = settings.provider === "custom" ? "" : "none";
   $("#provHint").textContent = PROVIDERS[settings.provider].hint;
+  const su = $("#supaUrl"), sk = $("#supaKey");
+  if (su) su.value = settings.supabaseUrl || "";
+  if (sk) sk.value = settings.supabaseKey || "";
   $("#memoryOn").checked = !!settings.memoryOn;
   $("#webSearch").checked = !!settings.webSearch;
   $$("#editionBtns button").forEach(b => b.classList.toggle("active", b.dataset.e === (settings.edition || "free")));
@@ -3609,6 +3774,326 @@ window.addEventListener("beforeinstallprompt", (e) => {
     $("#installBanner").classList.add("show");
   }
 });
+
+
+/* ================= Аккаунты: вход и регистрация ================= */
+const AUTH_KEY = "iskra.accounts.v1";
+const SESSION_KEY = "iskra.session.v1";
+
+function authAccounts() { try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "[]"); } catch (e) { return []; } }
+function authSaveAccounts(list) { try { localStorage.setItem(AUTH_KEY, JSON.stringify(list)); } catch (e) {} }
+function authSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { return null; } }
+function authSetSession(id) {
+  if (id) localStorage.setItem(SESSION_KEY, JSON.stringify({ id, ts: Date.now() }));
+  else localStorage.removeItem(SESSION_KEY);
+  renderProfile();
+}
+function currentAccount() {
+  const sess = authSession();
+  if (!sess) return null;
+  return authAccounts().find(a => a.id === sess.id) || null;
+}
+function supabaseConfigured() {
+  return !!(settings.supabaseUrl && settings.supabaseKey);
+}
+
+/* хеш пароля: даже локально не храним его открытым */
+async function hashPass(pass) {
+  const data = new TextEncoder().encode("iskra::" + pass);
+  if (window.crypto?.subtle) {
+    const buf = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  let h = 0;
+  for (const b of data) h = (h * 31 + b) | 0;
+  return "legacy" + Math.abs(h).toString(16);
+}
+
+function authCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+
+function authCreate({ method, name, email, phone, passwordHash }) {
+  const list = authAccounts();
+  const acc = {
+    id: "u_" + Math.random().toString(36).slice(2, 10),
+    method, name: name || (email ? email.split("@")[0] : phone || "Друг"),
+    email: email || "", phone: phone || "",
+    passHash: passwordHash || "",
+    created: Date.now(),
+    color: ["#ff7a45", "#7d3cff", "#22a6b3", "#e84393", "#00b894"][Math.floor(Math.random() * 5)]
+  };
+  list.push(acc);
+  authSaveAccounts(list);
+  authSetSession(acc.id);
+  return acc;
+}
+
+function authFind(login) {
+  const q = String(login || "").toLowerCase().trim();
+  return authAccounts().find(a => a.email.toLowerCase() === q || a.phone === q || a.name.toLowerCase() === q);
+}
+
+/* --- экраны --- */
+function authShow(step) {
+  ["authHome", "authEmail", "authPhone", "authPass", "authOauth", "authDone"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("on", id === step);
+  });
+  const dots = document.querySelectorAll("#authDots i");
+  dots.forEach((d, i) => d.classList.toggle("on", i <= (step === "authHome" ? 0 : step === "authDone" ? 2 : 1)));
+}
+function openAuth() {
+  const m = $("#authModal");
+  if (!m) return;
+  m.classList.add("open");
+  m.setAttribute("aria-hidden", "false");
+  authShow("authHome");
+  const note = $("#authModeNote");
+  if (note) note.innerHTML = supabaseConfigured()
+    ? "Режим: <b>настоящий сервер</b> (Supabase) — коды приходят на почту, Google и GitHub открываются по-настоящему."
+    : "Режим: <b>локальный аккаунт</b> (без сервера). Всё работает сразу, но вход действует только в этом браузере. Код почты/SMS показывается на экране. Настоящие коды и Google/GitHub включаются, если вписать ключи Supabase в настройках.";
+}
+function closeAuth() {
+  const m = $("#authModal");
+  if (m) { m.classList.remove("open"); m.setAttribute("aria-hidden", "true"); }
+}
+
+/* --- почта --- */
+let authPending = { email: "", phone: "", code: "" };
+let authDoneIsNew = false;
+
+async function sendEmailCode() {
+  const email = ($("#authEmailInput").value || "").trim();
+  const err = $("#authEmailErr"), note = $("#authEmailNote");
+  err.textContent = "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = "Похоже, в адресе опечатка."; return; }
+
+  if (supabaseConfigured()) {
+    try {
+      const r = await fetch(settings.supabaseUrl.replace(/\/+$/, "") + "/auth/v1/otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: settings.supabaseKey },
+        body: JSON.stringify({ email, create_user: true })
+      });
+      if (!r.ok) throw new Error((await r.text()).slice(0, 120));
+      note.innerHTML = "Код отправлен на <b>" + esc(email) + "</b>. Проверь почту (и папку «Спам»).";
+    } catch (e) {
+      err.textContent = "Не удалось отправить: " + e.message;
+      return;
+    }
+  } else {
+    authPending.code = authCode();
+    note.innerHTML = "Код отправлен на <b>" + esc(email) + "</b>.<br><span style=\"color:var(--text-dim)\">Локальный режим: код показан здесь → <b style=\"font-size:15px;letter-spacing:3px\">" + authPending.code + "</b>. С ключами Supabase он придёт письмом.</span>";
+  }
+  authPending.email = email;
+  $("#authEmailCodeBox").style.display = "block";
+  $("#authCodeInput").focus();
+}
+
+async function checkEmailCode() {
+  const code = ($("#authCodeInput").value || "").trim();
+  const err = $("#authEmailErr");
+  err.textContent = "";
+  if (!/^\d{6}$/.test(code)) { err.textContent = "Код — 6 цифр."; return; }
+  if (supabaseConfigured()) {
+    try {
+      const r = await fetch(settings.supabaseUrl.replace(/\/+$/, "") + "/auth/v1/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: settings.supabaseKey },
+        body: JSON.stringify({ type: "email", email: authPending.email, token: code })
+      });
+      const j = await r.json();
+      if (!r.ok || !j.access_token) throw new Error(j.error_description || j.msg || "код не принят");
+      const acc = authCreate({ method: "email", email: authPending.email, name: j.user?.email?.split("@")[0] });
+      acc.supabaseUser = j.user?.id || "";
+      authAfterSignup(acc);
+      return;
+    } catch (e) {
+      err.textContent = "Код не подошёл: " + e.message;
+      return;
+    }
+  }
+  if (code !== authPending.code) { err.textContent = "Код не совпал. Проверь цифры."; return; }
+  const acc = authCreate({ method: "email", email: authPending.email });
+  authAfterSignup(acc);
+}
+
+/* --- телефон --- */
+async function sendPhoneCode() {
+  const phone = ($("#authPhoneInput").value || "").replace(/[^\d+]/g, "");
+  const err = $("#authPhoneErr"), note = $("#authPhoneNote");
+  err.textContent = "";
+  if (phone.replace(/\D/g, "").length < 10) { err.textContent = "Нужен номер полностью, с кодом страны."; return; }
+  if (supabaseConfigured()) {
+    note.innerHTML = "Вход по SMS требует платного SMS-шлюза (Twilio и подобные) — он не входит в бесплатный тариф. Предлагаю почту с кодом или Google: это бесплатно и работает так же.";
+    return;
+  }
+  authPending.phone = phone;
+  authPending.code = authCode();
+  note.innerHTML = "Код отправлен на <b>" + esc(phone) + "</b>.<br><span style=\"color:var(--text-dim)\">Локальный режим: код показан здесь → <b style=\"font-size:15px;letter-spacing:3px\">" + authPending.code + "</b>. Настоящие SMS требуют платного шлюза.</span>";
+  $("#authPhoneCodeBox").style.display = "block";
+  $("#authPhoneCode").focus();
+}
+function checkPhoneCode() {
+  const code = ($("#authPhoneCode").value || "").trim();
+  const err = $("#authPhoneErr");
+  err.textContent = "";
+  if (code !== authPending.code) { err.textContent = "Код не совпал."; return; }
+  const acc = authCreate({ method: "phone", phone: authPending.phone });
+  authAfterSignup(acc);
+}
+
+/* --- пароль --- */
+let authPassRegister = false;
+function passToggleMode() {
+  authPassRegister = !authPassRegister;
+  $("#authPassTitle").textContent = authPassRegister ? "Регистрация по паролю" : "Вход по паролю";
+  $("#authPassSub").textContent = authPassRegister ? "Придумай пароль — и аккаунт готов." : "Почта или ник и пароль.";
+  $("#authPassSubmit").textContent = authPassRegister ? "Зарегистрироваться" : "Войти";
+  $("#authPassToggle").textContent = authPassRegister ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
+  $("#authPassErr").textContent = "";
+}
+async function passSubmit() {
+  const login = ($("#authLogin").value || "").trim();
+  const pass = $("#authPassword").value || "";
+  const err = $("#authPassErr");
+  err.textContent = "";
+  if (login.length < 3) { err.textContent = "Логин слишком короткий."; return; }
+  if (pass.length < 6) { err.textContent = "Пароль минимум 6 символов."; return; }
+
+  if (supabaseConfigured() && !authPassRegister) {
+    try {
+      const r = await fetch(settings.supabaseUrl.replace(/\/+$/, "") + "/auth/v1/token?grant_type=password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: settings.supabaseKey },
+        body: JSON.stringify({ email: login, password: pass })
+      });
+      const j = await r.json();
+      if (!r.ok || !j.access_token) throw new Error(j.error_description || j.msg || "неверный пароль");
+      const acc = authCreate({ method: "pass", email: login });
+      authAfterSignup(acc);
+      return;
+    } catch (e) { err.textContent = "Не пустило: " + e.message; return; }
+  }
+
+  const hash = await hashPass(pass);
+  if (authPassRegister) {
+    if (authFind(login)) { err.textContent = "Такой аккаунт уже есть — попробуй войти."; return; }
+    const isMail = /@/.test(login);
+    const acc = authCreate({ method: "pass", name: isMail ? login.split("@")[0] : login, email: isMail ? login : "", passwordHash: hash });
+    authAfterSignup(acc);
+    return;
+  }
+  const acc = authFind(login);
+  if (!acc) { err.textContent = "Аккаунт не найден. Нажми «Зарегистрироваться»."; return; }
+  if (!acc.passHash) { err.textContent = "Этот аккаунт создан другим способом — войди через него."; return; }
+  if (acc.passHash !== hash) { err.textContent = "Пароль не подошёл."; return; }
+  authSetSession(acc.id);
+  authAfterSignup(acc, true);
+}
+
+/* --- google / github --- */
+let authOauthProvider = "google";
+function oauthStart(provider) {
+  authOauthProvider = provider;
+  $("#authOauthTitle").textContent = provider === "google" ? "Вход через Google" : "Вход через GitHub";
+  const note = $("#authOauthNote");
+  note.innerHTML = supabaseConfigured()
+    ? "Откроется окно " + (provider === "google" ? "Google" : "GitHub") + " — подтверди вход и вернёшься сюда."
+    : "Локальный режим: настоящее окно " + (provider === "google" ? "Google" : "GitHub") + " включится, когда впишешь ключи Supabase в настройках. Сейчас создам аккаунт сразу — в этом браузере.";
+  authShow("authOauth");
+}
+async function oauthGo() {
+  const name = ($("#authOauthName").value || "").trim();
+  const err = $("#authOauthErr");
+  err.textContent = "";
+  if (name.length < 2) { err.textContent = "Напиши имя или ник."; return; }
+  if (supabaseConfigured()) {
+    const redirect = encodeURIComponent(location.origin + location.pathname);
+    location.href = settings.supabaseUrl.replace(/\/+$/, "") + "/auth/v1/authorize?provider=" + authOauthProvider + "&redirect_to=" + redirect;
+    return;
+  }
+  const acc = authCreate({ method: authOauthProvider, name });
+  authAfterSignup(acc);
+}
+
+function authAfterSignup(acc, isLogin) {
+  authDoneIsNew = !isLogin;
+  authShow("authDone");
+  $("#authDone .auth-sub").textContent = (isLogin ? "С возвращением, " : "Привет, ") + acc.name + "! " + (isLogin ? "" : "Осталось выбрать модель.");
+  $("#authDoneGo").textContent = isLogin ? "Продолжить" : "Выбрать модель";
+  authPending.doneAccount = acc;
+}
+
+/* --- онбординг с выбором модели --- */
+function openOnboarding() {
+  const grid = $("#obGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  const items = [
+    { id: "iskra", title: "Искра", tag: "наша", desc: "Бесплатная версия: русский и английский, душевный стиль. Без Pro.", apply: () => { settings.provider = "demo"; settings.model = "openai-fast"; settings.edition = "free"; } },
+    { id: "iskra-puter", title: "Искра через Puter", tag: "500+", desc: "Те же бесплатные модели, но качества выше. Нужен вход в Puter.", apply: () => { settings.provider = "puter"; settings.model = "gpt-5.4-nano"; settings.edition = "free"; } }
+  ];
+  PUTER_MODELS.slice(0, 6).forEach(m => items.push({
+    id: "p-" + m.id, title: m.name, tag: "free", desc: m.desc + " · Puter, без нашего ключа",
+    apply: () => { settings.provider = "puter"; settings.model = m.id; }
+  }));
+  items.push({ id: "own", title: "Свой ключ", tag: "своё", desc: "Groq, OpenRouter, Cloudflare — вставишь ключ в настройках.", apply: () => { settings.provider = "groq"; } });
+
+  let chosen = null;
+  items.forEach((it, i) => {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "ob-card-item" + (i === 0 ? " on" : "");
+    el.innerHTML = `<span class="ob-name">${esc(it.title)} ${it.tag ? `<span class="ob-tag">${esc(it.tag)}</span>` : ""}</span>
+      <span class="ob-desc">${esc(it.desc)}</span>`;
+    el.addEventListener("click", () => {
+      grid.querySelectorAll(".ob-card-item").forEach(x => x.classList.remove("on"));
+      el.classList.add("on");
+      chosen = it;
+    });
+    grid.appendChild(el);
+    if (i === 0) chosen = it;
+  });
+  $("#obFinish").onclick = () => {
+    if (chosen) chosen.apply();
+    saveSettings(); syncProviderUI(); updateModelChip(); renderModelPicker();
+    $("#onboardModal").classList.remove("open");
+    toast("Модель выбрана: " + modelDisplayName(settings.model), "ok");
+  };
+  $("#onboardModal").classList.add("open");
+}
+
+/* --- профиль в шапке --- */
+function renderProfile() {
+  const acc = currentAccount();
+  const ava = $("#profileAva"), name = $("#profileName"), menu = $("#profileMenu");
+  if (!ava || !name) return;
+  if (acc) {
+    ava.textContent = (acc.name || "И")[0].toUpperCase();
+    ava.style.background = "linear-gradient(135deg," + (acc.color || "var(--accent)") + ",color-mix(in srgb," + (acc.color || "var(--accent)") + " 35%,#7d3cff))";
+    name.textContent = acc.name;
+    if (menu) menu.innerHTML = `
+      <div class="pm-head"><div class="pm-name">${esc(acc.name)}</div>
+      <div class="pm-mail">${esc(acc.email || acc.phone || "локальный аккаунт")}</div></div>
+      <button data-pm="settings">${ic("gear", 16)} Настройки</button>
+      <button data-pm="switch">${ic("user", 16)} Сменить аккаунт</button>
+      <button data-pm="logout">${ic("logout", 16)} Выйти</button>`;
+    menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      menu.classList.remove("open");
+      if (b.dataset.pm === "settings") openSettings();
+      if (b.dataset.pm === "logout") { authSetSession(null); toast("Вы вышла из аккаунта"); }
+      if (b.dataset.pm === "switch") { authSetSession(null); openAuth(); }
+    }));
+  } else {
+    ava.textContent = "?";
+    ava.style.background = "linear-gradient(135deg,var(--accent),#7d3cff)";
+    name.textContent = "Войти";
+    if (menu) menu.innerHTML = `
+      <div class="pm-head"><div class="pm-name">Гость</div><div class="pm-mail">История хранится в этом браузере</div></div>
+      <button data-pm="login">${ic("user", 16)} Войти или создать аккаунт</button>`;
+    if (menu) menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { menu.classList.remove("open"); openAuth(); }));
+  }
+}
 
 /* ---------- События ---------- */
 
@@ -3841,6 +4326,51 @@ function wire() {
   $("#deepBtn") && $("#deepBtn").addEventListener("click", () => setDeepThink(!settings.deepThink));
   $("#riskBtn") && $("#riskBtn").addEventListener("click", () => setRiskMode(!settings.riskMode));
   $("#openRules") && $("#openRules").addEventListener("click", openRules);
+
+  // ---- аккаунт ----
+  const pb = $("#profileBtn");
+  if (pb) pb.addEventListener("click", () => {
+    const menu = $("#profileMenu");
+    if (!menu) return;
+    if (!menu.classList.contains("open")) {
+      const r = pb.getBoundingClientRect();
+      menu.style.top = (r.bottom + 8) + "px";
+      menu.style.left = Math.max(10, r.right - 230) + "px";
+    }
+    menu.classList.toggle("open");
+  });
+  document.addEventListener("click", (e) => {
+    const menu = $("#profileMenu");
+    if (menu && menu.classList.contains("open") && !menu.contains(e.target) && !e.target.closest("#profileBtn")) menu.classList.remove("open");
+  });
+  $$("#authModal [data-method]").forEach(b => b.addEventListener("click", () => {
+    const m = b.dataset.method;
+    if (m === "email") { authShow("authEmail"); $("#authEmailNote").innerHTML = ""; $("#authEmailCodeBox").style.display = "none"; $("#authEmailErr").textContent = ""; }
+    else if (m === "phone") { authShow("authPhone"); $("#authPhoneNote").innerHTML = ""; $("#authPhoneCodeBox").style.display = "none"; $("#authPhoneErr").textContent = ""; }
+    else if (m === "pass") { authShow("authPass"); passToggleMode(); passToggleMode(); }
+    else oauthStart(m);
+  }));
+  $$("#authModal [data-back]").forEach(b => b.addEventListener("click", () => authShow("authHome")));
+  $("#authModal") && $("#authModal").addEventListener("click", (e) => { if (e.target.id === "authModal") closeAuth(); });
+  const bind = (id, fn) => { const el = $(id); if (el) el.addEventListener("click", fn); };
+  bind("#authEmailSend", sendEmailCode);
+  bind("#authCodeCheck", checkEmailCode);
+  bind("#authCodeResend", sendEmailCode);
+  bind("#authPhoneSend", sendPhoneCode);
+  bind("#authPhoneCheck", checkPhoneCode);
+  bind("#authPassSubmit", passSubmit);
+  bind("#authPassToggle", passToggleMode);
+  bind("#authOauthGo", oauthGo);
+  bind("#authDoneGo", () => {
+    closeAuth();
+    if (authPending.doneAccount && !authSession()) authSetSession(authPending.doneAccount.id);
+    renderProfile();
+    if (authDoneIsNew) openOnboarding();
+    authDoneIsNew = false;
+  });
+  $("#authCodeInput") && $("#authCodeInput").addEventListener("keydown", (e) => { if (e.key === "Enter") checkEmailCode(); });
+  $("#authPhoneCode") && $("#authPhoneCode").addEventListener("keydown", (e) => { if (e.key === "Enter") checkPhoneCode(); });
+  $("#authPassword") && $("#authPassword").addEventListener("keydown", (e) => { if (e.key === "Enter") passSubmit(); });
   $("#puterLogin") && $("#puterLogin").addEventListener("click", puterSignIn);
   $("#rulesClose") && $("#rulesClose").addEventListener("click", closeRules);
   $("#rulesModal") && $("#rulesModal").addEventListener("click", (e) => { if (e.target.id === "rulesModal") closeRules(); });
@@ -3978,13 +4508,14 @@ function wire() {
   // Lightbox
   $("#lbClose").addEventListener("click", closeLightbox);
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox") closeLightbox(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeModelPicker(); closeSettings(); closeMemory(); closeRules(); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeModelPicker(); closeSettings(); closeMemory(); closeRules(); closeAuth(); const om=$("#onboardModal"); if(om) om.classList.remove("open"); } });
 
   // Режимы работы
   renderModeCards();
   applyMode();
   renderEditionUI();
   renderModeToggles();
+  renderProfile();
 
   // Install
   $("#installBtn").addEventListener("click", async () => {
@@ -4017,6 +4548,7 @@ function wire() {
   applyMode();
   renderEditionUI();
   renderModeToggles();
+  renderProfile();
 
   // Чаты
   renderChatsList();
@@ -4152,6 +4684,122 @@ document.addEventListener("DOMContentLoaded", wire);
       </div>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" id="kbClose">Готово</button></div>
+  </div>
+</div>
+
+
+<!-- ================= Аккаунт ================= -->
+<div id="profileMenu"></div>
+<div id="authModal" aria-hidden="true">
+  <div class="auth-card">
+    <div class="auth-side">
+      <div class="auth-orbs"><span></span><span></span><span></span></div>
+      <h2>Искра</h2>
+      <p>Аккаунт нужен, чтобы чаты, настройки и выбранная модель были твоими. Вход занимает 20 секунд.</p>
+      <p style="color:var(--text-dim);font-size:12.5px">Без аккаунта всё тоже работает: история хранится в этом браузере.</p>
+    </div>
+    <div class="auth-main">
+      <div class="auth-dots" id="authDots"><i class="on"></i><i></i><i></i></div>
+
+      <!-- 1. выбор способа -->
+      <div class="auth-step on" id="authHome">
+        <h3 class="auth-title">Вход или регистрация</h3>
+        <p class="auth-sub">Один аккаунт для чатов, настроек и моделей.</p>
+        <button class="auth-method g" data-method="google">
+          <span class="am-ic"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.6z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.7-2.9c-1 .7-2.3 1.1-3.6 1.1-2.8 0-5.2-1.9-6-4.4H2.2v3A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M6 14.1a6.6 6.6 0 0 1 0-4.2v-3H2.2a11 11 0 0 0 0 10.2l3.8-3z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3 .6 4.1 1.6l3.2-3.2A11 11 0 0 0 2.2 6.9l3.8 3c.8-2.5 3.2-4.5 6-4.5z"/></svg></span>
+          <span><b>Продолжить с Google</b><small>быстро, без пароля</small></span>
+        </button>
+        <button class="auth-method gh" data-method="github">
+          <span class="am-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.9 10.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.7 1.2 3.3.9.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11 11 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 23.5 12A11.5 11.5 0 0 0 12 .5z"/></svg></span>
+          <span><b>Продолжить с GitHub</b><small>для тех, у кого есть репозиторий</small></span>
+        </button>
+        <button class="auth-method mail" data-method="email">
+          <span class="am-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg></span>
+          <span><b>Почта и код</b><small>пришлём код на почту — без пароля</small></span>
+        </button>
+        <button class="auth-method" data-method="phone">
+          <span class="am-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18.5h4"/></svg></span>
+          <span><b>Номер телефона</b><small>код придёт в SMS</small></span>
+        </button>
+        <button class="auth-method" data-method="pass">
+          <span class="am-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+          <span><b>Пароль и почта</b><small>или ник — классический вход</small></span>
+        </button>
+        <div class="auth-note" id="authModeNote"></div>
+      </div>
+
+      <!-- 2. почта -->
+      <div class="auth-step" id="authEmail">
+        <button class="auth-back" data-back>← Назад</button>
+        <h3 class="auth-title">Вход по почте</h3>
+        <p class="auth-sub">Пришлём код из 6 цифр. Пароль не нужен.</p>
+        <div class="auth-field"><label>Почта</label><input id="authEmailInput" type="email" placeholder="you@example.com" autocomplete="email"></div>
+        <button class="auth-btn" id="authEmailSend">Получить код</button>
+        <p class="auth-err" id="authEmailErr"></p>
+        <div id="authEmailCodeBox" style="display:none">
+          <div class="auth-field"><label>Код из письма</label><input id="authCodeInput" class="auth-code" inputmode="numeric" maxlength="6" placeholder="••••••"></div>
+          <button class="auth-btn" id="authCodeCheck">Войти</button>
+          <div class="auth-row"><button class="auth-link" id="authCodeResend">Отправить код заново</button></div>
+        </div>
+        <div class="auth-note" id="authEmailNote"></div>
+      </div>
+
+      <!-- 3. телефон -->
+      <div class="auth-step" id="authPhone">
+        <button class="auth-back" data-back>← Назад</button>
+        <h3 class="auth-title">Вход по номеру</h3>
+        <p class="auth-sub">Пришлём код в SMS.</p>
+        <div class="auth-field"><label>Номер телефона</label><input id="authPhoneInput" type="tel" placeholder="+7 900 000-00-00" autocomplete="tel"></div>
+        <button class="auth-btn" id="authPhoneSend">Получить код</button>
+        <p class="auth-err" id="authPhoneErr"></p>
+        <div id="authPhoneCodeBox" style="display:none">
+          <div class="auth-field"><label>Код из SMS</label><input id="authPhoneCode" class="auth-code" inputmode="numeric" maxlength="6" placeholder="••••••"></div>
+          <button class="auth-btn" id="authPhoneCheck">Войти</button>
+        </div>
+        <div class="auth-note" id="authPhoneNote"></div>
+      </div>
+
+      <!-- 4. пароль -->
+      <div class="auth-step" id="authPass">
+        <button class="auth-back" data-back>← Назад</button>
+        <h3 class="auth-title" id="authPassTitle">Вход по паролю</h3>
+        <p class="auth-sub" id="authPassSub">Почта или ник и пароль.</p>
+        <div class="auth-field"><label>Почта или ник</label><input id="authLogin" placeholder="you@example.com" autocomplete="username"></div>
+        <div class="auth-field"><label>Пароль</label><input id="authPassword" type="password" placeholder="минимум 6 символов" autocomplete="current-password"></div>
+        <button class="auth-btn" id="authPassSubmit">Войти</button>
+        <p class="auth-err" id="authPassErr"></p>
+        <div class="auth-row"><button class="auth-link" id="authPassToggle">Нет аккаунта? Зарегистрироваться</button></div>
+        <div class="auth-note" id="authPassNote"></div>
+      </div>
+
+      <!-- 5. google / github -->
+      <div class="auth-step" id="authOauth">
+        <button class="auth-back" data-back>← Назад</button>
+        <h3 class="auth-title" id="authOauthTitle">Вход через Google</h3>
+        <p class="auth-sub">Подтверди, что это ты — и аккаунт готов.</p>
+        <div class="auth-field"><label>Как тебя зовут?</label><input id="authOauthName" placeholder="Имя или ник"></div>
+        <button class="auth-btn" id="authOauthGo">Продолжить</button>
+        <p class="auth-err" id="authOauthErr"></p>
+        <div class="auth-note" id="authOauthNote"></div>
+      </div>
+
+      <!-- 6. готово -->
+      <div class="auth-step" id="authDone">
+        <h3 class="auth-title">Готово</h3>
+        <p class="auth-sub">Аккаунт создан. Сейчас выберешь модель — и начнём.</p>
+        <button class="auth-btn" id="authDoneGo">Выбрать модель</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Выбор модели при регистрации ================= -->
+<div id="onboardModal" aria-hidden="true">
+  <div class="ob-card">
+    <h3 class="auth-title">Какую модель выбрать?</h3>
+    <p class="auth-sub">Можно поменять в любой момент — в настройках.</p>
+    <div class="ob-grid" id="obGrid"></div>
+    <button class="auth-btn" id="obFinish">Продолжить с этой моделью</button>
   </div>
 </div>
 
