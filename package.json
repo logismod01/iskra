@@ -1,0 +1,15 @@
+{
+  "name": "iskra",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Искра — ИИ-ассистент в одном файле: чат, учёба, код и доступ по ключу",
+  "scripts": {
+    "test": "node tests/access.test.mjs && node tests/smoke.test.mjs",
+    "test:access": "node tests/access.test.mjs",
+    "test:smoke": "node tests/smoke.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  },
+  "license": "ISC"
+}
