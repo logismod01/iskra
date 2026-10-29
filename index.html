@@ -1267,6 +1267,33 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .auth-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; margin-left: 8px; letter-spacing: .03em; }
 .auth-badge.on { background: rgba(84,180,120,.16); color: #7ed6a1; }
 .auth-badge.off { background: rgba(255,255,255,.07); color: var(--text-dim); }
+
+/* Puter и проверка ошибок */
+.puter-list { margin: 10px 0 14px; padding-left: 18px; font-size: 13.5px; line-height: 1.6; color: var(--text); }
+.puter-list li { margin-bottom: 6px; }
+.proof-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; background: var(--bg-soft-2); font-size: 13.5px; }
+.proof-fix { color: #7ed6a1; }
+.proof-bad { color: #ff8a7a; text-decoration: line-through; }
+.proof-rule { font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.45; }
+.proof-ok { color: #7ed6a1; font-size: 13.5px; }
+/* Формулы */
+.math-frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; font-size: .92em; }
+.math-frac .num { border-bottom: 1px solid currentColor; padding: 0 3px; }
+.math-frac .den { padding: 0 3px; }
+.math-sqrt { border-top: 1px solid currentColor; padding: 0 2px; margin-left: 1px; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 1.06em; overflow-x: auto; }
+.proof-count { font-weight: 600; margin-bottom: 8px; display: block; }
+
+/* ===== Поиск: подсветка и фрагменты ===== */
+.chat-row.find { flex-wrap: wrap; align-items: flex-start; }
+.chat-row.find .find-snip { flex-basis: 100%; font-size: 11.5px; color: var(--text-dim); line-height: 1.45; margin: 4px 0 0 22px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.chat-row.find mark, .msg mark { background: rgba(226,122,95,.32); color: var(--text); border-radius: 3px; padding: 0 2px; }
+.sb-empty { padding: 20px 14px; color: var(--text-dim); font-size: 13px; text-align: center; line-height: 1.5; }
+
+/* Заголовок модалки с кнопкой закрытия */
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.modal-head h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.modal-body { padding-top: 4px; }
 </style>
 </head>
 <body>
@@ -1390,6 +1417,12 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
               </svg>
             </button>
             <input type="file" id="fileInput" accept="image/*" multiple hidden />
+            <button type="button" class="tool-btn" id="proofBtn" title="Проверка ошибок — работает без интернета">
+              <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h16"/><path d="m6 16 9.5-9.5a2.1 2.1 0 0 1 3 3L9 19l-4 1z"/><path d="m13.5 7.5 3 3"/>
+              </svg>
+            </button>
+
             <button type="button" class="tool-btn" id="skillsBtn" title="Навыки — готовые команды">
               <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>
@@ -3000,6 +3033,7 @@ let lastModelVision = guessVision(settings.model);
     lastModelVision = guessVision(settings.model);
     saveSettings();
   }
+  if (typeof settings.puterExplained !== "boolean") settings.puterExplained = false;
   if (!MODES[settings.mode]) settings.mode = "chat";
   if (settings.proUntil && settings.proUntil < Date.now() && settings.edition === "pro") {
     settings.edition = "free"; settings.mat = false;
@@ -3108,6 +3142,65 @@ function applyTheme(name, ev) {
 }
 
 /* ---------- Markdown-рендер ---------- */
+
+/* ---------- Формулы без интернета: свой рендер ---------- */
+const MATH_SYMBOLS = {
+  "\\pi": "π", "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\delta": "δ", "\\Delta": "Δ",
+  "\\epsilon": "ε", "\\theta": "θ", "\\lambda": "λ", "\\mu": "μ", "\\nu": "ν", "\\rho": "ρ",
+  "\\sigma": "σ", "\\Sigma": "Σ", "\\tau": "τ", "\\phi": "φ", "\\omega": "ω", "\\Omega": "Ω",
+  "\\cdot": "·", "\\times": "×", "\\div": "÷", "\\pm": "±", "\\le": "≤", "\\leq": "≤",
+  "\\ge": "≥", "\\geq": "≥", "\\ne": "≠", "\\neq": "≠", "\\approx": "≈", "\\equiv": "≡",
+  "\\infty": "∞", "\\to": "→", "\\Rightarrow": "⇒", "\\in": "∈", "\\notin": "∉",
+  "\\subset": "⊂", "\\cup": "∪", "\\cap": "∩", "\\emptyset": "∅", "\\int": "∫", "\\iint": "∬",
+  "\\oint": "∮", "\\sum": "∑", "\\prod": "∏", "\\partial": "∂", "\\angle": "∠", "\\perp": "⊥",
+  "\\parallel": "∥", "\\triangle": "△", "\\sin": "sin", "\\cos": "cos", "\\tan": "tan",
+  "\\cot": "cot", "\\log": "log", "\\ln": "ln", "\\lg": "lg", "\\lim": "lim", "\\max": "max", "\\min": "min"
+};
+
+function mathEscape(t) {
+  return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* Преобразует LaTeX в HTML без внешних библиотек */
+function texToHtml(src) {
+  let out = String(src);
+  for (let i = 0; i < 4; i++) {
+    const before = out;
+    out = out.replace(/\\[dt]?frac\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g,
+      (_, a, b) => `<span class="math-frac"><span class="num">${texToHtml(a)}</span><span class="den">${texToHtml(b)}</span></span>`);
+    if (out === before) break;
+  }
+  out = out.replace(/\\sqrt\s*\[([^\]]*)\]\s*\{([^{}]*)\}/g, (_, n, a) => `<sup>${texToHtml(n)}</sup><span class="math-sqrt">${texToHtml(a)}</span>`);
+  out = out.replace(/\\sqrt\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g, (_, a) => `<span class="math-sqrt">${texToHtml(a)}</span>`);
+  out = out.replace(/\^\{([^{}]*)\}/g, (_, a) => `<sup>${texToHtml(a)}</sup>`);
+  out = out.replace(/_\{([^{}]*)\}/g, (_, a) => `<sub>${texToHtml(a)}</sub>`);
+  out = out.replace(/\^([A-Za-z0-9+\-])/g, "<sup>$1</sup>");
+  out = out.replace(/_([A-Za-z0-9+\-])/g, "<sub>$1</sub>");
+  const symKeys = Object.keys(MATH_SYMBOLS).sort((a, b) => b.length - a.length);
+  for (const k of symKeys) out = out.split(k).join(MATH_SYMBOLS[k]);
+  out = out.replace(/\\left|\\right|\\displaystyle|\\textstyle/g, "");
+  out = out.replace(/\\text\s*\{([^{}]*)\}/g, "$1");
+  out = out.replace(/\\mathrm\s*\{([^{}]*)\}/g, "$1");
+  out = out.replace(/\\\\/g, "<br>");
+  out = out.replace(/\\[a-zA-Z]+/g, "");
+  out = out.replace(/[{}]/g, "");
+  return out;
+}
+
+/* Применяет рендер к готовому HTML, не трогая код */
+function applyMath(html) {
+  const parts = String(html).split(/(<pre[\s\S]*?<\/pre>|<code[\s\S]*?<\/code>)/gi);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) return part;
+    let t = part;
+    t = t.replace(/\\\[([\s\S]+?)\\\]/g, (_, m) => `<span class="math-block">${texToHtml(mathEscape(m.trim()))}</span>`);
+    t = t.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => `<span class="math-block">${texToHtml(mathEscape(m.trim()))}</span>`);
+    t = t.replace(/\\\(([\s\S]+?)\\\)/g, (_, m) => texToHtml(mathEscape(m.trim())));
+    t = t.replace(/(^|[\s>(])\$([^$\n]{1,200})\$/g, (_, pre, m) => pre + texToHtml(mathEscape(m.trim())));
+    return t;
+  }).join("");
+}
+
 function renderMarkdown(md) {
   let html = md;
   html = html.replace(/\r\n/g, "\n");
@@ -3159,7 +3252,7 @@ function renderMarkdown(md) {
     const id = "cb_" + Math.random().toString(36).slice(2, 8);
     return `<pre data-lang="${esc(lang)}"><div class="code-head"><span class="lang">${esc(lang)}</span><button data-copy="${id}">Копировать</button></div><code id="${id}">${esc(code)}</code></pre>`;
   });
-  return html;
+  return applyMath(html);
 }
 
 
@@ -3254,10 +3347,76 @@ function titleFromText(text) {
   const t = String(text || "").replace(/\s+/g, " ").trim();
   return t.length > 48 ? t.slice(0, 48) + "…" : (t || "Новый чат");
 }
+
+/* Поиск по содержимому переписки, а не только по названиям */
+function chatSearchHit(chat, q) {
+  const needle = q.toLowerCase();
+  const msgs = chat.messages || [];
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const text = String(msgs[i].content || "");
+    const idx = text.toLowerCase().indexOf(needle);
+    if (idx >= 0) {
+      const from = Math.max(0, idx - 40);
+      const to = Math.min(text.length, idx + q.length + 60);
+      return {
+        snippet: (from > 0 ? "…" : "") + text.slice(from, to).replace(/\s+/g, " ") + (to < text.length ? "…" : ""),
+        role: msgs[i].role,
+        index: i,
+        before: text.slice(from, idx),
+        match: text.slice(idx, idx + q.length),
+        after: text.slice(idx + q.length, to)
+      };
+    }
+  }
+  return null;
+}
+
+function escRe(t) { return String(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
 function renderChatsList() {
   const list = $("#chatsList");
   list.innerHTML = "";
   const q = chatQuery.trim().toLowerCase();
+
+  // режим поиска: ищем и в названиях, и в тексте сообщений
+  if (q.length >= 2) {
+    const found = [];
+    for (const c of Object.values(chats)) {
+      const inTitle = (c.title || "").toLowerCase().includes(q);
+      const hit = chatSearchHit(c, q);
+      if (inTitle || hit) found.push({ chat: c, hit, inTitle });
+    }
+    found.sort((a, b) => (b.chat.created || 0) - (a.chat.created || 0));
+    if (!found.length) {
+      list.innerHTML = `<div class="sb-empty">Ничего не нашлось по «${esc(chatQuery.trim())}».<br>Попробуй другое слово.</div>`;
+      return;
+    }
+    const head = document.createElement("div");
+    head.className = "sb-group-title";
+    head.textContent = `Найдено: ${found.length}`;
+    list.appendChild(head);
+    for (const f of found) {
+      const row = document.createElement("div");
+      row.className = "chat-row find" + (f.chat.id === currentChatId ? " active" : "");
+      const snip = f.hit
+        ? `${esc(f.hit.before)}<mark>${esc(f.hit.match)}</mark>${esc(f.hit.after)}`
+        : "совпадение в названии";
+      row.innerHTML = `${ic("chat", 16)}<span class="title">${esc(f.chat.title)}</span><span class="find-snip">${snip}</span>`;
+      row.addEventListener("click", () => {
+        currentChatId = f.chat.id;
+        renderChatsList();
+        renderMessages();
+        closeSidebar();
+        setTimeout(() => {
+          const marks = document.querySelectorAll("#messages mark, .msg mark");
+          if (marks.length) marks[0].scrollIntoView({ block: "center", behavior: "smooth" });
+        }, 60);
+      });
+      list.appendChild(row);
+    }
+    return;
+  }
+
   const entries = Object.values(chats)
     .sort((a, b) => b.created - a.created)
     .filter(c => !q || (c.title || "").toLowerCase().includes(q));
@@ -3463,7 +3622,38 @@ async function puterStream(payload, onDelta, signal) {
   }
 }
 
+
+/* ---------- Объяснение про Puter (чтобы окно не пугало) ---------- */
+function askPuterFirst() {
+  return new Promise((resolve) => {
+    const m = $("#puterModal");
+    if (!m) return resolve(true);
+    m.classList.add("open");
+    const done = (v) => { m.classList.remove("open"); resolve(v); };
+    const go = $("#puterGo"), skip = $("#puterSkip"), cl = $("#puterClose");
+    if (go) go.onclick = () => done(true);
+    if (skip) skip.onclick = () => { done(false); useNoKeyMode(); };
+    if (cl) cl.onclick = () => done(false);
+    m.onclick = (e) => { if (e.target === m) done(false); };
+  });
+}
+
+/* «Без Puter» — переключаемся на бесплатный движок без входа */
+function useNoKeyMode() {
+  settings.provider = "demo";
+  const demoModels = (PROVIDERS.demo && PROVIDERS.demo.models) || [];
+  settings.model = (demoModels[0] && demoModels[0].id) || "openai-fast";
+  lastModelVision = false;
+  saveSettings(); syncProviderUI && syncProviderUI(); updateModelChip && updateModelChip();
+  toast("Работаю на своих знаниях и бесплатном движке без входа", "ok");
+}
 async function puterSignIn() {
+  if (!settings.puterExplained) {
+    const go = await askPuterFirst();
+    if (!go) return false;
+    settings.puterExplained = true;
+    saveSettings();
+  }
   try {
     const puter = await loadPuter();
     await puter.auth.signIn();
@@ -4434,6 +4624,9 @@ async function generateImage(prompt, attempt = 0) {
     return;
   } catch (e) {
     const msg = (e && (e.message || e.error?.message)) || "";
+    if (e && e.kind === "puter-auth" && !settings.puterExplained) {
+      await puterSignIn();
+    }
     if (e && e.kind === "puter-auth") {
       toast("Качественные картинки — после входа в Puter (⚙ → «Войти в Puter»). Пока рисую запасным движком.", "err");
     } else if (/auth|sign|login|permission|credit|quota/i.test(msg)) {
@@ -5494,6 +5687,119 @@ function renderProPanel() {
     }
   });
 }
+
+/* ---------- Проверка ошибок без интернета ---------- */
+/* Внимание: \b в JS не работает с кириллицей — используем (^|[^а-яё]) и (?![а-яё]) */
+const PROOF_WORDS = {
+  "щас": "сейчас", "чё": "что", "шо": "что", "ихний": "их", "евонный": "его",
+  "конешно": "конечно", "ложить": "класть", "покласть": "положить", "вообщем": "в общем",
+  "впринципе": "в принципе", "втечение": "в течение", "какбудто": "как будто",
+  "токо": "только", "тока": "только", "че": "что", "нету": "нет",
+  "извени": "извини", "извените": "извините", "будующее": "будущее", "будующем": "будущем",
+  "карова": "корова", "малако": "молоко", "харашо": "хорошо", "здарово": "здорово",
+  "одёжа": "одежда", "ездию": "езжу", "ездиют": "ездят", "ездиешь": "ездишь",
+  "небыло": "не было", "немогу": "не могу", "нехочу": "не хочу", "небуду": "не буду",
+  "незнаю": "не знаю", "неумею": "не умею"
+};
+
+const PRE = "(^|[^а-яёa-z])";   // начало слова для кириллицы
+const POST = "(?![а-яёa-z])";
+
+function ruleReplace(text, re, fix, why, issues) {
+  return text.replace(re, (...args) => {
+    const m = args[0];
+    const fixed = String(fix(m) ?? m);
+    if (fixed !== m && issues.length < 40) {
+      const bad = m.trim(), good = fixed.trim();
+      if (bad !== good) issues.push({ bad, good, why });
+    }
+    return fixed;
+  });
+}
+
+function offlineProofread(text) {
+  let out = String(text || "");
+  const issues = [];
+
+  // -тся / -ться
+  out = ruleReplace(out, new RegExp(PRE + "(он|она|оно|они|кто|что|это)\\s+([а-яё]+)ться" + POST, "gi"),
+    (m) => m.replace(/ться$/, "тся"),
+    "-тся пишется, когда вопрос «что делает?» — в вопросе нет мягкого знака.", issues);
+  out = ruleReplace(out, new RegExp(PRE + "(надо|можно|нельзя|хочу|хочет|хотим|будет|будут|буду|начал|начала|стал|стала|должен|должна|пора)\\s+([а-яё]+)тся" + POST, "gi"),
+    (m) => m.replace(/тся$/, "ться"),
+    "-ться пишется, когда вопрос «что делать?» — в вопросе есть мягкий знак.", issues);
+
+  // жи / ши, ча / ща
+  out = ruleReplace(out, new RegExp(PRE + "[а-яё]*?(?:жы|шы)[а-яё]*" + POST, "gi"),
+    (m) => m.replace(/жы/gi, "жи").replace(/шы/gi, "ши"),
+    "После ж и ш пишется И: жи, ши (жизнь, машина).", issues);
+  out = ruleReplace(out, new RegExp(PRE + "[а-яё]*?(?:чя|щя|чю|щю)[а-яё]*" + POST, "gi"),
+    (m) => m.replace(/чя/gi, "ча").replace(/щя/gi, "ща").replace(/чю/gi, "чу").replace(/щю/gi, "щу"),
+    "После ч и щ пишутся А и У: ча, ща, чу, щу.", issues);
+
+  // слова-ошибки
+  for (const [bad, good] of Object.entries(PROOF_WORDS)) {
+    out = ruleReplace(out, new RegExp(PRE + bad + POST, "gi"),
+      (m) => m.replace(new RegExp(bad + "$", "i"), good),
+      "Правильно: «" + good + "».", issues);
+  }
+
+  // пробелы и знаки
+  out = ruleReplace(out, /\s+([,.:;!?])/g, (m) => m.trim(),
+    "Перед знаком препинания пробел не ставится.", issues);
+  out = ruleReplace(out, /([,.;:!?])([А-Яа-яЁёA-Za-z])/g, (m) => m[0] + " " + m.slice(1),
+    "После знака препинания нужен пробел.", issues);
+
+  // повтор слова
+  out = ruleReplace(out, new RegExp(PRE + "([а-яё]{2,})\\s+\\2" + POST, "gi"),
+    (m) => m.replace(/\s+([а-яё]{2,})$/, ""),
+    "Слово повторено дважды.", issues);
+
+  // скобки, кавычки, заглавная буква
+  const open = (out.match(/\(/g) || []).length, close = (out.match(/\)/g) || []).length;
+  if (open !== close) issues.push({ bad: "скобки", good: "закрой скобку", why: "Открывающих и закрывающих скобок разное число." });
+  const quotes = (out.match(/"/g) || []).length;
+  if (quotes % 2) issues.push({ bad: "кавычки", good: "закрой кавычку", why: "Кавычек нечётное число — одна не закрыта." });
+  const sent = out.match(/[.!?]\s+([а-яё])/);
+  if (sent) issues.push({ bad: ". " + sent[1], good: ". " + sent[1].toUpperCase(), why: "Новое предложение начинается с заглавной буквы." });
+  const first = out.match(/^\s*([а-яё])/);
+  if (first) issues.push({ bad: first[1] + "…", good: first[1].toUpperCase() + "…", why: "Текст начинается с заглавной буквы." });
+
+  return { text: out, issues, changed: out !== text };
+}
+
+function renderProofResult(res) {
+  const box = $("#proofResult");
+  if (!box) return;
+  if (!res.issues.length) {
+    box.innerHTML = `<p class="proof-ok">${ic("check", 16)} Явных ошибок по моим правилам не нашла. Если нужна полная проверка запятых и смысла — нажми «Проверить с Искрой».</p>`;
+    return;
+  }
+  box.innerHTML = `<span class="proof-count">Нашла ${res.issues.length} ${res.issues.length === 1 ? "ошибку" : res.issues.length < 5 ? "ошибки" : "ошибок"}:</span>` +
+    res.issues.map(i => `<div class="proof-item">
+      <span class="proof-bad">${esc(i.bad)}</span> → <span class="proof-fix">${esc(i.good)}</span>
+      <div class="proof-rule">${esc(i.why)}</div>
+    </div>`).join("") +
+    `<button class="auth-btn ghost" id="proofCopy" style="margin-top:6px">Скопировать исправленный текст</button>`;
+  const cp = $("#proofCopy");
+  if (cp) cp.onclick = () => {
+    navigator.clipboard.writeText(res.text).then(() => { cp.textContent = "Скопировано"; setTimeout(() => (cp.textContent = "Скопировать исправленный текст"), 1400); }).catch(() => {});
+  };
+}
+
+function openProof() {
+  $("#proofModal").classList.add("open");
+  setTimeout(() => $("#proofText") && $("#proofText").focus(), 100);
+}
+
+function proofWithAi() {
+  const text = ($("#proofText").value || "").trim();
+  if (text.length < 3) { toast("Вставь текст для проверки", "err"); return; }
+  $("#proofModal").classList.remove("open");
+  $("#input").value = "Проверь текст на ошибки: орфография, пунктуация, речь. Покажи исправленный вариант и список ошибок с правилами. Не переписывай стиль.\n\n" + text;
+  autoGrowInput && autoGrowInput();
+  $("#input").focus();
+}
 /* ---------- События ---------- */
 
 /* ---------- Режимы: отрисовка и переключение ---------- */
@@ -5898,6 +6204,17 @@ function wire() {
     settings.knowledgeOn = e.target.checked; saveSettings(); updateKnowledgeChip();
   });
 
+  // Проверка ошибок
+  $("#proofClose") && $("#proofClose").addEventListener("click", () => $("#proofModal").classList.remove("open"));
+  $("#proofModal") && $("#proofModal").addEventListener("click", (e) => { if (e.target.id === "proofModal") $("#proofModal").classList.remove("open"); });
+  $("#proofLocal") && $("#proofLocal").addEventListener("click", () => {
+    const res = offlineProofread($("#proofText").value || "");
+    renderProofResult(res);
+    $("#proofResult").dataset.fixed = res.text;
+  });
+  $("#proofAi") && $("#proofAi").addEventListener("click", proofWithAi);
+  $("#proofBtn") && $("#proofBtn").addEventListener("click", openProof);
+
   // Поиск по чатам
   $("#chatSearch") && $("#chatSearch").addEventListener("input", (e) => {
     chatQuery = e.target.value;
@@ -6117,6 +6434,42 @@ document.addEventListener("DOMContentLoaded", wire);
 
 <!-- ================= Аккаунт ================= -->
 <div id="profileMenu"></div>
+
+<!-- Объяснение про Puter -->
+<div id="puterModal" class="modal-bg">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3>Что это за окно Puter</h3><button class="icon-btn" id="puterClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <p class="auth-p">Окно, которое откроется дальше — <b>не Искра</b>. Это вход в <b>Puter</b>: бесплатный сервис, через который Искра получает сильные модели (GPT, Claude, Gemini) без наших ключей.</p>
+      <ul class="puter-list">
+        <li><b>Деньги не нужны</b>, карту не просит.</li>
+        <li>Проще всего нажать там <b>Sign up with Google</b> — вход в один клик.</li>
+        <li>Логин и пароль от Искры Puter не видит и не получает.</li>
+        <li>Можно не входить: тогда Искра отвечает на своей базе знаний — быстро, но короче.</li>
+      </ul>
+      <button class="auth-btn" id="puterGo">Продолжить — откроется окно Puter</button>
+      <button class="auth-btn ghost" id="puterSkip" style="margin-top:8px">Без Puter — отвечать на своих знаниях</button>
+      <p class="acct-note" style="margin-top:12px">Это окно больше не появится, если нажмёшь «Продолжить» — запомню.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Проверка ошибок -->
+<div id="proofModal" class="modal-bg">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head"><h3>Проверка ошибок</h3><button class="icon-btn" id="proofClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <p class="auth-p">Вставь текст — найду ошибки и объясню правило. Проверка правил работает <b>без интернета</b>.</p>
+      <textarea id="proofText" class="auth-input" rows="7" placeholder="Вставь сюда сочинение или сообщение…" style="width:100%;resize:vertical;font-family:inherit"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="auth-btn" id="proofLocal" style="flex:1">Проверить без интернета</button>
+        <button class="auth-btn ghost" id="proofAi" style="flex:1">Проверить с Искрой</button>
+      </div>
+      <div id="proofResult" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
 <div id="proModal" class="modal-bg">
   <div class="modal" style="max-width:520px">
     <div class="modal-head"><h3>Искра Pro</h3><button class="icon-btn" id="proClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
