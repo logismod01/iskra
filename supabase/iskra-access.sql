@@ -45,6 +45,8 @@ create table if not exists public.iskra_keys (
 -- для уже созданных баз: добавить колонку плана
 alter table public.iskra_keys add column if not exists plan text not null default 'day';
 create index if not exists iskra_keys_client_idx on public.iskra_keys (client_code);
+-- правило «один аккаунт — один ключ» проверяется в iskra_issue_key,
+-- а этот индекс не даёт случайно выдать два одинаковых ключа на один код
 alter table public.iskra_keys enable row level security;
 revoke all on public.iskra_keys from anon;
 revoke all on public.iskra_keys from authenticated;
@@ -83,12 +85,16 @@ as $$
 $$;
 
 -- ---------- Выдать ключ (только владелец, по паролю) ----------
+-- новая версия принимает ещё p_force; старую пятиаргументную убираем,
+-- иначе вызов с пятью аргументами станет неоднозначным
+drop function if exists public.iskra_issue_key(text, text, text, text, int);
 create or replace function public.iskra_issue_key(
   p_secret text,
   p_client text,
   p_label text default null,
   p_plan text default 'day',
-  p_hours int default null
+  p_hours int default null,
+  p_force boolean default false
 )
 returns jsonb
 language plpgsql security definer
@@ -102,6 +108,8 @@ declare
   v_forever boolean := false;
   v_hex text;
   v_key text;
+  v_active int;
+  v_force boolean := coalesce(p_force, false);
 begin
   select admin_secret into v_secret from public.iskra_config where id = 1;
   if v_secret is null then
@@ -112,6 +120,22 @@ begin
   end if;
   if not public.iskra_client_ok(v_cl) then
     return jsonb_build_object('ok', false, 'error', 'Код клиента не по формату 123456-AB12CD-word');
+  end if;
+
+  -- один аккаунт = один код = один ключ.
+  -- Второй ключ на тот же код выдаём только если прежний кончился или отозван.
+  select count(*) into v_active
+    from public.iskra_keys k
+   where lower(k.client_code) = lower(v_cl)
+     and not k.revoked
+     and (k.plan = 'forever'
+          or (k.expires_at is not null and k.expires_at > now())
+          or (k.activated_at is null and k.created_at + make_interval(hours => k.hours) > now()));
+  if v_active > 0 and not v_force then
+    return jsonb_build_object(
+      'ok', false,
+      'error', 'У этого кода уже есть активный ключ (' || v_active || '). Один аккаунт — один ключ. Новый можно выдать после окончания или отзыва старого.'
+    );
   end if;
 
   -- тарифы: day / month / year / forever (можно и свои часы)
@@ -295,7 +319,7 @@ end $$;
 
 -- ---------- Права на вызов ----------
 grant execute on function public.iskra_health() to anon, authenticated;
-grant execute on function public.iskra_issue_key(text, text, text, text, int) to anon, authenticated;
+grant execute on function public.iskra_issue_key(text, text, text, text, int, boolean) to anon, authenticated;
 grant execute on function public.iskra_activate_key(text, text) to anon, authenticated;
 grant execute on function public.iskra_access(text) to anon, authenticated;
 grant execute on function public.iskra_list_keys(text, int) to anon, authenticated;
@@ -309,7 +333,7 @@ returns jsonb
 language sql security definer
 set search_path = public, extensions
 as $$
-  select public.iskra_issue_key(p_secret, p_client, p_label, 'custom', p_hours)
+  select public.iskra_issue_key(p_secret, p_client, p_label, 'custom', p_hours, false)
 $$;
 grant execute on function public.iskra_issue_key(text, text, text, int) to anon, authenticated;
 
