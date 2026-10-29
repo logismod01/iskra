@@ -1391,34 +1391,33 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .access-chip:hover { border-color: var(--accent); color: var(--text); }
 .access-chip.on { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-soft-2)); }
 @media (max-width: 640px) { .access-chip { display: none; } }
-/* Тарифы Pro */
 /* ---------- 3D-мастерская ---------- */
 .mk-modal { max-width: 880px; width: 94vw; }
 .mk-badge { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   padding: 3px 8px; border-radius: 999px; background: var(--accent); color: #fff; margin-left: 8px; vertical-align: 3px; }
-.modal-hint { font-size: 13.5px; line-height: 1.55; color: var(--muted); margin: -6px 0 14px; }
+.modal-hint { font-size: 13.5px; line-height: 1.55; color: var(--text-dim); margin: -6px 0 14px; }
 .mk-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.mk-tab { border: 1px solid var(--line); background: var(--panel); color: var(--text);
+.mk-tab { border: 1px solid var(--line); background: var(--bg-soft-2); color: var(--text);
   padding: 6px 11px; border-radius: 999px; font-size: 13px; cursor: pointer; transition: .15s; }
 .mk-tab:hover { border-color: var(--accent); }
 .mk-tab.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .mk-wrap { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 16px; }
 .mk-canvas-box { position: relative; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
-  background: radial-gradient(circle at 50% 40%, var(--panel2, #1d1d20), var(--panel, #141416)); height: 260px; }
+  background: radial-gradient(circle at 50% 38%, var(--bg-soft-2), var(--bg-soft)); height: 260px; }
 .mk-canvas-box canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .mk-canvas-box canvas:active { cursor: grabbing; }
 .mk-hint { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center;
-  font-size: 11px; color: var(--muted); opacity: .75; pointer-events: none; }
+  font-size: 11px; color: var(--text-dim); opacity: .75; pointer-events: none; }
 .mk-field { margin-bottom: 9px; }
 .mk-field label { display: flex; justify-content: space-between; align-items: center;
-  font-size: 12.5px; color: var(--muted); margin-bottom: 3px; }
+  font-size: 12.5px; color: var(--text-dim); margin-bottom: 3px; }
 .mk-field label b { color: var(--accent); font-variant-numeric: tabular-nums; }
 .mk-field input[type=range] { width: 100%; accent-color: var(--accent); }
 .mk-field input[type=text] { width: 100%; padding: 8px 10px; border-radius: 10px;
   border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 13px; }
 .mk-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .mk-actions button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;
-  border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  border-radius: 10px; border: 1px solid var(--line); background: var(--bg-soft-2); color: var(--text);
   font-size: 13px; cursor: pointer; transition: .15s; }
 .mk-actions button:hover { border-color: var(--accent); }
 .mk-actions button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
@@ -1426,7 +1425,7 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
   border: 1px solid var(--line); background: var(--bg); color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.45; resize: vertical; }
 .mk-lock { text-align: center; padding: 26px 10px; }
-.mk-lock p { color: var(--muted); font-size: 13.5px; margin: 8px 0 14px; }
+.mk-lock p { color: var(--text-dim); font-size: 13.5px; margin: 8px 0 14px; }
 @media (max-width: 720px) {
   .mk-wrap { grid-template-columns: 1fr; }
   .mk-canvas-box { height: 210px; }
@@ -1434,10 +1433,10 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 
 /* Пресеты качества генерации */
 .gen-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-.gen-lab { font-size: 12px; color: var(--muted); min-width: 74px; text-transform: uppercase; letter-spacing: .04em; }
+.gen-lab { font-size: 12px; color: var(--text-dim); min-width: 74px; text-transform: uppercase; letter-spacing: .04em; }
 .gen-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .gen-chip { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line);
-  background: var(--panel); color: var(--text); font-size: 12.5px; cursor: pointer; transition: .15s; }
+  background: var(--bg-soft-2); color: var(--text); font-size: 12.5px; cursor: pointer; transition: .15s; }
 .gen-chip:hover:not(:disabled) { border-color: var(--accent); }
 .gen-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .gen-chip:disabled { opacity: .45; cursor: not-allowed; }
@@ -1452,26 +1451,6 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .plan-note { font-size: 10.5px; color: var(--text-dim); line-height: 1.35; flex: 1; }
 .plan-btn { margin-top: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px 8px; font-size: 12px; font-family: inherit; cursor: pointer; }
 .plan-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-/* 3D-мастерская */
-.mk-wrap { display: grid; grid-template-columns: 1fr; gap: 12px; }
-@media (min-width: 620px) { .mk-wrap { grid-template-columns: 240px 1fr; } }
-.mk-canvas-box { border: 1px solid var(--line); border-radius: 12px; background: var(--bg); overflow: hidden; position: relative; }
-.mk-canvas-box canvas { display: block; width: 100%; height: 220px; touch-action: none; cursor: grab; }
-.mk-canvas-box canvas:active { cursor: grabbing; }
-.mk-hint { position: absolute; bottom: 6px; left: 8px; font-size: 10.5px; color: var(--text-dim); pointer-events: none; }
-.mk-field { margin-bottom: 9px; }
-.mk-field label { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-dim); margin-bottom: 4px; }
-.mk-field input[type="range"] { width: 100%; accent-color: var(--accent); }
-.mk-field select, .mk-field input[type="number"] { width: 100%; background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 7px 9px; font-size: 13px; font-family: inherit; outline: none; }
-.mk-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-.mk-tab { padding: 5px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text-soft); font-size: 11.5px; font-family: inherit; cursor: pointer; }
-.mk-tab.on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
-.mk-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-.mk-actions button { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 8px 11px; font-size: 12.5px; font-family: inherit; cursor: pointer; }
-.mk-actions button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.mk-out { width: 100%; margin-top: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; color: var(--text-soft); font-family: var(--mono); font-size: 11px; padding: 9px; resize: vertical; min-height: 90px; }
-.mk-lock { padding: 14px; border: 1px dashed var(--accent); border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, var(--bg)); font-size: 13px; line-height: 1.55; }
 
 /* Браузер встроенной базы знаний */
 .kb-cats { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
