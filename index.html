@@ -1302,6 +1302,29 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .puter-help ol { margin: 8px 0 0; padding-left: 18px; }
 .puter-help li { margin-bottom: 6px; }
 .puter-help code { background: var(--bg-soft-2); padding: 1px 4px; border-radius: 4px; font-size: 11.5px; }
+
+/* ===== Консоль администратора ===== */
+.console-win { width: 100%; max-width: 720px; height: 78vh; display: flex; flex-direction: column;
+  background: #06090c; border: 1px solid #16303a; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 30px 90px rgba(0,0,0,.7), 0 0 0 1px rgba(80,255,180,.05) inset;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: #7dffb0; }
+.console-bar { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #0b1418; border-bottom: 1px solid #16303a; }
+.console-dots { display: flex; gap: 5px; }
+.console-dots i { width: 9px; height: 9px; border-radius: 50%; background: #24404a; display: block; }
+.console-dots i:nth-child(1) { background: #ff5f57; }
+.console-dots i:nth-child(2) { background: #ffbd2e; }
+.console-dots i:nth-child(3) { background: #28c840; }
+.console-title { flex: 1; text-align: center; font-size: 11.5px; letter-spacing: .18em; color: #4fa882; }
+.console-x { background: none; border: none; color: #4fa882; font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
+.console-out { flex: 1; overflow-y: auto; padding: 14px 16px; font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+.console-out .c-cmd { color: #7cc7ff; }
+.console-out .c-ok { color: #7dffb0; }
+.console-out .c-err { color: #ff7a6b; }
+.console-out .c-dim { color: #4a7a72; }
+.console-out .c-head { color: #ffd479; }
+.console-line { display: flex; align-items: center; gap: 8px; padding: 10px 16px 14px; border-top: 1px solid #16303a; background: #0b1418; }
+.console-prompt { font-size: 12.5px; color: #4fa882; white-space: nowrap; }
+.console-line input { flex: 1; background: none; border: none; outline: none; color: #7dffb0; font-family: inherit; font-size: 13px; caret-color: #7dffb0; }
 </style>
 </head>
 <body>
@@ -2468,6 +2491,282 @@ const KNOWLEDGE_PACK = {
 "title": "Валентность и формулы",
 "tags": "химия валентность формула составление индексы",
 "text": "Валентность: H — I, O — II, металлы I–III, Al — III, C — IV. Составление формулы: над элементами пишут валентности, находят наименьшее общее кратное, делят на валентность и получают индексы. Пример: Al(III) и O(II) → Al₂O₃."
+},
+{
+"id": "math-drobi",
+"title": "Дроби и действия с ними",
+"tags": "математика дроби числитель знаменатель общий знаменатель",
+"text": "Сложение: привести к общему знаменателю. 1/2 + 1/3 = 3/6 + 2/6 = 5/6. Умножение: 2/3 · 3/4 = 6/12 = 1/2. Деление: 2/3 : 4/5 = 2/3 · 5/4 = 10/12 = 5/6. Смешанное число 1 1/2 = 3/2."
+},
+{
+"id": "math-uravneniya",
+"title": "Линейные уравнения и задачи",
+"tags": "математика уравнение линейное перенос задачи",
+"text": "Линейное: ax + b = 0 → x = −b/a. При переносе через знак равенства знак меняется. Задачи на движение: S = v·t; на работу: A = p·t; на проценты и смеси — через пропорцию."
+},
+{
+"id": "math-ploshch-mnogoug",
+"title": "Площади многоугольников",
+"tags": "математика площадь ромб трапеция многоугольник",
+"text": "Ромб: S = (d₁·d₂)/2. Трапеция: S = ((a+b)/2)·h. Правильный шестиугольник: S = (3√3/2)a². Площадь через координаты — формула Гаусса (шнуровка)."
+},
+{
+"id": "math-okrug",
+"title": "Длина, площадь круга и дуги",
+"tags": "математика круг дуга сектор радиан",
+"text": "C = 2πr, S = πr². Длина дуги: l = (πr·α)/180. Площадь сектора: S = (πr²·α)/360. 1 радиан ≈ 57,3°, полный круг = 2π радиан."
+},
+{
+"id": "math-funkcii-osn",
+"title": "Основные функции и их графики",
+"tags": "математика функции линейная квадратичная показательная логарифмическая",
+"text": "Линейная y = kx+b (прямая), квадратичная y = ax²+bx+c (парабола), показательная y = aˣ (всегда положительна), логарифмическая y = logₐx (только x>0), y = k/x (гипербола), y = sin x и cos x (волны с периодом 2π)."
+},
+{
+"id": "math-sredniye",
+"title": "Средние величины и статистика",
+"tags": "математика среднее медиана мода размах",
+"text": "Среднее арифметическое — сумма, делённая на количество. Медиана — число посередине упорядоченного ряда. Мода — самое частое. Размах — максимум минус минимум."
+},
+{
+"id": "phys-plotnost",
+"title": "Плотность и масса",
+"tags": "физика плотность масса объём таблица",
+"text": "ρ = m/V. Вода 1000 кг/м³, лёд 900, алюминий 2700, железо 7800, свинец 11300, ртуть 13600, воздух 1,29. Тело тонет, если его плотность больше плотности жидкости."
+},
+{
+"id": "phys-rabota-energiya",
+"title": "Работа, энергия, мощность",
+"tags": "физика работа энергия мощность кпд",
+"text": "A = F·s·cos α. Мощность N = A/t (ватт). КПД = полезная работа / затраченная · 100 %. Закон сохранения энергии: энергия не появляется и не исчезает, только переходит."
+},
+{
+"id": "phys-teplovye",
+"title": "Тепловые явления",
+"tags": "физика теплота температура кипение плавление",
+"text": "Вода кипит при 100 °C (при нормальном давлении), замерзает при 0 °C. Удельная теплоёмкость воды 4200 Дж/(кг·°C). Влажность — содержание водяного пара; точка росы — температура конденсации."
+},
+{
+"id": "phys-davlenie-gazov",
+"title": "Газы и давление",
+"tags": "физика газ давление бойль мариотт",
+"text": "pV = const при постоянной температуре (Бойль — Мариотт). p/T = const при постоянном объёме. V/T = const при постоянном давлении. Нормальное атмосферное давление 101,3 кПа."
+},
+{
+"id": "phys-elektromagnit",
+"title": "Электромагнитные волны",
+"tags": "физика волны радиоволны свет спектр",
+"text": "Электромагнитные волны: радиоволны, микроволны, инфракрасное, видимый свет, ультрафиолет, рентген, гамма. Все летят со скоростью света. Частота и длина волны: c = λν."
+},
+{
+"id": "phys-prostye-mehanizmy",
+"title": "Простые механизмы",
+"tags": "физика рычаг блок наклонная плоскость",
+"text": "Рычаг в равновесии: F₁·l₁ = F₂·l₂ (правило моментов). Подвижный блок даёт выигрыш в силе в 2 раза, неподвижный меняет только направление. Наклонная плоскость: F = mg·sin α. «Золотое правило механики»: выигрыш в силе = проигрыш в пути."
+},
+{
+"id": "chem-stroenie-tablicy",
+"title": "Периоды и группы: как читать таблицу",
+"tags": "химия таблица менделеева период группа свойства",
+"text": "Слева направо в периоде металлические свойства ослабевают, неметаллические растут. Сверху вниз в группе — наоборот. Номер группы часто равен высшей валентности. Инертные газы — VIII группа."
+},
+{
+"id": "chem-oksidy",
+"title": "Оксиды, основания, кислоты, соли",
+"tags": "химия оксиды основания кислоты соли классификация",
+"text": "Основные оксиды — металлы I–II (Na₂O). Кислотные — неметаллы (CO₂, SO₃). Амфотерные — ZnO, Al₂O₃. Растворимые основания — щёлочи (NaOH, KOH). Кислоты: H₂SO₄, HCl, HNO₃, H₃PO₄. Соли: NaCl, CuSO₄, CaCO₃."
+},
+{
+"id": "chem-gorenie",
+"title": "Горение и окисление",
+"tags": "химия горение окисление кислород реакция",
+"text": "Горение — быстрая реакция с кислородом с выделением тепла и света. Метан: CH₄ + 2O₂ → CO₂ + 2H₂O. Медленное окисление — ржавление, дыхание. Безопасность: открытый огонь рядом с газом и легковоспламеняющимся — опасно, тушить по типу (вода не для масла и электрики)."
+},
+{
+"id": "chem-sole-rastvor",
+"title": "Растворимость и осадки",
+"tags": "химия растворимость осадок таблица реакция обмена",
+"text": "Все соли натрия, калия и аммония растворимы. Нитраты растворимы все. Хлориды нерастворимы: AgCl, PbCl₂. Сульфаты нерастворимы: BaSO₄, PbSO₄. Карбонаты нерастворимы, кроме Na, K, NH₄. Реакция идёт до конца, если выпадает осадок, выделяется газ или образуется вода."
+},
+{
+"id": "bio-krovoobrashchenie",
+"title": "Кровообращение",
+"tags": "биология кровообращение сердце круг кровеносный",
+"text": "Большой круг: левый желудочек → аорта → тело → полая вена → правое предсердие. Малый: правый желудочек → лёгкие → левое предсердие. Артерии несут кровь от сердца, вены — к сердцу. Давление нормального взрослого 120/80."
+},
+{
+"id": "bio-pishchevarenie",
+"title": "Пищеварение",
+"tags": "биология пищеварение желудок кишечник ферменты",
+"text": "Рот (слюна, амилаза) → пищевод → желудок (соляная кислота, пепсин) → тонкая кишка (основное всасывание, ворсинки) → толстая кишка → вывод. Печень вырабатывает жёлчь, поджелудочная — ферменты. Белки → аминокислоты, жиры → глицерин и жирные кислоты, углеводы → глюкоза."
+},
+{
+"id": "bio-nervnaya",
+"title": "Нервная система",
+"tags": "биология нервная система нейрон рефлекс мозг",
+"text": "Нейрон: тело, дендриты, аксон. Рефлекс — ответ на раздражение через рефлекторную дугу. Отделы: центральная (головной и спинной мозг) и периферическая. Полушария: лобная (мышление), теменная (ощущения), височная (слух, память), затылочная (зрение)."
+},
+{
+"id": "bio-immunitet",
+"title": "Иммунитет",
+"tags": "биология иммунитет антитела вакцина",
+"text": "Врождённый (кожа, слизистые, фагоциты) и приобретённый (антитела, лимфоциты). Вакцина — ослабленный возбудитель, даёт память без болезни. Антибиотики действуют на бактерии, на вирусы — нет. Группы крови: I (00), II (A), III (B), IV (AB); резус + или −."
+},
+{
+"id": "bio-razmnozhenie",
+"title": "Размножение и развитие",
+"tags": "биология размножение опыление семя развитие",
+"text": "У растений: опыление → оплодотворение → семя → плод. Вегетативное размножение — черенками, усами, клубнями. У животных: половое (гаметы) и бесполое (почкование, деление). Эмбриональное развитие: зигота → бластула → гаструла → органы."
+},
+{
+"id": "hist-sssr",
+"title": "История СССР",
+"tags": "история ссср ленин сталин оттепель перестройка",
+"text": "1917 — Октябрьская революция. 1922 — образование СССР. 1920–1930-е — индустриализация, коллективизация, репрессии. 1941–1945 — война. 1953 — смерть Сталина, 1956 — XX съезд, оттепель. 1961 — Гагарин. 1985 — перестройка Горбачёва. 1991 — распад."
+},
+{
+"id": "hist-usa",
+"title": "История США",
+"tags": "история сша независимость гражданская война депрессия",
+"text": "1607 — первое поселение Джеймстаун. 1776 — независимость. 1861–1865 — Гражданская война, отмена рабства (1865). 1929 — Великая депрессия, «Новый курс» Рузвельта. 1945 — атомные бомбардировки, ООН. 1963 — Мартин Лютер Кинг, борьба за права. 2008 — первый темнокожий президент."
+},
+{
+"id": "hist-kitay",
+"title": "История Китая",
+"tags": "история китай династии мао реформы",
+"text": "Династии: Цинь (221 до н. э., объединение), Хань, Тан, Сун, Мин, Цин (до 1912). 1912 — республика. 1949 — КНР, Мао Цзэдун. 1958 — «большой скачок». 1966–1976 — культурная революция. С 1978 — реформы Дэн Сяопина, экономический рост."
+},
+{
+"id": "hist-yaponiya",
+"title": "История Японии",
+"tags": "история япония сёгунат мэйдзи хиросима",
+"text": "Сёгунат Токугава (1603–1868) — закрытая страна. 1868 — реставрация Мэйдзи, модернизация. 1905 — победа в русско-японской войне. 1941 — Пёрл-Харбор, вступление во Вторую мировую. 1945 — Хиросима и Нагасаки. 1947 — мирная конституция, экономическое чудо."
+},
+{
+"id": "hist-india",
+"title": "История Индии",
+"tags": "история индия моголы ганди независимость",
+"text": "Индская цивилизация (около 2500 до н. э.). Империя Маурьев (Ашока, III в. до н. э.). Империя Великих Моголов (1526–1857). 1858 — британское владычество. 1947 — независимость, Ганди и ненасильственное сопротивление, разделение на Индию и Пакистан."
+},
+{
+"id": "hist-blizhny",
+"title": "Ближний Восток",
+"tags": "история османская империя арабы израиль",
+"text": "Арабский халифат VII–XIII вв. Османская империя 1299–1922, взятие Константинополя 1453. 1916 — соглашение Сайкса — Пико, раздел региона. 1948 — создание Израиля. 1979 — революция в Иране. Нефть определила экономику региона в XX веке."
+},
+{
+"id": "geo-rossiya-regiony",
+"title": "Россия: регионы и города",
+"tags": "география россия регионы города области",
+"text": "85 субъектов: области, края, республики, автономные округа, города федерального значения (Москва, Петербург, Севастополь). Крупнейшие города: Москва, Петербург, Новосибирск, Екатеринбург, Казань, Нижний Новгород, Челябинск, Омск, Самара, Иркутск."
+},
+{
+"id": "geo-pochvy",
+"title": "Почвы и природные ресурсы",
+"tags": "география почвы чернозём ресурсы",
+"text": "Типы почв: тундровые, подзолистые (тайга), серые лесные, чернозём (степи, самые плодородные), каштановые, бурые (пустыни). Ресурсы: лес, вода, нефть, газ, уголь, металлы. Чернозём — главное богатство степей России и Украины."
+},
+{
+"id": "geo-mira-rekordy",
+"title": "Рекорды Земли",
+"tags": "география рекорды самый большой глубина высота",
+"text": "Самая длинная река — Нил (6670 км) или Амазонка (по разным подсчётам). Самое большое озеро — Каспийское море. Самое глубокое — Байкал (1642 м). Самый большой остров — Гренландия. Самый высокий водопад — Анхель (979 м). Самая большая пустыня — Сахара (жаркая) и Антарктида (ледяная)."
+},
+{
+"id": "en-present-perfect",
+"title": "Present Perfect подробно",
+"tags": "английский present perfect have done",
+"text": "have/has + третья форма: I have finished. Когда важен результат к настоящему, без указания точного времени. Маркеры: already, yet, ever, never, just, since, for. Нельзя с yesterday, last week — для этого Past Simple."
+},
+{
+"id": "en-past",
+"title": "Past Simple и Past Continuous",
+"tags": "английский past simple continuous",
+"text": "Past Simple — законченное действие (I worked, I went). Past Continuous — процесс в прошлом (I was working). Вместе: I was working when he called (долгое — Continuous, короткое — Simple)."
+},
+{
+"id": "en-future",
+"title": "Способы сказать о будущем",
+"tags": "английский future will going to present continuous",
+"text": "will — решение сейчас, обещание (I will help). going to — план или предсказание по фактам (I am going to study). Present Continuous — договорённость (I am meeting Ann tomorrow). Present Simple — расписание (The train leaves at 5)."
+},
+{
+"id": "en-questions",
+"title": "Вопросы и отрицания",
+"tags": "английский вопрос отрицание do does did",
+"text": "Настоящее: Do you like? / He does not like. Прошедшее: Did you go? / I did not go. После do/does/did глагол в начальной форме. Специальные: What, Where, When, Why, How, Who + общий порядок. Вопрос к подлежащему — без do: Who came?"
+},
+{
+"id": "en-monolog",
+"title": "Как рассказать о себе",
+"tags": "английский рассказ о себе топик about myself",
+"text": "Каркас: My name is… I am … years old. I live in … with my family. I study at school, my favourite subjects are … In my free time I like … My dream is … I think I am … (kind, curious, hardworking)."
+},
+{
+"id": "inf-python",
+"title": "Python: база",
+"tags": "информатика python print input список цикл функция",
+"text": "Вывод: print(\"текст\"). Ввод: x = input() — всегда строка, превратить: int(input()). Условие: if a > b: … else: … Цикл: for i in range(5): … Список: a = [1,2,3], длина len(a). Функция: def f(x): return x*2."
+},
+{
+"id": "inf-bd",
+"title": "Базы данных",
+"tags": "информатика база данных sql таблица запрос",
+"text": "Таблица — набор строк и столбцов. Ключ — уникальное поле. SQL: SELECT * FROM таблица WHERE условие; INSERT INTO … VALUES …; UPDATE … SET …; DELETE FROM … WHERE …. Связи: один-к-одному, один-ко-многим, многие-ко-многим."
+},
+{
+"id": "inf-bezopasnost",
+"title": "Безопасность в сети",
+"tags": "информатика безопасность пароль фишинг",
+"text": "Пароль — длинный, разный на каждом сайте, лучше через менеджер паролей. Фишинг — поддельная страница, которая крадёт пароль; проверяй адрес в строке браузера. Двухфакторная защита — обязательна для почты. Не открывай вложения от неизвестных. Публичный Wi-Fi — без паролей и платежей."
+},
+{
+"id": "inf-office",
+"title": "Документы и таблицы",
+"tags": "информатика word excel презентация таблица формула",
+"text": "В таблицах: формула начинается с =; SUM(A1:A10), AVERAGE, MIN, MAX, IF(условие; да; нет). Абсолютная ссылка $A$1 не меняется при копировании. В тексте: стили заголовков, списки, оглавление. Презентация: меньше текста, больше схем."
+},
+{
+"id": "lit-pushkin",
+"title": "Пушкин: главное",
+"tags": "литература пушкин онегин капитанская дочка",
+"text": "«Евгений Онегин» — роман в стихах, «энциклопедия русской жизни», онегинская строфа. «Капитанская дочка» — исторический роман о Пугачёвском бунте. «Дубровский», «Повести Белкина», «Медный всадник». Лирика: «Я помню чудное мгновенье», «Зимнее утро»."
+},
+{
+"id": "lit-gogol",
+"title": "Гоголь: главное",
+"tags": "литература гоголь мёртвые души ревизор",
+"text": "«Мёртвые души» — поэма о Чичикове и скупке умерших крестьян, галерея помещиков (Манилов, Коробочка, Ноздрёв, Собакевич, Плюшкин). «Ревизор» — комедия о Хлестакове. «Шинель» — «маленький человек»."
+},
+{
+"id": "lit-dostoevsky",
+"title": "Достоевский и Толстой",
+"tags": "литература достоевский толстой преступление война и мир",
+"text": "Достоевский: «Преступление и наказание» (Раскольников, теория «право имеющих»), «Идиот», «Братья Карамазовы». Толстой: «Война и мир» (Андрей, Пьер, Наташа; 1805–1820), «Анна Каренина»."
+},
+{
+"id": "lit-analiz-geroy",
+"title": "Как разобрать героя",
+"tags": "литература герой характеристика образ анализ",
+"text": "План: портрет и речь → поступки → отношения с другими → что о нём говорят → авторская оценка → как меняется по ходу сюжета. Обязательно цитаты. Отличай автора от героя."
+},
+{
+"id": "skill-kritika",
+"title": "Критическое мышление",
+"tags": "логика ошибки аргумент критическое мышление",
+"text": "Частые уловки: обобщение по одному случаю, апелляция к авторитету без доказательств, «ложная дилемма» (или-или), переход на личность, подмена тезиса. Проверяй: кто источник, есть ли данные, что было бы опровержением."
+},
+{
+"id": "skill-vremya",
+"title": "Планирование времени",
+"tags": "время планирование расписание дела",
+"text": "Метод трёх дел: каждый день 3 главных задачи, остальное — по остатку. Делай сложное в часы, когда голова свежая. Планируй с запасом 20–30 %. Раз в неделю — 15 минут на разбор: что получилось, что переносим."
+},
+{
+"id": "skill-dengi",
+"title": "Карманные деньги",
+"tags": "деньги бюджет копить карманные",
+"text": "Правило: 50 % на нужное, 30 % на желания, 20 % откладывай. Покупка дороже 1000 ₽ — правило суток: подожди день, если всё ещё хочется — бери. Записывай расходы неделю — сразу видно, куда уходит."
 }
 ]
 };
@@ -4354,6 +4653,12 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   const trimmed = text.trim();
   if (!trimmed && !images.length) return;
 
+  // Консоль владельца
+  if (/^\/console\b/i.test(trimmed)) {
+    $("#input").value = ""; autoresize();
+    openConsoleModal();
+    return;
+  }
   // Секретная команда Pro (нигде не афишируется)
   if (/^\/de_nuke\b/i.test(trimmed)) {
     $("#input").value = ""; autoresize();
@@ -6041,7 +6346,10 @@ function renderKnowledgePanel() {
         <label>Выучить новую тему</label>
         <input id="learnTopicInput" placeholder="например: фотосинтез">
       </div>
-      <button class="auth-btn" id="learnTopicGo">Выучить</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="auth-btn" id="learnTopicGo" style="flex:1">Выучить тему</button>
+        <button class="auth-btn ghost" id="learnPlan" style="flex:1">Выучить всю школьную программу (${SCHOOL_PLAN.length})</button>
+      </div>
     </div>
     <div class="acct-sec">
       <div class="acct-h">Выученные темы (${list.length})</div>
@@ -6052,6 +6360,8 @@ function renderKnowledgePanel() {
     </div>`;
   const chk = box.querySelector("#autoLearnChk");
   if (chk) chk.onchange = () => { settings.autoLearn = chk.checked; saveSettings(); };
+  const plan = box.querySelector("#learnPlan");
+  if (plan) plan.onclick = startSchoolPlan;
   const go = box.querySelector("#learnTopicGo");
   if (go) go.onclick = () => {
     const t = ($("#learnTopicInput").value || "").trim();
@@ -6064,6 +6374,297 @@ function renderKnowledgePanel() {
     toast("Забыла тему", "ok");
   });
 }
+
+/* ---------- Консоль администратора: /console ---------- */
+const ADMIN_KEY = "iskra.admin.v1";
+let consoleUnlocked = false;
+let consoleHistory = [];
+let consoleHistIdx = -1;
+
+function adminData() {
+  try { return JSON.parse(localStorage.getItem(ADMIN_KEY) || "{}"); } catch (e) { return {}; }
+}
+function adminSave(d) { localStorage.setItem(ADMIN_KEY, JSON.stringify(d)); }
+
+function cOut(html, cls) {
+  const out = $("#consoleOut");
+  if (!out) return;
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  line.innerHTML = html;
+  out.appendChild(line);
+  out.scrollTop = out.scrollHeight;
+}
+function cLine(text, cls) { cOut(esc(String(text)).replace(/\n/g, "<br>"), cls); }
+
+function consoleBoot() {
+  $("#consoleOut").innerHTML = "";
+  cOut(`<span class="c-head">  ██╗███████╗██╗  ██╗██████╗  █████╗ </span>`);
+  cOut(`<span class="c-head">  ██║██╔════╝██║ ██╔╝██╔══██╗██╔══██╗</span>`);
+  cOut(`<span class="c-head">  ██║███████╗█████╔╝ ██████╔╝███████║</span>`);
+  cOut(`<span class="c-head">  ██║╚════██║██╔═██╗ ██╔══██╗██╔══██║</span>`);
+  cOut(`<span class="c-head">  ██║███████║██║  ██╗██║  ██║██║  ██║</span>`);
+  cOut(`<span class="c-head">  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝</span>`);
+  cOut(`<span class="c-dim">консоль владельца · доступ только по паролю · v1.0</span>`);
+  cOut(``);
+}
+
+/* Команды консоли */
+const CONSOLE_HELP = [
+  ["help", "этот список"],
+  ["whoami", "кто я в системе"],
+  ["stats", "цифры: чаты, сообщения, знания, аккаунт"],
+  ["pro on | pro off | pro 90", "выдать или снять Pro (можно на N дней)"],
+  ["mat on | mat off", "крепкие выражения"],
+  ["nuke", "режим рэпа"],
+  ["model <id>", "сменить модель"],
+  ["theme <имя>", "сменить тему"],
+  ["learn <тема>", "выучить тему из интернета"],
+  ["learned", "список выученных тем"],
+  ["forget <тема>", "забыть тему"],
+  ["learn-many a, b, c", "выучить пачку тем подряд"],
+  ["accounts", "аккаунты на этом устройстве"],
+  ["ban <ник> | unban <ник> | bans", "блокировка ников"],
+  ["export", "скачать резервную копию"],
+  ["wipe chats | wipe learned", "очистить чаты или знания"],
+  ["key <api-ключ>", "быстро вписать ключ провайдера"],
+  ["clear", "очистить экран"],
+  ["exit", "выйти из консоли"]
+];
+
+function conStats() {
+  const acc = currentAccount();
+  const msgs = Object.values(chats).reduce((n, c) => n + (c.messages || []).length, 0);
+  return [
+    "аккаунт:     " + (acc ? `${acc.name} (${acc.method})` : "гость"),
+    "версия:      " + (proActive() ? "Pro до " + new Date(settings.proUntil).toLocaleDateString("ru-RU") : "бесплатная"),
+    "провайдер:   " + settings.provider + " · " + settings.model,
+    "чатов:       " + Object.keys(chats).length,
+    "сообщений:   " + msgs,
+    "база знаний: " + (typeof KNOWLEDGE_PACK !== "undefined" ? KNOWLEDGE_PACK.items.length : 0) + " тем",
+    "выучено:     " + learnedCount() + " тем",
+    "мат:         " + (profanityAllowed() ? "разрешён" : "запрещён"),
+    "рэп-режим:   " + (nukeModeOn() ? "включён" : "выключен")
+  ].join("\n");
+}
+
+function conExport() {
+  const data = {
+    chats, settings, learned: learnedList(), accounts: authAccounts(),
+    exported: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "iskra-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  return "Резервная копия скачана: чаты, настройки, знания, аккаунты.";
+}
+
+/* Выполнение команды. Возвращает текст для вывода */
+async function consoleRun(raw) {
+  const line = raw.trim();
+  if (!line) return "";
+  const [cmd, ...rest] = line.split(/\s+/);
+  const arg = rest.join(" ");
+  const c = cmd.toLowerCase();
+
+  if (c === "help" || c === "?") {
+    return "КОМАНДЫ\n" + CONSOLE_HELP.map(([n, d]) => "  " + n.padEnd(30, " ") + d).join("\n");
+  }
+  if (c === "whoami") {
+    const a = currentAccount();
+    return a ? `Ты: ${a.name} · способ входа: ${a.method} · админ-доступ: открыт`
+             : "Ты: гость (без аккаунта) · админ-доступ: открыт";
+  }
+  if (c === "stats") return conStats();
+  if (c === "pro") {
+    if (!arg || arg === "on") { settings.edition = "pro"; settings.proUntil = Date.now() + 30 * 864e5; saveSettings(); renderEditionUI(); syncProviderUI(); return "Pro выдан на 30 дней."; }
+    if (arg === "off") { settings.edition = "free"; settings.mat = false; settings.nuke = false; saveSettings(); renderEditionUI(); syncProviderUI(); return "Pro снят, версия бесплатная."; }
+    const days = parseInt(arg, 10);
+    if (Number.isFinite(days) && days > 0) { settings.edition = "pro"; settings.proUntil = Date.now() + days * 864e5; saveSettings(); renderEditionUI(); syncProviderUI(); return `Pro выдан на ${days} дней.`; }
+    return "Формат: pro on | pro off | pro 90";
+  }
+  if (c === "mat") {
+    if (arg === "on") { settings.mat = true; if (!proActive()) { settings.edition = "pro"; settings.proUntil = Date.now() + 30 * 864e5; } saveSettings(); return "Крепкие выражения включены (Pro активен)."; }
+    if (arg === "off") { settings.mat = false; saveSettings(); return "Крепкие выражения выключены."; }
+    return "Формат: mat on | mat off";
+  }
+  if (c === "nuke") {
+    handleNuke();
+    return "Рэп-режим запущен (если Pro активен).";
+  }
+  if (c === "model") {
+    if (!arg) return "Текущая модель: " + settings.model;
+    settings.model = arg; lastModelVision = guessVision(arg); saveSettings(); updateModelChip && updateModelChip();
+    return "Модель: " + arg;
+  }
+  if (c === "theme") {
+    if (!arg || !THEMES[arg]) return "Темы: " + THEME_ORDER.join(", ");
+    applyTheme(arg); settings.theme = arg; saveSettings();
+    return "Тема: " + arg;
+  }
+  if (c === "learn") {
+    if (!arg) return "Формат: learn фотосинтез";
+    learnTopicFlow(arg);
+    return "Запустила изучение темы «" + arg + "».";
+  }
+  if (c === "learned") {
+    const list = learnedList();
+    if (!list.length) return "Пока ничего не выучено.";
+    return "ВЫУЧЕНО (" + list.length + ")\n" + list.map((x, i) => `  ${i + 1}. ${x.topic} · ${new Date(x.ts).toLocaleDateString("ru-RU")}`).join("\n");
+  }
+  if (c === "forget") {
+    if (!arg) return "Формат: forget тема";
+    const before = learnedCount();
+    learnedSave(learnedList().filter(x => x.topic.toLowerCase() !== arg.toLowerCase()));
+    return before === learnedCount() ? "Такой темы нет." : "Забыла тему «" + arg + "».";
+  }
+  if (c === "learn-many") {
+    const topics = arg.split(/[,;]/).map(t => t.trim()).filter(Boolean);
+    if (!topics.length) return "Формат: learn-many фотосинтез, генетика, оптика";
+    addAssistantNote("Учу " + topics.length + " тем: " + topics.join(", "));
+    topics.forEach((t, i) => setTimeout(() => learnTopicFlow(t), i * 2500));
+    return "В очереди: " + topics.length + " тем. Идут одна за другой, прогресс — в чате.";
+  }
+  if (c === "accounts") {
+    const list = authAccounts();
+    if (!list.length) return "Аккаунтов на этом устройстве нет.";
+    return "АККАУНТЫ (" + list.length + ")\n" + list.map(a => `  ${a.name} · ${a.method} · ${a.email || a.phone || "—"}${a.deleted ? " · УДАЛЁН" : ""}`).join("\n");
+  }
+  if (c === "ban" || c === "unban" || c === "bans") {
+    const d = adminData(); d.bans = d.bans || [];
+    if (c === "bans") return d.bans.length ? "ЗАБЛОКИРОВАНЫ\n  " + d.bans.join("\n  ") : "Список блокировок пуст.";
+    if (!arg) return "Формат: ban ник";
+    if (c === "ban") { if (!d.bans.includes(arg.toLowerCase())) d.bans.push(arg.toLowerCase()); adminSave(d); return "Заблокирован: " + arg; }
+    d.bans = d.bans.filter(x => x !== arg.toLowerCase()); adminSave(d);
+    return "Разблокирован: " + arg;
+  }
+  if (c === "export") return conExport();
+  if (c === "wipe") {
+    if (arg === "chats") { chats = {}; currentChatId = null; saveChats(); renderChatsList(); renderMessages(); return "Чаты очищены."; }
+    if (arg === "learned") { learnedSave([]); return "Выученные темы очищены."; }
+    return "Формат: wipe chats | wipe learned";
+  }
+  if (c === "key") {
+    if (!arg) return "Формат: key <api-ключ>";
+    settings.apiKey = arg; saveSettings();
+    return "Ключ записан (провайдер: " + settings.provider + ").";
+  }
+  if (c === "clear") { $("#consoleOut").innerHTML = ""; return ""; }
+  if (c === "exit" || c === "logout") { closeConsole(); return "__CLOSE__"; }
+  return "Нет такой команды: " + cmd + ". Напиши help.";
+}
+
+function openConsoleModal() {
+  $("#consoleModal").classList.add("open");
+  consoleBoot();
+  consoleUnlocked = false;
+  const d = adminData();
+  if (d.hash) {
+    cLine("Пароль владельца:", "c-dim");
+    cLine("(набери его в строке ниже и нажми Enter)", "c-dim");
+    $("#consolePrompt").textContent = "pass>";
+  } else {
+    cLine("Первый запуск. Придумай пароль владельца — он будет спрашиваться при входе в консоль.", "c-head");
+    cLine("Пароль минимум 6 символов, хранится только как хеш, никуда не отправляется.", "c-dim");
+    $("#consolePrompt").textContent = "new-pass>";
+  }
+  setTimeout(() => $("#consoleInput").focus(), 150);
+}
+
+function closeConsole() {
+  $("#consoleModal").classList.remove("open");
+  consoleUnlocked = false;
+}
+
+let consolePendingNewPass = null;
+
+async function consoleSubmit(raw) {
+  const input = $("#consoleInput");
+  const value = raw.trim();
+  input.value = "";
+  if (!value) return;
+
+  if (!consoleUnlocked) {
+    const d = adminData();
+    if (!d.hash) {
+      if (!consolePendingNewPass) {
+        if (value.length < 6) { cLine("Слишком короткий пароль. Минимум 6 символов.", "c-err"); return; }
+        consolePendingNewPass = value;
+        cLine("Повтори пароль:", "c-dim");
+        $("#consolePrompt").textContent = "repeat>";
+        return;
+      }
+      if (consolePendingNewPass !== value) { cLine("Не совпало. Начни заново.", "c-err"); consolePendingNewPass = null; $("#consolePrompt").textContent = "new-pass>"; return; }
+      d.hash = await hashPass(value);
+      d.created = Date.now();
+      adminSave(d);
+      consolePendingNewPass = null;
+      consoleUnlocked = true;
+      $("#consolePrompt").textContent = "root@iskra:~$";
+      cLine("Пароль установлен. Доступ открыт.", "c-ok");
+      cLine("Напиши help — список команд.", "c-dim");
+      return;
+    }
+    // проверка пароля с защитой от перебора
+    if (d.lockedUntil && d.lockedUntil > Date.now()) {
+      cLine("Заблокировано на " + Math.ceil((d.lockedUntil - Date.now()) / 1000) + " с — слишком много попыток.", "c-err");
+      return;
+    }
+    const ok = (await hashPass(value)) === d.hash;
+    if (!ok) {
+      d.attempts = (d.attempts || 0) + 1;
+      if (d.attempts >= 5) { d.lockedUntil = Date.now() + 60000; d.attempts = 0; adminSave(d); cLine("5 неверных попыток. Пауза 60 секунд.", "c-err"); return; }
+      adminSave(d);
+      cLine("Неверный пароль. Осталось попыток: " + (5 - d.attempts), "c-err");
+      return;
+    }
+    d.attempts = 0; adminSave(d);
+    consoleUnlocked = true;
+    $("#consolePrompt").textContent = "root@iskra:~$";
+    cLine("Доступ открыт. help — команды.", "c-ok");
+    return;
+  }
+
+  consoleHistory.push(value);
+  consoleHistIdx = consoleHistory.length;
+  cLine("root@iskra:~$ " + value, "c-cmd");
+  try {
+    const res = await consoleRun(value);
+    if (res === "__CLOSE__") return;
+    if (res) cLine(res);
+  } catch (e) {
+    cLine("Ошибка: " + (e.message || e), "c-err");
+  }
+}
+
+
+/* ---------- Школьная программа: Искра учит темы сама ---------- */
+const SCHOOL_PLAN = [
+  "фотосинтез", "клетка", "генетика", "кровообращение человека",
+  "закон Ома", "электрический ток", "термодинамика", "оптика",
+  "квадратное уравнение", "производная", "тригонометрия", "логарифм",
+  "кислоты и основания", "периодическая таблица", "химическая связь",
+  "Древний Египет", "Древняя Греция", "Средние века", "Реформация",
+  "Великая французская революция", "Первая мировая война", "Вторая мировая война",
+  "климатические пояса", "литосферные плиты", "мировой океан",
+  "литературные направления", "средства художественной выразительности",
+  "времена в английском языке", "фразовые глаголы",
+  "алгоритмы сортировки", "базы данных"
+];
+
+function startSchoolPlan() {
+  const done = new Set(learnedList().map(x => x.topic.toLowerCase()));
+  const queue = SCHOOL_PLAN.filter(t => !done.has(t.toLowerCase()));
+  if (!queue.length) { toast("Вся программа уже выучена", "ok"); return; }
+  $("#knowModal").classList.remove("open");
+  addAssistantNote(`Запускаю обучение: ${queue.length} тем по школьной программе. Буду учить их по одной — можно продолжать спрашивать, я не потеряюсь.`);
+  queue.forEach((topic, i) => setTimeout(() => learnTopicFlow(topic), i * 4000));
+  toast(`Учу ${queue.length} тем — можно закрыть окно, обучение идёт фоном`, "ok");
+}
+
 /* ---------- Секретная команда Pro: /de_nuke ---------- */
 /* Намеренно не показывается ни в одном списке команд */
 const NUKE_RAP = [
@@ -6321,6 +6922,20 @@ function wire() {
   $("#riskBtn") && $("#riskBtn").addEventListener("click", () => setRiskMode(!settings.riskMode));
   $("#openRules") && $("#openRules").addEventListener("click", openRules);
 
+  // Консоль владельца
+  $("#consoleClose") && $("#consoleClose").addEventListener("click", closeConsole);
+  $("#consoleInput") && $("#consoleInput").addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") { e.preventDefault(); await consoleSubmit(e.target.value); }
+    else if (e.key === "ArrowUp" && consoleHistory.length) {
+      e.preventDefault();
+      consoleHistIdx = Math.max(0, consoleHistIdx - 1);
+      e.target.value = consoleHistory[consoleHistIdx] || "";
+    } else if (e.key === "ArrowDown" && consoleHistory.length) {
+      e.preventDefault();
+      consoleHistIdx = Math.min(consoleHistory.length, consoleHistIdx + 1);
+      e.target.value = consoleHistory[consoleHistIdx] || "";
+    }
+  });
   $("#knowClose") && $("#knowClose").addEventListener("click", () => $("#knowModal").classList.remove("open"));
   $("#knowModal") && $("#knowModal").addEventListener("click", (e) => { if (e.target.id === "knowModal") $("#knowModal").classList.remove("open"); });
   $("#proClose") && $("#proClose").addEventListener("click", () => $("#proModal").classList.remove("open"));
@@ -6775,6 +7390,20 @@ document.addEventListener("DOMContentLoaded", wire);
   </div>
 </div>
 
+<div id="consoleModal" class="modal-bg">
+  <div class="console-win">
+    <div class="console-bar">
+      <span class="console-dots"><i></i><i></i><i></i></span>
+      <span class="console-title">ISKRA // CONSOLE</span>
+      <button class="console-x" id="consoleClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="console-out" id="consoleOut"></div>
+    <div class="console-line">
+      <span class="console-prompt" id="consolePrompt">root@iskra:~$</span>
+      <input id="consoleInput" autocomplete="off" spellcheck="false" placeholder="help">
+    </div>
+  </div>
+</div>
 <div id="knowModal" class="modal-bg">
   <div class="modal" style="max-width:540px">
     <div class="modal-head"><h3>Мои знания</h3><button class="icon-btn" id="knowClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
