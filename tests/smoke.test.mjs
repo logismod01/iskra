@@ -138,6 +138,358 @@ await test("чужой серверный ключ не принимается",
   window.fetch = async () => { throw new Error("offline в тесте"); };
 });
 
+/* ---------- Встроенная база знаний ---------- */
+await test("в базе не меньше 300 тем и у всех есть теги и текст", () => {
+  const items = window.eval("KNOWLEDGE_PACK.items");
+  assert.ok(items.length >= 300, "тем слишком мало: " + items.length);
+  const ids = new Set();
+  for (const it of items) {
+    assert.ok(!ids.has(it.id), "дубль id: " + it.id);
+    ids.add(it.id);
+    assert.ok(it.tags.split(" ").length >= 5, "мало тегов: " + it.id);
+    assert.ok(it.text.length >= 120, "короткий текст: " + it.id);
+    assert.match(it.id, /^[a-z]+-[a-z0-9-]+$/);
+  }
+});
+
+await test("каждая тема находится по своему названию", () => {
+  const miss = window.eval(`(() => {
+    const out = [];
+    for (const it of KNOWLEDGE_PACK.items) {
+      if (!kbSearch(it.title, 2).some(h => h.id === it.id)) out.push(it.title);
+    }
+    return out;
+  })()`);
+  assert.equal(miss.length, 0, "не находятся: " + miss.join(", "));
+});
+
+await test("живые вопросы находят нужную тему", () => {
+[
+    [
+      "как найти площадь круга",
+    "math-okrug"
+  ],
+  [
+      "теорема пифагора",
+    "math-pifagor"
+  ],
+  [
+      "теорема виета",
+    "math-vieta"
+  ],
+  [
+      "как решать задачи на движение",
+    "math-dvizhenie"
+  ],
+  [
+      "задачи на работу трубы",
+    "math-rabota-zadachi"
+  ],
+  [
+      "смеси и концентрации",
+    "math-smesi"
+  ],
+  [
+      "теорема синусов",
+    "math-sinusy-kosinusy"
+  ],
+  [
+      "таблица производных",
+    "math-proizvodnaya-tablica"
+  ],
+  [
+      "что такое интеграл",
+    "math-integral"
+  ],
+  [
+      "как округлять числа",
+    "math-okruglenie"
+  ],
+  [
+      "проценты скидка",
+    "math-procenty"
+  ],
+  [
+      "что такое моль",
+    "chem-mol"
+  ],
+  [
+      "ионные уравнения",
+    "chem-ionnye"
+  ],
+  [
+      "степень окисления",
+    "chem-stepen-okisleniya"
+  ],
+  [
+      "классы органики алканы",
+    "chem-organic-klassy"
+  ],
+  [
+      "как определить вид глагола",
+    "ru-vidy-glagola"
+  ],
+  [
+      "вводные слова запятая",
+    "ru-vvodnye"
+  ],
+  [
+      "обособленные члены предложения",
+    "ru-obosoblenie"
+  ],
+  [
+      "дефис в наречиях",
+    "ru-defis"
+  ],
+  [
+      "стили речи",
+    "ru-stili"
+  ],
+  [
+      "что такое митоз и мейоз",
+    "bio-mitoz-meyoz"
+  ],
+  [
+      "гормоны инсулин",
+    "bio-endokrin"
+  ],
+  [
+      "днк и рнк комплементарность",
+    "bio-dnk-rnk"
+  ],
+  [
+      "фазы фотосинтеза",
+    "bio-fotosintez-fazy"
+  ],
+  [
+      "вирусы и бактерии",
+    "bio-virusy-bakterii"
+  ],
+  [
+      "круговорот азота",
+    "bio-krugovorot"
+  ],
+  [
+      "когда отменили крепостное право",
+    "hist-1861"
+  ],
+  [
+      "бородино 1812",
+    "hist-1812"
+  ],
+  [
+      "блокада ленинграда",
+    "hist-vov"
+  ],
+  [
+      "петр первый реформы",
+    "hist-petr1"
+  ],
+  [
+      "1917 революция",
+    "hist-1917"
+  ],
+  [
+      "киевская русь крещение",
+    "hist-rus"
+  ],
+  [
+      "законы ньютона",
+    "phys-nyuton"
+  ],
+  [
+      "сила архимеда",
+    "phys-arhimed"
+  ],
+  [
+      "последовательное соединение",
+    "phys-elektrocep"
+  ],
+  [
+      "скорость звука",
+    "phys-zvuk"
+  ],
+  [
+      "погрешность измерений",
+    "phys-laboratoriya"
+  ],
+  [
+      "конституция россии",
+    "obsh-konstituciya"
+  ],
+  [
+      "права ребенка",
+    "obsh-prava-rebenka"
+  ],
+  [
+      "спрос и предложение",
+    "obsh-rynok-spros"
+  ],
+  [
+      "трудовой договор отпуск",
+    "obsh-trud-pravo"
+  ],
+  [
+      "налоги прямые косвенные",
+    "obsh-nalogi"
+  ],
+  [
+      "планеты солнечной системы",
+    "astro-solnechnaya-sistema"
+  ],
+  [
+      "луна фазы",
+    "astro-luna"
+  ],
+  [
+      "большой взрыв вселенная",
+    "astro-vselennaya"
+  ],
+  [
+      "гагарин космос",
+    "astro-issledovaniya"
+  ],
+  [
+      "как смешивать цвета",
+    "art-cvet"
+  ],
+  [
+      "правило третей",
+    "art-kompoziciya"
+  ],
+  [
+      "что делать при пожаре",
+    "safe-pozhar"
+  ],
+  [
+      "мошенники код из смс",
+    "safe-internet-moshenniki"
+  ],
+  [
+      "как справиться со стрессом",
+    "psy-stress"
+  ],
+  [
+      "тревога что делать",
+    "psy-trevoga"
+  ],
+  [
+      "как решать конфликты",
+    "psy-konflikt"
+  ],
+  [
+      "сколько нужно спать",
+    "psy-son"
+  ],
+  [
+      "правило тарелки питание",
+    "health-pitanie"
+  ],
+  [
+      "как составить резюме",
+    "job-rezume"
+  ],
+  [
+      "собеседование вопросы",
+    "job-sobesedovanie"
+  ],
+  [
+      "прокрастинация как бороться",
+    "skill-prokrastinaciya"
+  ],
+  [
+      "интервальное повторение",
+    "skill-intervalnoe"
+  ],
+  [
+      "как работают нейросети",
+    "ai-kak-rabotayut"
+  ],
+  [
+      "как писать промпты",
+    "ai-prompty"
+  ],
+  [
+      "что такое егэ",
+    "ege-struktura"
+  ],
+  [
+      "ямб хорей размер",
+    "lit-stihoslozhenie"
+  ],
+  [
+      "итоговое сочинение сколько слов",
+    "lit-itogovoe"
+  ],
+  [
+      "таблица времен английского",
+    "en-tenses-table"
+  ],
+  [
+      "как переводить в двоичную",
+    "inf-perevod-sistem"
+  ],
+  [
+      "git commit",
+    "inf-git"
+  ],
+  [
+      "масштаб карты",
+    "geo-masshtab"
+  ],
+  [
+      "климатические пояса",
+    "geo-klimat"
+  ],
+  [
+      "как стирать шерсть",
+    "life-stirka"
+  ],
+  [
+      "калории белки жиры",
+    "food-kalorii"
+  ],
+  [
+      "тональности диез бемоль",
+    "music-tonalnosti"
+  ],
+  [
+      "как читать учебник",
+    "skill-chtenie"
+  ]
+]
+});
+
+await test("болтовня не вытягивает случайную тему из базы", () => {
+  for (const q of ["привет как дела", "расскажи анекдот", "что ты умеешь", "спасибо большое", "ятожегэ"]) {
+    assert.equal(window.kbSearch(q, 2).length, 0, "ложное срабатывание: " + q);
+  }
+});
+
+await test("поиск по базе не падает на пустом и мусорном запросе", () => {
+  for (const q of ["", "   ", "?!", "ятожегэ", null]) {
+    assert.equal(Array.isArray(window.kbSearch(q, 2)), true);
+  }
+});
+
+await test("браузер базы: категории и поиск работают", () => {
+  $("#knowModal").classList.add("open");
+  window.renderKnowledgePanel();
+  assert.ok($("#kbSearchInput"), "нет поиска по базе");
+  assert.ok($("#kbCats"), "нет категорий");
+  const cards = window.document.querySelectorAll("#kbCards .kb-card");
+  assert.ok(cards.length > 0, "карточки не отрисовались");
+  window.document.querySelector('#kbCats [data-cat="chem"]').click();
+  const chem = [...window.document.querySelectorAll("#kbCards .kb-card b")].map(b => b.textContent);
+  assert.ok(chem.some(t => /Моль|Степени окисления/.test(t)), "категория «Химия» пустая: " + chem.slice(0, 3));
+  const input = $("#kbSearchInput");
+  input.value = "пифагор";
+  input.dispatchEvent(new window.Event("input", { bubbles: true }));
+  const found = [...window.document.querySelectorAll("#kbCards .kb-card b")].map(b => b.textContent);
+  assert.ok(found.some(t => /Пифагор/i.test(t)), "поиск по базе не нашёл Пифагора: " + found);
+  $("#knowModal").classList.remove("open");
+});
+
 await test("Puter без входа не открывает окно, а берёт бесплатный движок", async () => {
   let signInCalled = false;
   window.loadPuter = async () => ({
