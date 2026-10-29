@@ -1245,6 +1245,20 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
   .auth-side { display: none; }
   .profile-btn .pname { display: none; }
 }
+
+/* Панель аккаунта */
+.acct-sec { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.acct-sec:last-child { border-bottom: none; }
+.acct-h { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 10px; }
+.acct-row { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; padding: 5px 0; }
+.acct-row span { color: var(--text-dim); }
+.acct-code { font-family: ui-monospace, monospace; letter-spacing: 1px; color: var(--accent); }
+.acct-note { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; margin-top: 8px; }
+.acct-dev { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px; border-radius: 11px; border: 1px solid var(--line); margin-bottom: 8px; background: var(--bg-soft-2); }
+.acct-dev.cur { border-color: var(--accent); }
+.acct-dev b { font-size: 13.5px; }
+.acct-dev button { background: var(--bg); border: 1px solid var(--line); color: var(--err); border-radius: 8px; padding: 6px 10px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+.acct-dim { font-size: 11.5px; color: var(--text-dim); margin-top: 3px; }
 </style>
 </head>
 <body>
@@ -1573,6 +1587,255 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
   </button>
 </div>
 
+<script>
+/* Встроенная база знаний Искры — работает без интернета */
+const KNOWLEDGE_PACK = {
+"version": 1,
+"items": [
+{
+"id": "ru-zhi-shi",
+"title": "Жи-ши, ча-ща, чу-щу",
+"tags": "русский язык орфография жи ши ча ща жи ши ча ща чу щу орфография правило гласные после шипящих",
+"text": "После ж и ш пишется и (жи, ши): жизнь, машина, шило. После ч и щ пишется а и у (ча, ща, чу, щу): чаща, чудо, щука. Исключения: жюри, парашют, брошюра."
+},
+{
+"id": "ru-bezudar",
+"title": "Безударные гласные в корне",
+"tags": "русский язык орфография проверяемая гласная безударная гласная корень проверка чередование лаг лож раст рос кас кос",
+"text": "Проверяемая: измени слово так, чтобы гласная стала ударной — вода́ → во́ды, лесно́й → лес. Непроверяемая: смотри словарь (собака, корабль). Чередующиеся корни: -лаг-/-лож- (полагать — положить), -раст-/-рос- (расти — вырос, кроме росток, Ростов), -кас-/-кос- (касаться — коснуться), -бер-/-бир- (собирать — соберу)."
+},
+{
+"id": "ru-pravila-n-nn",
+"title": "Одна и две Н",
+"tags": "русский язык орфография н нн причастие прилагательное одна две н нн причастие прилагательное суффикс",
+"text": "В отглагольных прилагательных одна Н (жареный, вязаный), в причастиях с приставкой или зависимым словом — две (прожаренный, жаренный на масле). В прилагательных на -онн-, -енн- две Н (лекционный, клюквенный), исключение — ветреный. -ан-, -ян-, -ин- — одна Н (кожаный, серебряный), исключения: стеклянный, оловянный, деревянный."
+},
+{
+"id": "ru-ne-glagol",
+"title": "НЕ с разными частями речи",
+"tags": "русский язык орфография не слитно раздельно не с глаголами не с прилагательными не с существительными слитно раздельно",
+"text": "С глаголами и деепричастиями НЕ пишется раздельно (не знал, не думая). С существительными и прилагательными слитно, если слово не употребляется без НЕ (неряха) или образует новое значение (неправда = ложь); раздельно при противопоставлении с союзом а (не правда, а ложь). С причастиями раздельно, если есть зависимое слово или противопоставление."
+},
+{
+"id": "ru-pristavki",
+"title": "Приставки на З и С",
+"tags": "русский язык орфография приставки раз рас без бес приставки з с раз рас без бес из ис приставка с",
+"text": "Перед звонкими согласными пишется З, перед глухими — С: разбить — распить, бездомный — бесшумный, издать — испечь. Приставка С- не меняется никогда: сделать, сдать, сбежать."
+},
+{
+"id": "ru-tsya",
+"title": "-ТСЯ и -ТЬСЯ",
+"tags": "русский язык орфография тся ться глагол тся ться мягкий знак глагол вопрос что делает что делать",
+"text": "Задай вопрос: что делает? — пишется -тся (учится), что делать? — пишется -ться (учиться). В вопросе есть мягкий знак — значит, он есть и в глаголе."
+},
+{
+"id": "ru-prichastie",
+"title": "Причастный и деепричастный оборот",
+"tags": "русский язык пунктуация запятая причастие деепричастие причастный оборот деепричастный оборот запятая причастие деепричастие",
+"text": "Причастный оборот после определяемого слова выделяется запятыми: «Книга, прочитанная вчера, лежит на столе». Если оборот стоит перед словом — запятая не нужна. Деепричастный оборот выделяется запятыми всегда: «Прочитав книгу, она задумалась»."
+},
+{
+"id": "ru-tire",
+"title": "Тире между подлежащим и сказуемым",
+"tags": "русский язык пунктуация тире тире подлежащее сказуемое пунктуация",
+"text": "Тире ставится, если оба главных члена выражены существительным в именительном падеже (Москва — столица), числительным или инфинитивом. Не ставится, если есть связка есть, сравнительные союзы как, будто, или подлежащее — личное местоимение (он врач)."
+},
+{
+"id": "ru-spryazhenie",
+"title": "Спряжение глаголов",
+"tags": "русский язык орфография спряжение глагол окончание спряжение глагол окончание исключения гнать держать дышать",
+"text": "II спряжение: глаголы на -ить (кроме брить, стелить) и 11 исключений: гнать, держать, дышать, слышать, смотреть, видеть, ненавидеть, обидеть, терпеть, вертеть, зависеть. Остальные — I спряжение. II: -ишь, -ит, -им, -ите, -ат/-ят. I: -ешь, -ет, -ем, -ете, -ут/-ют."
+},
+{
+"id": "ru-padezhi",
+"title": "Падежи русского языка",
+"tags": "русский язык падежи склонение падежи склонение именительный родительный дательный винительный творительный предложный",
+"text": "Шесть падежей: именительный (кто? что?), родительный (кого? чего?), дательный (кому? чему?), винительный (кого? что?), творительный (кем? чем?), предложный (о ком? о чём?)."
+},
+{
+"id": "ru-pryamaya-rech",
+"title": "Прямая речь",
+"tags": "русский язык пунктуация прямая речь кавычки прямая речь кавычки диалог слова автора",
+"text": "Прямая речь в кавычках, после слов автора ставится двоеточие: Он сказал: «Я приду». Если слова автора после реплики — тире и точка вне кавычек: «Я приду», — сказал он."
+},
+{
+"id": "math-kvadrat",
+"title": "Квадратное уравнение",
+"tags": "математика уравнение дискриминант квадратное квадратное уравнение дискриминант виета корни парабола",
+"text": "ax² + bx + c = 0. Дискриминант D = b² − 4ac. Если D > 0 — два корня x = (−b ± √D) / 2a; D = 0 — один корень x = −b / 2a; D < 0 — действительных корней нет. Теорема Виета: x₁ + x₂ = −b/a, x₁·x₂ = c/a."
+},
+{
+"id": "math-pifagor",
+"title": "Теорема Пифагора",
+"tags": "математика геометрия треугольник гипотенуза пифагор пифагор гипотенуза катет прямоугольный треугольник",
+"text": "В прямоугольном треугольнике квадрат гипотенузы равен сумме квадратов катетов: a² + b² = c². Обратная теорема: если a² + b² = c², треугольник прямоугольный."
+},
+{
+"id": "math-ploshadi",
+"title": "Площади и периметры",
+"tags": "математика геометрия площадь периметр фигуры площадь периметр круг треугольник прямоугольник трапеция ромб",
+"text": "Квадрат: S = a², P = 4a. Прямоугольник: S = ab, P = 2(a+b). Треугольник: S = ½ah, S = ½ab·sin C. Круг: S = πr², длина окружности C = 2πr. Трапеция: S = ((a+b)/2)·h. Параллелограмм: S = ah."
+},
+{
+"id": "math-obem",
+"title": "Объёмы тел",
+"tags": "математика геометрия объём куб шар цилиндр объём шар куб цилиндр конус пирамида",
+"text": "Куб: V = a³. Параллелепипед: V = abc. Шар: V = 4/3·πr³, площадь поверхности 4πr². Цилиндр: V = πr²h. Конус: V = ⅓πr²h. Пирамида: V = ⅓·Sосн·h."
+},
+{
+"id": "math-procenty",
+"title": "Проценты",
+"tags": "математика проценты доля проценты процент скидка доля от числа",
+"text": "1 % — это 1/100. Чтобы найти p % от числа A: A·p/100. Сколько процентов составляет A от B: A/B·100 %. Увеличить на p %: A·(1 + p/100). Скидка 20 % от 1500 = 1200."
+},
+{
+"id": "math-stepeni",
+"title": "Степени и корни",
+"tags": "математика степень корень логарифм степень корень логарифм показательная свойства",
+"text": "aᵐ·aⁿ = aᵐ⁺ⁿ, aᵐ/aⁿ = aᵐ⁻ⁿ, (aᵐ)ⁿ = aᵐⁿ, a⁰ = 1, a⁻ⁿ = 1/aⁿ. √(ab) = √a·√b. a^(1/n) = ⁿ√a. Логарифмы: logₐ(xy) = logₐx + logₐy, logₐ(xⁿ) = n·logₐx, logₐa = 1."
+},
+{
+"id": "math-trig",
+"title": "Тригонометрия",
+"tags": "математика синус косинус тангенс формулы синус косинус тангенс котангенс теорема синусов косинусов тригонометрия",
+"text": "sin²x + cos²x = 1. tg x = sin x / cos x. sin 30° = ½, cos 60° = ½, sin 45° = cos 45° = √2/2, sin 90° = 1, cos 90° = 0. Теорема синусов: a/sin A = 2R. Теорема косинусов: c² = a² + b² − 2ab·cos C."
+},
+{
+"id": "math-proizvodnaya",
+"title": "Производные",
+"tags": "математика производная интеграл функция производная интеграл первообразная таблица производных",
+"text": "(xⁿ)' = n·xⁿ⁻¹, (sin x)' = cos x, (cos x)' = −sin x, (eˣ)' = eˣ, (ln x)' = 1/x, (c)' = 0, (u·v)' = u'v + uv'. Интеграл — обратное действие: ∫xⁿdx = xⁿ⁺¹/(n+1) + C при n ≠ −1."
+},
+{
+"id": "math-veroyatnost",
+"title": "Вероятность и комбинаторика",
+"tags": "математика вероятность комбинаторика вероятность комбинаторика сочетания перестановки факториал",
+"text": "Вероятность P = m/n, где m — благоприятные исходы, n — все равновозможные. Перестановки n! ; сочетания C(n,k) = n! / (k!(n−k)!). Вероятности независимых событий перемножаются."
+},
+{
+"id": "en-tenses",
+"title": "Времена английского",
+"tags": "английский язык времена present past future perfect времена present simple continuous perfect past future английский время",
+"text": "Present Simple: I work / he works (регулярно). Present Continuous: I am working (сейчас). Past Simple: I worked / went. Present Perfect: I have worked (результат к настоящему). Future: I will work. Правило: для привычек — Simple, для процесса сейчас — Continuous, для результата — Perfect."
+},
+{
+"id": "en-articles",
+"title": "Артикли a / an / the",
+"tags": "английский язык артикль a an the артикли a an the артикль",
+"text": "a/an — один из многих, впервые упомянутый (a cat); an перед гласным звуком (an apple, an hour). the — конкретный, уже известный или единственный (the sun, the cat we saw). Без артикля — множественное число и неисчисляемые в общем смысле (cats are nice, water is wet)."
+},
+{
+"id": "en-tobe",
+"title": "Глагол to be",
+"tags": "английский язык to be am is are was were to be am is are was were глагол связка",
+"text": "I am, he/she/it is, you/we/they are. Прошлое: was (I, he, she, it), were (we, you, they). Отрицание: is not (isn't). Вопрос: Are you ready?"
+},
+{
+"id": "en-prepositions",
+"title": "Предлоги in / on / at",
+"tags": "английский язык предлоги время место предлоги in on at время место",
+"text": "Время: at — точное (at 5 o'clock), on — день и дата (on Monday), in — месяц, год, длинный период (in July, in 2026). Место: at — точка (at the door), on — поверхность (on the table), in — внутри (in the box)."
+},
+{
+"id": "en-comparatives",
+"title": "Степени сравнения",
+"tags": "английский язык сравнение прилагательное степени сравнения прилагательных better best more most",
+"text": "Короткие: big → bigger → the biggest. Длинные: interesting → more interesting → the most interesting. Исключения: good → better → the best, bad → worse → the worst, many → more → the most, little → less → the least."
+},
+{
+"id": "en-conditionals",
+"title": "Условные предложения",
+"tags": "английский язык conditional if условные предложения if conditional would",
+"text": "1-й тип (реально): If it rains, I will stay home. 2-й (нереально сейчас): If I had money, I would travel. 3-й (нереально в прошлом): If I had known, I would have come."
+},
+{
+"id": "en-irregular",
+"title": "Неправильные глаголы: главное",
+"tags": "английский язык неправильные глаголы неправильные глаголы таблица go went gone",
+"text": "go–went–gone, be–was/were–been, have–had–had, do–did–done, see–saw–seen, take–took–taken, make–made–made, come–came–come, get–got–got, give–gave–given, speak–spoke–spoken, write–wrote–written, eat–ate–eaten, know–knew–known, think–thought–thought."
+},
+{
+"id": "phys-mechanics",
+"title": "Механика: формулы",
+"tags": "физика скорость ускорение сила ньютон энергия механика скорость ускорение ньютон сила энергия работа мощность импульс",
+"text": "v = s/t. a = (v − v₀)/t. Второй закон Ньютона: F = ma. Вес: P = mg (g ≈ 9,8 м/с², часто 10). Кинетическая энергия: E = mv²/2. Потенциальная: E = mgh. Работа: A = F·s·cos α. Мощность: N = A/t."
+},
+{
+"id": "phys-electric",
+"title": "Электричество",
+"tags": "физика ток напряжение сопротивление ом закон электричество ток напряжение сопротивление закон ома мощность ток цепь",
+"text": "Закон Ома: I = U/R. Мощность: P = UI = I²R = U²/R. Последовательно: R = R₁ + R₂. Параллельно: 1/R = 1/R₁ + 1/R₂. Заряд: q = It. Работа тока: A = UIt."
+},
+{
+"id": "chem-osnovy",
+"title": "Химия: основы",
+"tags": "химия валентность оксид кислота основание соль моль химия моль молярная масса валентность оксид кислота основание соль нейтрализация",
+"text": "Моль — 6,02·10²³ частиц. Молярная масса M = m/n, г/моль. Кислота + основание → соль + вода (нейтрализация): HCl + NaOH → NaCl + H₂O. Оксид металла + кислота → соль + вода. Валентность: H — I, O — II. Вода H₂O, поваренная соль NaCl, углекислый газ CO₂."
+},
+{
+"id": "bio-kletka",
+"title": "Клетка и фотосинтез",
+"tags": "биология клетка фотосинтез дыхание днк клетка фотосинтез днк митохондрия хлоропласт дыхание биология",
+"text": "Фотосинтез: 6CO₂ + 6H₂O + свет → C₆H₁₂O₆ + 6O₂, идёт в хлоропластах. Дыхание — обратный процесс в митохондриях. ДНК хранит наследственную информацию, состоит из четырёх оснований: A, T, G, C. Клетка: мембрана, цитоплазма, ядро (у эукариот), рибосомы."
+},
+{
+"id": "bio-chelovek",
+"title": "Человек: системы органов",
+"tags": "биология человек органы кровь сердце человек органы кровь сердце эритроциты пульс системы органов анатомия",
+"text": "Кровь: плазма и клетки (эритроциты переносят кислород, лейкоциты защищают, тромбоциты свёртывают). Сердце — четыре камеры. Большой круг кровообращения идёт от левого желудочка по телу, малый — через лёгкие. Норма пульса взрослого в покое 60–80 ударов в минуту."
+},
+{
+"id": "hist-daty",
+"title": "История России: ключевые даты",
+"tags": "история россия даты века история россии даты куликовская битва ледовое побоище невская крещение руси гагарин 1812 1861 1941",
+"text": "862 — призвание варягов. 988 — Крещение Руси при Владимире. 1240 — Невская битва, 1242 — Ледовое побоище. 1380 — Куликовская битва. 1480 — стояние на Угре, конец ордынской зависимости. 1703 — основание Петербурга. 1812 — Отечественная война. 1861 — отмена крепостного права. 1917 — революции. 1941–1945 — Великая Отечественная война. 1961 — полёт Гагарина."
+},
+{
+"id": "hist-world",
+"title": "Мировая история: вехи",
+"tags": "история мир даты всемирная история колумб рим французская революция мировые войны луна",
+"text": "Древний Египет — около 3000 г. до н. э. Античная Греция — V в. до н. э. Римская империя — с I в. до н. э. 476 — падение Западной Римской империи. 1492 — открытие Америки Колумбом. 1789 — Великая французская революция. 1914–1918 — Первая мировая. 1939–1945 — Вторая мировая. 1945 — ООН. 1969 — высадка на Луну."
+},
+{
+"id": "geo-materiki",
+"title": "Материки и океаны",
+"tags": "география материки океаны столицы материки континенты океаны эверест марианская впадина реки",
+"text": "Шесть материков: Евразия, Африка, Северная Америка, Южная Америка, Австралия, Антарктида. Пять океанов: Тихий (самый большой), Атлантический, Индийский, Северный Ледовитый, Южный. Самая высокая точка — Эверест, 8848 м. Самая длинная река — Нил или Амазонка (спорно, зависит от методики). Самое глубокое место — Марианская впадина, около 11 000 м."
+},
+{
+"id": "geo-stolicy",
+"title": "Столицы и страны",
+"tags": "география столицы страны столицы стран австралия канберра вашингтон лондон париж берлин токио пекин каир",
+"text": "Россия — Москва, Беларусь — Минск, Казахстан — Астана, Китай — Пекин, Япония — Токио, Индия — Нью-Дели, США — Вашингтон, Великобритания — Лондон, Франция — Париж, Германия — Берлин, Италия — Рим, Испания — Мадрид, Турция — Анкара, Египет — Каир, Бразилия — Бразилиа, Австралия — Канберра, Канада — Оттава."
+},
+{
+"id": "lit-avtory",
+"title": "Литература: авторы и произведения",
+"tags": "литература писатели произведения литература пушкин лермонтов гоголь тургенев достоевский толстой чехов булгаков шолохов произведения",
+"text": "Пушкин — «Евгений Онегин», «Капитанская дочка». Лермонтов — «Герой нашего времени». Гоголь — «Мёртвые души», «Ревизор». Тургенев — «Отцы и дети». Достоевский — «Преступление и наказание». Толстой — «Война и мир», «Анна Каренина». Чехов — «Вишнёвый сад», рассказы. Булгаков — «Мастер и Маргарита». Шолохов — «Тихий Дон»."
+},
+{
+"id": "inf-sistemy",
+"title": "Системы счисления",
+"tags": "информатика системы счисления двоичная бит байт информатика системы счисления двоичная байт бит шестнадцатеричная",
+"text": "1 байт = 8 бит. Двоичная 1011₂ = 11₁₀. Перевод в десятичную: сумма цифр, умноженных на основание в степени разряда. Из десятичной в двоичную — деление на 2 с остатком. Шестнадцатеричная использует 0–9 и A–F."
+},
+{
+"id": "inf-slozhnost",
+"title": "Алгоритмы и сложность",
+"tags": "информатика алгоритм сложность сортировка информатика алгоритм сложность сортировка бинарный поиск o(n)",
+"text": "O(1) — константа, O(log n) — бинарный поиск, O(n) — линейный проход, O(n log n) — быстрая сортировка и сортировка слиянием, O(n²) — пузырьковая. Бинарный поиск работает только на отсортированном массиве."
+},
+{
+"id": "pravo-osnovy",
+"title": "Права потребителя и учёбы (РФ)",
+"tags": "право закон потребитель школа право закон потребитель возврат товара 14 дней школа образование",
+"text": "Потребитель вправе вернуть товар надлежащего качества в течение 14 дней, если он не был в употреблении и сохранён чек (перечень невозвратных товаров установлен законом). Гарантийный ремонт — бесплатно. Общее образование в РФ — 11 лет, основное обязательное — 9 классов."
+}
+]
+};
+
+</script>
 <script>
 /* ============================================================
    ИСКРА — ИИ-ассистент для учёбы, кода и текстов.
@@ -1942,7 +2205,7 @@ function safetyCheck(text) {
       /(бомб|взрывчат|тротил|нитроглицерин|детонатор|оружие|пистолет|автомат|гранат|яд|токсин|отрав|рицин|анарх|терроризм)/.test(t))
     return deny("weapons", "Я не помогаю делать оружие, взрывчатку или яды. Это уголовная ответственность и реальная опасность для людей.");
 
-  if (/(порн|эрот|секс(а|ом|у)?|интим|нюдс|голые|раздева|18\+|хентай)/.test(t) &&
+  if (/(порн|эрот|пошл|секс(а|ом|у)?|интим|нюдс|голые|раздева|18\+|хентай)/.test(t) &&
       /(хочу|дай|покажи|сгенерируй|сгенери|нарисуй|сделай|изготов|опиши|расскажи|ролев|рп|сценарий|историю|фото|изображени|картинк)/.test(t))
     return deny("adult", "Контент 18+ я не создаю — ни тексты, ни картинки. Это правило без исключений.");
 
@@ -2137,6 +2400,11 @@ let lastModelVision = guessVision(settings.model);
   }
   if (!MODES[settings.mode]) settings.mode = "chat";
 })();
+
+/* ---------- Настройки настоящего входа (Supabase) ----------
+   url и anonKey — публичные, их можно держать в коде (это не секрет).
+   Пока пусто — работает локальный аккаунт. */
+const SUPABASE_CONFIG = { url: "", anonKey: "" };
 
 /* ---------- Утилиты ---------- */
 const $ = (s) => document.querySelector(s);
@@ -2645,6 +2913,12 @@ function buildSystemPrompt(userText = "") {
     sys += "\n\nСтиль речи: без мата и грубых выражений.";
   }
 
+  // встроенная база знаний: не нужно искать в интернете
+  const kb = isTaskRequest(userText) ? { hits: [], block: "" } : kbContext(userText);
+  if (kb.block) {
+    sys += "\n\nСПРАВКА ИЗ ВСТРОЕННОЙ БАЗЫ ИСКРЫ (пользуйся ею как главным источником, если она подходит):\n" + kb.block;
+  }
+
   // режимы скорости
   if (settings.riskMode) {
     sys += "\n\nРежим «Риск»: отвечай максимально быстро, коротко, без проверки себя. Скорость важнее точности.";
@@ -2708,9 +2982,11 @@ function apiPayload(chatMessages, opts = {}) {
     body.reasoning_effort = "high";
     body.max_tokens = 4096;
     body.temperature = 0.4;
-  } else if (settings.provider === "demo") {
+  } else if (settings.edition !== "pro") {
+    // бесплатная версия: быстрый ответ, без долгих размышлений
     body.reasoning_effort = "low";
-    body.max_tokens = 2048;
+    body.max_tokens = 1200;
+    body.temperature = 0.65;
   }
   return body;
 }
@@ -2956,6 +3232,52 @@ function cleanQuery(t) {
   q = q.replace(/^(это|такое)\s+/i, "");
   return q.trim() || String(t).trim();
 }
+
+/* ---------- Встроенная база знаний (без интернета) ---------- */
+const KB_STOP = new Set(["что","как","где","когда","почему","зачем","какой","какая","какие","это","для","про","мне","меня","тебе","тебя","расскажи","объясни","подскажи","можно","нужно","есть","или","если","чтобы","тоже","очень","всё","все","the","and","what","how","why","is","are"]);
+
+function kbTokens(text) {
+  return String(text || "").toLowerCase().replace(/ё/g, "е")
+    .replace(/[^a-zа-я0-9\s]/gi, " ").split(/\s+/)
+    .filter(w => w.length > 1 && !KB_STOP.has(w));
+}
+
+function kbSearch(text, limit = 2) {
+  if (typeof KNOWLEDGE_PACK === "undefined" || !KNOWLEDGE_PACK.items) return [];
+  const q = String(text || "").toLowerCase().replace(/ё/g, "е");
+  const words = kbTokens(text);
+  if (!words.length) return [];
+  const scored = [];
+  for (const it of KNOWLEDGE_PACK.items) {
+    const tags = it.tags.toLowerCase().replace(/ё/g, "е");
+    const title = it.title.toLowerCase().replace(/ё/g, "е");
+    const body = it.text.toLowerCase().replace(/ё/g, "е");
+    let score = 0, strong = 0;
+    for (const w of words) {
+      const stem = w.length > 5 ? w.slice(0, w.length - 2) : w;
+      if (!stem || stem.length < 2) continue;
+      if (tags.includes(stem)) { score += 4; strong += 2; }
+      else if (title.includes(stem)) { score += 3; strong += 1; }
+      else if (body.includes(stem)) { score += 2; if (stem.length >= 6) strong += 1; }
+    }
+    // совпадение точной фразы из тегов — самый сильный сигнал
+    const tagList = tags.split(/[,\s]+/).filter(Boolean);
+    for (const t of tagList) if (t.length > 3 && q.includes(t)) { score += 3; strong += 1; }
+    if (score >= 5 && strong >= 1) scored.push({ it, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored[0];
+  return scored.filter(x => !best || x.score >= best.score * 0.6).slice(0, limit).map(x => x.it);
+}
+
+/* Используется в промпте: модель получает готовую справку и не идёт в интернет */
+function kbContext(text) {
+  const hits = kbSearch(text, 2);
+  if (!hits.length) return { hits: [], block: "" };
+  const block = hits.map(h => `• ${h.title}: ${h.text}`).join("\n");
+  return { hits, block };
+}
+
 function shouldSearch(text) {
   const t = String(text || "").trim();
   if (t.length < 6 || t.length > 300) return false;
@@ -3199,7 +3521,8 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   try {
     // умный поиск: если это вопрос — сначала смотрим в Википедии
     _lastSearch = null;
-    if (settings.webSearch && shouldSearch(trimmed) && !pendingImages.length) {
+    const kbHit = !isTaskRequest(trimmed) && kbSearch(trimmed, 1).length > 0;
+    if (settings.webSearch && !kbHit && shouldSearch(trimmed) && !pendingImages.length) {
       contentEl.innerHTML = `<div class="typing"></div><div class="searching">Ищу в интернете…</div>`;
       try { _lastSearch = await wikiSearch(trimmed); } catch (e) {}
       contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
@@ -3786,15 +4109,95 @@ function authSession() { try { return JSON.parse(localStorage.getItem(SESSION_KE
 function authSetSession(id) {
   if (id) localStorage.setItem(SESSION_KEY, JSON.stringify({ id, ts: Date.now() }));
   else localStorage.removeItem(SESSION_KEY);
+  registerDevice(currentAccount());
   renderProfile();
+  if (supabaseConfigured()) handleAuthRedirect();
 }
 function currentAccount() {
   const sess = authSession();
   if (!sess) return null;
-  return authAccounts().find(a => a.id === sess.id) || null;
+  const acc = authAccounts().find(a => a.id === sess.id) || null;
+  if (acc && !deviceAllowed(acc)) {          // устройство отключили из другого места
+    localStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+  return acc;
 }
 function supabaseConfigured() {
-  return !!(settings.supabaseUrl && settings.supabaseKey);
+  return !!(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
+}
+const SB = () => SUPABASE_CONFIG.url.replace(/\/+$/, "");
+async function sbFetch(path, body, method = "POST") {
+  const r = await fetch(SB() + path, {
+    method,
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_CONFIG.anonKey, Authorization: "Bearer " + SUPABASE_CONFIG.anonKey },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const txt = await r.text();
+  let j = {};
+  try { j = JSON.parse(txt); } catch (e) {}
+  if (!r.ok) throw new Error(j.error_description || j.msg || j.message || txt.slice(0, 140));
+  return j;
+}
+
+/* Возврат после входа через Google/GitHub: токены приходят в адресе */
+async function handleAuthRedirect() {
+  if (!location.hash || location.hash.length < 10) return false;
+  const h = new URLSearchParams(location.hash.slice(1));
+  const token = h.get("access_token");
+  if (!token) return false;
+  try {
+    const r = await fetch(SB() + "/auth/v1/user", { headers: { apikey: SUPABASE_CONFIG.anonKey, Authorization: "Bearer " + token } });
+    const u = await r.json();
+    const email = u?.email || "";
+    const meta = u?.user_metadata || {};
+    const name = meta.full_name || meta.name || meta.user_name || (email ? email.split("@")[0] : "Друг");
+    let acc = authAccounts().find(a => a.sbId === u.id) || (email ? authFind(email) : null);
+    if (!acc) acc = authCreate({ method: meta.provider || "oauth", name, email });
+    acc.sbId = u.id;
+    acc.email = email || acc.email;
+    const list = authAccounts().map(a => (a.id === acc.id ? acc : a));
+    authSaveAccounts(list);
+    authSetSession(acc.id);
+    history.replaceState(null, "", location.pathname + location.search);
+    toast("Вход выполнен: " + acc.name, "ok");
+    if (!settings.model || settings.onboarded !== true) setTimeout(openOnboarding, 600);
+    return true;
+  } catch (e) {
+    toast("Не удалось завершить вход: " + e.message, "err");
+    history.replaceState(null, "", location.pathname + location.search);
+    return false;
+  }
+}
+
+/* ---------- Устройства ---------- */
+const DEVICE_KEY = "iskra.device.id";
+function deviceId() {
+  let id = localStorage.getItem(DEVICE_KEY);
+  if (!id) { id = "d_" + Math.random().toString(36).slice(2, 10); localStorage.setItem(DEVICE_KEY, id); }
+  return id;
+}
+function deviceName() {
+  const ua = navigator.userAgent;
+  const br = /YaBrowser/.test(ua) ? "Яндекс.Браузер" : /Edg\//.test(ua) ? "Edge" : /Firefox/.test(ua) ? "Firefox" : /Chrome/.test(ua) ? "Chrome" : /Safari/.test(ua) ? "Safari" : "Браузер";
+  const os = /Android/.test(ua) ? "Android" : /iPhone|iPad/.test(ua) ? "iPhone/iPad" : /Windows/.test(ua) ? "Windows" : /Mac/.test(ua) ? "macOS" : /Linux/.test(ua) ? "Linux" : "устройство";
+  return br + " · " + os;
+}
+function accountDevices(acc) { return (acc && acc.devices) || []; }
+function registerDevice(acc) {
+  if (!acc) return;
+  const id = deviceId();
+  acc.devices = accountDevices(acc);
+  const found = acc.devices.find(d => d.id === id);
+  if (found) { found.last = Date.now(); found.name = deviceName(); }
+  else acc.devices.push({ id, name: deviceName(), created: Date.now(), last: Date.now(), current: true });
+  acc.devices.forEach(d => { d.current = d.id === id; });
+  authSaveAccounts(authAccounts().map(a => (a.id === acc.id ? acc : a)));
+}
+function deviceAllowed(acc) {
+  if (!acc) return false;
+  if (!acc.devices || !acc.devices.length) return true;   // старые аккаунты
+  return accountDevices(acc).some(d => d.id === deviceId());
 }
 
 /* хеш пароля: даже локально не храним его открытым */
@@ -3811,6 +4214,11 @@ async function hashPass(pass) {
 
 function authCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
 
+function makeRecoveryCode() {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 3 }, () => Array.from({ length: 4 }, () => abc[Math.floor(Math.random() * abc.length)]).join("")).join("-");
+}
+
 function authCreate({ method, name, email, phone, passwordHash }) {
   const list = authAccounts();
   const acc = {
@@ -3819,10 +4227,13 @@ function authCreate({ method, name, email, phone, passwordHash }) {
     email: email || "", phone: phone || "",
     passHash: passwordHash || "",
     created: Date.now(),
+    recovery: makeRecoveryCode(),
+    devices: [],
     color: ["#ff7a45", "#7d3cff", "#22a6b3", "#e84393", "#00b894"][Math.floor(Math.random() * 5)]
   };
   list.push(acc);
   authSaveAccounts(list);
+  registerDevice(acc);
   authSetSession(acc.id);
   return acc;
 }
@@ -3993,8 +4404,13 @@ async function passSubmit() {
 
 /* --- google / github --- */
 let authOauthProvider = "google";
-function oauthStart(provider) {
+async function oauthStart(provider) {
   authOauthProvider = provider;
+  if (supabaseConfigured()) {
+    const redirect = encodeURIComponent(location.origin + location.pathname);
+    location.href = SB() + "/auth/v1/authorize?provider=" + provider + "&redirect_to=" + redirect;
+    return;
+  }
   $("#authOauthTitle").textContent = provider === "google" ? "Вход через Google" : "Вход через GitHub";
   const note = $("#authOauthNote");
   note.innerHTML = supabaseConfigured()
@@ -4075,11 +4491,13 @@ function renderProfile() {
     if (menu) menu.innerHTML = `
       <div class="pm-head"><div class="pm-name">${esc(acc.name)}</div>
       <div class="pm-mail">${esc(acc.email || acc.phone || "локальный аккаунт")}</div></div>
+      <button data-pm="account">${ic("user", 16)} Мой аккаунт и устройства</button>
       <button data-pm="settings">${ic("gear", 16)} Настройки</button>
       <button data-pm="switch">${ic("user", 16)} Сменить аккаунт</button>
       <button data-pm="logout">${ic("logout", 16)} Выйти</button>`;
     menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
       menu.classList.remove("open");
+      if (b.dataset.pm === "account") openAccountPanel();
       if (b.dataset.pm === "settings") openSettings();
       if (b.dataset.pm === "logout") { authSetSession(null); toast("Вы вышла из аккаунта"); }
       if (b.dataset.pm === "switch") { authSetSession(null); openAuth(); }
@@ -4090,11 +4508,153 @@ function renderProfile() {
     name.textContent = "Войти";
     if (menu) menu.innerHTML = `
       <div class="pm-head"><div class="pm-name">Гость</div><div class="pm-mail">История хранится в этом браузере</div></div>
-      <button data-pm="login">${ic("user", 16)} Войти или создать аккаунт</button>`;
-    if (menu) menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { menu.classList.remove("open"); openAuth(); }));
+      <button data-pm="login">${ic("user", 16)} Войти или создать аккаунт</button>
+      <button data-pm="restore">${ic("regen", 16)} Восстановить аккаунт</button>`;
+    if (menu) menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      menu.classList.remove("open");
+      if (b.dataset.pm === "restore") openRestore(); else openAuth();
+    }));
   }
 }
 
+
+/* ---------- Управление аккаунтом: устройства, пароль, удаление ---------- */
+function openAccountPanel() {
+  const acc = currentAccount();
+  if (!acc) { openAuth(); return; }
+  registerDevice(acc);
+  const acc2 = currentAccount();
+  const devs = accountDevices(acc2);
+  const box = $("#acctBody");
+  if (!box) return;
+  box.innerHTML = `
+    <div class="acct-sec">
+      <div class="acct-h">Аккаунт</div>
+      <div class="acct-row"><span>Имя</span><b>${esc(acc2.name)}</b></div>
+      <div class="acct-row"><span>Почта</span><b>${esc(acc2.email || "—")}</b></div>
+      <div class="acct-row"><span>Телефон</span><b>${esc(acc2.phone || "—")}</b></div>
+      <div class="acct-row"><span>Способ входа</span><b>${esc({google:"Google",github:"GitHub",email:"почта и код",phone:"телефон",pass:"пароль"}[acc2.method] || acc2.method || "—")}</b></div>
+      <div class="acct-row"><span>Код восстановления</span><b class="acct-code">${esc(acc2.recovery || "—")}</b></div>
+      <div class="acct-note">Сохрани код восстановления: по нему можно вернуть аккаунт после удаления или смены устройства.</div>
+    </div>
+
+    <div class="acct-sec">
+      <div class="acct-h">Устройства (${devs.length})</div>
+      <div id="acctDevices">
+        ${devs.map(d => `<div class="acct-dev ${d.current ? "cur" : ""}">
+          <div><b>${esc(d.name)}</b>${d.current ? ' <span class="ob-tag">это устройство</span>' : ""}
+          <div class="acct-dim">вход: ${new Date(d.created).toLocaleDateString("ru-RU")} · активность: ${new Date(d.last).toLocaleString("ru-RU")}</div></div>
+          ${d.current ? "" : `<button data-off="${esc(d.id)}">Отключить</button>`}
+        </div>`).join("") || "<div class='acct-dim'>Пока только это устройство</div>"}
+      </div>
+      <button class="auth-btn ghost" id="acctOffAll" style="margin-top:10px">Выйти на всех устройствах</button>
+      <div class="acct-note">Настоящий список устройств с сервера появится, когда включён вход через Supabase. Сейчас это устройства этого браузера.</div>
+    </div>
+
+    <div class="acct-sec">
+      <div class="acct-h">Пароль</div>
+      <button class="auth-btn ghost" id="acctChangePass">Сменить или восстановить пароль</button>
+      <div id="acctPassBox" style="display:none;margin-top:10px">
+        <div class="auth-field"><label>Новый пароль</label><input id="acctNewPass" type="password" placeholder="минимум 6 символов"></div>
+        <div class="auth-field"><label>Код восстановления</label><input id="acctRecCode" placeholder="XXXX-XXXX-XXXX"></div>
+        <button class="auth-btn" id="acctSavePass">Сохранить пароль</button>
+        <p class="auth-err" id="acctPassErr"></p>
+      </div>
+    </div>
+
+    <div class="acct-sec">
+      <div class="acct-h">Удаление</div>
+      <button class="auth-btn ghost" id="acctDelete" style="color:var(--err)">Удалить аккаунт</button>
+      <div id="acctDelBox" style="display:none;margin-top:10px">
+        <div class="acct-note">Аккаунт отключается сразу, данные чатов остаются в браузере. Вернуть можно кодом восстановления в течение 30 дней.</div>
+        <div class="auth-field"><label>Впиши слово УДАЛИТЬ</label><input id="acctDelConfirm" placeholder="УДАЛИТЬ"></div>
+        <button class="auth-btn" id="acctDelGo" style="background:var(--err)">Удалить окончательно</button>
+      </div>
+    </div>`;
+
+  box.querySelectorAll("[data-off]").forEach(b => b.addEventListener("click", () => {
+    const a = currentAccount();
+    a.devices = accountDevices(a).filter(d => d.id !== b.dataset.off);
+    authSaveAccounts(authAccounts().map(x => (x.id === a.id ? a : x)));
+    toast("Устройство отключено", "ok");
+    openAccountPanel();
+  }));
+  const offAll = box.querySelector("#acctOffAll");
+  if (offAll) offAll.addEventListener("click", () => {
+    const a = currentAccount();
+    a.devices = [];
+    a.signedOutAll = Date.now();
+    authSaveAccounts(authAccounts().map(x => (x.id === a.id ? a : x)));
+    authSetSession(null);
+    $("#accountModal").classList.remove("open");
+    toast("Вы вышла на всех устройствах", "ok");
+    renderProfile();
+  });
+  const cp = box.querySelector("#acctChangePass");
+  if (cp) cp.addEventListener("click", () => { $("#acctPassBox").style.display = "block"; });
+  const sp = box.querySelector("#acctSavePass");
+  if (sp) sp.addEventListener("click", async () => {
+    const err = $("#acctPassErr");
+    err.textContent = "";
+    const pass = $("#acctNewPass").value, code = ($("#acctRecCode").value || "").trim().toUpperCase();
+    const a = currentAccount();
+    if (pass.length < 6) { err.textContent = "Пароль минимум 6 символов."; return; }
+    if (code !== (a.recovery || "").toUpperCase()) { err.textContent = "Код восстановления не совпал."; return; }
+    a.passHash = await hashPass(pass);
+    a.method = "pass";
+    authSaveAccounts(authAccounts().map(x => (x.id === a.id ? a : x)));
+    err.className = "auth-err auth-ok";
+    err.textContent = "Пароль обновлён.";
+    toast("Пароль обновлён", "ok");
+  });
+  const del = box.querySelector("#acctDelete");
+  if (del) del.addEventListener("click", () => { $("#acctDelBox").style.display = "block"; });
+  const dg = box.querySelector("#acctDelGo");
+  if (dg) dg.addEventListener("click", () => {
+    if (($("#acctDelConfirm").value || "").trim().toUpperCase() !== "УДАЛИТЬ") { toast("Впиши слово УДАЛИТЬ", "err"); return; }
+    const a = currentAccount();
+    a.deleted = Date.now();
+    a.devices = [];
+    authSaveAccounts(authAccounts().map(x => (x.id === a.id ? a : x)));
+    authSetSession(null);
+    $("#accountModal").classList.remove("open");
+    renderProfile();
+    toast("Аккаунт удалён. Вернуть можно кодом: " + a.recovery, "ok");
+  });
+
+  $("#accountModal").classList.add("open");
+}
+
+/* Восстановление удалённого аккаунта */
+function openRestore() {
+  const box = $("#acctBody");
+  box.innerHTML = `
+    <div class="acct-sec">
+      <div class="acct-h">Восстановить аккаунт</div>
+      <div class="acct-note">Впиши почту, ник или телефон и код восстановления.</div>
+      <div class="auth-field"><label>Почта, ник или телефон</label><input id="restLogin" placeholder="zhenya@example.com"></div>
+      <div class="auth-field"><label>Код восстановления</label><input id="restCode" placeholder="XXXX-XXXX-XXXX"></div>
+      <button class="auth-btn" id="restGo">Восстановить</button>
+      <p class="auth-err" id="restErr"></p>
+    </div>`;
+  $("#restGo").addEventListener("click", () => {
+    const login = ($("#restLogin").value || "").trim();
+    const code = ($("#restCode").value || "").trim().toUpperCase();
+    const err = $("#restErr");
+    err.textContent = "";
+    const acc = authAccounts().find(a => (a.email && a.email.toLowerCase() === login.toLowerCase()) || (a.phone && a.phone === login) || a.name.toLowerCase() === login.toLowerCase());
+    if (!acc) { err.textContent = "Такого аккаунта нет."; return; }
+    if ((acc.recovery || "").toUpperCase() !== code) { err.textContent = "Код не совпал."; return; }
+    acc.deleted = 0;
+    authSaveAccounts(authAccounts().map(x => (x.id === acc.id ? acc : x)));
+    authSetSession(acc.id);
+    registerDevice(acc);
+    renderProfile();
+    $("#accountModal").classList.remove("open");
+    toast("Аккаунт восстановлен: " + acc.name, "ok");
+  });
+  $("#accountModal").classList.add("open");
+}
 /* ---------- События ---------- */
 
 /* ---------- Режимы: отрисовка и переключение ---------- */
@@ -4327,6 +4887,9 @@ function wire() {
   $("#riskBtn") && $("#riskBtn").addEventListener("click", () => setRiskMode(!settings.riskMode));
   $("#openRules") && $("#openRules").addEventListener("click", openRules);
 
+  $("#accountClose") && $("#accountClose").addEventListener("click", () => $("#accountModal").classList.remove("open"));
+  $("#accountModal") && $("#accountModal").addEventListener("click", (e) => { if (e.target.id === "accountModal") $("#accountModal").classList.remove("open"); });
+
   // ---- аккаунт ----
   const pb = $("#profileBtn");
   if (pb) pb.addEventListener("click", () => {
@@ -4360,6 +4923,29 @@ function wire() {
   bind("#authPhoneCheck", checkPhoneCode);
   bind("#authPassSubmit", passSubmit);
   bind("#authPassToggle", passToggleMode);
+  bind("#authForgot", async () => {
+    const login = ($("#authLogin").value || "").trim();
+    const err = $("#authPassErr");
+    err.className = "auth-err";
+    err.textContent = "";
+    if (!login) { err.textContent = "Сначала впиши почту или ник."; return; }
+    if (supabaseConfigured()) {
+      try {
+        await sbFetch("/auth/v1/otp", { email: login, create_user: false });
+        err.className = "auth-err auth-ok";
+        err.textContent = "Письмо со ссылкой для сброса пароля отправлено на " + login;
+      } catch (e) { err.textContent = "Не удалось отправить: " + e.message; }
+      return;
+    }
+    const acc = authFind(login);
+    if (!acc) { err.textContent = "Аккаунт не найден."; return; }
+    if (acc.recovery) {
+      err.className = "auth-err auth-ok";
+      err.textContent = "Код восстановления этого аккаунта: " + acc.recovery + " — впиши его в «Мой аккаунт» → «Сменить пароль».";
+    } else {
+      err.textContent = "У аккаунта нет кода восстановления. Создай новый аккаунт.";
+    }
+  });
   bind("#authOauthGo", oauthGo);
   bind("#authDoneGo", () => {
     closeAuth();
@@ -4690,6 +5276,12 @@ document.addEventListener("DOMContentLoaded", wire);
 
 <!-- ================= Аккаунт ================= -->
 <div id="profileMenu"></div>
+<div id="accountModal" class="modal-bg">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3>Мой аккаунт</h3><button class="icon-btn" id="accountClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body" id="acctBody"></div>
+  </div>
+</div>
 <div id="authModal" aria-hidden="true">
   <div class="auth-card">
     <div class="auth-side">
@@ -4768,7 +5360,10 @@ document.addEventListener("DOMContentLoaded", wire);
         <div class="auth-field"><label>Пароль</label><input id="authPassword" type="password" placeholder="минимум 6 символов" autocomplete="current-password"></div>
         <button class="auth-btn" id="authPassSubmit">Войти</button>
         <p class="auth-err" id="authPassErr"></p>
-        <div class="auth-row"><button class="auth-link" id="authPassToggle">Нет аккаунта? Зарегистрироваться</button></div>
+        <div class="auth-row" style="justify-content:space-between">
+          <button class="auth-link" id="authPassToggle">Нет аккаунта? Зарегистрироваться</button>
+          <button class="auth-link" id="authForgot">Забыла пароль</button>
+        </div>
         <div class="auth-note" id="authPassNote"></div>
       </div>
 
