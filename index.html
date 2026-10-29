@@ -1108,6 +1108,24 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 /* Стиль общения: ровная сетка 2×2 вместо «3 + 1» */
 #toneBtns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 420px) { #toneBtns { grid-template-columns: 1fr; } }
+
+/* Картинки: замок на пилюле, заметки и кнопки */
+.mode-pill.locked { opacity: .55; }
+.mode-pill .pill-lock {
+  font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  padding: 1px 5px; border-radius: 6px; margin-left: 2px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent);
+}
+.gen-wrap { margin-top: 10px; }
+.gen-img { max-width: min(460px, 100%); width: 100%; border-radius: 14px; border: 1px solid var(--line); display: block; cursor: zoom-in; }
+.gen-note { font-size: 12.5px; color: var(--text-dim); margin: 8px 0 0; }
+.gen-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.gen-actions button {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-soft-2); border: 1px solid var(--line); color: var(--text-soft);
+  border-radius: 9px; padding: 7px 11px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.gen-actions button:hover { color: var(--text); border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1653,7 +1671,7 @@ function renderModelPicker() {
     const info = document.createElement("div");
     info.className = "mp-note";
     info.style.cssText = "background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:10px;padding:9px 11px;margin-bottom:12px;color:var(--text-soft)";
-    info.innerHTML = "🔑 <b>Puter</b>: 500+ моделей бесплатно и без наших ключей. Нужен бесплатный вход в Puter — окно откроется при первом сообщении. " + (_puterModels ? "" : "<i>Список моделей подгружается…</i>");
+    info.innerHTML = "<b>Puter</b>: 500+ моделей бесплатно и без наших ключей. Нужен бесплатный вход в Puter — окно откроется при первом сообщении. " + (_puterModels ? "" : "<i>Список моделей подгружается…</i>");
     box.appendChild(info);
     if (!_puterModels) loadPuterModels();
   }
@@ -1662,7 +1680,7 @@ function renderModelPicker() {
     const warn = document.createElement("div");
     warn.className = "mp-note";
     warn.style.cssText = "background:color-mix(in srgb,var(--warn) 12%,transparent);border:1px solid color-mix(in srgb,var(--warn) 35%,var(--line));border-radius:10px;padding:9px 11px;margin-bottom:12px;color:var(--text-soft)";
-    warn.innerHTML = "⚠️ <b>Демо без ключа</b>: 1 ответ в 30 секунд. Для нормальной работы возьми бесплатный ключ Groq — кнопка «Получить ключ» в настройках.";
+    warn.innerHTML = "<b>Демо без ключа</b>: 1 ответ в 30 секунд. Для нормальной работы возьми бесплатный ключ Groq — кнопка «Получить ключ» в настройках.";
     box.appendChild(warn);
   }
 
@@ -1746,7 +1764,7 @@ const EDITIONS = {
   pro: {
     name: "Искра Pro",
     languages: "любой язык, который попросит пользователь",
-    features: ["Всё из бесплатной", "Любые языки", "Свободный стиль общения", "Максимум качества в коде, почерке и домашке"]
+    features: ["Картинки в высоком качестве", "Всё из бесплатной", "Любые языки", "Свободный стиль общения", "Максимум качества в коде, почерке и домашке"]
   }
 };
 
@@ -2292,6 +2310,12 @@ function appendMessage(msg, animate = true) {
     <div class="body">
       <div class="who">${who}</div>
       <div class="content">${msg.role === "user" ? escUser(msg.content) : renderMarkdown(msg.content || "")}</div>
+      ${msg.image ? `<div class="gen-wrap"><img class="gen-img" src="${msg.image}" alt=""/>
+        ${msg.imageNote ? `<p class="gen-note">${esc(msg.imageNote)}</p>` : ""}
+        <div class="gen-actions">
+          <button data-act="imgdl">${ic("download", 16)} Скачать</button>
+          <button data-act="imggen">${ic("regen", 16)} Ещё вариант</button>
+        </div></div>` : ""}
       ${msg.images?.length ? `<div class="thumbs">${msg.images.map(src => `<img src="${src}" alt=""/>`).join("")}</div>` : ""}
       <div class="actions"></div>
     </div>`;
@@ -2305,6 +2329,16 @@ function appendMessage(msg, animate = true) {
     b.addEventListener("click", () => onMsgAction(msg.id, b.dataset.act));
   });
   if (msg.sources && msg.sources.length) renderSources(el.querySelector(".content"), msg.sources);
+  const genImg = el.querySelector(".gen-img");
+  if (genImg) {
+    genImg.addEventListener("click", () => openLightbox(genImg.src));
+    const dl = el.querySelector('[data-act="imgdl"]');
+    if (dl) dl.addEventListener("click", () => downloadImage(genImg.src, msg.content || "iskra"));
+    const ag = el.querySelector('[data-act="imggen"]');
+    if (ag) ag.addEventListener("click", () => {
+      generateImage(msg.prompt || String(msg.content || "").replace(/^Готово.*$/, "").trim() || "повтори картинку");
+    });
+  }
   el.querySelectorAll(".thumbs img").forEach(img => {
     img.addEventListener("click", () => openLightbox(img.src));
   });
@@ -3121,13 +3155,95 @@ function renderImgStrip() {
 }
 
 /* ---------- Генерация картинок (Pollinations) ---------- */
-async function generateImage(prompt) {
+/* ---------- Генерация картинок ---------- */
+function imageLockedMessage() {
+  return "Картинки рисует только версия «Искра Pro». Включить: ⚙ → Версия → Искра Pro.";
+}
+
+/* Проверка доступа: картинки — только Pro */
+function imageAllowed() {
+  if (settings.edition === "pro") return true;
+  toast(imageLockedMessage(), "err");
+  return false;
+}
+
+/* Картинка через Puter (gpt-image-2, высокое качество) */
+async function puterImage(prompt) {
+  const puter = await loadPuter();
+  // без входа Puter молча зависает — проверяем заранее
+  let signed = false;
+  try { signed = await Promise.race([puter.auth.isSignedIn(), wait(4000).then(() => false)]); }
+  catch (e) { signed = false; }
+  if (!signed) throw new ApiError(401, "Нет входа в Puter", "puter-auth");
+  const out = await Promise.race([
+    puter.ai.txt2img(prompt, { model: "gpt-image-2", quality: "high", ratio: { w: 1, h: 1 } }),
+    wait(45000).then(() => { throw new ApiError(0, "Puter не ответил за 45 секунд", "puter-timeout"); })
+  ]);
+  let src = out && (out.src || out.url || (typeof out === "string" ? out : ""));
+  if (!src) throw new ApiError(0, "Puter не вернул картинку", "img-puter");
+  if (src.startsWith("data:") || src.startsWith("blob:")) return src;
+  // пробуем перевести во встроенный формат, чтобы картинка не пропала после перезагрузки
+  try {
+    const r = await fetch(src);
+    if (!r.ok) return src;
+    const blob = await r.blob();
+    return await new Promise((res) => {
+      const fr = new FileReader();
+      fr.onload = () => res(String(fr.result));
+      fr.onerror = () => res(src);
+      fr.readAsDataURL(blob);
+    });
+  } catch (e) { return src; }
+}
+
+/* Запасной вариант: бесплатный Pollinations (модель sana, качество скромнее) */
+async function pollinationsImage(prompt) {
+  const seed = Math.floor(Math.random() * 1e9);
+  const url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) +
+    "?width=1024&height=1024&model=flux&nologo=true&safe=true&seed=" + seed;
+  const res = await fetch(url);
+  if (res.status === 402 || res.status === 429) {
+    const retrySec = Number(res.headers.get("retry-after") || 45);
+    const err = new ApiError(402, "Лимит бесплатных картинок", "img-limit");
+    err.retryAfter = retrySec;
+    throw err;
+  }
+  if (!res.ok) throw new ApiError(res.status, await res.text().catch(() => ""));
+  const blob = await res.blob();
+  if (!blob || blob.size < 2000) throw new ApiError(0, "Пустой ответ сервера картинок", "img-empty");
+  return await new Promise((resolve) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result));
+    fr.onerror = () => resolve(url);
+    fr.readAsDataURL(blob);
+  });
+}
+
+/* Перевод запроса в понятный модели английский промпт */
+async function toEnglishPrompt(text) {
+  const body = {
+    model: settings.model,
+    messages: [
+      { role: "system", content: "Turn the user's image request into ONE short English image prompt (max 25 words). Include: subject, action, setting, style, lighting. Always end with 'sfw, family friendly'. Output only the prompt: no quotes, no explanations, no Russian." },
+      { role: "user", content: String(text).slice(0, 400) }
+    ],
+    stream: true, temperature: 0.3, max_tokens: 120
+  };
+  let acc = "";
+  try { await streamChat(body, (d) => { acc += d; }); } catch (e) { return ""; }
+  const line = acc.trim().split("\n").filter(Boolean)[0] || "";
+  return line.replace(/^["'`«]+|["'`»]+$/g, "").replace(/\s+/g, " ").trim().slice(0, 300);
+}
+
+async function generateImage(prompt, attempt = 0) {
+  if (!imageAllowed()) return;
   const chk = safetyCheck("нарисуй " + prompt);
   if (chk.blocked) { toast(chk.reason, "err"); return; }
-  if (!prompt.trim()) return;
+  prompt = String(prompt || "").trim();
+  if (!prompt) return;
   if (!currentChatId) createChat(titleFromText("Нарисовать: " + prompt));
   const chat = chats[currentChatId];
-  const userMsg = { id: uid(), role: "user", content: "🎨 " + prompt, ts: Date.now() };
+  const userMsg = { id: uid(), role: "user", content: prompt, ts: Date.now() };
   chat.messages.push(userMsg);
   $("#welcome").style.display = "none";
   appendMessage(userMsg);
@@ -3136,34 +3252,98 @@ async function generateImage(prompt) {
   chat.messages.push(aiMsg);
   const el = appendMessage(aiMsg);
   const contentEl = el.querySelector(".content");
-  contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note">Рисую… качество высокое, это занимает до 30 секунд</p>`;
 
-  const seed = Math.floor(Math.random() * 1e9);
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&seed=${seed}&nologo=true`;
-  const img = new Image();
-  img.onload = () => {
-    aiMsg.content = `Готово ✦`;
-    aiMsg.image = url;
+  const showImage = (src, engine, note) => {
+    aiMsg.content = "Готово ✦";
+    aiMsg.image = src;
+    aiMsg.imageNote = note || "";
+    aiMsg.prompt = prompt;
     contentEl.innerHTML = `
       <p>${esc(prompt)}</p>
-      <img class="gen-img" src="${url}" alt=""/>
+      <img class="gen-img" src="${src}" alt="${esc(prompt)}"/>
+      ${note ? `<p class="gen-note">${esc(note)}</p>` : ""}
       <div class="gen-actions">
         <button data-act="dl">${ic("download", 16)} Скачать</button>
         <button data-act="again">${ic("regen", 16)} Ещё вариант</button>
       </div>`;
-    contentEl.querySelector(".gen-img").addEventListener("click", () => openLightbox(url));
-    contentEl.querySelector('[data-act="dl"]').addEventListener("click", () => downloadImage(url, prompt));
+    const im = contentEl.querySelector(".gen-img");
+    im.addEventListener("click", () => openLightbox(im.src));
+    contentEl.querySelector('[data-act="dl"]').addEventListener("click", () => downloadImage(im.src, prompt));
     contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt));
     saveChats();
   };
-  img.onerror = () => {
-    contentEl.innerHTML = `<p>Не удалось нарисовать. Сервер мог быть перегружен.</p>
-      <div class="gen-actions"><button data-act="again">${ic("regen", 16)} Попробовать снова</button></div>`;
-    contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt));
-    chat.messages.pop(); saveChats();
-    toast("Ошибка генерации", "err");
+
+  const showFail = (text, canRetry = true) => {
+    aiMsg.content = text;
+    contentEl.innerHTML = `<p>${esc(text)}</p>
+      ${canRetry ? `<div class="gen-actions"><button data-act="again">${ic("regen", 16)} Попробовать снова</button></div>` : ""}`;
+    const b = contentEl.querySelector('[data-act="again"]');
+    if (b) b.addEventListener("click", () => generateImage(prompt));
+    chat.messages.pop();
+    saveChats();
   };
-  img.src = url;
+
+  // 0) переводим запрос: русский текст модель понимает плохо и рисует не то
+  let enPrompt = "";
+  try { enPrompt = await toEnglishPrompt(prompt); } catch (e) { enPrompt = ""; }
+  if (!enPrompt) enPrompt = prompt + ", highly detailed, professional lighting, sfw, family friendly";
+  let finalPrompt = enPrompt;
+  if (!/sfw|family friendly/i.test(finalPrompt)) finalPrompt += ", sfw, family friendly";
+
+  // 1) сначала Puter — качество заметно выше
+  try {
+    const src = await puterImage(finalPrompt);
+    showImage(src, "puter", "Нарисовано через Puter · gpt-image-2, высокое качество · промпт: " + finalPrompt);
+    return;
+  } catch (e) {
+    const msg = (e && (e.message || e.error?.message)) || "";
+    if (e && e.kind === "puter-auth") {
+      toast("Качественные картинки — после входа в Puter (⚙ → «Войти в Puter»). Пока рисую запасным движком.", "err");
+    } else if (/auth|sign|login|permission|credit|quota/i.test(msg)) {
+      toast("Puter не дал доступ — рисую запасным движком", "err");
+    }
+  }
+
+  // 2) запасной бесплатный вариант
+  try {
+    const src = await pollinationsImage(finalPrompt);
+    showImage(src, "pollinations", "Запасной бесплатный движок (sana) — качество скромнее. Для высокого включи вход в Puter. Промпт: " + finalPrompt);
+  } catch (e) {
+    if (e && e.kind === "img-limit") {
+      const w = e.retryAfter || 45;
+      if (attempt === 0) {
+        // ждём лимит и рисуем сами — без «нажми ещё раз»
+        aiMsg.content = "";
+        contentEl.innerHTML = `<p class="gen-note">Сервер ограничивает бесплатные картинки. Подожду <b id="genCount">${w}</b> с и нарисую автоматически…</p>
+          <div class="gen-actions">
+            <button data-act="puter">${ic("spark", 16)} Войти в Puter — без лимитов</button>
+            <button data-act="again">${ic("regen", 16)} Попробовать сейчас</button>
+          </div>`;
+        contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt, 1));
+        contentEl.querySelector('[data-act="puter"]').addEventListener("click", async () => {
+          if (await puterSignIn()) generateImage(prompt, 1);
+        });
+        let left = w;
+        const timer = setInterval(() => {
+          left -= 1;
+          const c = document.getElementById("genCount");
+          if (c) c.textContent = String(Math.max(left, 0));
+          if (left <= 0) {
+            clearInterval(timer);
+            generateImage(prompt, 1);
+          }
+        }, 1000);
+        toast(`Лимит бесплатных картинок: подожду ${w} с`, "err");
+        return;
+      }
+      const sec = `${w} ${plural(w, "секунду", "секунды", "секунд")}`;
+      showFail(`Сервер всё ещё держит лимит: одна картинка раз в ${sec}. Попробуй чуть позже или войди в Puter — там без лимитов.`);
+      return;
+    }
+    showFail("Нарисовать не получилось: сервер картинок не ответил. Попробуй ещё раз или войди в Puter в настройках.");
+    toast("Ошибка генерации картинки", "err");
+  }
 }
 async function downloadImage(url, prompt) {
   try {
@@ -3443,8 +3623,10 @@ function renderModebar() {
     b.type = "button";
     b.className = "mode-pill" + (settings.mode === key ? " on" : "");
     b.dataset.mode = key;
-    b.innerHTML = ic(m.icon, 17) + `<span>${m.name}</span>`;
-    b.title = m.sub;
+    const locked = m.image && settings.edition !== "pro";
+    b.innerHTML = ic(m.icon, 17) + `<span>${m.name}</span>` + (locked ? `<span class="pill-lock">Pro</span>` : "");
+    b.classList.toggle("locked", !!locked);
+    b.title = locked ? "Генерация картинок — только в версии Искра Pro" : m.sub;
     b.addEventListener("click", () => setMode(key));
     bar.appendChild(b);
   }
@@ -3467,6 +3649,10 @@ function renderModeCards() {
   }
 }
 function setMode(key) {
+  if (MODES[key] && MODES[key].image && settings.edition !== "pro") {
+    toast("Картинки рисует только версия «Искра Pro»: ⚙ → Версия", "err");
+    return;
+  }
   if (!MODES[key]) return;
   settings.mode = key;
   saveSettings();
@@ -3570,7 +3756,7 @@ function renderModeToggles() {
   if (r) r.classList.toggle("on", !!settings.riskMode);
   const note = document.querySelector(".composer-note");
   if (note && settings.riskMode) {
-    note.textContent = "⚠️ Режим «Риск»: очень быстро, но возможны ошибки. Не рекомендовано к использованию.";
+    note.textContent = "Внимание: режим «Риск»: очень быстро, но возможны ошибки. Не рекомендовано к использованию.";
   } else if (note) {
     updateComposerNote();
   }
@@ -3586,7 +3772,7 @@ function setRiskMode(on) {
   settings.riskMode = on;
   if (on) settings.deepThink = false;
   saveSettings(); renderModeToggles();
-  if (on) toast("⚠️ Режим «Риск»: очень быстро, возможны ошибки. Не рекомендовано к использованию.", "err");
+  if (on) toast("Внимание: режим «Риск» — очень быстро, возможны ошибки. Не рекомендовано к использованию.", "err");
 }
 
 function syncPuterButton() {
