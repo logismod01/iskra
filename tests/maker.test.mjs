@@ -154,5 +154,35 @@ await test("«навсегда» нельзя выдать офлайн-ключ
   assert(/только через сервер/i.test(out), "офлайн «навсегда» не заблокирован: " + out);
 });
 
+
+await test("режимы: «Задача» и «Текст» слились в «Учёбу»", () => {
+  const order = window.eval("MODE_ORDER");
+  assert(!order.includes("math") && !order.includes("text"), "старые режимы остались в меню: " + order.join(", "));
+  assert(order.includes("study"), "нет режима «Учёба»");
+  const hint = window.eval("MODES.study.hint");
+  assert(/Дано/.test(hint) && /живым языком/.test(hint), "в «Учёбе» нет задач и текстов");
+});
+
+await test("Blender помечен Pro и без ключа не включается", () => {
+  proOff();
+  assert(window.eval("MODES.blender.pro") === true, "у Blender нет флага pro");
+  assert(window.eval("modeNeedsPro(MODES.blender)") === true, "Blender не требует Pro");
+  window.eval("settings.mode='chat'; setMode('blender')");
+  assert(window.eval("settings.mode") === "chat", "Blender включился без ключа");
+  window.eval("renderModebar()");
+  const pill = window.document.querySelector('.mode-pill[data-mode="blender"]');
+  assert(pill, "Blender пропал из меню режимов");
+  assert(pill.querySelector(".pill-lock"), "у Blender в меню нет бейджа Pro");
+  const noLock = window.document.querySelector('.mode-pill[data-mode="chat"] .pill-lock');
+  assert(!noLock, "у «Чата» появился бейдж Pro");
+  const text = window.document.querySelector("#modebar").textContent;
+  assert(!/Задача|Текст/.test(text), "в меню остались «Задача» или «Текст»: " + text);
+  proOn();
+  window.eval("setMode('blender')");
+  assert(window.eval("settings.mode") === "blender", "с ключом Blender не включился");
+});
+
 dom.window.close();
 console.log("\nГотово: " + passed + " проверок пройдено");
+// выходим сразу: фоновые таймеры страницы не должны ронять процесс после закрытия окна
+process.exit(process.exitCode || 0);
