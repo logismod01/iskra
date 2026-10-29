@@ -1366,7 +1366,7 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .selfcheck-name { font-weight: 600; color: var(--text); white-space: nowrap; }
 .selfcheck-text { color: var(--text-soft); flex: 1; text-align: left; }
 .gen-video { width: 100%; max-width: 520px; border-radius: 14px; background: #000; display: block; margin-top: 8px; }
-.code-head button[data-dlpy] { margin-left: auto; margin-right: 8px; }
+.code-head button[data-dlpy], .code-head button[data-dlcode] { margin-left: auto; margin-right: 8px; display: inline-flex; align-items: center; gap: 4px; }
 /* Карточка ошибки в чате */
 .fail-actions { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg-soft-2); }
 .fail-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
@@ -1399,6 +1399,18 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 .access-chip:hover { border-color: var(--accent); color: var(--text); }
 .access-chip.on { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-soft-2)); }
 @media (max-width: 640px) { .access-chip { display: none; } }
+/* Поля ключей в блоке генерации */
+.gen-input {
+  flex: 1; min-width: 0; padding: 8px 10px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  font-family: var(--mono); font-size: 12px;
+}
+/* Подпись режима в списке чатов */
+.chat-row .title { display: flex; flex-direction: column; gap: 1px; min-width: 0; overflow: hidden; }
+.chat-row .title .tt { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-mode { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Статус обучения и карточки «моих» тем */
 .learn-status { font-size: 12.5px; line-height: 1.5; margin-top: 8px; min-height: 18px; color: var(--text-dim); }
 .learn-status.ok { color: var(--ok); }
@@ -1639,7 +1651,7 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
               </svg>
             </button>
-            <button type="button" class="tool-btn" id="makerBtn" title="3D-мастерская · Pro — фигуры, .obj и скрипт Blender">
+            <button type="button" class="tool-btn" id="makerBtn" hidden style="display:none" title="3D-мастерская · Pro — фигуры, .obj и скрипт Blender">
               <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>
               </svg>
@@ -5436,9 +5448,9 @@ const MODES = {
   },
   study: {
     name: "Учёба", icon: "book", motif: "study",
-    ph: "Тема, задача или текст — что нужно?",
-    sub: "Объясню тему, решу задачу, напишу текст",
-    hint: "Режим учёбы — это всё про школу и предметы. 1) Если просят объяснить тему — объясняй простыми словами, по шагам, с примерами из жизни, в конце задай один проверочный вопрос. 2) Если это задача — сначала «Дано», потом формулы, каждое действие с пояснением, ответ и проверка, шаги не перескакивай. 3) Если просят текст, сочинение, эссе или пост — пиши живым языком, без канцелярита и штампов, соблюдай объём и жанр."
+    ph: "Тема, задача, домашка или текст — что нужно?",
+    sub: "Объясню тему, решу задачу, разберу домашку",
+    hint: "Режим учёбы — это вся школа, домашние задания, задачи и тексты. 1) Если просят объяснить тему — объясняй простыми словами, по шагам, с примерами из жизни, в конце задай один проверочный вопрос. 2) Если это задача или домашка — сначала «Дано», потом формулы, каждое действие с пояснением, ответ и проверка, шаги не перескакивай. Если на фото тетрадь — прочитай условие целиком и реши его, а не пересказывай фото. 3) Если просят текст, сочинение, эссе или пост — пиши живым языком, без канцелярита, соблюдай объём и жанр. 4) Если это материал для запоминания — дай короткий конспект и 3 вопроса для самопроверки."
   },
   code: {
     name: "Код", icon: "code", motif: "code",
@@ -5463,15 +5475,9 @@ const MODES = {
     ph: "Что сделать в Blender? Например: тор с глазурью",
     sub: "3D-модель: скрипт для Blender и мастерская фигур",
     hint: "Режим Blender. Пользователь не программист: выдай ОДИН готовый Python-скрипт для Blender в блоке ```python, который сам создаёт сцену и модель (bpy), задаёт материалы, свет, камеру и делает рендер. Не используй внешние файлы и аддоны, только встроенные средства bpy. После скрипта дай короткую инструкцию из 4 шагов: открыть Blender → вкладка Scripting → вставить код → Run Script (Alt+P). Предупреди, что если версия Blender ниже 4.0, часть функций может отличаться. Если просят готовую модель по описанию, подскажи про 3D-мастерскую: кнопка с кубиком у поля ввода (Pro) — там фигура собирается по параметрам, есть превью, файл .obj и скрипт .py."
-  },
-  homework: {
-    name: "Домашка", icon: "camera", motif: "homework",
-    ph: "Прикрепи фото домашки",
-    sub: "Сфотографируй — распознаю и проверю",
-    hint: "Проверка домашки: если есть фото — распознай текст, в том числе рукописный, перепиши его печатными буквами, затем найди ошибки, объясни как правильно и как это решать."
   }
 };
-const MODE_ORDER = ["chat", "study", "code", "art", "video", "blender", "homework"];
+const MODE_ORDER = ["chat", "study", "code", "art", "video", "blender"];
 
 /* Узоры для фона под каждый режим */
 const MOTIF = {
@@ -6075,7 +6081,14 @@ let lastModelVision = guessVision(settings.model);
   if (typeof settings.proImageAspect !== "string") settings.proImageAspect = "1:1";
   if (typeof settings.proVideoQuality !== "string") settings.proVideoQuality = "hd";
   /* «Задача» и «Текст» слились в «Учёбу» — старый выбор переносим, чтобы не сломать интерфейс */
-  if (settings.mode === "math" || settings.mode === "text") { settings.mode = "study"; saveSettings(); }
+  if (settings.mode === "math" || settings.mode === "text" || settings.mode === "homework") {
+    settings.mode = "study"; saveSettings();
+  }
+  if (!settings.modeChats || typeof settings.modeChats !== "object") settings.modeChats = {};
+  /* Движок картинок: по умолчанию авто (Puter → Stable Horde → Pollinations) */
+  if (!settings.imageEngine) settings.imageEngine = "auto";
+  if (typeof settings.hordeKey !== "string") settings.hordeKey = "";
+  if (typeof settings.pollinationsToken !== "string") settings.pollinationsToken = "";
 })();
 
 /* ---------- Настройки настоящего входа (Supabase) ----------
@@ -6115,7 +6128,10 @@ function loadSettings() {
     deepThink: false,
     riskMode: false,
     supabaseUrl: "",
-    supabaseKey: ""
+    supabaseKey: "",
+    imageEngine: "auto",
+    hordeKey: "",
+    pollinationsToken: ""
   };
 }
 function saveSettings() {
@@ -6285,12 +6301,50 @@ function renderMarkdown(md) {
   html = html.replace(/<p>__CODE_(\d+)__<\/p>/g, (_, i) => {
     const { lang, code } = codeBlocks[+i];
     const id = "cb_" + Math.random().toString(36).slice(2, 8);
-    const pyBtn = /python/i.test(lang) ? `<button data-dlpy="1">Скачать .py</button>` : "";
-    return `<pre data-lang="${esc(lang)}"><div class="code-head"><span class="lang">${esc(lang)}</span>${pyBtn}<button data-copy="${id}">Копировать</button></div><code id="${id}">${esc(code)}</code></pre>`;
+    const dlBtn = `<button data-dlcode="${id}" title="Скачать этот код файлом">${ic("download", 12)} Скачать ${esc(codeExt(lang))}</button>`;
+    return `<pre data-lang="${esc(lang)}"><div class="code-head"><span class="lang">${esc(lang)}</span>${dlBtn}<button data-copy="${id}">Копировать</button></div><code id="${id}">${esc(code)}</code></pre>`;
   });
   return applyMath(html);
 }
 
+
+/* Расширение файла по языку из блока ```lang — чтобы кнопка «Скачать» давала рабочий файл */
+const CODE_EXT = {
+  "Python": "py", "JavaScript": "js", "TypeScript": "ts", "C++": "cpp", "C": "c", "C#": "cs",
+  "Java": "java", "Go": "go", "Rust": "rs", "PHP": "php", "Ruby": "rb", "Kotlin": "kt", "Swift": "swift",
+  "HTML": "html", "CSS": "css", "SCSS": "scss", "JSON": "json", "SQL": "sql", "Bash": "sh",
+  "PowerShell": "ps1", "Lua": "lua", "Dart": "dart", "R": "R", "MATLAB": "m", "1C": "bsl",
+  "YAML": "yml", "Markdown": "md", "XML": "xml", "Assembler": "asm", "Terraform": "tf", "Dockerfile": "Dockerfile"
+};
+const CODE_EXT_LOW = Object.keys(CODE_EXT).reduce((acc, k) => { acc[k.toLowerCase()] = CODE_EXT[k]; return acc; }, {});
+function codeExt(langLabel) {
+  const key = String(langLabel || "").trim();
+  if (CODE_EXT[key]) return "." + CODE_EXT[key];
+  const direct = { tex: "tex", latex: "tex", ini: "ini", toml: "toml", env: "env", text: "txt", txt: "txt",
+    py: "py", python: "py", js: "js", javascript: "js", ts: "ts", typescript: "ts", sh: "sh", bash: "sh",
+    zsh: "sh", shell: "sh", console: "sh", html5: "html", jsonc: "json", yml: "yml", yaml: "yml", md: "md",
+    markdown: "md", cpp: "cpp", "c++": "cpp", cs: "cs", "c#": "cs", rs: "rs", rust: "rs", kt: "kt",
+    kotlin: "kt", go: "go", golang: "go", rb: "rb", ruby: "rb", php: "php", sql: "sql", css: "css",
+    scss: "scss", sass: "scss", vue: "html", svelte: "html", jsx: "jsx", tsx: "tsx", svg: "svg", xml: "xml",
+    ps1: "ps1", powershell: "ps1", lua: "lua", dart: "dart", swift: "swift", java: "java", c: "c" };
+  const low = key.toLowerCase();
+  if (direct[low]) return "." + direct[low];
+  if (CODE_EXT_LOW[low]) return "." + CODE_EXT_LOW[low];
+  // метка вида «python 3.12» или «JavaScript (Node)» — берём первое слово
+  const first = low.split(/[\s(/]+/)[0];
+  if (direct[first]) return "." + direct[first];
+  if (CODE_EXT_LOW[first]) return "." + CODE_EXT_LOW[first];
+  return ".txt";
+}
+/* Имя файла для скачивания: осмысленное, если получится */
+function codeFileName(langLabel, code, index) {
+  const ext = codeExt(langLabel);
+  const head = String(code || "").slice(0, 400);
+  const m = head.match(/(?:def|class|function|const|let|var|public|private|interface|struct)\s+([A-Za-z_][A-Za-z0-9_]{2,30})/);
+  const base = m ? m[1].replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/_/g, "-").toLowerCase() : "iskra";
+  const n = Number.isFinite(index) && index > 0 ? "-" + (index + 1) : "";
+  return base + n + ext;
+}
 
 /* ---------- Распознавание языка кода ---------- */
 const LANG_ALIASES = {
@@ -6366,8 +6420,12 @@ function getCurrentChat() {
 }
 function createChat(firstTitle) {
   const id = uid();
-  chats[id] = { id, title: firstTitle || "Новый чат", messages: [], created: Date.now() };
+  const mode = MODES[settings.mode] ? settings.mode : "chat";
+  chats[id] = { id, title: firstTitle || "Новый чат", messages: [], created: Date.now(), mode };
   currentChatId = id;
+  if (!settings.modeChats) settings.modeChats = {};
+  settings.modeChats[mode] = id;
+  saveSettings();
   saveChats();
   renderChatsList();
   return chats[id];
@@ -6375,9 +6433,34 @@ function createChat(firstTitle) {
 function deleteChat(id) {
   delete chats[id];
   if (currentChatId === id) currentChatId = null;
+  if (settings.modeChats) {
+    let changed = false;
+    for (const k of Object.keys(settings.modeChats)) {
+      if (settings.modeChats[k] === id) { delete settings.modeChats[k]; changed = true; }
+    }
+    if (changed) saveSettings();
+  }
   saveChats();
   renderChatsList();
   renderMessages();
+}
+
+/* У каждого режима своя переписка: сменил режим — открылась его история.
+   Картинки не смешиваются с кодом, а Blender — с домашкой. */
+function chatOfMode(mode) {
+  const id = settings.modeChats && settings.modeChats[mode];
+  return id && chats[id] ? id : null;
+}
+function openModeChat(mode) {
+  currentChatId = chatOfMode(mode);
+  renderChatsList();
+  renderMessages();
+}
+function resetModeChat(mode) {
+  if (settings.modeChats && settings.modeChats[mode]) {
+    delete settings.modeChats[mode];
+    saveSettings();
+  }
 }
 function titleFromText(text) {
   const t = String(text || "").replace(/\s+/g, " ").trim();
@@ -6481,7 +6564,10 @@ function renderChatsList() {
     for (const c of groups[k]) {
       const row = document.createElement("div");
       row.className = "chat-row" + (c.id === currentChatId ? " active" : "");
-      row.innerHTML = `${ic("chat", 16)}<span class="title">${esc(c.title)}</span><button class="del" title="Удалить">${ic("x", 14)}</button>`;
+      const cm = c.mode && MODES[c.mode] ? MODES[c.mode] : null;
+      row.innerHTML = `${ic(cm ? cm.icon : "chat", 16)}<span class="title"><span class="tt">${esc(c.title)}</span>` +
+        (cm && c.mode !== "chat" ? `<span class="chat-mode">${esc(cm.name)}</span>` : "") +
+        `</span><button class="del" title="Удалить">${ic("x", 14)}</button>`;
       row.addEventListener("click", () => {
         currentChatId = c.id;
         renderChatsList();
@@ -6575,7 +6661,7 @@ function appendMessage(msg, animate = true) {
   el.querySelectorAll(".thumbs img").forEach(img => {
     img.addEventListener("click", () => openLightbox(img.src));
   });
-  el.querySelectorAll(".code-head button").forEach(b => {
+  el.querySelectorAll(".code-head button[data-copy]").forEach(b => {
     b.addEventListener("click", () => {
       const code = document.getElementById(b.dataset.copy).textContent;
       navigator.clipboard.writeText(code).then(() => {
@@ -6892,6 +6978,32 @@ const NO_JUDGE_RULE = "НИКОГДА НЕ ОСУЖДАЙ ПОЛЬЗОВАТЕЛ
 
 const CODE_RULE = "ПРО ЯЗЫКИ ПРОГРАММИРОВАНИЯ: всегда называй язык, на котором пишешь код (это видно в подписи блока). Если пользователь не указал язык — выбери самый подходящий и скажи, какой выбрала и почему, либо спроси, если выбор реально важен. Если просят язык, который ты не можешь выполнить или проверить (например, узкий проприетарный или устаревший язык, либо код, который нельзя запустить в браузере) — честно скажи, что этот язык недоступен/не проверен, и предложи близкую замену. Никогда не выдавай код за рабочий, если не уверена.";
 
+/* Мастерство: кому и как Искра отвечает. Это не список фактов, а правила ремесла —
+   чтобы школьнику было понятно, студенту — по делу, программисту — рабочий код,
+   а родителю — что делать с домашкой ребёнка сегодня вечером. */
+const MASTERY_RULE = `КОМУ ОТВЕЧАЕШЬ. Сначала определи, кто перед тобой, и подстройся — но не спрашивай «кто ты», а догадайся по формулировке:
+• Школьник (5–9 класс): короткие шаги, простые слова, один пример и один вопрос на проверку. Никаких «очевидно» и «тривиально». В конце — «проверь себя: …».
+• Старшеклассник (ОГЭ/ЕГЭ): разбор по критериям, типовые ловушки, как оформлять в бланке, сколько баллов дают за что. Всегда добавляй, что правила экзамена и проходные баллы меняются и их надо сверить с официальным сайтом (fipi.ru, ege.edu.ru).
+• Студент: структура (план, тезис, аргумент, вывод), конспект, оформление по ГОСТ, список источников, как отвечать на семинаре. Для курсовой и диплома — сначала план, потом текст по частям.
+• Программист: сначала рабочий код, потом две-три строки объяснения ключевых мест; укажи версии и зависимости; назови крайние случаи, на которых код обычно ломается. Если код не проверен запуском — так и скажи.
+• Родитель: без нотаций. Сначала — что делать прямо сейчас (по шагам, по времени), потом как объяснить ребёнку. Не оценивай стиль воспитания. В вопросах здоровья ребёнка — только общие принципы и настоятельный совет к врачу.
+• Рабочий/взрослый человек с бытовым вопросом (ЖКХ, документы, работа, деньги): конкретный порядок действий, куда идти, какие документы, сколько это обычно занимает и стоит; где проверить актуальную норму.
+
+ЧТО НУЖНО ЗНАТЬ НАИЗУСТЬ (поле знаний):
+школа — программа 5–11 классов по математике, русскому, физике, химии, биологии, географии, истории, обществознанию, информатике, литературе, английскому; ОГЭ и ЕГЭ (структура, критерии, апелляция);
+учёба — как учиться: интервальные повторения, активное вспоминание, конспект Корнелла, метод Фейнмана, режим сна и учёбы, как готовиться к контрольной за вечер;
+код — Python, JavaScript/TypeScript, C++, Java, Go, C#, PHP, SQL, HTML/CSS, Git, Linux, алгоритмы и структуры данных, ООП, паттерны проектирования, экосистема Java/JS, тесты, дебаг, ревью, API и JSON, регулярки, Big-O; помощь с ошибками по тексту ошибки;
+студент — как писать курсовую, реферат, эссе, аннотацию, тезисы, отзыв, рецензию; как готовиться к сессии; как считать средний балл; академическая честность (не выдавай чужую работу за свою — объясняй и переписывай своими словами);
+родитель — сколько уроков и когда делать домашку, режим дня и экрана, чтение вслух, таблица умножения, подготовка к школе, как реагировать на двойку, разговор с учителем, перевод в другую школу, льготы и выплаты (проверять на Госуслугах);
+быт и деньги — ЖКХ и перерасчёт, квитанции, налоговый вычет за учёбу и лечение, самозанятость и НПД, резюме и собеседование, аренда и договор, маткапитал, пособия, кредит и переплата, как считать проценты и скидки;
+здоровье — первая помощь, сон, питание, аптечка, когда обязателен врач; никаких диагнозов и дозировок лекарств;
+языки — английский, немецкий, китайский: грамматика, слова, произношение, как переводить и как запоминать слова.
+
+ЧЕСТНОСТЬ О ЦИФРАХ. Точные суммы, ставки, сроки, номера приказов, названия ведомств и проходные баллы со временем меняются. Называй их как «примерно, на 2026 год» и добавляй, где сверить: Госуслуги, сайт школы, fipi.ru, сайт вуза, ФНС, банк. Никогда не выдумывай номер закона или сумму выплаты — если не уверена, скажи, где смотреть.
+
+Как отвечать на учебный вопрос: 1) ответ по сути в первом абзаце, 2) пошагово, 3) пример, 4) как проверить, 5) если уместно — короткое задание на закрепление. Не заканчивай вопросом «понятно?» — вместо этого предложи следующий шаг.`;
+
+
 function buildSystemPrompt(userText = "") {
   const p = PERSONAS[settings.persona] || PERSONAS.universal;
   let sys = settings.persona === "custom" && settings.customPersona
@@ -6899,6 +7011,7 @@ function buildSystemPrompt(userText = "") {
     : p.prompt;
   sys += "\n\n" + GENDER_RULE + "\n\n" + SAFETY_RULES;
   sys += "\n\n" + KNOWLEDGE_RULES + "\n\n" + IDENTITY_RULE + "\n\n" + POLITICS_RULE + "\n\n" + NO_JUDGE_RULE + "\n\n" + CODE_RULE;
+  sys += "\n\n" + MASTERY_RULE;
 
   // версия
   const ed = EDITIONS[settings.edition] || EDITIONS.free;
@@ -7783,6 +7896,22 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     autoresize();
     return generateImage(trimmed);
   }
+  /* Прямая просьба «нарисуй кота» или «сделай видео закат» — даже в обычном чате.
+     Раньше такой запрос уходил в текстовую модель, и она рисовала ASCII-картинку
+     символами вместо настоящего изображения. */
+  if (trimmed && !images.length && addChat && settings.mode !== "art" && settings.mode !== "video" && !isResend) {
+    const askImg = parseImageAsk(trimmed);
+    if (askImg) {
+      $("#input").value = ""; autoresize();
+      return generateImage(askImg);
+    }
+    const askVid = parseVideoAsk(trimmed);
+    if (askVid) {
+      $("#input").value = ""; autoresize();
+      return generateVideo(askVid);
+    }
+  }
+
   /* Не заставляем регистрироваться в Puter: нет входа — работаем без него */
   if (settings.provider === "puter" && !(await puterSignedInCached())) {
     settings.provider = "demo";
@@ -8009,23 +8138,26 @@ function renderImgStrip() {
 }
 
 
-/* Скачивание Python-скрипта из блока кода (для режима Blender) */
+/* Скачивание любого блока кода: и Python для Blender, и JS, и HTML, и SQL */
 document.addEventListener("click", (ev) => {
-  const b = ev.target && ev.target.closest ? ev.target.closest("[data-dlpy]") : null;
+  const target = ev.target && ev.target.closest ? ev.target : null;
+  const b = target && (target.closest("[data-dlcode]") || target.closest("[data-dlpy]"));
   if (!b) return;
   const pre = b.closest("pre");
-  const codeEl = pre && pre.querySelector("code");
+  const codeEl = b.dataset.dlcode ? document.getElementById(b.dataset.dlcode) : (pre && pre.querySelector("code"));
   if (!codeEl) return;
   ev.preventDefault();
   const text = codeEl.textContent || "";
-  const blob = new Blob([text], { type: "text/x-python;charset=utf-8" });
+  const lang = (pre && pre.dataset.lang) || (b.dataset.dlpy ? "Python" : "");
+  const name = b.dataset.dlpy ? "iskra-blender.py" : codeFileName(lang, text);
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "iskra-blender.py";
+  a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
-  toast("Скрипт сохранён: iskra-blender.py", "ok");
+  toast("Файл сохранён: " + name, "ok");
 });
 
 /* ============================================================
@@ -8625,10 +8757,15 @@ async function puterVideo(prompt, seconds) {
 /* ---------- Видео без регистрации и без Puter: открытая модель в браузере ---------- */
 const HF_VIDEO_SPACE = "https://lightricks-ltx-video-distilled.hf.space";
 
-async function hfSpaceVideo(prompt, signal) {
+async function hfSpaceVideo(prompt, signal, dims) {
   const session = Math.random().toString(36).slice(2, 14);
-  const data = [prompt, "worst quality, blurry, jittery, distorted", null, null,
-    512, 704, "text-to-video", 2, 9, 42, true, 1, true];
+  const w = (dims && dims.w) || 704;
+  const h = (dims && dims.h) || 512;
+  // негативный промпт: убирает мыло, дрожание и водяные знаки на кадре
+  const neg = "worst quality, low quality, blurry, grainy, jittery, distorted, deformed, extra limbs, " +
+    "watermark, text, logo, subtitles, oversaturated, flicker";
+  const data = [prompt, neg, null, null,
+    w, h, "text-to-video", 2, 9, 42, true, 1, true];
 
   const join = await fetch(HF_VIDEO_SPACE + "/gradio_api/queue/join", {
     method: "POST",
@@ -8732,6 +8869,16 @@ async function generateVideo(prompt, attempt = 0) {
       </div>`;
     contentEl.querySelector('[data-act="vdl"]').addEventListener("click", () => downloadVideo(src, prompt));
     contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateVideo(prompt));
+    const pv = contentEl.querySelector("video");
+    if (pv) pv.addEventListener("error", () => {
+      // ссылка на файл живёт недолго: вместо чёрного прямоугольника — честное объяснение
+      aiMsg.video = "";
+      contentEl.innerHTML = `<p>${esc(prompt)}</p>
+        <p class="gen-note">Видео собралось, но ссылка на файл уже протухла — так бывает у бесплатного демо-сервиса. Соберу заново.</p>
+        <div class="gen-actions"><button data-act="again">${ic("regen", 16)} Собрать заново</button></div>`;
+      contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateVideo(prompt));
+      saveChats();
+    });
     saveChats();
   };
 
@@ -8777,10 +8924,23 @@ async function generateVideo(prompt, attempt = 0) {
   }
 
   try {
-    const src = await hfSpaceVideo(finalPrompt);
+    // Качество: сначала широкий кадр побольше, затем привычный — узкая вертикаль только
+    // если человек сам просит вертикальное видео.
+    const vertical = /вертикал|9:16|сторис|shorts|tiktok|рилс|reels|портретн/i.test(prompt);
+    const sizes = vertical
+      ? [{ w: 512, h: 704 }, { w: 704, h: 512 }]
+      : (proVideo ? [{ w: 768, h: 512 }, { w: 704, h: 512 }] : [{ w: 704, h: 512 }, { w: 512, h: 704 }]);
+    let src = "";
+    let used = sizes[0];
+    let lastErr = null;
+    for (const sz of sizes) {
+      try { src = await hfSpaceVideo(finalPrompt, null, sz); used = sz; break; }
+      catch (e) { lastErr = e; if (e && e.kind === "hf-quota") throw e; }
+    }
+    if (!src) throw lastErr || new ApiError(503, "видео-сервис не ответил", "hf-none");
     showVideo(src, (proVideo
-      ? "Запасная открытая модель LTX-Video: короткий ролик ~2 секунды, как демо. Чтобы получать длинные и чистые видео, войди в Puter."
-      : "Сделано открытой моделью LTX-Video, без регистрации и без Puter. Это короткий ролик (около 2 секунд) — демо-режим. Скачай сразу: ссылка живёт недолго.") +
+      ? "Запасная открытая модель LTX-Video, " + used.w + "×" + used.h + ": короткий ролик ~2 секунды. Чтобы получать длинные HD-видео, войди в Puter."
+      : "LTX-Video, " + used.w + "×" + used.h + ", без регистрации и Puter. Это короткий ролик (около 2 секунд) — демо-режим. Скачай сразу: ссылка живёт недолго.") +
       " Промпт: " + finalPrompt);
   } catch (e) {
     const msg = (e && (e.message || (e.error && e.error.message))) || "не получилось";
@@ -8815,6 +8975,82 @@ const GEN_QUALITY = [
 ];
 
 function genPick(list, id) { return list.find(x => x.id === id) || list[0]; }
+
+/* Движки картинок. Pollinations — быстрый, но бесплатный слой ставит водяной знак
+   и отдаёт жёлтую заглушку «Free limit reached» раз в 45 секунд.
+   Stable Horde — бесплатное сообщество видеокарт: SDXL, без водяного знака. */
+const IMG_ENGINES = [
+  { id: "auto",         name: "Авто",            hint: "Puter → Stable Horde → Pollinations" },
+  { id: "horde",        name: "Stable Horde",    hint: "бесплатно · SDXL · без водяного знака" },
+  { id: "pollinations", name: "Pollinations",    hint: "быстро · лимит 1 картинка в 45 с · водяной знак" }
+];
+function imgEngine() {
+  const id = settings.imageEngine || "auto";
+  return IMG_ENGINES.find(x => x.id === id) || IMG_ENGINES[0];
+}
+
+/* Stable Horde: бесплатные чужие видеокарты. Без ключа — аноним, 512 px и низкий приоритет;
+   с бесплатным ключом (stablehorde.net → Register → API Key) — 1024 px и быстрее. */
+const HORDE_API = "https://stablehorde.net/api/v2";
+async function hordeImage(prompt, opts) {
+  const o = opts || genImageOpts();
+  const personal = (settings.hordeKey || "").trim();
+  const key = personal || "0000000000";
+  const cap = personal ? 1024 : 512;
+  const side = (v) => Math.max(256, Math.min(cap, Math.round(v / 64) * 64));
+  const width = side(o.width), height = side(o.height);
+  const job = {
+    prompt: prompt,
+    params: { width, height, steps: personal ? 28 : 20, n: 1, sampler_name: "k_euler", cfg_scale: 6.5 },
+    nsfw: false, censor_nsfw: true, trusted_workers: false, slow_workers: true
+  };
+  const join = await fetch(HORDE_API + "/generate/async", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: key,
+      "Client-Agent": "iskra:1.1:github.com/logismod01"
+    },
+    body: JSON.stringify(job)
+  });
+  if (!join.ok) {
+    let msg = "HTTP " + join.status;
+    try { const j = await join.json(); if (j && j.message) msg = j.message; } catch (e) {}
+    if (/invalid api key|wrong api key|incorrect/i.test(msg)) throw new ApiError(401, "ключ Stable Horde неверный", "horde-key");
+    if (/kudos/i.test(msg)) throw new ApiError(429, "на ключе Stable Horde закончились kudos", "horde-kudos");
+    throw new ApiError(503, "Stable Horde не принял запрос: " + msg, "horde-join");
+  }
+  const { id } = await join.json();
+  if (!id) throw new ApiError(503, "Stable Horde не вернул номер задания", "horde-id");
+
+  const deadline = Date.now() + 150000;
+  while (Date.now() < deadline) {
+    await wait(2500);
+    let chk = {};
+    try { chk = await (await fetch(HORDE_API + "/generate/check/" + id)).json(); } catch (e) { continue; }
+    if (chk && chk.faulted) throw new ApiError(503, "Stable Horde не смог собрать картинку", "horde-fault");
+    if (chk && chk.is_possible === false) throw new ApiError(503, "Stable Horde не нашёл свободную видеокарту", "horde-noworker");
+    if (chk && chk.done) {
+      const st = await (await fetch(HORDE_API + "/generate/status/" + id)).json();
+      const g = st && st.generations && st.generations[0];
+      if (!g || !g.img) throw new ApiError(503, "Stable Horde вернул пустой ответ", "horde-empty");
+      // картинку хорды проксируем в data:, иначе она теряется после перезагрузки
+      try {
+        const r = await fetch(g.img);
+        const blob = await r.blob();
+        const data = await new Promise((res) => {
+          const fr = new FileReader();
+          fr.onload = () => res(String(fr.result));
+          fr.onerror = () => res("");
+          fr.readAsDataURL(blob);
+        });
+        if (data) return { src: data, width, height, personal: !!personal };
+      } catch (e) {}
+      return { src: g.img, width, height, personal: !!personal };
+    }
+  }
+  throw new ApiError(503, "Stable Horde не успел за 2,5 минуты — очередь большая", "horde-timeout");
+}
 
 /* Настройки генерации: бесплатным — как раньше, Pro — по своим пресетам */
 function genImageOpts() {
@@ -8865,32 +9101,62 @@ async function puterImage(prompt, opts) {
   } catch (e) { return src; }
 }
 
-/* Запасной вариант: бесплатный Pollinations (модель sana, качество скромнее) */
+/* Запасной вариант: бесплатный Pollinations.
+   - nologo=true убирает знак только при бесплатном токене (settings.pollinationsToken);
+   - enhance выключен: он переписывал промпт и подменял сюжет (просили овчарку — рисовал девочку);
+   - жёлтая заглушка «Free limit reached» прилетает как обычная картинка, её ловим по цвету. */
 async function pollinationsImage(prompt, opts) {
   const o = opts || genImageOpts();
   const seed = Math.floor(Math.random() * 1e9);
+  const token = (settings.pollinationsToken || "").trim();
   // Важно: через fetch() сервис отвечает 503 (режет CORS), а через <img> — работает.
   const makeUrl = (model) => "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) +
     "?width=" + o.width + "&height=" + o.height + "&model=" + model + "&nologo=true&safe=true&seed=" + seed +
-    (o.pro ? "&enhance=true" : "");
+    (token ? "&token=" + encodeURIComponent(token) : "");
+
+  /* Заглушка «Free limit reached» — жёлтый плакат. Смотрим пиксели: если холст
+     «чистый» (CORS разрешил) и картинка почти вся жёлтая — это не картинка, а лимит. */
+  const looksLikeLimit = (im) => {
+    try {
+      const c = document.createElement("canvas");
+      c.width = 16; c.height = 16;
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return false;
+      ctx.drawImage(im, 0, 0, 16, 16);
+      const d = ctx.getImageData(0, 0, 16, 16).data;
+      let yellow = 0, total = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        total++;
+        if (d[i] > 190 && d[i + 1] > 165 && d[i + 2] < 130) yellow++;
+      }
+      return total > 0 && yellow / total > 0.62;
+    } catch (e) { return false; } // холст «испачкан» CORS — судить не можем
+  };
 
   const works = (url) => new Promise((resolve) => {
     const im = new Image();
     let done = false;
     const finish = (v) => { if (!done) { done = true; resolve(v); } };
-    im.onload = () => finish(im.naturalWidth > 0);
-    im.onerror = () => finish(false);
+    im.onload = () => {
+      if (!im.naturalWidth) return finish("error");
+      if (looksLikeLimit(im)) return finish("limit");
+      finish("ok");
+    };
+    im.onerror = () => finish("error");
     im.src = url;
-    setTimeout(() => finish(false), 40000);
+    setTimeout(() => finish("error"), 60000);
   });
 
-  // Pro: сначала flux (лучшая детализация), потом turbo и sana как запасные
-  // Бесплатно: как раньше — сначала sana, потом flux
-  const order = o.pro ? ["flux", "turbo", "sana"] : ["sana", "flux"];
+  // flux рисует по промпту заметно точнее, чем sana; sana оставлен последней попыткой
+  const order = o.pro ? ["flux", "turbo", "sana"] : ["flux", "turbo", "sana"];
+  let sawLimit = false;
   for (const model of order) {
     const url = makeUrl(model);
-    if (await works(url)) return { url, model };
+    const st = await works(url);
+    if (st === "ok") return { url, model };
+    if (st === "limit") sawLimit = true;
   }
+  if (sawLimit) throw new ApiError(429, "бесплатный Pollinations держит лимит: одна картинка в 45 секунд", "img-limit");
   throw new ApiError(503, "бесплатный движок картинок сейчас занят", "img-busy");
 }
 
@@ -8899,7 +9165,7 @@ async function toEnglishPrompt(text) {
   const body = {
     model: settings.model,
     messages: [
-      { role: "system", content: "Turn the user's image request into ONE short English image prompt (max 25 words). Include: subject, action, setting, style, lighting. Always end with 'sfw, family friendly'. Output only the prompt: no quotes, no explanations, no Russian." },
+      { role: "system", content: "Turn the user's image request into ONE short English image prompt (max 25 words). Keep the MAIN SUBJECT exactly as asked: if they ask for an animal, a thing or a place, the prompt must start with that animal/thing/place — never replace it with a person. Add action, setting, lighting and camera. Do not add people unless the user asked for a person. End with 'sfw, family friendly'. Output only the prompt: no quotes, no explanations, no Russian." },
       { role: "user", content: String(text).slice(0, 400) }
     ],
     stream: true, temperature: 0.3, max_tokens: 120
@@ -8908,6 +9174,43 @@ async function toEnglishPrompt(text) {
   try { await streamChat(body, (d) => { acc += d; }); } catch (e) { return ""; }
   const line = acc.trim().split("\n").filter(Boolean)[0] || "";
   return line.replace(/^["'`«]+|["'`»]+$/g, "").replace(/\s+/g, " ").trim().slice(0, 300);
+}
+
+/* «Нарисуй овчарку на диване» → «овчарку на диване». Возвращает текст запроса или "". */
+const IMG_VERBS = "(?:нарисуй|нарисуйте|нарисовать|сгенерируй|сгенерируйте|сгенерь|изобрази|покажи)";
+const IMG_NOUNS = "(?:картинк[ауи]|изображени[ея]|рисунок|арт|фото|фотографию|постер|иллюстраци[юя]|обои|picture|image|photo|art)";
+const VIDEO_NOUNS = "(?:видео|видеоролик|ролик|анимаци[юя]|клип|video|clip|animation)";
+function parseImageAsk(text) {
+  const t = String(text || "").trim();
+  let m = t.match(new RegExp("^\\/?" + IMG_VERBS + "\\s+(?:(?:мне|пожалуйста|плиз)\\s+)?(?:" + IMG_NOUNS + ")?\\s*[:,\\-—]?\\s*(.+)$", "i"));
+  if (!m) return "";
+  const what = (m[1] || "").trim().replace(/^[,\-—:\s]+/, "");
+  if (!what || what.length < 3) return "";
+  // «нарисуй схему электрической цепи» — это не картинка, а объяснение
+  if (/^(схем|график|таблиц|план|диаграмм)/i.test(what) && !/обои|постер|арт/i.test(what)) return "";
+  return what;
+}
+function parseVideoAsk(text) {
+  const t = String(text || "").trim();
+  const m = t.match(new RegExp("^\\/?(?:сделай|сделайте|сними|снимите|создай|создайте|сгенерируй|сгенерируйте)\\s+(?:(?:мне|пожалуйста|плиз)\\s+)?(" + VIDEO_NOUNS + ")(?![\\wа-яё])[\\s:,\\-—]*(.+)$", "i"));
+  if (!m) return "";
+  const what = (m[2] || "").trim();
+  return what.length >= 3 ? what : "";
+}
+
+/* Если просили животное или предмет, а перевод дописал людей — выкидываем людей.
+   Именно из-за этого «овчарка на диване» превращалась в портрет девушки. */
+const ANIMAL_RE = /(овчар|собак|пёс|пес|щен|кот|кошк|котён|котен|тигр|лев|лис|волк|медвед|заяц|кролик|птиц|попугай|рыб|черепах|лошад|конь|ёж|еж|панда|жираф|слон|обезьян|dog|cat|puppy|kitten|tiger|lion|fox|wolf|bear|rabbit|bird|parrot|horse|panda|giraffe|elephant|monkey)/i;
+const PERSON_WORDS_RE = /(девочк|девушк|женщин|мужчин|парн|мальчик|ребён|ребен|человек|люди|портрет|girl|woman|boy|man\b|human|people|person|portrait|lady|male|female)/i;
+function sanitizeImgPrompt(en, source) {
+  let out = String(en || "").trim();
+  const src = String(source || "");
+  if (ANIMAL_RE.test(src) && !PERSON_WORDS_RE.test(src)) {
+    out = out.replace(/\b(a |an |the )?(beautiful |young |cute )?(girl|woman|lady|boy|man|person|human|child|kids?)\b/gi, " ")
+             .replace(/\b(portrait of|photo of a (girl|woman|boy|man))\b/gi, " ")
+             .replace(/\s{2,}/g, " ").replace(/^[,\s]+/, "").trim();
+  }
+  return out || String(en || "");
 }
 
 async function generateImage(prompt, attempt = 0) {
@@ -8946,7 +9249,18 @@ async function generateImage(prompt, attempt = 0) {
         <button data-act="again">${ic("regen", 16)} Ещё вариант</button>
       </div>`;
     const im = contentEl.querySelector(".gen-img");
-    im.addEventListener("click", () => openLightbox(im.src));
+    im.addEventListener("click", () => { if (!im.dataset.broken) openLightbox(im.src); });
+    im.addEventListener("error", () => {
+      // у бесплатных движков ссылки на картинку иногда умирают через пару минут
+      im.dataset.broken = "1";
+      im.remove();
+      aiMsg.image = "";
+      contentEl.innerHTML = `<p>${esc(prompt)}</p>
+        <p class="gen-note">Картинка нарисовалась, но ссылка на неё уже не открывается — бесплатный сервер так делает. Нарисую заново.</p>
+        <div class="gen-actions"><button data-act="again">${ic("regen", 16)} Нарисовать заново</button></div>`;
+      contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt));
+      saveChats();
+    });
     contentEl.querySelector('[data-act="dl"]').addEventListener("click", () => downloadImage(im.src, prompt));
     contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt));
     saveChats();
@@ -8966,64 +9280,96 @@ async function generateImage(prompt, attempt = 0) {
   let enPrompt = "";
   try { enPrompt = await toEnglishPrompt(prompt); } catch (e) { enPrompt = ""; }
   if (!enPrompt) enPrompt = prompt + ", highly detailed, professional lighting";
-  let finalPrompt = enPrompt;
+  let finalPrompt = sanitizeImgPrompt(enPrompt, prompt);
   if (!/sfw|family friendly/i.test(finalPrompt)) finalPrompt += ", sfw, family friendly";
   // Pro-пресеты добавляют к промпту стиль и детализацию — именно они дают «дорогую» картинку
   if (imgOpts.suffix) finalPrompt = finalPrompt.replace(/,?\s*sfw, family friendly\.?$/i, "") + ", " + imgOpts.suffix + " sfw, family friendly";
 
-  // 1) сначала Puter — качество заметно выше
-  try {
-    const src = await puterImage(finalPrompt, imgOpts);
-    showImage(src, "puter", "Puter · gpt-image-2" + (imgOpts.pro ? " · " + imgOpts.quality.name : "") +
-      " · " + imgOpts.width + "×" + imgOpts.height + " · промпт: " + finalPrompt);
-    return;
-  } catch (e) {
-    // Puter не обязателен: если входа нет — молча рисуем бесплатным движком,
-    // никаких окон и красных ошибок
+  const engine = imgEngine();
+  const errors = [];
+
+  // 1) Puter — лучшее качество и ни водяного знака, ни лимита (нужен бесплатный вход)
+  if (engine.id !== "pollinations") {
+    try {
+      const src = await puterImage(finalPrompt, imgOpts);
+      showImage(src, "puter", "Puter · gpt-image-2" + (imgOpts.pro ? " · " + imgOpts.quality.name : "") +
+        " · " + imgOpts.width + "×" + imgOpts.height + " · промпт: " + finalPrompt);
+      return;
+    } catch (e) {
+      // нет входа в Puter — идём дальше молча
+      errors.push("Puter: " + ((e && e.kind) || "нет входа"));
+    }
   }
 
-  // 2) запасной бесплатный вариант
+  // 2) Stable Horde — бесплатные чужие видеокарты, SDXL, без водяного знака
+  if (engine.id !== "pollinations") {
+    try {
+      const got = await hordeImage(finalPrompt, imgOpts);
+      const note = (got.personal ? "Stable Horde · SDXL · " : "Stable Horde (аноним, 512 px) · ") +
+        got.width + "×" + got.height + " · без водяного знака. Промпт: " + finalPrompt +
+        (got.personal ? "" : " · Впиши бесплатный ключ Horde в ⚙ — будет 1024 px и быстрее.");
+      showImage(got.src, "horde", note);
+      return;
+    } catch (e) {
+      errors.push("Horde: " + ((e && (e.kind || e.message)) || "ошибка"));
+    }
+  }
+
+  // 3) Pollinations — самый быстрый, но с лимитом и водяным знаком на бесплатном слое
   try {
     const got = await pollinationsImage(finalPrompt, imgOpts);
     const modelName = got.model === "flux" ? "Flux" : got.model === "turbo" ? "Turbo" : "Sana";
+    const token = !!(settings.pollinationsToken || "").trim();
     const note = imgOpts.pro
       ? "Искра Pro · " + modelName + " · " + imgOpts.width + "×" + imgOpts.height + " · " + imgOpts.style.name + " · " + imgOpts.quality.name +
         ". Промпт: " + finalPrompt
-      : "Бесплатный движок (" + modelName + "). В Искре Pro — Flux, свои форматы и стили, детализация выше. Промпт: " + finalPrompt;
+      : "Pollinations · " + modelName + " · " + imgOpts.width + "×" + imgOpts.height +
+        (token ? "" : " · бесплатный слой ставит водяной знак. Убрать: бесплатный токен Pollinations в ⚙ или Stable Horde") +
+        ". Промпт: " + finalPrompt;
     showImage(got.url, got.model, note);
   } catch (e) {
-    if (e && e.kind === "img-limit") {
+    if (e && e.kind === "img-limit" && attempt === 0) {
       const w = e.retryAfter || 45;
-      if (attempt === 0) {
-        // ждём лимит и рисуем сами — без «нажми ещё раз»
-        aiMsg.content = "";
-        contentEl.innerHTML = `<p class="gen-note">Сервер ограничивает бесплатные картинки. Подожду <b id="genCount">${w}</b> с и нарисую автоматически…</p>
-          <div class="gen-actions">
-            <button data-act="puter">${ic("spark", 16)} Войти в Puter — без лимитов</button>
-            <button data-act="again">${ic("regen", 16)} Попробовать сейчас</button>
-          </div>`;
-        contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt, 1));
-        contentEl.querySelector('[data-act="puter"]').addEventListener("click", async () => {
-          if (await puterSignIn()) generateImage(prompt, 1);
-        });
-        let left = w;
-        const timer = setInterval(() => {
-          left -= 1;
-          const c = document.getElementById("genCount");
-          if (c) c.textContent = String(Math.max(left, 0));
-          if (left <= 0) {
-            clearInterval(timer);
-            generateImage(prompt, 1);
-          }
-        }, 1000);
-        toast(`Лимит бесплатных картинок: подожду ${w} с`, "err");
-        return;
-      }
-      const sec = `${w} ${plural(w, "секунду", "секунды", "секунд")}`;
-      showFail(`Сервер всё ещё держит лимит: одна картинка раз в ${sec}. Попробуй чуть позже или войди в Puter — там без лимитов.`);
+      // ждём лимит и рисуем сами — без «нажми ещё раз»
+      aiMsg.content = "";
+      contentEl.innerHTML = `<p class="gen-note">Бесплатный сервер держит лимит: одна картинка в 45 секунд. Подожду <b id="genCount">${w}</b> с и нарисую сама…</p>
+        <div class="gen-actions">
+          <button data-act="horde">${ic("spark", 16)} Без лимита — Stable Horde</button>
+          <button data-act="again">${ic("regen", 16)} Попробовать сейчас</button>
+        </div>`;
+      contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt, 1));
+      contentEl.querySelector('[data-act="horde"]').addEventListener("click", () => {
+        settings.imageEngine = "horde"; saveSettings();
+        toast("Движок картинок: Stable Horde — без водяного знака", "ok");
+        generateImage(prompt, 1);
+      });
+      let left = w;
+      const timer = setInterval(() => {
+        left -= 1;
+        const c = document.getElementById("genCount");
+        if (c) c.textContent = String(Math.max(left, 0));
+        if (left <= 0) {
+          clearInterval(timer);
+          generateImage(prompt, 1);
+        }
+      }, 1000);
+      toast(`Лимит бесплатных картинок: подожду ${w} с`, "err");
       return;
     }
-    showFail("Нарисовать не получилось: сервер картинок не ответил. Попробуй ещё раз или войди в Puter в настройках.");
+    if (e && e.kind === "img-limit") {
+      const w = e.retryAfter || 45;
+      const sec = `${w} ${plural(w, "секунду", "секунды", "секунд")}`;
+      showFail(`Движок всё ещё держит лимит: одна картинка раз в ${sec}. Переключи движок на Stable Horde в ⚙ → «Качество генерации» — там очередь, зато без водяного знака.`);
+      return;
+    }
+    // все движки отказали — честная ошибка и что нажать
+    const why = e && e.message ? e.message : "сервер картинок не ответил";
+    const hint = (e && e.kind) === "horde-key"
+      ? "Ключ Stable Horde не подошёл: возьми новый на stablehorde.net → Register → API Key (он бесплатный)."
+      : (e && e.kind) === "horde-timeout"
+        ? "Очередь Stable Horde оказалась длинной. Попробуй ещё раз через минуту или впиши бесплатный ключ Horde — с ключом очередь короче."
+        : "Проверь интернет и попробуй ещё раз. Если повторяется — смени движок в ⚙ → «Качество генерации».";
+    showFail("Нарисовать не получилось. " + why + ". " + hint);
     toast("Ошибка генерации картинки", "err");
   }
 }
@@ -10556,6 +10902,22 @@ function renderProPanel() {
       <div class="acct-h">Качество генерации</div>
       ${proOn ? "" : `<div class="acct-note" style="margin:0 0 10px">Пресеты включаются вместе с ключом. Сейчас рисует бесплатный движок в 1024×1024.</div>`}
       <div class="gen-row">
+        <div class="gen-lab">Движок</div>
+        <div class="gen-chips">
+          ${IMG_ENGINES.map(x => `<button type="button" class="gen-chip ${(settings.imageEngine || "auto") === x.id ? "on" : ""}" data-imgengine="${x.id}" title="${esc(x.hint)}">${esc(x.name)}</button>`).join("")}
+        </div>
+      </div>
+      <div class="gen-note2" style="font-size:12px;color:var(--text-dim);margin:-4px 0 10px">${esc(imgEngine().hint)}</div>
+      ${(settings.imageEngine || "auto") === "pollinations" ? `<div class="acct-note" style="margin:0 0 10px">Pollinations на бесплатном слое ставит водяной знак и держит лимит 1 картинка в 45 секунд. Бесплатный токен (auth.pollinations.ai) снимает и то, и другое.</div>` : ""}
+      <div class="gen-row">
+        <div class="gen-lab">Ключ Horde</div>
+        <input id="hordeKey" class="gen-input" type="text" placeholder="бесплатный ключ со stablehorde.net (можно пусто)" value="${esc(settings.hordeKey || "")}"/>
+      </div>
+      <div class="gen-row">
+        <div class="gen-lab">Токен Pollinations</div>
+        <input id="pollToken" class="gen-input" type="text" placeholder="бесплатный токен — убирает водяной знак" value="${esc(settings.pollinationsToken || "")}"/>
+      </div>
+      <div class="gen-row">
         <div class="gen-lab">Стиль</div>
         <div class="gen-chips">
           ${GEN_STYLES.map(x => `<button type="button" class="gen-chip ${settings.proImageStyle === x.id ? "on" : ""}" data-style="${x.id}" ${proOn ? "" : "disabled"}>${esc(x.name)}</button>`).join("")}
@@ -10641,6 +11003,30 @@ function renderProPanel() {
     settings.proImageQuality = btn.dataset.quality; saveSettings(); renderProPanel();
     toast("Детализация: " + genPick(GEN_QUALITY, btn.dataset.quality).name, "ok");
   });
+  box.querySelectorAll("[data-imgengine]").forEach(btn => btn.onclick = () => {
+    settings.imageEngine = btn.dataset.imgengine; saveSettings(); renderProPanel();
+    toast("Движок картинок: " + imgEngine().name + " — " + imgEngine().hint, "ok");
+  });
+  const hk = box.querySelector("#hordeKey");
+  if (hk) {
+    const saveHk = () => {
+      settings.hordeKey = hk.value.trim();
+      saveSettings();
+      toast(settings.hordeKey ? "Ключ Stable Horde сохранён — 1024 px и очередь короче" : "Ключ Horde убран", "ok");
+    };
+    hk.onchange = saveHk;
+    hk.onblur = saveHk;
+  }
+  const pt = box.querySelector("#pollToken");
+  if (pt) {
+    const savePt = () => {
+      settings.pollinationsToken = pt.value.trim();
+      saveSettings();
+      toast(settings.pollinationsToken ? "Токен Pollinations сохранён — без водяного знака" : "Токен Pollinations убран", "ok");
+    };
+    pt.onchange = savePt;
+    pt.onblur = savePt;
+  }
   box.querySelectorAll("[data-vquality]").forEach(btn => btn.onclick = () => {
     settings.proVideoQuality = btn.dataset.vquality; saveSettings(); renderProPanel();
     toast(btn.dataset.vquality === "fast" ? "Видео: сразу открытая LTX, без Puter" : "Видео: сначала Puter (Wan 2.7), затем LTX", "ok");
@@ -11320,6 +11706,36 @@ function adminData() {
 }
 function adminSave(d) { localStorage.setItem(ADMIN_KEY, JSON.stringify(d)); }
 
+/* «Запомнить меня»: владелец вводит пароль один раз, дальше консоль открывается сразу.
+   Токен живёт 30 дней и привязан к хешу пароля — сменил пароль, старые сессии умерли.
+   Команда lock стирает токен: на чужом компьютере консоль снова попросит пароль. */
+const ADMIN_SESSION_KEY = "iskra.admin.session.v1";
+const ADMIN_SESSION_DAYS = 30;
+function adminSessionGet() {
+  try {
+    const o = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || "null");
+    if (!o || !o.proof || !o.exp) return null;
+    if (o.exp < Date.now()) { localStorage.removeItem(ADMIN_SESSION_KEY); return null; }
+    return o;
+  } catch (e) { return null; }
+}
+function adminSessionValid(d) {
+  const o = adminSessionGet();
+  return !!(o && d && d.hash && o.proof === d.hash);
+}
+function adminSessionSet(d) {
+  try {
+    localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({
+      proof: d.hash, at: Date.now(), exp: Date.now() + ADMIN_SESSION_DAYS * 864e5
+    }));
+  } catch (e) {}
+}
+function adminSessionClear() { try { localStorage.removeItem(ADMIN_SESSION_KEY); } catch (e) {} }
+function adminSessionLeftDays() {
+  const o = adminSessionGet();
+  return o ? Math.max(1, Math.ceil((o.exp - Date.now()) / 864e5)) : 0;
+}
+
 function cOut(html, cls) {
   const out = $("#consoleOut");
   if (!out) return;
@@ -11377,8 +11793,10 @@ const CONSOLE_HELP = [
   ["export", "скачать резервную копию"],
   ["wipe chats | wipe learned", "очистить чаты или знания"],
   ["key <api-ключ>", "быстро вписать ключ провайдера"],
+  ["lock", "забыть этот браузер и запереть консоль"],
+  ["pass <новый пароль>", "сменить пароль владельца"],
   ["clear", "очистить экран"],
-  ["exit", "выйти из консоли"]
+  ["exit", "закрыть консоль (вход останется запомнен)"]
 ];
 
 function conStats() {
@@ -11643,6 +12061,24 @@ async function consoleRun(raw) {
     settings.apiKey = arg; saveSettings();
     return "Ключ записан (провайдер: " + settings.provider + ").";
   }
+  if (c === "lock") {
+    adminSessionClear();
+    consoleUnlocked = false;
+    consolePendingNewPass = null;
+    $("#consolePrompt").textContent = "pass>";
+    $("#consoleOut").innerHTML = "";
+    cLine("Заперто. Запомненный вход стёрт — дальше только по паролю.", "c-ok");
+    return "";
+  }
+  if (c === "pass" || c === "password") {
+    if (!arg || arg.length < 6) return "Формат: pass <новый пароль>\nМинимум 6 символов.";
+    const d = adminData();
+    d.hash = await hashPass(arg);
+    d.attempts = 0; d.lockedUntil = 0;
+    adminSave(d);
+    adminSessionSet(d);
+    return "Пароль владельца заменён. Старые запомненные входы на других устройствах больше не действуют.";
+  }
   if (c === "clear") { $("#consoleOut").innerHTML = ""; return ""; }
   if (c === "exit" || c === "logout") { closeConsole(); return "__CLOSE__"; }
   return "Нет такой команды: " + cmd + ". Напиши help.";
@@ -11653,6 +12089,15 @@ function openConsoleModal() {
   consoleBoot();
   consoleUnlocked = false;
   const d = adminData();
+  if (d.hash && adminSessionValid(d)) {
+    consoleUnlocked = true;
+    $("#consolePrompt").textContent = "root@iskra:~$";
+    cLine("Владелец узнан — пароль не нужен ещё " + adminSessionLeftDays() + " дн.", "c-ok");
+    cLine("Этот браузер считается твоим. На чужом компьютере напиши lock.", "c-dim");
+    cLine("help — список команд.", "c-dim");
+    setTimeout(() => $("#consoleInput").focus(), 150);
+    return;
+  }
   if (d.hash) {
     cLine("Пароль владельца:", "c-dim");
     cLine("(набери его в строке ниже и нажми Enter)", "c-dim");
@@ -11691,11 +12136,14 @@ async function consoleSubmit(raw) {
       if (consolePendingNewPass !== value) { cLine("Не совпало. Начни заново.", "c-err"); consolePendingNewPass = null; $("#consolePrompt").textContent = "new-pass>"; return; }
       d.hash = await hashPass(value);
       d.created = Date.now();
+      d.attempts = 0; d.lockedUntil = 0;
       adminSave(d);
+      adminSessionSet(d);
       consolePendingNewPass = null;
       consoleUnlocked = true;
       $("#consolePrompt").textContent = "root@iskra:~$";
       cLine("Пароль установлен. Доступ открыт.", "c-ok");
+      cLine("Запомнил этот браузер на " + ADMIN_SESSION_DAYS + " дней — пароль спрашивать не буду.", "c-dim");
       cLine("Напиши help — список команд.", "c-dim");
       return;
     }
@@ -11712,10 +12160,12 @@ async function consoleSubmit(raw) {
       cLine("Неверный пароль. Осталось попыток: " + (5 - d.attempts), "c-err");
       return;
     }
-    d.attempts = 0; adminSave(d);
+    d.attempts = 0; d.lockedUntil = 0; adminSave(d);
+    adminSessionSet(d);
     consoleUnlocked = true;
     $("#consolePrompt").textContent = "root@iskra:~$";
     cLine("Доступ открыт. help — команды.", "c-ok");
+    cLine("Запомнил этот браузер на " + ADMIN_SESSION_DAYS + " дней.", "c-dim");
     return;
   }
 
@@ -11852,9 +12302,11 @@ function setMode(key) {
     return;
   }
   if (!MODES[key]) return;
+  const changed = settings.mode !== key;
   settings.mode = key;
   saveSettings();
   applyMode();
+  if (changed) openModeChat(key);
 }
 function applyMode() {
   const m = MODES[settings.mode] || MODES.chat;
@@ -11875,7 +12327,11 @@ function applyMode() {
   if (inp) inp.placeholder = m.ph;
 
   const mkBtn = $("#makerBtn");
-  if (mkBtn) mkBtn.classList.toggle("on", settings.mode === "blender");
+  if (mkBtn) {
+    mkBtn.hidden = settings.mode !== "blender";
+    mkBtn.style.display = settings.mode === "blender" ? "" : "none";
+    mkBtn.classList.toggle("on", settings.mode === "blender");
+  }
 
   $("#modesGrid") && renderModeCards();
   renderModebar();
@@ -12174,6 +12630,7 @@ function wire() {
   $("#menuBtn").addEventListener("click", openSidebar);
   $("#sbBackdrop").addEventListener("click", closeSidebar);
   $("#newChat").addEventListener("click", () => {
+    resetModeChat(settings.mode);
     currentChatId = null;
     renderChatsList();
     renderMessages();
@@ -12346,11 +12803,25 @@ function wire() {
   syncAccess();
   updateAccessBadge();
 
-  // Чаты
+  // Чаты: у каждого режима своя переписка
   renderChatsList();
-  // Восстановим последний активный
-  const lastId = Object.values(chats).sort((a,b) => b.created - a.created)[0]?.id;
-  if (lastId) { currentChatId = lastId; renderChatsList(); renderMessages(); }
+  const modeChatId = chatOfMode(settings.mode);
+  if (modeChatId) {
+    currentChatId = modeChatId;
+  } else {
+    // миграция со старой версии: берём последний чат этого режима (или самый свежий)
+    const all = Object.values(chats).sort((a, b) => b.created - a.created);
+    const sameMode = all.find(c => (c.mode || "chat") === settings.mode);
+    const lastId = (sameMode || all[0] || {}).id;
+    if (lastId) {
+      currentChatId = lastId;
+      if (!settings.modeChats) settings.modeChats = {};
+      settings.modeChats[settings.mode] = lastId;
+      saveSettings();
+    }
+  }
+  renderChatsList();
+  renderMessages();
 
   // SW
   if ("serviceWorker" in navigator) {
