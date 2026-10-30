@@ -18,6 +18,9 @@ const end = html.indexOf("/* ---------- Экран «Доступ по ключ�
 assert.ok(start > 0 && end > start, "не найдены границы модуля доступа");
 const source = html.slice(start, end);
 
+/* Текущий аккаунт для clientCode(): у гостя его нет, у зарегистрированного — есть */
+const accountState = { acc: null };
+
 const store = new Map();
 const localStorage = {
   getItem: (k) => (store.has(k) ? store.get(k) : null),
@@ -57,7 +60,9 @@ const context = {
   PAY_PRICE_RUB: 450,
   PAY_PRICE_TON: "1",
   accessServerReady: async () => false,
-  console
+  console,
+  /* Аккаунт подставляется тестом: код клиента существует только у зарегистрированных */
+  currentAccount: () => accountState.acc
 };
 vm.createContext(context);
 vm.runInContext(
@@ -105,12 +110,19 @@ await test("неверные форматы отвергаются", async () =>
   }
 });
 
+await test("без аккаунта код клиента не создаётся", async () => {
+  accountState.acc = null;
+  assert.equal(api.clientCode(), "", "гостю код клиента не выдаётся");
+  assert.equal(localStorage.getItem(api.ACCESS.clientStore), null, "в хранилище ничего не пишется");
+});
+
 await test("clientCode() генерируется один раз и не меняется", async () => {
+  accountState.acc = { id: "acc-test" };
   const a = api.clientCode();
   const b = api.clientCode();
   assert.match(a, CODE_RE);
   assert.equal(a, b);
-  assert.equal(localStorage.getItem(api.ACCESS.clientStore), a);
+  assert.equal(localStorage.getItem(api.ACCESS.clientStore + ".acc.acc-test"), a);
 });
 
 await test("setClientCode сохраняет валидный код и отвергает мусор", async () => {

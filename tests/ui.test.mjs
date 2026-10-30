@@ -112,7 +112,22 @@ await test("«Искра Про» без ключа открывает тари�
   assert(window.eval("proActive()") === false, "Pro включился без ключа");
 });
 
-await test("в тарифах есть качество картинок, код клиента и цены", () => {
+await test("гостю Pro не продают: нет кода клиента и тарифов, есть «зарегистрируйтесь»", () => {
+  const body = $("#proBody");
+  assert($("#clientCodeText") === null, "у гостя отрисован код клиента");
+  assert($$("[data-plan]").length === 0, "у гостя есть тарифы");
+  assert($("[data-imgquality]") === null, "у гостя есть Pro-настройки качества");
+  assert(/зарегистрируйтесь/i.test(body.textContent), "нет приглашения зарегистрироваться");
+  assert($("#proRegister") !== null, "нет кнопки регистрации");
+});
+
+await test("зарегистрированному аккаунту тарифы и код клиента показываются", () => {
+  window.eval(`(function(){
+    const acc = { id: "acc-ui", name: "Тест", email: "t@example.com", method: "email", createdAt: Date.now(), devices: [] };
+    localStorage.setItem(AUTH_KEY, JSON.stringify([acc]));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ id: acc.id, ts: Date.now() }));
+    renderProPanel();
+  })()`);
   const body = $("#proBody");
   assert(/\d{6}-[A-Z0-9]{6}-[a-z]{6}/.test($("#clientCodeText").textContent), "код клиента не отрисован");
   assert($$("[data-imgquality]").length === 3, "нет уровней качества картинок");

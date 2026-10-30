@@ -31,6 +31,13 @@ window.fetch = async () => { throw new Error("offline в тесте"); };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 await wait(500);
 
+/* Аккаунт нужен всему, что связано с кодом клиента и Pro: гостям ключи не выдаются */
+window.eval(`(function(){
+  const acc = { id: "acc-maker", name: "Мастер", method: "email", createdAt: Date.now(), devices: [] };
+  localStorage.setItem(AUTH_KEY, JSON.stringify([acc]));
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ id: acc.id, ts: Date.now() }));
+})()`);
+
 const $ = (s) => window.document.querySelector(s);
 let passed = 0;
 async function test(name, fn) {
@@ -143,14 +150,25 @@ await test("консоль: plans, price, prices, pay", async () => {
 
 await test("офлайн-ключ выдаётся по тарифу", async () => {
   proOn();
-  const out = await window.eval("(async () => await consoleRun('key24 --local 482913-K7M2QX-orange Тест'))()");
+  const code = window.clientCode();
+  const out = await window.eval(`(async () => await consoleRun('key24 --local ${code} Тест'))()`);
   assert(typeof out === "string" && out.length > 0, "команда ничего не вернула");
   assert(/ISKRA-L-/.test(out), "не выдался офлайн-ключ: " + out);
 });
 
+await test("консоль не выдаёт ключ без аккаунта", async () => {
+  const saved = window.eval("localStorage.getItem(AUTH_KEY)");
+  const saves = window.eval("localStorage.getItem(SESSION_KEY)");
+  window.eval("localStorage.removeItem(AUTH_KEY); localStorage.removeItem(SESSION_KEY);");
+  const out = await window.eval("(async () => await consoleRun('key24 --local 482913-K7M2QX-orange Тест'))()");
+  assert(typeof out === "string" && /нет аккаунта/i.test(out), "гостю выдали ключ: " + out);
+  window.eval(`localStorage.setItem(AUTH_KEY, ${JSON.stringify(saved)}); localStorage.setItem(SESSION_KEY, ${JSON.stringify(saves)});`);
+});
+
 await test("«навсегда» нельзя выдать офлайн-ключом", async () => {
   proOn();
-  const out = await window.eval("(async () => await consoleRun('key --local 482913-K7M2QX-orange forever Подарок'))()");
+  const code = window.clientCode();
+  const out = await window.eval(`(async () => await consoleRun('key --local ${code} forever Подарок'))()`);
   assert(/только через сервер/i.test(out), "офлайн «навсегда» не заблокирован: " + out);
 });
 

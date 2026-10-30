@@ -98,7 +98,13 @@ await test("тарифы показаны в звёздах, USDT и TON", () =>
   assert(Math.abs(m.usdt - 450 / 95) < 0.001, "USDT считаются неверно");
   const short = window.eval("moneyShort(99)");
   assert(/⭐/.test(short) && /USDT/.test(short) && /TON/.test(short), "нет трёх валют: " + short);
-  window.eval("settings.edition='free'; renderProPanel();");
+  /* панель тарифов видна только зарегистрированному аккаунту */
+  window.eval(`(function(){
+    const acc = { id: "acc-r2", name: "Тест", method: "email", createdAt: Date.now(), devices: [] };
+    localStorage.setItem(AUTH_KEY, JSON.stringify([acc]));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ id: acc.id, ts: Date.now() }));
+    settings.edition = "free"; renderProPanel();
+  })()`);
   const text = $("#proPanel") ? $("#proPanel").textContent : window.document.body.textContent;
   assert(/⭐/.test(text) && /USDT/.test(text), "в панели тарифов нет звёзд и USDT");
   assert($$(".plan-alt").length === window.eval("accessPlans().length"), "не у всех тарифов есть строка с валютами");
