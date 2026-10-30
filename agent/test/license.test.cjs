@@ -122,3 +122,82 @@ test("продление продлевает: конец подписки сд�
   store.data = Object.assign({}, store.data, { expiresAt: now + 30 * 864e5 });
   assert.equal(lic.status().state, "active");
 });
+
+test("подписка через аккаунт: активна — полный режим", () => {
+  const { lic, store } = makeLicense({});
+  const st = lic.linkAccount({ client: CLIENT, active: true, forever: false, expiresAt: Date.now() + 10 * 864e5, plan: "month" });
+  assert.equal(st.state, "active");
+  assert.equal(store.data.engine, "account");
+  assert.equal(store.data.key, "");
+  assert.equal(st.steps, 14);
+  assert.equal(lic.linkedByAccount(), CLIENT);
+});
+
+test("подписка через аккаунт: была и кончилась — ограниченный режим", () => {
+  const now = Date.now();
+  const { lic } = makeLicense({});
+  lic.linkAccount({ client: CLIENT, active: true, forever: false, expiresAt: now + 864e5 });
+  assert.equal(lic.status().state, "active");
+  const st = lic.linkAccount({ client: CLIENT, active: false });
+  assert.equal(st.state, "expired");
+  assert.equal(st.steps, 2);
+  assert.equal(st.write, false);
+});
+
+test("код клиента без единого ключа — подписки нет", () => {
+  const { lic } = makeLicense({});
+  const st = lic.linkAccount({ client: CLIENT, active: false });
+  assert.equal(st.state, "none");
+  assert.equal(lic.linkedByAccount(), "");
+});
+
+test("вечный Pro через аккаунт не истекает", () => {
+  const { lic } = makeLicense({});
+  const st = lic.linkAccount({ client: CLIENT, active: true, forever: true });
+  assert.equal(st.state, "active");
+  assert.equal(st.forever, true);
+  assert.equal(lic.status().state, "active");
+});
+
+test("аккаунт на другом компьютере — тоже чужое устройство", () => {
+  const data = { client: CLIENT, engine: "account", forever: true, deviceId: "other" };
+  const { lic } = makeLicense(data);
+  assert.equal(lic.status().state, "wrong-device");
+});
+
+test("чужой компьютер не перехватывает подписку аккаунта", () => {
+  const { lic, store } = makeLicense({});
+  lic.linkAccount({ client: CLIENT, active: true, forever: true });
+  const firstDevice = store.data.deviceId;
+  assert.equal(firstDevice, DEVICE);
+
+  // вторая машина с тем же кодом клиента
+  const other = createLicense({
+    read: () => store.data,
+    write: (v) => { store.data = v; },
+    deviceId: "another-pc",
+    now: () => Date.now()
+  });
+  const st = other.linkAccount({ client: CLIENT, active: true, forever: true });
+  assert.equal(st.state, "wrong-device");
+  assert.equal(store.data.deviceId, DEVICE, "привязка не должна переехать сама");
+});
+
+test("выход из аккаунта освобождает устройство", () => {
+  const { lic, store } = makeLicense({});
+  lic.linkAccount({ client: CLIENT, active: true, forever: true });
+  assert.equal(store.data.deviceId, DEVICE);
+  const st = lic.deactivate();
+  assert.equal(st.state, "none");
+  assert.equal(store.data.deviceId, "");
+  // теперь подписку можно привязать на другом компьютере
+  const other = createLicense({
+    read: () => store.data,
+    write: (v) => { store.data = v; },
+    deviceId: "another-pc",
+    now: () => Date.now()
+  });
+  const st2 = other.linkAccount({ client: CLIENT, active: true, forever: true });
+  assert.equal(st2.state, "active");
+  assert.equal(store.data.deviceId, "another-pc");
+});

@@ -44,24 +44,56 @@ function scripted(replies) {
 
 test("действие → наблюдение → итог", async () => {
   const ws = tmpWorkspace("loop");
+  fs.writeFileSync(path.join(ws, "hello.txt"), "привет", "utf8");
   const events = [];
   const s = scripted([
-    '<action>{"tool":"fs.write","args":{"path":"hello.txt","content":"привет"},"why":"создать файл"}</action>',
-    "<final>Создал hello.txt.</final>"
+    '<action>{"tool":"fs.read","args":{"path":"hello.txt"},"why":"посмотреть"}</action>',
+    "<final>Прочитал hello.txt.</final>"
   ]);
-  const res = await runTask({ task: "Создай hello.txt", ctx: ctxFor(ws), model: s.model, onEvent: (e) => events.push(e) });
+  const res = await runTask({ task: "Прочитай hello.txt", ctx: ctxFor(ws), model: s.model, onEvent: (e) => events.push(e) });
 
   assert.equal(res.ok, true);
-  assert.equal(res.final, "Создал hello.txt.");
+  assert.equal(res.final, "Прочитал hello.txt.");
   assert.equal(res.steps, 1);
-  assert.equal(fs.readFileSync(path.join(ws, "hello.txt"), "utf8"), "привет");
 
   const types = events.map((e) => e.type).filter((t) => t !== "token" && t !== "thinking");
   assert.deepEqual(types, ["action", "observation", "final"]);
   assert.ok(events.filter((e) => e.type === "thinking").length >= 2, "каждый шаг должен показывать «думаю»");
   const obs = events.find((e) => e.type === "observation");
   assert.equal(obs.ok, true);
-  assert.match(obs.summary, /Записал/);
+  assert.match(obs.summary, /Прочитал/);
+});
+
+test("после правки файлов агент сам просит проверку", async () => {
+  const ws = tmpWorkspace("verify");
+  const events = [];
+  const s = scripted([
+    '<action>{"tool":"fs.write","args":{"path":"a.txt","content":"1"},"why":"создать"}</action>',
+    "<final>Готово.</final>",
+    '<action>{"tool":"shell.run","args":{"command":"npm test"}}</action>',
+    "<final>Сделал и проверил: тесты зелёные.</final>"
+  ]);
+  const res = await runTask({ task: "создай файл", ctx: ctxFor(ws), model: s.model, onEvent: (e) => events.push(e) });
+  assert.equal(res.ok, true);
+  assert.ok(events.some((e) => e.type === "verify"), "должна быть просьба проверить");
+  const asked = s.seen[2].messages.some((m) => m.role === "user" && /не запустил ни одной проверки/.test(m.content));
+  assert.ok(asked, "модель должна получить просьбу о проверке");
+  assert.match(res.final, /проверил/i);
+  assert.equal(res.steps, 3, "запись, просьба проверить и сама проверка — три шага");
+});
+
+test("если проверка уже была — лишний раз не просим", async () => {
+  const ws = tmpWorkspace("checked");
+  const events = [];
+  const s = scripted([
+    '<action>{"tool":"fs.write","args":{"path":"a.txt","content":"1"}}</action>',
+    '<action>{"tool":"shell.run","args":{"command":"npm test"}}</action>',
+    "<final>Готово, тесты прошли.</final>"
+  ]);
+  const res = await runTask({ task: "создай и проверь", ctx: ctxFor(ws), model: s.model, onEvent: (e) => events.push(e) });
+  assert.equal(res.steps, 2);
+  assert.equal(events.some((e) => e.type === "verify"), false);
+  assert.match(res.final, /тесты прошли/i);
 });
 
 test("результат действия возвращается модели как наблюдение", async () => {

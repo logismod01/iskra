@@ -7,6 +7,7 @@ const $$ = (sel) => [...document.querySelectorAll(sel)];
 
 const state = {
   license: null,
+  account: null,
   settings: null,
   brand: { name: "Sye", version: "0.1.0" },
   history: [],
@@ -73,7 +74,12 @@ function renderLicense(lic) {
   if (lic.state === "none" || lic.state === "wrong-device") {
     gate.hidden = false;
     $("#gateTitle").textContent = lic.state === "wrong-device" ? "Ключ уже занят другим компьютером" : "Нужна подписка Pro";
-    $("#gateText").textContent = lic.note || "Sye — агент для подписчиков Искры Pro.";
+    const acc = state.account;
+    if (lic.state === "none" && acc && acc.client) {
+      $("#gateText").textContent = "Аккаунт привязан, но активной подписки на этом коде клиента нет. Купи Pro на сайте Искры — и Sye сразу заработает.";
+    } else {
+      $("#gateText").textContent = lic.note || "Sye — агент для подписчиков Искры Pro.";
+    }
     $("#gateLater").hidden = true;
   } else if (expired) {
     $("#gateTitle").textContent = "Подписка закончилась";
@@ -90,6 +96,36 @@ function renderLicense(lic) {
   $("#note").textContent = active
     ? "Enter — запустить, Shift+Enter — новая строка. Ctrl+Alt+S — снимок экрана."
     : "Ограниченный режим: без терминала, записи файлов и скриншотов.";
+}
+
+function renderAccount(acc) {
+  state.account = acc || null;
+  const linked = !!(acc && acc.linked);
+  const who = linked ? (acc.name ? acc.name + " · " + acc.email : acc.email) : "не привязан";
+  $("#accWho").textContent = who;
+  $("#accWho").title = (acc && acc.email) || "";
+  $("#accClientView").textContent = (acc && acc.client) || "—";
+  $("#accChecked").textContent = acc && acc.lastCheck
+    ? new Date(acc.lastCheck).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+    : "—";
+  if (acc && acc.client && !$("#accClient").value) $("#accClient").value = acc.client;
+}
+
+/** Переключатель «Аккаунт Искры» / «Ключ Pro» в окне активации. */
+function setGateTab(which) {
+  const account = which !== "key";
+  $("#tabAccount").classList.toggle("on", account);
+  $("#tabKey").classList.toggle("on", !account);
+  $("#paneAccount").hidden = !account;
+  $("#paneKey").hidden = account;
+  const err = account ? $("#accErr") : $("#gateErr");
+  if (err) err.textContent = "";
+}
+
+function gateNote(text, isErr) {
+  const el = $("#accErr");
+  el.textContent = text || "";
+  el.style.color = isErr ? "var(--err)" : "var(--text-soft)";
 }
 
 function renderWorkspace(path) {
@@ -326,6 +362,9 @@ function wireEvents() {
         setThinking(run, null);
         appendFinal(e.text, true);
         break;
+      case "verify":
+        setThinking(run, "Проверяю результат…");
+        break;
       case "misformat":
         setThinking(run, "Уточняю формат…");
         if (e.error) {
@@ -357,6 +396,7 @@ function wireEvents() {
 
   window.sye.onState((payload) => {
     if (payload.license) renderLicense(payload.license);
+    if (payload.account) renderAccount(payload.account);
     if (payload.settings) { state.settings = payload.settings; renderWorkspace(payload.settings.workspace); renderSettings(); }
     if (payload.brand) state.brand = payload.brand;
   });
@@ -458,7 +498,29 @@ function wireUi() {
   $("#buyBtn").addEventListener("click", () => window.sye.openExternal("https://logismod01.github.io/iskra/"));
   $("#quitBtn").addEventListener("click", () => window.sye.quit());
 
-  // Доступ
+  // Доступ: аккаунт Искры
+  $("#tabAccount").addEventListener("click", () => setGateTab("account"));
+  $("#tabKey").addEventListener("click", () => setGateTab("key"));
+  $("#accConnect").addEventListener("click", () => connectAccount(false));
+  $("#accVerify").addEventListener("click", () => connectAccount(true));
+  $("#accSendCode").addEventListener("click", sendLoginCode);
+  $("#accOpenSite").addEventListener("click", () => window.sye.openExternal("https://logismod01.github.io/iskra/"));
+  $("#accPass").addEventListener("keydown", (e) => { if (e.key === "Enter") connectAccount(false); });
+  $("#accCode").addEventListener("keydown", (e) => { if (e.key === "Enter") connectAccount(true); });
+  $("#accCheckBtn").addEventListener("click", async () => {
+    const res = await window.sye.accountCheck();
+    if (res && res.account) renderAccount(res.account);
+    if (res && res.license) renderLicense(res.license);
+    toast((res && res.msg) || "Проверил подписку", res && res.ok ? "ok" : "err");
+  });
+  $("#accLogoutBtn").addEventListener("click", async () => {
+    const res = await window.sye.accountLogout();
+    if (res && res.account) renderAccount(res.account);
+    if (res && res.license) renderLicense(res.license);
+    toast("Вышел из аккаунта");
+  });
+
+  // Доступ: ключ Pro
   $("#gateActivate").addEventListener("click", activate);
   $("#gateKey").addEventListener("keydown", (e) => { if (e.key === "Enter") activate(); });
   $("#gateClient").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#gateKey").focus(); });
@@ -474,6 +536,59 @@ function wireUi() {
 async function takeShot() {
   const res = await window.sye.screenshot();
   if (!res || !res.ok) toast("Снимок не получился: " + ((res && res.error) || "нет доступа к экрану"), "err");
+}
+
+/** Вход в аккаунт Искры: пароль или код из письма + код клиента. */
+async function connectAccount(useCode) {
+  const email = $("#accEmail").value.trim();
+  const password = $("#accPass").value;
+  const client = $("#accClient").value.trim();
+  const code = $("#accCode").value.trim();
+
+  if (!email) { gateNote("Укажи почту аккаунта Искры.", true); return; }
+  if (!client) { gateNote("Нужен код клиента из Искры: ⚙ → «Доступ».", true); return; }
+  if (useCode && !code) { gateNote("Вставь код из письма.", true); return; }
+  if (!useCode && !password) { gateNote("Введи пароль или войди по коду из письма.", true); return; }
+
+  const btn = useCode ? $("#accVerify") : $("#accConnect");
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Проверяю…";
+  gateNote("");
+  let res = null;
+  try {
+    res = await window.sye.accountConnect({ email, password, client, code: useCode ? code : "" });
+  } catch (e) {
+    res = { ok: false, msg: "Не получилось связаться с сервером Искры." };
+  }
+  btn.disabled = false;
+  btn.textContent = label;
+
+  const warnings = (res && res.warnings) || [];
+  const good = !!(res && res.ok && res.access && res.access.active);
+  const text = [(res && res.msg) || "", ...warnings].filter(Boolean).join(" ");
+  gateNote(text || (good ? "Готово." : "Не получилось привязать аккаунт."), !good);
+
+  if (res && res.account) renderAccount(res.account);
+  if (res && res.license) renderLicense(res.license);
+  if (good) {
+    toast(res.msg || "Подписка привязана", "ok");
+    $("#gate").hidden = true;
+  }
+}
+
+async function sendLoginCode() {
+  const email = $("#accEmail").value.trim();
+  if (!email) { gateNote("Сначала укажи почту аккаунта.", true); return; }
+  gateNote("Отправляю код…");
+  const res = await window.sye.accountSendCode(email);
+  if (res && res.ok) {
+    $("#accCodeRow").hidden = false;
+    $("#accCode").focus();
+    gateNote(res.msg);
+  } else {
+    gateNote((res && res.msg) || "Не получилось отправить код", true);
+  }
 }
 
 async function activate() {
@@ -517,6 +632,7 @@ function wirePresets() {
   document.title = s.brand.name + " — агент на рабочем столе";
   $("#version").textContent = "v" + s.version;
   renderWorkspace(s.settings.workspace);
+  renderAccount(s.account);
   renderLicense(s.license);
   renderHistory(s.history);
   renderSettings();

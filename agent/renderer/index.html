@@ -108,21 +108,59 @@
       <div class="gate-benefits">
         <span>файлы и код</span><span>терминал</span><span>разбор скриншотов</span><span>поиск и исправление багов</span>
       </div>
-      <label class="field">
-        <span>Код клиента</span>
-        <input id="gateClient" placeholder="123456-AB12CD-word" autocomplete="off" spellcheck="false" />
-      </label>
-      <label class="field">
-        <span>Ключ Pro</span>
-        <input id="gateKey" placeholder="ISKRA-24-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" />
-      </label>
-      <button class="primary" id="gateActivate">Активировать</button>
-      <p class="gate-err" id="gateErr"></p>
-      <div class="gate-links">
-        <button class="link" id="gateGetKey">Как получить ключ</button>
+      <div class="gate-tabs">
+        <button class="gate-tab on" id="tabAccount" type="button">Аккаунт Искры</button>
+        <button class="gate-tab" id="tabKey" type="button">Ключ Pro</button>
+      </div>
+
+      <div id="paneAccount">
+        <label class="field">
+          <span>Почта аккаунта Искры</span>
+          <input id="accEmail" type="email" placeholder="you@mail.ru" autocomplete="username" spellcheck="false" />
+        </label>
+        <label class="field">
+          <span>Пароль</span>
+          <input id="accPass" type="password" placeholder="пароль от Искры" autocomplete="current-password" />
+        </label>
+        <label class="field">
+          <span>Код клиента из Искры</span>
+          <input id="accClient" placeholder="123456-AB12CD-word" autocomplete="off" spellcheck="false" />
+        </label>
+        <button class="primary" id="accConnect">Войти и привязать</button>
+        <div class="gate-code" id="accCodeRow" hidden>
+          <label class="field">
+            <span>Код из письма</span>
+            <input id="accCode" placeholder="код из письма" inputmode="numeric" autocomplete="one-time-code" />
+          </label>
+          <button class="primary" id="accVerify">Войти по коду</button>
+        </div>
+        <p class="gate-err" id="accErr"></p>
+        <div class="gate-links">
+          <button class="link" id="accSendCode">Войти по коду из письма</button>
+          <button class="link" id="accOpenSite">Где взять код клиента</button>
+        </div>
+      </div>
+
+      <div id="paneKey" hidden>
+        <label class="field">
+          <span>Код клиента</span>
+          <input id="gateClient" placeholder="123456-AB12CD-word" autocomplete="off" spellcheck="false" />
+        </label>
+        <label class="field">
+          <span>Ключ Pro</span>
+          <input id="gateKey" placeholder="ISKRA-24-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" />
+        </label>
+        <button class="primary" id="gateActivate">Активировать</button>
+        <p class="gate-err" id="gateErr"></p>
+        <div class="gate-links">
+          <button class="link" id="gateGetKey">Как получить ключ</button>
+        </div>
+      </div>
+
+      <div class="gate-links gate-footer">
         <button class="link" id="gateLater" hidden>Продолжить в ограниченном режиме</button>
       </div>
-      <p class="gate-note">Код клиента и ключ выдаются в Искре: ⚙ → «Доступ». Ключ привязывается к этому компьютеру.</p>
+      <p class="gate-note">Аккаунт и код клиента — в Искре: ⚙ → «Доступ». Подписка привязывается к этому компьютеру: один Pro — один агент.</p>
     </div>
   </div>
 
@@ -133,6 +171,20 @@
         <b>Настройки</b>
         <button class="x" id="drawerClose">×</button>
       </div>
+
+      <section>
+        <h3>Аккаунт Искры</h3>
+        <div class="lic-card">
+          <div class="lic-row"><span>Аккаунт</span><b id="accWho">не привязан</b></div>
+          <div class="lic-row"><span>Код клиента</span><b id="accClientView">—</b></div>
+          <div class="lic-row"><span>Проверено</span><b id="accChecked">—</b></div>
+        </div>
+        <p class="hint">Вход проверяется тем же сервером, что и на сайте. Подписка подтягивается по коду клиента — ключ вставлять не нужно.</p>
+        <div class="row">
+          <button class="ghost" id="accCheckBtn">Проверить подписку</button>
+          <button class="ghost" id="accLogoutBtn">Выйти из аккаунта</button>
+        </div>
+      </section>
 
       <section>
         <h3>Подписка</h3>
