@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#141413" />
+<title>Искра — страница переехала</title>
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: #141413; color: #f4eee4;
+    font-family: Inter, "SF Pro Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { display: flex; align-items: center; justify-content: center; padding: 24px; min-height: 100dvh; }
+  .card { width: 100%; max-width: 460px; text-align: center; }
+  .star { width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 22px; background: radial-gradient(120% 120% at 30% 20%, #3a2a22, #171614 70%);
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1px #2e2a26, 0 18px 50px rgba(217,119,87,.18); }
+  h1 { font-size: 26px; margin: 0 0 10px; letter-spacing: -.02em; }
+  p { color: #a89f92; line-height: 1.55; margin: 0 0 18px; font-size: 15px; }
+  a.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    padding: 14px 18px; border-radius: 14px; background: #d97757; color: #141413; font-weight: 650;
+    text-decoration: none; font-size: 16px; }
+  a.btn:active { transform: translateY(1px); }
+  .small { margin-top: 14px; font-size: 13px; color: #6e675c; }
+  code { background: #1c1b19; border: 1px solid #2e2a26; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+  .count { color: #d97757; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="star">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="#d97757" aria-hidden="true">
+        <path d="M12 2 L13.5 9.5 L21 12 L13.5 14.5 L12 22 L10.5 14.5 L3 12 L10.5 9.5 Z"/>
+      </svg>
+    </div>
+    <h1>Искра переехала</h1>
+    <p>Такой страницы больше нет. Приложение живёт по одному адресу — открываю его автоматически
+      через <span class="count" id="left">3</span>…</p>
+    <a class="btn" id="go" href="./">Открыть Искру</a>
+    <div class="small">Правильный адрес: <code id="addr">…</code></div>
+  </div>
+  <script>
+    (function () {
+      /* Считаем адрес приложения: первый сегмент пути — имя проекта на GitHub Pages. */
+      var parts = location.pathname.split("/").filter(Boolean);
+      var base = parts.length >= 1 ? location.origin + "/" + parts[0] + "/" : location.origin + "/";
+      var go = document.getElementById("go");
+      var addr = document.getElementById("addr");
+      go.href = base;
+      addr.textContent = base.replace(/^https?:\/\//, "");
+      var left = 3;
+      var el = document.getElementById("left");
+      var t = setInterval(function () {
+        left -= 1;
+        if (el) el.textContent = String(Math.max(0, left));
+        if (left <= 0) {
+          clearInterval(t);
+          location.replace(base);
+        }
+      }, 1000);
+      /* если страница открыта в iframe предпросмотра — не перекидываем принудительно */
+      try { if (window.top !== window.self) clearInterval(t); } catch (e) {}
+    })();
+  </script>
+</body>
+</html>
