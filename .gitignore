@@ -1,3 +1,7 @@
 node_modules/
 .DS_Store
 *.log
+
+# сборка агента Sye
+agent/dist/
+agent/node_modules/

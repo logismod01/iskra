@@ -1,0 +1,58 @@
+{
+  "name": "iskra-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Агент для рабочего стола: читает файлы, правит код, запускает команды и разбирает скриншоты",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis portable",
+    "test": "node test/run.cjs",
+    "smoke": "electron . --smoke-test"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "ru.iskra.agent",
+    "productName": "Iskra Agent",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "core/**/*",
+      "renderer/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png",
+      "category": "Development"
+    }
+  },
+  "author": {
+    "name": "Iskra",
+    "email": "iskra@users.noreply.github.com"
+  }
+}

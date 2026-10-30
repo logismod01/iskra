@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sye — агент на рабочем столе</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Слева: задачи -->
+    <aside class="side">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="spark"></span>
+        </div>
+        <div class="brand-text">
+          <b id="brandName">Sye</b>
+          <span>агент на рабочем столе</span>
+        </div>
+      </div>
+
+      <button class="new-task" id="newTask">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Новая задача
+      </button>
+
+      <div class="side-head">
+        <span>Последние</span>
+        <button class="link" id="clearHistory">очистить</button>
+      </div>
+      <div class="history" id="history"></div>
+
+      <div class="side-foot">
+        <div class="lic" id="sideLicense">
+          <span class="lic-dot"></span>
+          <span class="lic-text">Проверяю подписку…</span>
+        </div>
+        <button class="link" id="openSettingsBtn">Настройки</button>
+        <div class="ver" id="version"></div>
+      </div>
+    </aside>
+
+    <!-- Справа: работа -->
+    <main class="main">
+      <header class="topbar">
+        <div class="ws" id="wsChip" title="Рабочая папка">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span id="wsPath">папка не выбрана</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="pill" id="licPill" title="Подписка">
+          <span class="dot"></span><span id="licText">Pro</span>
+        </div>
+        <button class="ghost" id="shotBtn" title="Снять экран (Ctrl+Alt+S)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/></svg>
+          Экран
+        </button>
+      </header>
+
+      <section class="feed" id="feed">
+        <div class="hello" id="hello">
+          <div class="hello-mark"><span class="spark big"></span></div>
+          <h1>Я <b>Sye</b>. Скажи, что сделать — сделаю.</h1>
+          <p>Читаю и правлю файлы, запускаю команды, ищу причины ошибок и смотрю на экран, если показать скриншот.</p>
+          <div class="presets" id="presets">
+            <button data-preset="Проверь проект в рабочей папке: найди ошибки в коде, исправь их и запусти тесты. Покажи, что было и что стало.">Проверить проект и исправить баги</button>
+            <button data-preset="Что на моём экране? Разбери скриншот по делу: что за программа, что написано, какие ошибки видны и что делать.">Разобрать, что на экране</button>
+            <button data-preset="Напиши рабочий скрипт по описанию, сохрани его в рабочую папку и запусти проверку. Описание: ">Написать скрипт</button>
+            <button data-preset="Объясни, почему возникает эта ошибка, и предложи исправление. Текст ошибки: ">Разобрать ошибку</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="composer-wrap">
+        <div class="shot-chip" id="shotChip" hidden>
+          <img id="shotImg" alt="Скриншот" />
+          <div class="shot-meta"><b>Скриншот прикреплён</b><span id="shotTime"></span></div>
+          <button class="x" id="shotRemove" title="Убрать">×</button>
+        </div>
+        <div class="composer">
+          <textarea id="input" rows="1" placeholder="Что сделать? Например: найди, почему падает сборка, и почини"></textarea>
+          <div class="comp-actions">
+            <button class="ghost small" id="attachShot" title="Снять экран">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/></svg>
+              скрин
+            </button>
+            <div class="spacer"></div>
+            <button class="send" id="sendBtn" title="Запустить (Enter)">
+              <span>Запустить</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+            </button>
+            <button class="stop" id="stopBtn" hidden title="Остановить">Стоп</button>
+          </div>
+        </div>
+        <div class="note" id="note">Enter — запустить, Shift+Enter — новая строка. Ctrl+Alt+S — снимок экрана.</div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Доступ -->
+  <div class="gate" id="gate" hidden>
+    <div class="gate-card">
+      <div class="gate-mark"><span class="spark big"></span></div>
+      <h2 id="gateTitle">Нужна подписка Pro</h2>
+      <p id="gateText">Sye — агент для подписчиков Искры Pro. Без ключа он не работает: один Pro — один агент на одном компьютере.</p>
+      <div class="gate-benefits">
+        <span>файлы и код</span><span>терминал</span><span>разбор скриншотов</span><span>поиск и исправление багов</span>
+      </div>
+      <label class="field">
+        <span>Код клиента</span>
+        <input id="gateClient" placeholder="123456-AB12CD-word" autocomplete="off" spellcheck="false" />
+      </label>
+      <label class="field">
+        <span>Ключ Pro</span>
+        <input id="gateKey" placeholder="ISKRA-24-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" />
+      </label>
+      <button class="primary" id="gateActivate">Активировать</button>
+      <p class="gate-err" id="gateErr"></p>
+      <div class="gate-links">
+        <button class="link" id="gateGetKey">Как получить ключ</button>
+        <button class="link" id="gateLater" hidden>Продолжить в ограниченном режиме</button>
+      </div>
+      <p class="gate-note">Код клиента и ключ выдаются в Искре: ⚙ → «Доступ». Ключ привязывается к этому компьютеру.</p>
+    </div>
+  </div>
+
+  <!-- Настройки -->
+  <div class="drawer" id="drawer" hidden>
+    <div class="drawer-card">
+      <div class="drawer-head">
+        <b>Настройки</b>
+        <button class="x" id="drawerClose">×</button>
+      </div>
+
+      <section>
+        <h3>Подписка</h3>
+        <div class="lic-card" id="licCard">
+          <div class="lic-row"><span>Состояние</span><b id="licState">—</b></div>
+          <div class="lic-row"><span>Срок</span><b id="licTerm">—</b></div>
+          <div class="lic-row"><span>Устройство</span><b id="licDevice">—</b></div>
+        </div>
+        <p class="hint" id="licNote"></p>
+        <div class="row">
+          <button class="ghost" id="syncBtn">Проверить подписку</button>
+          <button class="ghost" id="buyBtn">Продлить</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Свобода действий</h3>
+        <label class="radio"><input type="radio" name="access" value="ask" /><span><b>Спрашивать всё</b><i>каждая запись и команда — с подтверждением</i></span></label>
+        <label class="radio"><input type="radio" name="access" value="folder" /><span><b>Свободно в папке</b><i>внутри рабочей папки делает сам, опасное спрашивает</i></span></label>
+        <label class="radio"><input type="radio" name="access" value="full" /><span><b>Полный доступ</b><i>может выйти за папку; системные команды всё равно запрещены</i></span></label>
+      </section>
+
+      <section>
+        <h3>Рабочая папка</h3>
+        <div class="row">
+          <code id="wsFull">—</code>
+          <button class="ghost" id="pickWs">Выбрать</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Свой ключ (необязательно)</h3>
+        <p class="hint">Если вписать ключ, Sye будет отвечать через него первым — быстрее и без общих лимитов. Названия сервисов не показываются.</p>
+        <label class="field"><span>Ключ</span><input id="apiKey" placeholder="sk-…" autocomplete="off" /></label>
+        <label class="field"><span>Адрес API</span><input id="apiBase" placeholder="https://…/v1" autocomplete="off" /></label>
+        <label class="field"><span>Модель</span><input id="apiModel" placeholder="название модели" autocomplete="off" /></label>
+        <button class="ghost" id="saveApi">Сохранить ключ</button>
+      </section>
+
+      <section class="danger">
+        <button class="ghost" id="quitBtn">Выйти из Sye</button>
+      </section>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
