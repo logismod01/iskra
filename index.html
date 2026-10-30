@@ -7169,6 +7169,7 @@ const IC = {
   camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
   globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
   arrowUp: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
+  arrowDown: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
   attach: '<path d="m21.4 11.05-9.2 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.9 8.8l-8.58 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -8019,12 +8020,24 @@ function applyMath(html) {
   }).join("");
 }
 
+/* Закрывающая рамка блока кода. Ответ мог обрезаться по лимиту длины (или ещё печатается) —
+   тогда закрывающей ``` нет, и весь код показывался как обычный текст с бэктиками. */
+const FENCE_LINE = /(?:^|\n)[ \t]*```/g;
+
+function closeOpenFence(text) {
+  const marks = String(text).match(FENCE_LINE) || [];
+  if (marks.length % 2 === 1) return text + "\n```";
+  return text;
+}
+
 function renderMarkdown(md) {
-  let html = md;
+  let html = String(md);
   html = html.replace(/\r\n/g, "\n");
-  // code blocks
+  html = closeOpenFence(html);
+  // code blocks: пробелы после ``` и после языка больше не ломают разбор
   const codeBlocks = [];
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
+  html = html.replace(/(?:^|\n)[ \t]*```[ \t]*([^\n`]*)\n([\s\S]*?)```/g, (_, rawLang, code) => {
+    const lang = String(rawLang || "").trim().split(/[\s,]+/)[0].replace(/^\{?\.?/, "");
     const i = codeBlocks.length;
     const body = code.replace(/\n$/, "");
     codeBlocks.push({ lang: codeLangLabel(lang, body), code: body });
@@ -8629,7 +8642,7 @@ const POLITICS_RULE = "ПОЛИТИКА И ИСТОРИЯ: обсуждать п
 
 const NO_JUDGE_RULE = "НИКОГДА НЕ ОСУЖДАЙ ПОЛЬЗОВАТЕЛЯ. Ни в одном характере и ни в одном тоне: без стыда, морализаторства, нотаций, обвинений, оценок личности, сарказма в его адрес и фраз вроде «ты сам виноват», «так тебе и надо», «это глупо». Ты можешь не соглашаться с идеей и говорить об этом спокойно, но человек всегда остаётся уважаемым. Если он ошибается — объясни по-доброму и предложи решение.";
 
-const CODE_RULE = "ПРО ЯЗЫКИ ПРОГРАММИРОВАНИЯ: всегда называй язык, на котором пишешь код (это видно в подписи блока). Если пользователь не указал язык — выбери самый подходящий и скажи, какой выбрала и почему, либо спроси, если выбор реально важен. Если просят язык, который ты не можешь выполнить или проверить (например, узкий проприетарный или устаревший язык, либо код, который нельзя запустить в браузере) — честно скажи, что этот язык недоступен/не проверен, и предложи близкую замену. Никогда не выдавай код за рабочий, если не уверена.";
+const CODE_RULE = "ОФОРМЛЕНИЕ КОДА: любой код — в блоке ```язык … ``` и блок обязательно закрывай. Не смешивай код с объяснением в одной строке: сначала блок, потом текст. Если код длинный — дай работающую часть целиком и скажи, что продолжишь, но не обрывай посреди функции. Строки внутри блока не склеивай: каждый оператор с новой строки.\n\nПРО ЯЗЫКИ ПРОГРАММИРОВАНИЯ: всегда называй язык, на котором пишешь код (это видно в подписи блока). Если пользователь не указал язык — выбери самый подходящий и скажи, какой выбрала и почему, либо спроси, если выбор реально важен. Если просят язык, который ты не можешь выполнить или проверить (например, узкий проприетарный или устаревший язык, либо код, который нельзя запустить в браузере) — честно скажи, что этот язык недоступен/не проверен, и предложи близкую замену. Никогда не выдавай код за рабочий, если не уверена.";
 
 
 /* Литература: как рассказывать про книги так, чтобы это было похоже на правду и приносило пользу. */
@@ -8796,9 +8809,10 @@ function apiPayload(chatMessages, opts = {}) {
     body.max_tokens = 4096;
     body.temperature = 0.4;
   } else if (settings.edition !== "pro") {
-    // бесплатная версия: быстрый ответ, без долгих размышлений
+    // бесплатная версия: быстрый ответ, без долгих размышлений.
+    // Но не 1200: на такой длине код обрывался на середине функции.
     body.reasoning_effort = "low";
-    body.max_tokens = 1200;
+    body.max_tokens = String(settings.apiKey || "").trim() ? 4096 : 2000;
     body.temperature = 0.65;
   }
   return body;
@@ -9404,6 +9418,7 @@ async function streamOnce(engine, payload, onDelta, signal) {
   delete body.reasoning_effort;
   let got = 0;
   let acc = "";
+  let finish = "";
   let res;
   try {
     const endpoint = engine.url || (engine.base.replace(/\/+$/, "") + "/chat/completions");
@@ -9438,7 +9453,7 @@ async function streamOnce(engine, payload, onDelta, signal) {
       const data = await res.json();
       take(data.choices?.[0]?.message?.content || data.choices?.[0]?.text || "");
       if (!got) throw new ApiError(503, "пустой ответ движка", "empty");
-      return { engine: engine.id, text: acc };
+      return { engine: engine.id, text: acc, truncated: data.choices?.[0]?.finish_reason === "length" };
     }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
@@ -9456,6 +9471,8 @@ async function streamOnce(engine, payload, onDelta, signal) {
         if (d === "[DONE]") continue;
         try {
           const j = JSON.parse(d);
+          const fr = j.choices?.[0]?.finish_reason;
+          if (fr) finish = fr;
           const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || j.choices?.[0]?.text || "";
           if (delta) take(delta);
         } catch (e) { /* битые куски пропускаем */ }
@@ -9469,10 +9486,10 @@ async function streamOnce(engine, payload, onDelta, signal) {
       } catch (e) {}
     }
     if (!got) throw new ApiError(503, "пустой ответ движка", "empty");
-    return { engine: engine.id, text: acc };
+    return { engine: engine.id, text: acc, truncated: finish === "length" };
   } catch (e) {
     if (e && e.name === "AbortError") {
-      if (got > 0) return { engine: engine.id, text: acc };   // уже что-то сказала — не начинаем заново
+      if (got > 0) return { engine: engine.id, text: acc, truncated: true };   // уже что-то сказала — не начинаем заново
       throw timedOut ? new ApiError(0, "движок не ответил за " + timeoutSec + " с", "timeout") : new ApiError(0, "остановлено", "abort");
     }
     /* Настоящий ответ сервера (401, 429, 500…) нельзя превращать в «нет связи»:
@@ -9726,7 +9743,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
         `<p class="gen-note">Секунду — подбираю, кто ответит…</p>`;
     };
-    await askIskra(payload, (delta) => {
+    const done = await askIskra(payload, (delta) => {
       acc += delta;
       el.classList.remove("thinking");
       const t = streamEl();
@@ -9758,6 +9775,11 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     }
     aiMsg.content = acc;
     aiMsg.pending = false;
+    aiMsg.truncated = !!(done && done.truncated);
+    if (aiMsg.truncated) {
+      // обрез по лимиту длины — честно говорим и даём кнопку продолжить
+      toast("Ответ упёрся в лимит длины — можно продолжить", "err");
+    }
     if (_lastSearch && _lastSearch.sources && _lastSearch.sources.length) {
       aiMsg.sources = _lastSearch.sources;
       contentEl.innerHTML = renderMarkdown(acc);
@@ -9771,7 +9793,12 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
 
     saveChats();
     // rewire action buttons
-    el.querySelector(".actions").innerHTML = `<button data-act="copy">${ic("copy", 14)} Копировать</button><button data-act="regen">${ic("regen", 14)} Перегенерить</button>`;
+    el.querySelector(".actions").innerHTML = `<button data-act="copy">${ic("copy", 14)} Копировать</button><button data-act="regen">${ic("regen", 14)} Перегенерить</button>` +
+      (aiMsg.truncated ? `<button data-act="continue">${ic("arrowDown", 14)} Продолжить</button>` : "");
+    const contBtn = el.querySelector('[data-act="continue"]');
+    if (contBtn) contBtn.addEventListener("click", () => {
+      sendMessage("Продолжи ровно с того места, где остановился. Не повторяй начало, продолжай текст и код.");
+    });
     el.querySelectorAll(".actions button").forEach(b => {
       b.addEventListener("click", () => onMsgAction(aiMsg.id, b.dataset.act));
     });
