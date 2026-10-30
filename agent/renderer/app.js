@@ -9,7 +9,7 @@ const state = {
   license: null,
   account: null,
   settings: null,
-  brand: { name: "Sye", version: "0.3.1" },
+  brand: { name: "Sye", version: "0.4.0" },
   history: [],
   shot: null,
   running: false
@@ -483,12 +483,16 @@ function wireUi() {
   });
 
   $("#saveApi").addEventListener("click", async () => {
-    state.settings = await window.sye.saveSettings({
-      apiKey: $("#apiKey").value.trim(),
-      apiBase: $("#apiBase").value.trim(),
-      apiModel: $("#apiModel").value.trim()
-    });
-    toast("Ключ сохранён");
+    const key = $("#apiKey").value.trim();
+    const base = $("#apiBase").value.trim();
+    const model = $("#apiModel").value.trim();
+    state.settings = await window.sye.saveSettings({ apiKey: key, apiBase: base, apiModel: model });
+    // говорим по делу: ключ распознан (адрес и модель подставились сами) или нужен адрес
+    if (!key) toast("Ключ убран — отвечаю своими движками");
+    else if (/^gsk_/.test(key)) toast("Ключ сохранён — теперь отвечаю сильной моделью");
+    else if (/^sk-or-/.test(key)) toast("Ключ сохранён — теперь отвечаю через него");
+    else if (base && model) toast("Ключ сохранён — отвечаю через твой сервер");
+    else toast("Ключ сохранён, но не распознан — укажи адрес и модель", "err");
   });
 
   $("#syncBtn").addEventListener("click", async () => {

@@ -329,8 +329,8 @@ async function startTask(payload) {
   const ctx = makeContext(st, { shot });
   const send = (event) => { if (win && !win.isDestroyed()) win.webContents.send("task:event", Object.assign({ taskId }, event)); };
 
-  const model = async ({ messages, signal, maxTokens, onDelta }) => {
-    return askModel({ messages, settings, signal, maxTokens, onDelta, onTry: (i, total) => send({ type: "engine", n: i, total }) });
+  const model = async ({ messages, liteMessages, signal, maxTokens, onDelta }) => {
+    return askModel({ messages, liteMessages, settings, signal, maxTokens, onDelta, onTry: (i, total) => send({ type: "engine", n: i, total }) });
   };
 
   try {

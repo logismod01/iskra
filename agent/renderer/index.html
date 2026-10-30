@@ -232,10 +232,14 @@
 
       <section>
         <h3>Свой ключ (необязательно)</h3>
-        <p class="hint">Если вписать ключ, Sye будет отвечать через него первым — быстрее и без общих лимитов. Названия сервисов не показываются.</p>
-        <label class="field"><span>Ключ</span><input id="apiKey" placeholder="sk-…" autocomplete="off" /></label>
-        <label class="field"><span>Адрес API</span><input id="apiBase" placeholder="https://…/v1" autocomplete="off" /></label>
-        <label class="field"><span>Модель</span><input id="apiModel" placeholder="название модели" autocomplete="off" /></label>
+        <p class="hint">Если вписать ключ, Sye будет отвечать через него первым — быстрее и без общих лимитов. Ключа достаточно:
+          адрес и модель подставятся сами по его виду. Названия сервисов не показываются.</p>
+        <label class="field"><span>Ключ</span><input id="apiKey" placeholder="gsk_… или sk-or-…" autocomplete="off" /></label>
+        <details class="field-adv">
+          <summary>Свой адрес и модель <em>если ключ не распознаётся</em></summary>
+          <label class="field"><span>Адрес API</span><input id="apiBase" placeholder="https://…/v1" autocomplete="off" /></label>
+          <label class="field"><span>Модель</span><input id="apiModel" placeholder="название модели" autocomplete="off" /></label>
+        </details>
         <button class="ghost" id="saveApi">Сохранить ключ</button>
       </section>
 

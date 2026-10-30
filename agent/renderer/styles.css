@@ -318,3 +318,11 @@ code { font-family: "JetBrains Mono", "Consolas", monospace; font-size: 12px; }
 ::-webkit-scrollbar-thumb { background: #2a2724; border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: #37322d; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Дополнительные поля ключа: свёрнуты, чтобы не пугать тремя полями */
+.field-adv { margin: 4px 0 10px; }
+.field-adv summary {
+  cursor: pointer; font-size: 12px; color: var(--text-dim); margin-bottom: 8px;
+}
+.field-adv summary em { font-style: normal; opacity: .7; }
+.field-adv[open] summary { color: var(--text-soft); }
