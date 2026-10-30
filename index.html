@@ -9114,6 +9114,16 @@ function renderKnowledge() {
     const info = document.createElement("div");
     info.className = "kb-info";
     info.innerHTML = `<b>${esc(doc.title)}</b><span>${doc.text.length.toLocaleString("ru-RU")} символов · ${chunkText(doc.text).length} фрагментов</span>`;
+    const pub = document.createElement("button");
+    pub.className = "kb-del";
+    pub.textContent = "Для всех";
+    pub.title = "Опубликовать для всех пользователей";
+    pub.addEventListener("click", async () => {
+      pub.disabled = true;
+      const ok = await publishToShared(doc.title, doc.text, "", "");
+      pub.disabled = false;
+      if (ok) renderKnowledge();
+    });
     const del = document.createElement("button");
     del.className = "kb-del";
     del.innerHTML = ic("trash", 15);
@@ -9122,7 +9132,7 @@ function renderKnowledge() {
       settings.knowledge = settings.knowledge.filter(x => x.id !== doc.id);
       saveSettings(); renderKnowledge(); updateKnowledgeChip();
     });
-    row.append(info, del);
+    row.append(info, pub, del);
     box.appendChild(row);
   });
 }
@@ -9249,11 +9259,14 @@ function kbStemSet(text) {
   return new Set(kbTokens(text).map(kbStem));
 }
 function kbSearch(text, limit = 2) {
+  const shared = (typeof sharedKbList === "function" ? sharedKbList() : []).map(x => ({
+    title: x.topic, tags: (x.tags || "") + " " + x.topic.toLowerCase(), text: x.text, shared: true
+  }));
   const learned = (typeof learnedList === "function" ? learnedList() : []).map(x => ({
     title: x.topic, tags: x.topic.toLowerCase(), text: x.text, learned: true
   }));
   const base = (typeof KNOWLEDGE_PACK !== "undefined" && KNOWLEDGE_PACK.items) ? KNOWLEDGE_PACK.items : [];
-  const allItems = learned.concat(base);
+  const allItems = shared.concat(learned, base);
   if (!allItems.length) return [];
   const q = String(text || "").toLowerCase().replace(/ё/g, "е");
   const words = [...new Set(kbTokens(text))];
@@ -9300,6 +9313,7 @@ function kbSearch(text, limit = 2) {
       if (t.length > 3 && q.includes(t)) score += 3;
     }
     if (d.it.learned) score += 3;                 // своё выученное — в приоритете
+    if (d.it.shared) score += 4;                  // общая база — то, что владелец проверил руками
 
     cands.push({ it: d.it, score, coverage: weightedHits / totalWeight, strong, rare, latin });
   }
@@ -13336,6 +13350,137 @@ function learnedSave(list) {
 }
 function learnedCount() { return learnedList().length; }
 
+/* ---------- Общая база: темы, опубликованные владельцем для всех ----------
+   Живёт на сервере (Supabase). Читают все, пишет только владелец по паролю.
+   В браузере держим копию: без сети Искра отвечает по ней. */
+const SHARED_KB_KEY = "iskra.sharedkb.v1";
+const SHARED_KB_TTL = 6 * 3600e3;
+let _sharedKb = null;
+let _sharedKbAt = 0;
+
+function sharedKbList() {
+  if (_sharedKb) return _sharedKb;
+  _sharedKb = [];
+  try {
+    const o = JSON.parse(localStorage.getItem(SHARED_KB_KEY) || "null");
+    if (o && Array.isArray(o.items)) {
+      _sharedKb = o.items.filter(x => x && x.topic && x.text);
+      _sharedKbAt = Number(o.at) || 0;
+    }
+  } catch (e) {}
+  return _sharedKb;
+}
+
+function sharedKbSave(items) {
+  _sharedKb = (items || []).filter(x => x && x.topic && x.text);
+  _sharedKbAt = Date.now();
+  try { localStorage.setItem(SHARED_KB_KEY, JSON.stringify({ at: _sharedKbAt, items: _sharedKb })); } catch (e) {}
+}
+
+/* Забрать общую базу с сервера. Ошибка, офлайн или ещё не созданная таблица
+   не ломают ответы: остаётся копия из прошлого раза. */
+async function sharedKbRefresh(force) {
+  if (!supabaseConfigured()) return sharedKbList();
+  if (!force && _sharedKbAt && Date.now() - _sharedKbAt < SHARED_KB_TTL) return sharedKbList();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 8000);
+  try {
+    const url = SB() + "/rest/v1/iskra_shared_kb?select=topic,body,source,tags,updated_at" +
+      "&active=eq.true&order=updated_at.desc&limit=500";
+    const r = await fetch(url, {
+      headers: { apikey: SUPABASE_CONFIG.anonKey, Authorization: "Bearer " + SUPABASE_CONFIG.anonKey },
+      signal: ctrl.signal
+    });
+    if (!r.ok) return sharedKbList();
+    const rows = await r.json();
+    if (!Array.isArray(rows)) return sharedKbList();
+    sharedKbSave(rows.map(x => ({
+      topic: String(x.topic || ""),
+      text: String(x.body || ""),
+      source: String(x.source || ""),
+      tags: String(x.tags || ""),
+      updated: x.updated_at || ""
+    })));
+  } catch (e) {
+    /* нет сети или таблицы — работаем по сохранённой копии */
+  } finally {
+    clearTimeout(timer);
+  }
+  return sharedKbList();
+}
+
+/* ---------- Публикация для всех (только владелец) ----------
+   Пароль владельца тот же, что в /console → secret. Хранится в этом браузере,
+   на сервер уходит только при публикации. */
+function sharedOwnerSecret() {
+  try { return String((adminData() || {}).accessSecret || ""); } catch (e) { return ""; }
+}
+
+function sharedStatus(text, kind) {
+  const el = $("#sharedStatus");
+  if (el) { el.className = "learn-status " + (kind || ""); el.textContent = text || ""; }
+}
+
+/* Опубликовать тему в общую базу. Повторная публикация обновляет текст. */
+async function publishToShared(topic, body, source, tags) {
+  const t = String(topic || "").trim();
+  const b = String(body || "").trim();
+  if (t.length < 2) { sharedStatus("Нужно название темы.", "bad"); return false; }
+  if (b.length < 40) { sharedStatus("Слишком мало текста: нужно хотя бы 40 символов.", "bad"); return false; }
+  if (!supabaseConfigured()) { sharedStatus("Сервер не настроен: общей базы нет.", "bad"); return false; }
+  const secret = sharedOwnerSecret();
+  if (!secret) {
+    sharedStatus("Введи пароль владельца выше — тот же, что в /console → secret.", "bad");
+    const inp = $("#sharedSecret");
+    if (inp && inp.focus) inp.focus();
+    return false;
+  }
+  sharedStatus("Публикую…", "");
+  try {
+    await sbRpc("iskra_kb_publish", {
+      p_secret: secret,
+      p_topic: t.slice(0, 200),
+      p_body: b.slice(0, 8000),
+      p_source: String(source || ""),
+      p_tags: String(tags || "")
+    }, 15000);
+    await sharedKbRefresh(true);
+    sharedStatus("Опубликовано: «" + t + "». Теперь это видят все.", "ok");
+    toast("Опубликовано для всех: " + t, "ok");
+    try { renderKnowledgePanel(); } catch (e) {}
+    return true;
+  } catch (e) {
+    if (sbMissingFunction(e)) {
+      sharedStatus("Общей базы на сервере ещё нет. Один раз выполни supabase/iskra-shared-kb.sql в Supabase → SQL Editor.", "bad");
+      return false;
+    }
+    const msg = (e && (e.message || e.error_description)) || "ошибка связи";
+    sharedStatus("Не получилось опубликовать: " + msg + ".", "bad");
+    return false;
+  }
+}
+
+/* Снять тему с общей базы: у всех она исчезнет после обновления. */
+async function unpublishFromShared(topic) {
+  const secret = sharedOwnerSecret();
+  if (!secret) { sharedStatus("Сначала введи пароль владельца.", "bad"); return false; }
+  try {
+    await sbRpc("iskra_kb_unpublish", { p_secret: secret, p_topic: String(topic || "") }, 15000);
+    await sharedKbRefresh(true);
+    sharedStatus("Снято с общей базы: «" + topic + "».", "ok");
+    toast("Снято: " + topic, "ok");
+    try { renderKnowledgePanel(); } catch (e) {}
+    return true;
+  } catch (e) {
+    if (sbMissingFunction(e)) {
+      sharedStatus("Общей базы на сервере ещё нет: выполни supabase/iskra-shared-kb.sql.", "bad");
+      return false;
+    }
+    sharedStatus("Не получилось снять: " + ((e && e.message) || "ошибка связи") + ".", "bad");
+    return false;
+  }
+}
+
 function learnedFind(topic) {
   const t = String(topic || "").toLowerCase().replace(/ё/g, "е").trim();
   return learnedList().find(x => x.topic.toLowerCase().replace(/ё/g, "е") === t);
@@ -13665,8 +13810,13 @@ function renderKbCards() {
   });
 }
 
+function sharedTopicsLower() {
+  return sharedKbList().map(x => String(x.topic || "").toLowerCase().replace(/ё/g, "е").trim());
+}
+
 function renderKnowledgePanel() {
   const list = learnedList().sort((a, b) => b.ts - a.ts);
+  const shared = sharedKbList();
   const box = $("#knowBody");
   if (!box) return;
   box.innerHTML = `
@@ -13706,8 +13856,30 @@ function renderKnowledgePanel() {
       <div class="acct-h">Выученные темы (${list.length})</div>
       ${list.length ? list.map(x => `<div class="acct-dev">
         <div><b>${esc(x.topic)}</b><div class="acct-dim">${new Date(x.ts).toLocaleDateString("ru-RU")} · ${x.text.length} символов</div></div>
+        ${sharedTopicsLower().includes(String(x.topic || "").toLowerCase().replace(/ё/g, "е").trim())
+          ? '<span class="acct-dim">уже для всех</span>'
+          : `<button data-publish="${esc(x.id)}" title="Опубликовать для всех пользователей">Опубликовать</button>`}
         <button data-forget="${esc(x.id)}">Забыть</button>
       </div>`).join("") : "<div class='acct-dim'>Пока пусто. Напиши тему выше или спроси что-нибудь новое — я запомню.</div>"}
+    </div>
+    <div class="acct-sec">
+      <div class="acct-h">Общая база — для всех пользователей (${shared.length})</div>
+      <div class="acct-note">Эти темы подтягивают и используют все, кто открывает Искру. Публиковать может только владелец — по паролю,
+        тому же, что в /console → secret. Пароль остаётся в этом браузере.</div>
+      <div class="acct-row"><span>Пароль владельца</span><b>${sharedOwnerSecret() ? "сохранён" : "не введён"}</b></div>
+      <div class="auth-field" style="margin-top:10px">
+        <label>Пароль владельца</label>
+        <input id="sharedSecret" type="password" placeholder="тот же, что в /console → secret" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="pay-row">
+        <button class="auth-btn" id="sharedSecretSave" type="button">Запомнить пароль</button>
+        <button class="auth-btn ghost" id="sharedRefresh" type="button">Обновить базу</button>
+      </div>
+      <div class="learn-status" id="sharedStatus"></div>
+      ${shared.length ? shared.map(x => `<div class="acct-dev">
+        <div><b>${esc(x.topic)}</b><div class="acct-dim">${esc(String(x.updated || "").slice(0, 10))} · ${x.text.length} символов</div></div>
+        <button data-unpublish="${esc(x.topic)}" title="Убрать из общей базы">Снять</button>
+      </div>`).join("") : "<div class='acct-dim'>Пока пусто. Выучи тему выше и нажми «Опубликовать» — её увидят все.</div>"}
     </div>`;
   // поиск и папки по встроенной базе
   renderKbCards();
@@ -13761,6 +13933,43 @@ function renderKnowledgePanel() {
     learnedSave(learnedList().filter(x => x.id !== b.dataset.forget));
     renderKnowledgePanel();
     toast("Забыла тему", "ok");
+  });
+
+  /* Публикация выученной темы для всех */
+  box.querySelectorAll("[data-publish]").forEach(b => b.onclick = async () => {
+    const item = learnedList().find(x => x.id === b.dataset.publish);
+    if (!item) return;
+    b.disabled = true;
+    await publishToShared(item.topic, item.text, item.source, "");
+    b.disabled = false;
+  });
+
+  /* Пароль владельца — тот же, что в /console */
+  const secretSave = box.querySelector("#sharedSecretSave");
+  const secretInput = box.querySelector("#sharedSecret");
+  if (secretSave && secretInput) secretSave.onclick = () => {
+    const v = (secretInput.value || "").trim();
+    if (v.length < 6) { sharedStatus("Слишком короткий пароль — проверь, что скопировал целиком.", "bad"); return; }
+    const d = adminData();
+    d.accessSecret = v;
+    adminSave(d);
+    secretInput.value = "";
+    sharedStatus("Пароль сохранён в этом браузере. Теперь можно публиковать.", "ok");
+    renderKnowledgePanel();
+  };
+  const refresh = box.querySelector("#sharedRefresh");
+  if (refresh) refresh.onclick = async () => {
+    refresh.disabled = true;
+    sharedStatus("Обновляю общую базу…", "");
+    await sharedKbRefresh(true);
+    refresh.disabled = false;
+    sharedStatus("В общей базе тем: " + sharedKbList().length + ".", "ok");
+    renderKnowledgePanel();
+  };
+  box.querySelectorAll("[data-unpublish]").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    await unpublishFromShared(b.dataset.unpublish);
+    b.disabled = false;
   });
 }
 
@@ -15029,6 +15238,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("hashchange", showAccess);
   window.__iskraBoot = true;
   document.documentElement.classList.add("booted");
+  /* Общая база подтягивается в фоне: если сервер молчит, работаем по сохранённой копии */
+  try { sharedKbRefresh(); } catch (e) {}
   const bar = document.getElementById("crashBar");
   if (bar) bar.hidden = true;   // запустилось — убираем предупреждение, если оно успело появиться
   // возврат после входа через Google/GitHub приходит в адресе — обрабатываем сразу
