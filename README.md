@@ -54,9 +54,13 @@
 `sudo`/`runas`, убийство системных процессов, обратные шеллы. Такую команду агент не выполнит
 даже с подтверждением.
 
-**Сборка `.exe` без установки Electron на свой компьютер.** В репозитории есть
-`.github/workflows/agent-build.yml`: открой **Actions → «Sye — сборка для Windows» → Run workflow**,
-через несколько минут в **Artifacts** появится `Sye-Windows` с установщиком и portable-версией.
+**Скачать `.exe`.** Готовые установщик и portable-версия лежат в
+**[Releases](../../releases)** — откройте последний релиз `Sye` и скачайте файл `.exe`
+(вход в GitHub не нужен).
+
+**Собрать самому без установки Electron.** Есть `.github/workflows/agent-build.yml`:
+**Actions → «Sye — сборка для Windows» → Run workflow**, через несколько минут в **Artifacts**
+появится `Sye-Windows`. Тег `agent-v*` дополнительно публикует файлы в Releases.
 Локально: `cd agent && npm install && npm run dist`.
 
 Подробности — в [`agent/README.md`](agent/README.md).
