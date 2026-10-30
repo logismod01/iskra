@@ -1,7 +1,8 @@
 name: Sye — сборка для Windows
 
 # Собирает установщик агента Sye на серверах GitHub, чтобы не держать
-# Electron на своём компьютере. Готовые файлы лежат в разделе Actions → Artifacts.
+# Electron на своём компьютере. Готовые файлы лежат в разделе Actions → Artifacts,
+# а на теге agent-v* ещё и в Releases — оттуда .exe скачивается без входа в GitHub.
 on:
   workflow_dispatch:
   push:
@@ -83,3 +84,31 @@ jobs:
       - name: Окно открывается без ошибок
         working-directory: agent
         run: xvfb-run --auto-servernum npx electron . --no-sandbox --smoke-test
+
+  release:
+    name: Публикация релиза
+    needs: windows
+    if: startsWith(github.ref, 'refs/tags/agent-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Sye-Windows
+          path: dist
+      - name: Что скачалось
+        run: ls -lh dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Sye ${{ github.ref_name }}
+          files: dist/*.exe
+          fail_on_unmatched_files: true
+          body: |
+            **Sye** — виртуальный агент на рабочем столе Windows.
+
+            Установщик: `Sye Setup … .exe` — можно выбрать папку и поставить ярлык.
+            Портативная версия: `Sye … .exe` — запускается без установки.
+
+            Горячие клавиши: `Ctrl+Alt+S` — снимок экрана и задача, `Ctrl+Alt+Space` — окно.
+            Агенту нужна подписка **Искра Про**: без ключа окно активации не закрывается.

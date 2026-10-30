@@ -53,7 +53,14 @@ npx electron-builder --win nsis portable
 
 Если не хочется ставить Electron: **GitHub → Actions → «Sye — сборка для Windows» → Run workflow**.
 Сборка сама прогонит тесты, соберёт `.exe` на `windows-latest` и положит файлы в Artifacts
-(`Sye-Windows`, хранится 14 дней). То же запускается на тег `agent-v*`.
+(`Sye-Windows`, хранится 14 дней).
+
+Тег `agent-v*` делает то же самое и **публикует файлы в Releases** — оттуда `.exe` скачивается
+без входа в GitHub:
+
+```bash
+git tag agent-v0.1.0 && git push origin agent-v0.1.0
+```
 
 ## Подписка
 
