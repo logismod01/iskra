@@ -141,6 +141,27 @@ test("openrouter: имя бесплатной модели подбираетс�
   assert.ok(!list.some((e) => /tiny:free/.test(e.model)), "взяли модель со слишком коротким контекстом");
 });
 
+test("если зашитых моделей у сервиса нет, берётся та, что реально есть", async () => {
+  const { customEngines, resolveEngines, resetChatModelsCache } = require("../core/engines.js");
+  resetChatModelsCache();
+  const key = "gsk_" + "d".repeat(40);
+  const asked = [];
+  const fakeFetch = async (url) => {
+    asked.push(String(url));
+    if (String(url).endsWith("/models")) {
+      return { ok: true, status: 200, json: async () => ({ data: [{ id: "whisper-large-v3" }, { id: "brand-new-chat-model" }] }) };
+    }
+    return { ok: false, status: 404, text: async () => "{}", headers: { get: () => "" } };
+  };
+  const engines = customEngines({ apiKey: key });
+  const resolved = await resolveEngines(engines, { fetch: fakeFetch });
+  const names = resolved.filter((e) => e.key === key).map((e) => e.model);
+  assert.ok(names.length > 0, "движков не осталось");
+  assert.equal(names[0], "brand-new-chat-model", "пошла не туда: " + names.join(" → "));
+  assert.ok(!names.some((m) => /whisper/.test(m)), "полезла в служебную модель: " + names.join(" → "));
+  assert.ok(asked.some((u) => u.endsWith("/models")), "список моделей не запрошен");
+});
+
 test("если список моделей недоступен — остаются запасные имена", async () => {
   const { resolveEngines, order, routeForKey, resetFreeModelsCache } = require("../core/engines.js");
   resetFreeModelsCache();
@@ -148,6 +169,18 @@ test("если список моделей недоступен — остают
   const list = await resolveEngines(order({ apiKey: or }), { fetch: async () => { throw new Error("offline"); } });
   assert.ok(list[0].model, "модель пустая — запрос уйдёт в никуда");
   assert.ok(routeForKey(or).models.includes(list[0].model), "взяли имя не из запасного списка: " + list[0].model);
+});
+
+test("склеенные ключи распознаются: старое однострочное поле их не теряет", () => {
+  const { parseKeys, customEngines } = require("../core/engines.js");
+  const groq = "gsk_" + "a".repeat(40);
+  const or = "sk-or-v1-" + "b".repeat(48);
+  // так выглядело сохранённое значение, когда поле было однострочным: перевод строки вырезался
+  assert.equal(parseKeys(groq + or).length, 2);
+  assert.equal(parseKeys("Bearer " + groq + ", key=" + or + " мой ключ").length, 2);
+  const engines = customEngines({ apiKey: groq + or });
+  assert.ok(engines.length >= 2, "движков от склеенных ключей: " + engines.length);
+  assert.notEqual(engines[0].key, engines[engines.length - 1].key, "ключи слиплись в один");
 });
 
 test("ключ не печатается в журнал и не уходит в промпт", () => {

@@ -111,19 +111,33 @@ await test("в настройках сказано, что можно два к�
 
 await test("кнопка «Проверить ключ» проверяет оба ключа и говорит правду", async () => {
   window.eval(`settings.apiKey = ${JSON.stringify(GROQ + "\n" + OR)};`);
-  const inputs = window.document.querySelector("#apiKey");
-  inputs.value = GROQ + "\n" + OR;
-  const seen = [];
+  window.document.querySelector("#apiKey").value = GROQ + "\n" + OR;
+  const seen = { models: 0, chat: 0, keys: new Set() };
   window.fetch = async (url, opt) => {
-    seen.push(String(url));
-    const auth = (opt && opt.headers && opt.headers.Authorization) || "";
-    if (auth.includes("a".repeat(40))) return new Response("{}", { status: 200 });
-    return new Response("{}", { status: 401 });
+    const u = String(url);
+    const auth0 = (opt && opt.headers && opt.headers.Authorization) || "";
+    if (u.endsWith("/models")) { seen.models++; if (auth0) seen.keys.add(auth0); }
+    if (u.includes("chat/completions")) seen.chat++;
+    const auth = auth0;
+    if (auth.includes("a".repeat(40))) return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
+    return new Response("{}", { status: 401, headers: { "Content-Type": "application/json" } });
   };
   await window.eval("testConnection()");
   const text = window.document.querySelector("#connResult").textContent;
-  assert(seen.length === 2, "проверено ключей: " + seen.length);
-  assert(/Рабочих ключей: 1 из 2/.test(text), "не сказала, что рабочий только один: " + text);
+  assert(seen.keys.size === 2, "ключей проверено: " + seen.keys.size);
+  assert(seen.chat === 1, "живых запросов: " + seen.chat + " (должен быть один — по рабочему ключу)");
+  assert(/Отвечают 1 из 2/.test(text), "не сказала, что отвечает только один: " + text);
+});
+
+await test("склеенные ключи (старое однострочное поле) всё равно распознаются", () => {
+  const glued = GROQ + OR;
+  const left = window.eval(`JSON.stringify(parseKeys(${JSON.stringify(glued)}))`);
+  const parsed = JSON.parse(left);
+  assert(parsed.length === 2, "распознано ключей: " + parsed.length);
+  assert(parsed[0] === GROQ && parsed[1] === OR, "ключи разобраны неверно");
+  const junk = `Bearer ${GROQ}, key=${OR}, мой ключ`;
+  const parsedJunk = JSON.parse(window.eval(`JSON.stringify(parseKeys(${JSON.stringify(junk)}))`));
+  assert(parsedJunk.length === 2, "с мусором распознано: " + parsedJunk.length);
 });
 
 try { window.close(); } catch (e) {}

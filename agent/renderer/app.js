@@ -9,7 +9,7 @@ const state = {
   license: null,
   account: null,
   settings: null,
-  brand: { name: "Sye", version: "0.4.1" },
+  brand: { name: "Sye", version: "0.4.2" },
   history: [],
   shot: null,
   running: false
@@ -488,9 +488,13 @@ function wireUi() {
     const model = $("#apiModel").value.trim();
     state.settings = await window.sye.saveSettings({ apiKey: key, apiBase: base, apiModel: model });
     // говорим по делу: ключ распознан (адрес и модель подставились сами) или нужен адрес
+    // ключей может быть два: считаем их по началам, а не по всей строке
+    const many = (key.match(/(?:gsk_|sk-or-|hf_)/g) || []).length;
+    const head = key.slice(0, 8);
     if (!key) toast("Ключ убран — отвечаю своими движками");
-    else if (/^gsk_/.test(key)) toast("Ключ сохранён — теперь отвечаю сильной моделью");
-    else if (/^sk-or-/.test(key)) toast("Ключ сохранён — теперь отвечаю через него");
+    else if (many > 1) toast("Ключей сохранено: " + many + " — если один занят, возьму второй");
+    else if (/^gsk_/.test(head)) toast("Ключ сохранён — теперь отвечаю сильной моделью");
+    else if (/^sk-or-/.test(head)) toast("Ключ сохранён — теперь отвечаю через него");
     else if (base && model) toast("Ключ сохранён — отвечаю через твой сервер");
     else toast("Ключ сохранён, но не распознан — укажи адрес и модель", "err");
   });

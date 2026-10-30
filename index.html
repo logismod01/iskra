@@ -1365,7 +1365,8 @@ button:active:not(:disabled) { transform: scale(.975); }
 .fail-btns button { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 8px 12px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
 .fail-btns button:first-child { background: var(--accent); border-color: var(--accent); color: #fff; }
 .fail-key { display: flex; gap: 8px; margin-top: 10px; }
-.fail-key input { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; color: var(--text); font-size: 12.5px; font-family: inherit; outline: none; }
+.fail-key input, .fail-key textarea { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; color: var(--text); font-size: 12.5px; font-family: inherit; outline: none; }
+.fail-key textarea { resize: vertical; min-height: 38px; line-height: 1.4; }
 .fail-key button { background: var(--accent); border: none; color: #fff; border-radius: 9px; padding: 8px 14px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
 /* Оплата */
 .pay-box { padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: rgba(226,122,95,.06); margin-bottom: 10px; }
@@ -1687,11 +1688,13 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
 .fail-btns button:hover { border-color: var(--accent); color: var(--accent); }
 .fail-note { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
 .fail-key { display: flex; gap: 8px; }
-.fail-key input {
+.fail-key input, .fail-key textarea {
   flex: 1; min-width: 0;
   background: var(--bg); border: 1px solid var(--line);
   border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 13px;
+  font-family: inherit; outline: none;
 }
+.fail-key textarea { resize: vertical; min-height: 44px; line-height: 1.4; }
 .fail-key button {
   padding: 0 16px; border-radius: 10px;
   background: var(--accent); color: #fff; font-weight: 600; font-size: 13px;
@@ -7511,11 +7514,11 @@ const ISKRA_ENGINES = [
 const KEY_PROVIDERS = {
   // первый — основной; остальные пробуются, если этот не найден или кончился лимит
   groq: {
-    base: "https://api.groq.com/openai/v1", keyed: true,
+    base: "https://api.groq.com/openai/v1", keyed: true, list: true,
     models: ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
   },
   huggingface: {
-    base: "https://router.huggingface.co/v1", keyed: true,
+    base: "https://router.huggingface.co/v1", keyed: true, list: true,
     models: ["meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct"]
   },
   // бесплатные модели здесь меняются постоянно: имя подбираем у самого сервиса,
@@ -7543,13 +7546,21 @@ function detectKeyKind(key) {
 }
 
 /* Ключей может быть несколько: человек вставляет оба сразу, по одному в строке.
-   Тогда вторая строка — запасная, если у первой кончился лимит. */
+   Тогда вторая строка — запасная, если у первой кончился лимит.
+
+   Отдельный случай: раньше поле было однострочным, и браузер вырезал перевод строки —
+   два ключа слипались в один ("gsk_…sk-or-…") и не работал ни один. Поэтому режем
+   ещё и по началам ключей, а не только по пробелам и запятым. */
+const KEY_MARKER = /(?=(?:gsk_|sk-or-|hf_))/;
+const KEY_TOKEN = /(?:gsk_[A-Za-z0-9_-]{10,}|sk-or-[A-Za-z0-9_-]{10,}|hf_[A-Za-z0-9_-]{10,})/;
 function parseKeys(text) {
   const raw = String(text || "");
-  const parts = raw.split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
   const out = [];
-  for (const p of parts) {
-    if (detectKeyKind(p) && !out.includes(p)) out.push(p);
+  for (const chunk of raw.split(KEY_MARKER)) {
+    const m = chunk.match(KEY_TOKEN);
+    if (!m) continue;
+    const key = m[0].replace(/[-_]+$/, "");
+    if (detectKeyKind(key) && !out.includes(key)) out.push(key);
   }
   return out;
 }
@@ -7576,12 +7587,13 @@ function keyEngines() {
     const vision = !!provider.vision ? true : guessVision(provider.models[0]);
     if (provider.discovery) {
       // имя модели подберём у сервиса при первом запросе (см. resolveKeyEngines)
-      out.push({ id, base: kind.base, model: "", models: kind.models, key, timeout: 25, vision, discovery: provider.discovery });
+      out.push({ id, base: kind.base, model: "", models: kind.models, key, timeout: 25, vision, provider: kind.provider, discovery: provider.discovery });
     } else {
       // несколько моделей одного сервиса = запасные варианты, а не одна попытка
       kind.models.forEach((model, i) => {
         out.push({
           id: i === 0 ? id : id + "-" + (i + 1), base: kind.base, model, key, timeout: 25,
+          provider: kind.provider, models: kind.models, list: !!provider.list,
           vision: provider.vision || guessVision(model)
         });
       });
@@ -7626,21 +7638,79 @@ async function discoverFreeModels(needVision) {
   }
 }
 
+/* Названия моделей у сервиса меняются, а зашитые имена устаревают: вместо «модель не найдена»
+   спрашиваем у сервиса, что у него есть на самом деле. Кэш на 6 часов, при неудаче — зашитые имена. */
+const _chatModelsCache = new Map();
+const CHAT_ONLY = /(whisper|tts|speech|audio|guard|embed|rerank|moderation|image|dall|stable-diffusion)/i;
+async function discoverChatModels(provider, key, base) {
+  const tag = provider + "|" + String(base || "");
+  const hit = _chatModelsCache.get(tag);
+  if (hit && Date.now() - hit.at < 6 * 3600e3) return hit.ids;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(String(base).replace(/\/+$/, "") + "/models", {
+      headers: { Authorization: "Bearer " + key }, signal: ctrl.signal
+    });
+    clearTimeout(t);
+    if (!res || !res.ok) return hit ? hit.ids : [];
+    const json = await res.json();
+    const ids = ((json && json.data) || [])
+      .map(m => (m && (m.id || m.model)) || "")
+      .filter(id => typeof id === "string" && id && !CHAT_ONLY.test(id));
+    if (ids.length) _chatModelsCache.set(tag, { at: Date.now(), ids });
+    return ids;
+  } catch (e) {
+    return hit ? hit.ids : [];
+  }
+}
+
 /* Подставляет реальные имена моделей в движки, ждущие подбора.
    Ошибка сети или пустой список не ломают отправку: остаются запасные имена. */
 async function resolveKeyEngines(list, needVision) {
-  if (!list.some(e => e.discovery && !e.model)) return list;
-  const found = await discoverFreeModels(needVision);
-  const out = [];
+  if (!list.some(e => e.discovery || e.list)) return list;
+  const found = list.some(e => e.discovery && !e.model) ? await discoverFreeModels(needVision) : [];
+
+  // Группируем по адресу и ключу: у одного ключа несколько моделей — это запасные варианты
+  const groups = new Map();
   for (const e of list) {
-    if (!e.discovery || e.model) { out.push(e); continue; }
-    let names = (found && found.length ? found.filter(m => !needVision || m.vision).map(m => m.id) : []);
-    if (!names.length) names = e.models || [];
-    names.slice(0, 3).forEach((model, i) => {
-      out.push(Object.assign({}, e, {
-        id: i === 0 ? e.id : e.id + "-" + (i + 1),
+    if (!e.discovery && !e.list) continue;
+    const tag = (e.base || "") + "|" + (e.key || "");
+    if (!groups.has(tag)) groups.set(tag, []);
+    groups.get(tag).push(e);
+  }
+  const namesByTag = new Map();
+  for (const [tag, group] of groups) {
+    const e0 = group[0];
+    let names = [];
+    if (e0.discovery === "openrouter") {
+      const free = (found || []).filter(m => !needVision || m.vision).map(m => m.id);
+      names = free.length ? free : (e0.models || []);
+    } else {
+      const avail = await discoverChatModels(e0.provider, e0.key, e0.base);
+      const pref = (e0.models || []).filter(m => avail.includes(m));
+      // ничего из зашитых имён у сервиса нет — берём то, что реально есть
+      names = avail.length ? (pref.length ? pref : avail.slice(0, 2)) : (e0.models || []);
+      if (pref.length && avail.length > pref.length) names = pref.concat(avail.filter(m => !pref.includes(m))).slice(0, 3);
+    }
+    namesByTag.set(tag, names.filter(Boolean).slice(0, 3));
+  }
+
+  const out = [];
+  const done = new Set();
+  for (const e of list) {
+    if (!e.discovery && !e.list) { out.push(e); continue; }
+    const tag = (e.base || "") + "|" + (e.key || "");
+    if (done.has(tag)) continue;
+    done.add(tag);
+    const group = groups.get(tag) || [e];
+    const names = namesByTag.get(tag) || [];
+    names.forEach((model, i) => {
+      const src = group[Math.min(i, group.length - 1)];
+      out.push(Object.assign({}, src, {
+        id: i === 0 ? group[0].id : group[0].id + "-" + (i + 1),
         model,
-        vision: (found.find(m => m.id === model) || {}).vision || e.vision
+        vision: (found.find(m => m.id === model) || {}).vision || src.vision
       }));
     });
   }
@@ -8794,7 +8864,7 @@ function showFailCard(contentEl, aiMsg, question, err) {
     </div>
     ${raw ? `<div class="fail-note">Ответ движка: ${esc(raw)}</div>` : ""}
     <div class="fail-key" id="failKeyBox" style="display:none">
-      <input id="failKeyInput" placeholder="вставь ключ доступа" autocomplete="off" spellcheck="false" value="">
+      <textarea id="failKeyInput" rows="2" placeholder="вставь ключ — или два, по одному в строке" autocomplete="off" spellcheck="false"></textarea>
       <button id="failKeySave" type="button">Включить</button>
     </div>
     <div class="fail-note">Ключ не обязателен: без него Искра тоже отвечает. Ключ просто снимает общий лимит и делает ответы точнее. Хранится только в твоём браузере.</div>`;
@@ -8811,12 +8881,13 @@ function showFailCard(contentEl, aiMsg, question, err) {
   if (kbBtn) kbBtn.onclick = () => openKnowledge();
   box.querySelector("#failKeySave").onclick = () => {
     const key = (box.querySelector("#failKeyInput").value || "").trim();
-    if (key && !detectKeyKind(key) && !/^https?:/i.test(settings.baseUrl || "")) {
+    const parsed = parseKeys(key);
+    if (key && !parsed.length && !/^https?:/i.test(settings.baseUrl || "")) {
       toast("Такой ключ не распознан. Вставь его целиком или очисти поле, чтобы отвечала без ключа.", "err");
       return;
     }
     settings.apiKey = key;
-    settings.provider = key ? (detectKeyKind(key)?.provider || "custom") : "custom";
+    settings.provider = parsed.length ? (detectKeyKind(parsed[0])?.provider || "custom") : "custom";
     saveSettings(); updateComposerNote();
     toast(key ? "Ключ сохранён — повторяю вопрос" : "Ключ убран — отвечаю без него", "ok");
     sendMessage(question, [], false, true);
@@ -9319,10 +9390,8 @@ async function streamOnce(engine, payload, onDelta, signal) {
   const headers = { "Content-Type": "application/json" };
   if (engine.auth === "anonymous") headers.Authorization = "Bearer anonymous";
   else if (engine.key) headers.Authorization = "Bearer " + engine.key;
-  if (detectKeyKind(engine.key)?.provider === "openrouter") {
-    headers["HTTP-Referer"] = location.origin || "https://iskra.app";
-    headers["X-Title"] = BRAND.name;
-  }
+  /* Никаких лишних заголовков: браузер сначала спрашивает разрешение (CORS),
+     и незнакомый заголовок может отменить весь запрос. Для ответа достаточно ключа. */
   const msgsForEngine = engine.small ? liteMessages(payload.messages) : payload.messages;
   const body = { ...payload, model: engine.model, stream: true, messages: sanitizeMessages(msgsForEngine) };
   // бесплатные движки не понимают половину настроек — лишнее убираем, иначе 400
@@ -11117,8 +11186,74 @@ function updateModelChip() {
   }
 }
 
-/* Проверка своего ключа (если человек его вписал). Ключей может быть два —
-   проверяем каждый и говорим честно, какие рабочие. */
+/* Проверка ключа: не только «сервис узнал ключ», а «ключ правда отвечает».
+   Именно этого не хватало: список моделей отдаётся и тогда, когда чат не работает.
+   Ключей может быть два — проверяем оба сразу, параллельно. */
+const KEY_PROBE_REPLY = [{ role: "user", content: "Скажи одно слово: привет" }];
+
+async function probeKey(key) {
+  const kind = detectKeyKind(key);
+  if (!kind) return { state: "unknown", status: 0 };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 20000);
+  const auth = { Authorization: "Bearer " + key };
+  try {
+    /* 1. Ключ вообще принят? */
+    let res;
+    try {
+      res = await fetch(kind.base + "/models", { headers: auth, signal: ctrl.signal });
+    } catch (e) {
+      return { state: "net", status: 0 };
+    }
+    if (res.status === 401 || res.status === 403) return { state: "auth", status: res.status };
+    /* 2. И он правда отвечает: короткий живой запрос в чат. */
+    let names = (kind.models || []).slice(0, 2);
+    const provider = KEY_PROVIDERS[kind.provider];
+    if (provider && provider.discovery) {
+      const free = await discoverFreeModels(false);
+      if (free && free.length) names = free.map(m => m.id).slice(0, 3);
+    } else if (provider && provider.list) {
+      const avail = await discoverChatModels(kind.provider, key, kind.base);
+      const pref = (kind.models || []).filter(m => avail.includes(m));
+      if (avail.length) names = (pref.length ? pref : avail).slice(0, 2);
+    }
+    let last = 0;
+    for (const model of names) {
+      let rr;
+      try {
+        rr = await fetch(kind.base + "/chat/completions", {
+          method: "POST",
+          headers: Object.assign({ "Content-Type": "application/json" }, auth),
+          body: JSON.stringify({ model, messages: KEY_PROBE_REPLY, max_tokens: 8, stream: false }),
+          signal: ctrl.signal
+        });
+      } catch (e) {
+        return { state: "net", status: 0 };
+      }
+      if (rr.ok) return { state: "ok", status: 200 };
+      last = rr.status;
+      if (last === 429 || last === 402) return { state: "limit", status: last };
+      if (last === 401 || last === 403) return { state: "auth", status: last };
+    }
+    return { state: "model", status: last || 404 };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function probeWords(i) {
+  return ["первый", "второй", "третий", "четвёртый"][i] || (i + 1) + "-й";
+}
+
+function describeProbe(r) {
+  if (r.state === "ok") return "отвечает";
+  if (r.state === "limit") return "принят, но лимит (" + r.status + ") — включится позже";
+  if (r.state === "auth") return "не принят (" + r.status + ") — ключ неверный, обрезанный или отозван";
+  if (r.state === "model") return "принят, но ни одна модель не ответила (" + r.status + ")";
+  if (r.state === "unknown") return "не распознан";
+  return "нет связи — проверить не вышло";
+}
+
 async function testConnection() {
   const box = $("#connResult");
   const raw = ($("#apiKey")?.value || "").trim();
@@ -11131,33 +11266,26 @@ async function testConnection() {
     if (box) { box.className = "conn-result err"; box.textContent = "Ключ не распознан. Скопируй его целиком — или впиши адрес и модель ниже."; }
     return;
   }
-  if (box) { box.className = "conn-result"; box.textContent = keys.length > 1 ? "Проверяю ключи…" : "Проверяю…"; }
-  const checked = [];
-  for (const key of keys) {
-    const kind = detectKeyKind(key);
-    try {
-      const r = await fetch(kind.base + "/models", { headers: { Authorization: "Bearer " + key } });
-      checked.push({ ok: r.ok, status: r.status });
-    } catch (e) {
-      checked.push({ ok: false, status: 0 });
-    }
+  if (box) {
+    box.className = "conn-result wait";
+    box.textContent = keys.length > 1 ? "Проверяю ключи — отправляю по короткому запросу…" : "Проверяю ключ — отправляю короткий запрос…";
   }
-  const good = checked.filter(x => x.ok).length;
-  const nth = ["первый", "второй", "третий"];
+  const results = await Promise.all(keys.map(k => probeKey(k)));
+  const good = results.filter(r => r.state === "ok").length;
   let text;
   let cls = "ok";
-  if (good === checked.length) {
-    text = checked.length === 1 ? "Ключ рабочий — теперь ответы будут точнее."
-      : "Проверил " + checked.length + " ключа: оба рабочие, второй включится, если первый упрётся в лимит.";
+  if (good === results.length) {
+    text = results.length === 1
+      ? "Ключ отвечает — теперь ответы будут точнее."
+      : "Проверил " + results.length + " ключа: оба отвечают. Второй включится, если у первого кончится лимит.";
   } else if (good > 0) {
-    const bad = checked.map((x, i) => x.ok ? null : (nth[i] || (i + 1) + "-й")).filter(Boolean);
-    text = "Рабочих ключей: " + good + " из " + checked.length + ". Не принят: " + bad.join(", ") +
-      " (" + (checked.find(x => !x.ok).status || "нет связи") + "). Второй всё равно сохраню — он включится позже.";
+    const bad = results.map((r, i) => r.state === "ok" ? null : probeWords(i) + " — " + describeProbe(r)).filter(Boolean);
+    text = "Отвечают " + good + " из " + results.length + ". " + bad.join("; ") + ".";
     cls = "err";
   } else {
-    text = checked[0].status === 401 || checked[0].status === 403
-      ? "Ключ не принят (" + checked[0].status + "). Проверь, что скопирован целиком и не отозван."
-      : "Не удалось проверить: нет связи. Ключ всё равно сохранится.";
+    const parts = results.map((r, i) => probeWords(i) + " — " + describeProbe(r));
+    text = results.length > 1 ? "Пока не отвечают оба: " + parts.join("; ") + "." : "Ключ " + describeProbe(results[0]) + ".";
+    if (results.every(r => r.state === "net")) text = "Не удалось проверить: нет связи. Ключ всё равно сохраню.";
     cls = "err";
   }
   if (box) { box.className = "conn-result " + cls; box.textContent = text; }
@@ -14598,7 +14726,9 @@ function wire() {
   $("#closeSettings").addEventListener("click", () => $("#settingsModal").classList.remove("open"));
   $("#saveSettings").addEventListener("click", () => {
     const key = ($("#apiKey")?.value || "").trim();
-    const kind = key ? detectKeyKind(key) : null;
+    /* Ключей может быть два: вид определяем по первому, а не по всей строке. */
+    const firstKey = parseKeys(key)[0] || "";
+    const kind = firstKey ? detectKeyKind(firstKey) : null;
     settings.apiKey = key;
     settings.baseUrl = ($("#baseUrl")?.value || "").trim();
     settings.customModel = ($("#customModel")?.value || "").trim();

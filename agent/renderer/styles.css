@@ -241,7 +241,8 @@ code { font-family: "JetBrains Mono", "Consolas", monospace; font-size: 12px; }
   width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
   background: var(--bg); color: var(--text); font-size: 13px; outline: 0;
 }
-.field input:focus { border-color: var(--accent-soft); }
+.field input:focus, .field textarea:focus { border-color: var(--accent-soft); }
+.field textarea { resize: vertical; min-height: 46px; line-height: 1.45; font-family: inherit; }
 .primary {
   width: 100%; padding: 12px; border-radius: 12px; border: 0; background: var(--accent);
   color: #1a120e; font-weight: 700; font-size: 14px; margin-top: 2px;
