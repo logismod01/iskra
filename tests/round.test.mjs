@@ -141,14 +141,14 @@ await test("промпт не подменяет животное человек
   assert(/woman/.test(keep), "человека по просьбе убрали");
 });
 
-await test("движки картинок: авто по умолчанию, ключи хранятся", () => {
-  assert(window.eval('IMG_ENGINES.map(x => x.id).join(",")') === "auto,horde,pollinations", "нет движков");
-  window.eval("settings.imageEngine=''; delete settings.imageEngine; settings.imageEngine='auto';");
-  assert(window.eval("imgEngine().id") === "auto", "по умолчанию не авто");
-  window.eval("settings.imageEngine='horde'; settings.hordeKey='abc';");
-  assert(window.eval("imgEngine().name") === "Stable Horde", "движок не переключился");
-  assert(/SDXL/.test(window.eval("imgEngine().hint")), "у Horde нет описания");
-  window.eval("settings.imageEngine='auto'; settings.hordeKey='';");
+await test("качество картинок: авто по умолчанию, без чужих имён", () => {
+  assert(window.eval('IMG_QUALITY.map(x => x.id).join(",")') === "auto,hq,fast", "нет уровней качества");
+  window.eval("delete settings.imageQuality;");
+  assert(window.eval("imgQuality().id") === "auto", "по умолчанию не авто");
+  window.eval("settings.imageQuality='hq';");
+  assert(window.eval("imgQuality().id") === "hq", "качество не переключилось");
+  assert(!/horde|pollinations|stable/i.test(window.eval("JSON.stringify(IMG_QUALITY)")), "в качестве остались чужие сервисы");
+  window.eval("settings.imageQuality='auto';");
 });
 
 await test("видео: битый плеер не оставляет чёрный прямоугольник", () => {
