@@ -4,7 +4,7 @@
   "private": true,
   "description": "Искра — ИИ-ассистент в одном файле: чат, учёба, код и доступ по ключу",
   "scripts": {
-    "test": "node tests/access.test.mjs && node tests/auth.test.mjs && node tests/ui.test.mjs && node tests/round.test.mjs && node tests/round2.test.mjs && node tests/round3.test.mjs && node tests/smoke.test.mjs && node tests/maker.test.mjs && node tests/learn.test.mjs && node tests/images.test.mjs && node tests/round4.test.mjs && node tests/round5.test.mjs && node agent/test/run.cjs",
+    "test": "node tests/access.test.mjs && node tests/auth.test.mjs && node tests/ui.test.mjs && node tests/round.test.mjs && node tests/round2.test.mjs && node tests/round3.test.mjs && node tests/smoke.test.mjs && node tests/maker.test.mjs && node tests/learn.test.mjs && node tests/images.test.mjs && node tests/round4.test.mjs && node tests/round5.test.mjs && node tests/round6.test.mjs && node agent/test/run.cjs",
     "test:access": "node tests/access.test.mjs",
     "test:smoke": "node tests/smoke.test.mjs",
     "test:maker": "node tests/maker.test.mjs",
@@ -13,7 +13,8 @@
     "test:round2": "node tests/round2.test.mjs && node tests/round3.test.mjs && node tests/images.test.mjs",
     "test:auth": "node tests/auth.test.mjs",
     "test:ui": "node tests/ui.test.mjs",
-    "test:agent": "node agent/test/run.cjs"
+    "test:agent": "node agent/test/run.cjs",
+    "test:round6": "node tests/round6.test.mjs"
   },
   "devDependencies": {
     "jsdom": "^24.1.3"

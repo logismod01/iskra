@@ -11,6 +11,7 @@ const os = require("node:os");
 const { parseModelOutput, formatCorrection, toolsPrompt } = require("./protocol.js");
 const guard = require("./guard.js");
 const { runTool } = require("./tools.js");
+const knowledge = require("./knowledge.js");
 const brand = require("./brand.js");
 
 const IDENTITY = [
@@ -33,7 +34,7 @@ const SECURITY = [
 ].join("\n");
 
 function systemPrompt(opts) {
-  const { workspace, settings, limits, info } = opts;
+  const { workspace, settings, limits, info, task } = opts;
   const access = guard.levelOf(settings);
   const levelText = {
     ask: "Уровень доступа «Спрашивать всё»: перед записью файла и запуском команды человек подтверждает.",
@@ -59,6 +60,9 @@ function systemPrompt(opts) {
     "",
     "ИНСТРУМЕНТЫ:",
     toolsPrompt(),
+    "",
+    // своя справка по языкам и багам — подбирается под задачу
+    knowledge.promptBlock(task || "", 2200),
     "",
     "ФОРМАТ ОТВЕТА — строго один из двух вариантов, без лишнего текста:",
     '  1) действие: <action>{"tool":"имя","args":{...},"why":"зачем это делаю"}</action>',
@@ -105,7 +109,7 @@ async function runTask(opts) {
   };
 
   const messages = [
-    { role: "system", content: systemPrompt({ workspace: ctx.workspace, settings: ctx.settings, limits, info: ctx.info }) },
+    { role: "system", content: systemPrompt({ workspace: ctx.workspace, settings: ctx.settings, limits, info: ctx.info, task }) },
     ...buildHistory(history, 8),
     { role: "user", content: String(task || "").trim() || "Поздоровайся и скажи, чем можешь помочь." }
   ];

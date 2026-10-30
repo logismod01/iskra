@@ -99,6 +99,19 @@ jobs:
           path: dist
       - name: Что скачалось
         run: ls -lh dist
+      - name: Стабильные имена для сайта
+        # Сайт всегда качает …/releases/latest/download/Sye-Setup.exe и Sye-Portable.exe,
+        # поэтому к файлам с версией в имени добавляем копии без версии.
+        run: |
+          set -euo pipefail
+          setup=$(ls dist/*[Ss]etup*.exe | head -n 1)
+          portable=$(ls dist/*.exe | grep -v '[Ss]etup' | head -n 1)
+          if [ -z "$setup" ] || [ -z "$portable" ] || [ "$setup" = "$portable" ]; then
+            echo "Не нашёл установщик и портативную сборку"; ls -lh dist; exit 1
+          fi
+          cp "$setup" dist/Sye-Setup.exe
+          cp "$portable" dist/Sye-Portable.exe
+          ls -lh dist
       - uses: softprops/action-gh-release@v2
         with:
           name: Sye ${{ github.ref_name }}
