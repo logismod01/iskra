@@ -97,3 +97,66 @@ test("непонятный ключ без адреса не подключае�
   assert.equal(customEngine({}), null);
   assert.equal(customEngine({ apiKey: "" }), null);
 });
+
+test("можно вставить два ключа сразу — второй станет запасным", () => {
+  const { parseKeys, order } = require("../core/engines.js");
+  const groq = "gsk_" + "a".repeat(40);
+  const or = "sk-or-v1-" + "b".repeat(48);
+  const both = groq + "\n" + or;
+  assert.deepEqual(parseKeys(both), [groq, or], "оба ключа не распознаны");
+  assert.deepEqual(parseKeys("мусор " + groq + "; " + or + " мусор"), [groq, or], "разбор с мусором");
+  assert.deepEqual(parseKeys(""), []);
+  const list = order({ apiKey: both });
+  assert.equal(list[0].key, groq, "первым должен идти первый ключ");
+  assert.ok(list.some((e) => e.key === or), "второй ключ не попал в очередь");
+  const ids = list.map((e) => e.id);
+  assert.equal(new Set(ids).size, ids.length, "у движков повторяются id: " + ids.join(","));
+});
+
+test("у одного ключа несколько моделей — это запасные попытки, а не дубли", () => {
+  const { customEngines } = require("../core/engines.js");
+  const list = customEngines({ apiKey: "gsk_" + "c".repeat(40) });
+  assert.ok(list.length >= 2, "у ключа всего одна модель — нечем заменить при отказе");
+  assert.equal(list[0].id, "custom");
+  for (const e of list) assert.ok(e.model && e.base, "движок без модели или адреса");
+  const models = new Set(list.map((e) => e.model));
+  assert.equal(models.size, list.length, "модели повторяются");
+});
+
+test("openrouter: имя бесплатной модели подбирается у сервиса", async () => {
+  const { resolveEngines, order } = require("../core/engines.js");
+  const or = "sk-or-v1-" + "d".repeat(48);
+  const fakeFetch = async () => new Response(JSON.stringify({
+    data: [
+      { id: "big/model:free", context_length: 128000, architecture: { input_modalities: ["text"] } },
+      { id: "paid/model", context_length: 200000 },
+      { id: "tiny:free", context_length: 4000 }
+    ]
+  }), { status: 200 });
+  const list = await resolveEngines(order({ apiKey: or }), { fetch: fakeFetch });
+  const first = list[0];
+  assert.equal(first.base, "https://openrouter.ai/api/v1");
+  assert.equal(first.model, "big/model:free", "взяли не бесплатную или не самую крупную: " + first.model);
+  assert.ok(!list.some((e) => /paid\/model/.test(e.model)), "в очередь попала платная модель");
+  assert.ok(!list.some((e) => /tiny:free/.test(e.model)), "взяли модель со слишком коротким контекстом");
+});
+
+test("если список моделей недоступен — остаются запасные имена", async () => {
+  const { resolveEngines, order, routeForKey, resetFreeModelsCache } = require("../core/engines.js");
+  resetFreeModelsCache();
+  const or = "sk-or-v1-" + "e".repeat(48);
+  const list = await resolveEngines(order({ apiKey: or }), { fetch: async () => { throw new Error("offline"); } });
+  assert.ok(list[0].model, "модель пустая — запрос уйдёт в никуда");
+  assert.ok(routeForKey(or).models.includes(list[0].model), "взяли имя не из запасного списка: " + list[0].model);
+});
+
+test("ключ не печатается в журнал и не уходит в промпт", () => {
+  const { formatCorrection, toolsPrompt } = require("../core/protocol.js");
+  const { systemPrompt } = require("../core/agent.js");
+  const { LIMITS } = require("../core/license.js");
+  const key = "gsk_" + "f".repeat(40);
+  const sys = systemPrompt({ workspace: "C:\\p", settings: { access: "folder", apiKey: key }, limits: LIMITS.active, info: {}, task: "почини" });
+  assert.ok(!sys.includes(key), "ключ попал в системный промпт");
+  assert.ok(!toolsPrompt().includes(key));
+  assert.ok(!formatCorrection("ошибка").includes(key));
+});

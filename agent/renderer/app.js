@@ -9,7 +9,7 @@ const state = {
   license: null,
   account: null,
   settings: null,
-  brand: { name: "Sye", version: "0.4.0" },
+  brand: { name: "Sye", version: "0.4.1" },
   history: [],
   shot: null,
   running: false
