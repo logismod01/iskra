@@ -93,7 +93,9 @@ function createLicense(opts) {
 
   function status() {
     const s = state();
-    if (!s.key) return { ...LIMITS.none, state: NONE, client: s.client, key: s.key };
+    // Подписка есть, если активирован ключ или привязан аккаунт Искры с кодом клиента.
+    const hasSubscription = !!s.key || (s.engine === "account" && !!s.client);
+    if (!hasSubscription) return { ...LIMITS.none, state: NONE, client: s.client, key: s.key };
     if (s.deviceId && deviceId && s.deviceId !== deviceId) {
       return {
         ...LIMITS.none,
@@ -188,11 +190,57 @@ function createLicense(opts) {
   }
 
   function deactivate() {
-    save({ key: "", engine: "", expiresAt: 0, forever: false, plan: "", label: "", activatedAt: 0, lastSync: 0 });
+    // снимаем и привязку к устройству: после выхода подписку можно заново
+    // привязать на этом или на другом компьютере
+    save({ key: "", engine: "", expiresAt: 0, forever: false, plan: "", label: "", activatedAt: 0, lastSync: 0, deviceId: "", deviceName: "" });
     return status();
   }
 
-  return { state, status, activate, sync, deactivate, LIMITS };
+  /**
+   * Подписка через аккаунт Искры: ключ в руки не попадает, агент спрашивает
+   * сервер по коду клиента и запоминает ответ.
+   *   active=true  — Pro живёт, включаем полный режим;
+   *   был активен раньше, теперь нет — ограниченный режим;
+   *   никогда не было — подписки нет, окно активации не закрывается.
+   */
+  function linkAccount(info) {
+    const s = state();
+    const client = String((info && info.client) || s.client || "");
+    // Чужую привязку не переписываем: один Pro — один компьютер.
+    if (s.deviceId && deviceId && s.deviceId !== deviceId) return status();
+    const same = s.engine === "account" && s.client === client;
+    if (info && info.active) {
+      save({
+        client,
+        engine: "account",
+        forever: !!info.forever,
+        expiresAt: info.forever ? 0 : Number(info.expiresAt || 0),
+        plan: String(info.plan || ""),
+        label: String(info.label || ""),
+        deviceId,
+        deviceName: opts.deviceName || "",
+        activatedAt: s.activatedAt || now(),
+        lastSync: now()
+      });
+      return status();
+    }
+    if (same && (s.forever || s.expiresAt > 0)) {
+      save({ forever: false, expiresAt: Math.min(s.expiresAt || now(), now()), lastSync: now() });
+      return status();
+    }
+    save({
+      client, engine: "", key: "", forever: false, expiresAt: 0,
+      plan: "", label: "", lastSync: now()
+    });
+    return status();
+  }
+
+  function linkedByAccount() {
+    const s = state();
+    return s.engine === "account" ? s.client : "";
+  }
+
+  return { state, status, activate, sync, deactivate, linkAccount, linkedByAccount, LIMITS };
 }
 
 module.exports = { createLicense, LIMITS, ACTIVE, EXPIRED, NONE, WRONG_DEVICE };

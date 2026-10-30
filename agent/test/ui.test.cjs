@@ -51,6 +51,23 @@ test("окно активации: закрыть нельзя без ключа
   assert.match(appJs, /\$\("#gateLater"\)\.hidden = false/);
 });
 
+test("вход по аккаунту Искры есть в окне активации", () => {
+  for (const id of ["tabAccount", "tabKey", "paneAccount", "paneKey", "accEmail", "accPass", "accClient", "accConnect", "accSendCode", "accCode", "accVerify", "accWho", "accCheckBtn", "accLogoutBtn"]) {
+    assert.ok(html.includes('id="' + id + '"'), "нет поля " + id);
+  }
+  assert.match(appJs, /accountConnect/);
+  assert.match(appJs, /accountCheck/);
+  assert.match(preload, /accountConnect:/);
+  assert.match(preload, /accountSendCode:/);
+});
+
+test("аккаунт и ключ — два разных способа, не мешают друг другу", () => {
+  assert.match(html, /Аккаунт Искры/);
+  assert.match(html, /Ключ Pro/);
+  assert.match(appJs, /setGateTab\(/);
+  assert.match(appJs, /paneAccount"\).hidden/);
+});
+
 test("скриншот уходит в задачу вместе с текстом", () => {
   assert.match(appJs, /const shot = state\.shot;/);
   assert.match(appJs, /startTask\(text, shot\)/);

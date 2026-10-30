@@ -68,6 +68,8 @@ function systemPrompt(opts) {
     "- Один ответ — одно действие. Не описывай действие словами вместо <action>.",
     "- Перед правкой файла прочитай его (fs.read) и правь точным фрагментом (fs.replace).",
     "- После правки запусти проверку (тесты, сборку, линтер), если она есть в проекте.",
+    "- После любой правки кода запусти проверку: тесты, сборку или линтер, которые есть в проекте (посмотри package.json, README, Makefile). Пока проверка не прошла — не заканчивай.",
+    "- Задача считается сделанной, когда результат проверен, а не когда код написан. Если проверить нельзя — честно скажи почему в <final>.",
     "- В <final> пиши по-русски: 2–6 строк, что сделано и что делать человеку.",
     "- Если задача непонятна — задай один короткий вопрос прямо в <final>."
   ].join("\n");
@@ -114,8 +116,28 @@ async function runTask(opts) {
     return { ok: true, final: text, steps: 0, events };
   }
 
+  /** Пора попросить проверку: файлы менялись, терминал не запускался. */
+  const needsVerify = () => limits.shell !== false && wroteFiles && !ranCheck && !nudged && steps < maxSteps - 1;
+
+  /** Один раз отправляем модель обратно — пусть проверит свою работу. */
+  function pushVerify(raw) {
+    nudged = true;
+    steps++;
+    emit({ type: "verify", text: "Файлы изменены — прошу проверить результат" });
+    messages.push({ role: "assistant", content: clampText(raw, 2000) });
+    messages.push({
+      role: "user",
+      content: "Ты изменил файлы, но не запустил ни одной проверки. Запусти тесты, сборку или линтер (shell.run) и убедись, что всё цело. " +
+        "Если проверить нечем или нельзя — честно объясни это в <final>."
+    });
+    return true;
+  }
+
   let steps = 0;
   let lastText = "";
+  let wroteFiles = false;   // трогал ли файлы
+  let ranCheck = false;     // запускал ли терминал
+  let nudged = false;       // просили ли уже проверить результат
 
   while (steps < maxSteps) {
     if (signal && signal.aborted) {
@@ -148,6 +170,7 @@ async function runTask(opts) {
     const parsed = parseModelOutput(raw);
 
     if (parsed.kind === "final") {
+      if (needsVerify() && pushVerify(raw)) continue;
       emit({ type: "final", text: parsed.text });
       return { ok: true, final: parsed.text, steps, events };
     }
@@ -155,12 +178,15 @@ async function runTask(opts) {
     if (parsed.kind === "action") {
       const action = parsed.action;
       if (action.tool === "task.done") {
+        if (needsVerify() && pushVerify(raw)) continue;
         const text = String(action.args.summary || "Готово.");
         emit({ type: "final", text });
         return { ok: true, final: text, steps, events };
       }
       steps++;
       emit({ type: "action", action });
+      if (/^fs\.(write|append|replace|mkdir|delete)$/.test(action.tool)) wroteFiles = true;
+      if (action.tool === "shell.run") ranCheck = true;
       const result = await runTool(action, ctx);
       const observation = {
         type: "observation",

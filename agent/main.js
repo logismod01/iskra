@@ -15,6 +15,7 @@ const { exec } = require("node:child_process");
 const brand = require("./core/brand.js");
 const guard = require("./core/guard.js");
 const { createLicense } = require("./core/license.js");
+const { createAccount } = require("./core/account.js");
 const { runTask } = require("./core/agent.js");
 const { askModel, askVision } = require("./core/engines.js");
 const { stripHtml } = require("./core/tools.js");
@@ -26,6 +27,7 @@ const USER_DIR = app.getPath("userData");
 const FILES = {
   settings: path.join(USER_DIR, "sye-settings.json"),
   license: path.join(USER_DIR, "sye-license.json"),
+  account: path.join(USER_DIR, "sye-account.json"),
   history: path.join(USER_DIR, "sye-history.json")
 };
 
@@ -77,6 +79,50 @@ const license = createLicense({
   log: (msg) => console.log("[license]", msg)
 });
 
+const account = createAccount({
+  read: () => readJson(FILES.account, {}),
+  write: (state) => writeJson(FILES.account, state),
+  log: (msg) => console.log("[account]", msg)
+});
+
+/** Сверить подписку по привязанному коду клиента и запомнить итог в лицензии. */
+async function syncAccount(force) {
+  const acc = await account.check(force);
+  const client = account.state().client;
+  if (!client) {
+    return { ok: false, msg: (acc && acc.msg) || "Код клиента не привязан." };
+  }
+  const a = await account.access();
+  if (!a.ok) {
+    broadcastState();
+    return { ok: false, msg: a.msg || "Сервер Искры не ответил." };
+  }
+  const st = license.linkAccount({
+    client,
+    active: !!a.active,
+    forever: !!a.forever,
+    expiresAt: a.expiresAt,
+    plan: a.plan,
+    label: a.label
+  });
+  broadcastState();
+  const wrongDevice = st && st.state === "wrong-device";
+  return {
+    ok: !wrongDevice,
+    access: a,
+    license: licenseView(),
+    msg: wrongDevice
+      ? "Подписка привязана к другому компьютеру. Один Pro — один агент: выйди из аккаунта на старом компьютере, чтобы перенести."
+      : a.active
+        ? (a.forever ? "Pro активна: навсегда." : "Pro активна до " + new Date(a.expiresAt).toLocaleDateString("ru-RU") + ".")
+        : "На этом коде клиента нет активной подписки Pro."
+  };
+}
+
+function broadcastState() {
+  if (win && !win.isDestroyed()) win.webContents.send("state:changed", { license: licenseView(), settings, brand, account: account.view() });
+}
+
 function licenseView() {
   const st = license.status();
   return {
@@ -87,8 +133,9 @@ function licenseView() {
     forever: !!st.forever,
     expiresAt: st.expiresAt || 0,
     plan: st.plan || "",
+    engine: st.engine || "",
     client: st.client || "",
-    keyMasked: st.key ? st.key.slice(0, 9) + "…" + st.key.slice(-4) : "",
+    keyMasked: st.engine === "account" ? "" : st.key ? st.key.slice(0, 9) + "…" + st.key.slice(-4) : "",
     device: DEVICE_NAME,
     limits: { steps: st.steps, shell: st.shell, write: st.write, vision: st.vision, web: st.web }
   };
@@ -321,12 +368,58 @@ async function startTask(payload) {
 function wireIpc() {
   ipcMain.handle("state:get", () => ({
     license: licenseView(),
+    account: account.view(),
     settings,
     brand,
     device: DEVICE_NAME,
     version: app.getVersion(),
     history: historyList()
   }));
+
+  /* ---------- Аккаунт Искры ---------- */
+  ipcMain.handle("account:send-code", async (event, payload) => {
+    return account.sendCode(payload && payload.email);
+  });
+
+  ipcMain.handle("account:verify-code", async (event, payload) => {
+    const res = await account.verifyCode(payload && payload.email, payload && payload.code);
+    broadcastState();
+    return res;
+  });
+
+  ipcMain.handle("account:signin", async (event, payload) => {
+    const res = await account.signIn(payload && payload.email, payload && payload.password);
+    broadcastState();
+    return res;
+  });
+
+  ipcMain.handle("account:link", async (event, payload) => {
+    const res = account.linkClient(payload && payload.client);
+    if (!res.ok) return res;
+    const synced = await syncAccount(false);
+    return Object.assign({}, res, { sync: synced, account: account.view() });
+  });
+
+  ipcMain.handle("account:check", async () => {
+    const res = await syncAccount(true);
+    return Object.assign({}, res, { account: account.view() });
+  });
+
+  ipcMain.handle("account:connect", async (event, payload) => {
+    const res = await account.connect(payload || {});
+    if (res.ok) {
+      await syncAccount(false);
+    }
+    broadcastState();
+    return Object.assign({}, res, { account: account.view(), license: licenseView() });
+  });
+
+  ipcMain.handle("account:logout", () => {
+    account.logout();
+    license.deactivate();
+    broadcastState();
+    return { ok: true, account: account.view(), license: licenseView() };
+  });
 
   ipcMain.handle("license:activate", async (event, payload) => {
     const res = await license.activate(payload && payload.key, payload && payload.client);
@@ -335,8 +428,13 @@ function wireIpc() {
   });
 
   ipcMain.handle("license:sync", async () => {
+    if (account.state().client) {
+      const res = await syncAccount(true);
+      const st = license.status();
+      return { state: st.state, label: st.label, msg: res.msg, account: account.view() };
+    }
     const st = await license.sync(true);
-    if (win && !win.isDestroyed()) win.webContents.send("state:changed", { license: licenseView(), settings, brand });
+    broadcastState();
     return { state: st.state, label: st.label };
   });
 
@@ -431,8 +529,13 @@ if (!gotLock) {
     } catch (e) { /* другие приложения могли занять эти клавиши */ }
 
     license.sync(false).then(() => {
-      if (win && !win.isDestroyed()) win.webContents.send("state:changed", { license: licenseView(), settings, brand });
+      broadcastState();
     });
+
+    // если человек уже привязал аккаунт Искры — тихо проверяем подписку
+    if (account.state().client) {
+      setTimeout(() => { syncAccount(false).catch(() => {}); }, 1500);
+    }
 
     app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); else showWindow(); });
   });

@@ -16,6 +16,13 @@ const on = (channel, handler) => {
 contextBridge.exposeInMainWorld("sye", {
   state: () => ipcRenderer.invoke("state:get"),
   activate: (key, client) => ipcRenderer.invoke("license:activate", { key, client }),
+  accountSendCode: (email) => ipcRenderer.invoke("account:send-code", { email }),
+  accountVerifyCode: (email, code) => ipcRenderer.invoke("account:verify-code", { email, code }),
+  accountSignIn: (email, password) => ipcRenderer.invoke("account:signin", { email, password }),
+  accountLink: (client) => ipcRenderer.invoke("account:link", { client }),
+  accountCheck: () => ipcRenderer.invoke("account:check"),
+  accountConnect: (payload) => ipcRenderer.invoke("account:connect", payload || {}),
+  accountLogout: () => ipcRenderer.invoke("account:logout"),
   syncLicense: () => ipcRenderer.invoke("license:sync"),
   deactivate: () => ipcRenderer.invoke("license:deactivate"),
   saveSettings: (patch) => ipcRenderer.invoke("settings:save", patch),
