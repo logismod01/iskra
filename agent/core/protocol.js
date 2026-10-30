@@ -27,6 +27,7 @@ const TOOLS = {
   "shell.run": { args: ["command", "cwd"], desc: "выполнить команду в терминале" },
   "web.fetch": { args: ["url"], desc: "прочитать страницу из интернета текстом" },
   "screen.look": { args: ["question"], desc: "посмотреть на скриншот экрана и ответить, что на нём" },
+  "kb.search": { args: ["query"], desc: "справка Sye: языки, типовые баги и как их чинить" },
   "task.done": { args: ["summary"], desc: "задача выполнена, короткий итог" }
 };
 

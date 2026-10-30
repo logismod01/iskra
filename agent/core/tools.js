@@ -17,6 +17,7 @@
 const fsp = require("node:fs/promises");
 const path = require("node:path");
 const guard = require("./guard.js");
+const knowledge = require("./knowledge.js");
 
 const SKIP_DIRS = new Set([".git", "node_modules", ".next", "dist", "build", "out", "target", "__pycache__", ".venv", "venv", ".idea", ".vscode", "coverage"]);
 const MAX_READ = 300 * 1024;
@@ -292,6 +293,22 @@ async function runTool(action, ctx) {
           return ctx.lookAtShot(shot, args.question || "");
         }
         return ctx.lookAtShot(image, args.question || "");
+      }
+
+      case "kb.search": {
+        const query = String(args.query || "").trim();
+        if (!query) return { ok: false, summary: "Пустой запрос", output: "Что искать? Например: python, IndentationError, null." };
+        const found = knowledge.search(query, 3);
+        if (!found.length) {
+          return {
+            ok: false,
+            summary: "В справке нет такой темы",
+            output: "Ничего не нашлось по запросу «" + query + "». Спроси иначе: язык (python, js, sql) или текст ошибки."
+          };
+        }
+        const body = found.map((x) => "• " + x.title + ": " + x.text).join("\n\n");
+        const packed = tooBig(limits, body);
+        return { ok: true, summary: "Справка: " + found.map((x) => x.title).join(", "), output: packed.text };
       }
 
       case "task.done": {
