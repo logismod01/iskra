@@ -48,8 +48,8 @@ npx electron-builder --win nsis portable
 
 Готовые файлы — в `agent/dist/`:
 
-- `Iskra Agent Setup 0.1.0.exe` — установщик (можно выбрать папку, ярлык на рабочем столе);
-- `Iskra Agent 0.1.0.exe` — portable, запускается без установки.
+- `Sye Setup 0.1.0.exe` — установщик (можно выбрать папку, ярлык на рабочем столе);
+- `Sye 0.1.0.exe` — portable, запускается без установки.
 
 Если не хочется ставить Electron: **GitHub → Actions → «Sye — сборка для Windows» → Run workflow**.
 Сборка сама прогонит тесты, соберёт `.exe` на `windows-latest` и положит файлы в Artifacts

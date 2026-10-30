@@ -2,7 +2,7 @@
   "name": "iskra-agent",
   "version": "0.1.0",
   "private": true,
-  "description": "Агент для рабочего стола: читает файлы, правит код, запускает команды и разбирает скриншоты",
+  "description": "Sye — виртуальный агент на рабочем столе: читает файлы, правит код, запускает команды и разбирает скриншоты",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -16,7 +16,7 @@
   },
   "build": {
     "appId": "ru.iskra.agent",
-    "productName": "Iskra Agent",
+    "productName": "Sye",
     "directories": {
       "output": "dist",
       "buildResources": "assets"
