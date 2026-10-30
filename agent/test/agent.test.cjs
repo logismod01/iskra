@@ -227,3 +227,29 @@ test("системный промпт: характер Sye, инструмен�
   const expired = systemPrompt({ workspace: "C:\\proj", settings: { access: "folder" }, limits: LIMITS.expired, info: {} });
   assert.match(expired, /подписка Pro неактивна/i);
 });
+
+test("мелким моделям уходит короткий системный промпт, история остаётся", async () => {
+  const { runTask } = require("../core/agent.js");
+  const { LIMITS } = require("../core/license.js");
+  let seen = null;
+  const model = async ({ messages, liteMessages }) => {
+    seen = { full: messages, lite: liteMessages };
+    return { text: "<final>готово</final>" };
+  };
+  await runTask({
+    task: "почини python",
+    ctx: { workspace: "C:\\proj", settings: { access: "folder" }, limits: LIMITS.active, info: { os: "win32", arch: "x64" } },
+    model
+  });
+  assert.ok(seen && seen.lite, "короткий промпт не передаётся вовсе");
+  assert.ok(seen.lite[0].content.length < seen.full[0].content.length / 2, "короткий промпт не короче полного");
+  assert.equal(seen.lite[0].content.length > 800, true, "короткий промпт подозрительно пустой");
+  // остальные сообщения — те же: задача и шаги не теряются
+  assert.deepEqual(seen.lite.slice(1), seen.full.slice(1), "история или задача разошлись");
+  // формат и запреты на месте
+  assert.match(seen.lite[0].content, /<action>/);
+  assert.match(seen.lite[0].content, /<final>/);
+  assert.match(seen.lite[0].content, /DAN|забудь правила/i);
+  assert.match(seen.lite[0].content, /Sye/);
+  assert.match(seen.lite[0].content, /Искры/);
+});

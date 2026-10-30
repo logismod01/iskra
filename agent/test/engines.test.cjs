@@ -49,3 +49,51 @@ test("адреса запросов собираются без двойных �
   assert.equal(endpointOf({ base: "https://x.dev/v1/" }), "https://x.dev/v1/chat/completions");
   assert.equal(endpointOf({ url: "https://x.dev/openai" }), "https://x.dev/openai");
 });
+
+test("сильные движки идут первыми, мелкие — в конце", () => {
+  const { ENGINES } = require("../core/engines.js");
+  const weak = /(?<![0-9])(?:20b|nemo|openai-fast|nano)|small/;
+  assert.ok(!weak.test(ENGINES[0].model), "первым слабый движок: " + ENGINES[0].model);
+  assert.ok(!weak.test(ENGINES[1].model), "вторым слабый движок: " + ENGINES[1].model);
+  const firstWeak = ENGINES.findIndex((e) => weak.test(e.model) || e.small);
+  assert.ok(firstWeak >= 2, "слабый движок слишком рано: " + firstWeak);
+  assert.ok(ENGINES[ENGINES.length - 1].small, "последним должен быть запасной движок");
+});
+
+test("для мелких движков помечен короткий промпт", () => {
+  const { ENGINES, order } = require("../core/engines.js");
+  const list = order({});
+  const small = list.filter((e) => e.small);
+  assert.ok(small.length >= 1, "ни один движок не помечен как маленький");
+  assert.ok(small.length < list.length, "все движки помечены маленькими");
+});
+
+test("ключа достаточно: адрес и модель подставляются по его виду", () => {
+  const { customEngine, routeForKey } = require("../core/engines.js");
+  const gsk = "gsk_" + "a".repeat(30);
+  const groq = customEngine({ apiKey: gsk });
+  assert.ok(groq, "ключ gsk_ не принят");
+  assert.match(groq.base, /^https:\/\//);
+  assert.match(groq.model, /\S/);
+  assert.equal(groq.key, gsk);
+  assert.equal(routeForKey(gsk).base, groq.base);
+
+  const or = customEngine({ apiKey: "sk-or-v1-" + "b".repeat(24) });
+  assert.ok(or, "ключ OpenRouter не принят");
+  assert.notEqual(or.base, groq.base, "разные сервисы ведут на один адрес");
+});
+
+test("свой адрес и модель главнее подставленных", () => {
+  const { customEngine } = require("../core/engines.js");
+  const own = customEngine({ apiKey: "gsk_" + "c".repeat(30), apiBase: "https://mine.example/v1", apiModel: "my-model" });
+  assert.equal(own.base, "https://mine.example/v1");
+  assert.equal(own.model, "my-model");
+});
+
+test("непонятный ключ без адреса не подключается молча", () => {
+  const { customEngine } = require("../core/engines.js");
+  assert.equal(customEngine({ apiKey: "какой-то-ключ" }), null);
+  assert.ok(customEngine({ apiKey: "какой-то-ключ", apiBase: "https://x/v1", apiModel: "m" }), "свой адрес не сработал");
+  assert.equal(customEngine({}), null);
+  assert.equal(customEngine({ apiKey: "" }), null);
+});

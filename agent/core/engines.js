@@ -8,12 +8,15 @@
 
 "use strict";
 
+/* Порядок = качество. Сначала крупные модели, мелкие — только страховка:
+   маленькие модели плохо держат протокол действий (<action>/<final>), поэтому
+   они стоят в конце и получают укороченный промпт. */
 const ENGINES = [
-  { id: "e1", base: "https://api.llm7.io/v1", model: "gpt-oss:20b", timeout: 40000 },
-  { id: "e2", base: "https://api.llm7.io/v1", model: "mistral-Nemo-Instruct-2407", timeout: 40000 },
-  { id: "e3", url: "https://text.pollinations.ai/openai", model: "openai-fast", timeout: 45000, auth: "none" },
-  { id: "e4", base: "https://api.kilo.ai/api/gateway", model: "kilo-auto/free", timeout: 45000, auth: "anonymous" },
-  { id: "e5", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "gpt-oss-120b", timeout: 45000, auth: "none" }
+  { id: "e1", base: "https://api.kilo.ai/api/gateway", model: "kilo-auto/free", timeout: 45000, auth: "anonymous" },
+  { id: "e2", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "gpt-oss-120b", timeout: 45000, auth: "none" },
+  { id: "e3", url: "https://text.pollinations.ai/openai", model: "openai-fast", timeout: 40000, auth: "none", small: true },
+  { id: "e4", base: "https://api.llm7.io/v1", model: "gpt-oss:20b", timeout: 40000, small: true },
+  { id: "e5", base: "https://api.llm7.io/v1", model: "mistral-Nemo-Instruct-2407", timeout: 40000, small: true }
 ];
 
 const VISION_ENGINES = [
@@ -44,13 +47,33 @@ function endpointOf(engine) {
   return base + "/chat/completions";
 }
 
-/** Свой ключ человека важнее бесплатных движков. */
+/* Куда нести ключ, если человек вставил только его: вид ключа говорит сам за себя. */
+const KEY_ROUTES = [
+  { test: /^gsk_[A-Za-z0-9]{20,}$/, base: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b" },
+  { test: /^sk-or-[A-Za-z0-9-]{20,}$/, base: "https://openrouter.ai/api/v1", model: "openai/gpt-oss-120b:free" },
+  { test: /^hf_[A-Za-z0-9]{20,}$/, base: "https://router.huggingface.co/v1", model: "meta-llama/Llama-3.3-70B-Instruct" }
+];
+
+function routeForKey(key) {
+  const k = String(key || "").trim();
+  for (const r of KEY_ROUTES) if (r.test.test(k)) return { base: r.base, model: r.model };
+  return null;
+}
+
+/**
+ * Свой ключ человека важнее бесплатных движков.
+ * Достаточно одного ключа: адрес и модель подставляются по его виду.
+ * Если человек вписал адрес и модель сам — они главнее.
+ */
 function customEngine(settings) {
   const key = String((settings && settings.apiKey) || "").trim();
   const base = String((settings && settings.apiBase) || "").trim();
   const model = String((settings && settings.apiModel) || "").trim();
-  if (!key || !base || !model) return null;
-  return { id: "custom", base, model, key, timeout: 60000 };
+  if (!key) return null;
+  if (base && model) return { id: "custom", base, model, key, timeout: 60000 };
+  const route = routeForKey(key);
+  if (route) return { id: "custom", base: route.base, model: model || route.model, key, timeout: 60000 };
+  return null;
 }
 
 function order(settings, vision) {
@@ -128,16 +151,18 @@ async function streamOnce(engine, payload, { signal, onDelta } = {}) {
  * Спросить модель, перебирая движки. Если один занят или молчит — берём следующий.
  * @returns {Promise<{text:string, engine:string}>}
  */
-async function askModel({ messages, settings = {}, vision = false, onDelta, signal, maxTokens = 1800, onTry }) {
+async function askModel({ messages, liteMessages, settings = {}, vision = false, onDelta, signal, maxTokens = 1800, onTry }) {
   const list = order(settings, vision);
   let lastError = null;
   for (let i = 0; i < list.length; i++) {
     const engine = list[i];
     if (onTry) onTry(i + 1, list.length);
     try {
+      // мелкая модель тонет в длинном промпте и забывает формат — ей уходит сжатый вариант
+      const useMessages = engine.small && Array.isArray(liteMessages) && liteMessages.length ? liteMessages : messages;
       const payload = {
         model: engine.model,
-        messages,
+        messages: useMessages,
         stream: true,
         temperature: 0.3,
         max_tokens: maxTokens
@@ -167,4 +192,4 @@ async function askVision({ imageDataUrl, question, settings = {}, onDelta, signa
   return askModel({ messages, settings, vision: true, onDelta, signal, maxTokens });
 }
 
-module.exports = { ENGINES, VISION_ENGINES, EngineError, askModel, askVision, streamOnce, order, customEngine, endpointOf, headersFor };
+module.exports = { ENGINES, VISION_ENGINES, EngineError, askModel, askVision, streamOnce, order, customEngine, routeForKey, endpointOf, headersFor };
