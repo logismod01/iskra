@@ -51,7 +51,7 @@ function endpointOf(engine) {
    models — по порядку: если первая модель не найдена или упёрлась в лимит, берём следующую. */
 const KEY_ROUTES = [
   {
-    kind: "groq", test: /^gsk_[A-Za-z0-9]{20,}$/, base: "https://api.groq.com/openai/v1",
+    kind: "groq", test: /^gsk_[A-Za-z0-9]{20,}$/, base: "https://api.groq.com/openai/v1", list: true,
     models: ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
   },
   {
@@ -61,23 +61,40 @@ const KEY_ROUTES = [
     models: ["deepseek/deepseek-chat-v3.1:free", "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen3-235b-a22b:free"]
   },
   {
-    kind: "huggingface", test: /^hf_[A-Za-z0-9]{20,}$/, base: "https://router.huggingface.co/v1",
+    kind: "huggingface", test: /^hf_[A-Za-z0-9]{20,}$/, base: "https://router.huggingface.co/v1", list: true,
     models: ["meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct"]
   }
 ];
 
 function routeForKey(key) {
   const k = String(key || "").trim();
-  for (const r of KEY_ROUTES) if (r.test.test(k)) return { base: r.base, models: r.models.slice(), discovery: r.discovery || "", kind: r.kind };
+  for (const r of KEY_ROUTES) {
+    if (r.test.test(k)) return { base: r.base, models: r.models.slice(), discovery: r.discovery || "", list: !!r.list, kind: r.kind };
+  }
   return null;
+}
+
+/* Ключей может быть несколько: человек вставляет оба, по одному в строке.
+   Отдельный случай — склеенные ключи: однострочное поле вырезало перевод строки,
+   и "gsk_…sk-or-…" превращался в один нерабочий ключ. Поэтому режем ещё и
+   по началам ключей, а не только по пробелам. */
+const KEY_MARKER = /(?=(?:gsk_|sk-or-|hf_))/;
+const KEY_TOKEN = /(?:gsk_[A-Za-z0-9_-]{10,}|sk-or-[A-Za-z0-9_-]{10,}|hf_[A-Za-z0-9_-]{10,})/;
+
+function splitKeys(text) {
+  const out = [];
+  for (const chunk of String(text || "").split(KEY_MARKER)) {
+    const m = chunk.match(KEY_TOKEN);
+    if (m) out.push(m[0].replace(/[-_]+$/, ""));
+  }
+  return out;
 }
 
 /** Ключей может быть несколько: человек вставляет оба, по одному в строке. */
 function parseKeys(text) {
-  const parts = String(text || "").split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
   const out = [];
-  for (const p of parts) {
-    if (routeForKey(p) && !out.includes(p)) out.push(p);
+  for (const key of splitKeys(text)) {
+    if (routeForKey(key) && !out.includes(key)) out.push(key);
   }
   return out;
 }
@@ -93,7 +110,8 @@ function customEngines(settings) {
   const base = String((settings && settings.apiBase) || "").trim();
   const model = String((settings && settings.apiModel) || "").trim();
   // со своим адресом и моделью подходит любой ключ; без них — только узнаваемый по виду
-  const any = raw.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
+  // со своим адресом и моделью годится любой ключ, даже незнакомого вида
+  const any = [...new Set([...splitKeys(raw), ...raw.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean)])];
   const keys = (base && model) ? any : parseKeys(raw);
   if (!keys.length) return [];
   const out = [];
@@ -106,11 +124,14 @@ function customEngines(settings) {
     const route = routeForKey(key);
     if (!route) return;
     if (route.discovery) {
-      out.push({ id, base: route.base, model: "", models: route.models, key, timeout: 60000, discovery: route.discovery });
+      out.push({ id, base: route.base, model: "", models: route.models, key, timeout: 60000, discovery: route.discovery, provider: route.kind });
       return;
     }
     route.models.forEach((name, i) => {
-      out.push({ id: i === 0 ? id : id + "-" + (i + 1), base: route.base, model: name, key, timeout: 60000 });
+      out.push({
+        id: i === 0 ? id : id + "-" + (i + 1), base: route.base, model: name, key, timeout: 60000,
+        provider: route.kind, models: route.models, list: route.list
+      });
     });
   });
   return out;
@@ -171,22 +192,83 @@ async function discoverFreeModels(fetchImpl) {
   }
 }
 
+/* Названия моделей у сервиса меняются, зашитые имена устаревают. Вместо «модель не найдена»
+   спрашиваем у сервиса, что у него есть. Кэш на 6 часов, при неудаче — зашитые имена. */
+const chatModelsCache = new Map();
+const CHAT_ONLY = /(whisper|tts|speech|audio|guard|embed|rerank|moderation|image|dall|stable-diffusion)/i;
+
+function resetChatModelsCache() {
+  chatModelsCache.clear();
+}
+
+async function discoverChatModels(key, base, fetchImpl) {
+  const tag = String(base || "");
+  const hit = chatModelsCache.get(tag);
+  if (hit && Date.now() - hit.at < 6 * 3600e3) return hit.ids;
+  const doFetch = fetchImpl || (typeof fetch === "function" ? fetch : null);
+  if (!doFetch) return hit ? hit.ids : [];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await doFetch(String(base).replace(/\/+$/, "") + "/models", {
+      headers: { Authorization: "Bearer " + key }, signal: controller.signal
+    });
+    if (!res || !res.ok) return hit ? hit.ids : [];
+    const json = await res.json();
+    const ids = ((json && json.data) || [])
+      .map((m) => (m && (m.id || m.model)) || "")
+      .filter((id) => typeof id === "string" && id && !CHAT_ONLY.test(id));
+    if (ids.length) chatModelsCache.set(tag, { at: Date.now(), ids });
+    return ids;
+  } catch (e) {
+    return hit ? hit.ids : [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Подставляет реальные имена моделей в движки, ждущие подбора. */
 async function resolveEngines(list, opts) {
   const options = opts || {};
-  if (!list.some((e) => e.discovery && !e.model)) return list;
-  const found = await discoverFreeModels(options.fetch);
-  const out = [];
+  if (!list.some((e) => e.discovery || e.list)) return list;
+  const found = list.some((e) => e.discovery && !e.model) ? await discoverFreeModels(options.fetch) : [];
+
+  const groups = new Map();
   for (const e of list) {
-    if (!e.discovery || e.model) { out.push(e); continue; }
-    const usable = found && found.length
-      ? found.filter((m) => !options.vision || m.vision).map((m) => m.id)
-      : [];
-    const names = (usable.length ? usable : (e.models || [])).slice(0, 3);
+    if (!e.discovery && !e.list) continue;
+    const tag = (e.base || "") + "|" + (e.key || "");
+    if (!groups.has(tag)) groups.set(tag, []);
+    groups.get(tag).push(e);
+  }
+  const namesByTag = new Map();
+  for (const [tag, group] of groups) {
+    const e0 = group[0];
+    let names = [];
+    if (e0.discovery === "openrouter") {
+      const free = (found || []).filter((m) => !options.vision || m.vision).map((m) => m.id);
+      names = free.length ? free : (e0.models || []);
+    } else {
+      const avail = await discoverChatModels(e0.key, e0.base, options.fetch);
+      const pref = (e0.models || []).filter((m) => avail.includes(m));
+      names = avail.length ? (pref.length ? pref : avail.slice(0, 2)) : (e0.models || []);
+    }
+    namesByTag.set(tag, names.filter(Boolean).slice(0, 3));
+  }
+
+  const out = [];
+  const done = new Set();
+  for (const e of list) {
+    if (!e.discovery && !e.list) { out.push(e); continue; }
+    const tag = (e.base || "") + "|" + (e.key || "");
+    if (done.has(tag)) continue;
+    done.add(tag);
+    const group = groups.get(tag) || [e];
+    const names = namesByTag.get(tag) || [];
     names.forEach((model, i) => {
+      const src = group[Math.min(i, group.length - 1)];
       const meta = (found || []).find((m) => m.id === model) || {};
-      out.push(Object.assign({}, e, {
-        id: i === 0 ? e.id : e.id + "-" + (i + 1),
+      out.push(Object.assign({}, src, {
+        id: i === 0 ? group[0].id : group[0].id + "-" + (i + 1),
         model,
         vision: !!meta.vision
       }));
@@ -307,5 +389,6 @@ async function askVision({ imageDataUrl, question, settings = {}, onDelta, signa
 module.exports = {
   ENGINES, VISION_ENGINES, EngineError, askModel, askVision, streamOnce, order,
   customEngine, customEngines, parseKeys, routeForKey, KEY_ROUTES,
-  discoverFreeModels, resolveEngines, resetFreeModelsCache, endpointOf, headersFor
+  discoverFreeModels, resolveEngines, resetFreeModelsCache, endpointOf, headersFor,
+  discoverChatModels, resetChatModelsCache
 };
