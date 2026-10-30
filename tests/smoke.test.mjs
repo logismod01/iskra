@@ -58,7 +58,16 @@ await test("ключевые элементы на месте", () => {
   }
 });
 
-await test("код клиента сгенерирован и по формату", () => {
+await test("гостю код клиента не выдаётся", () => {
+  assert.equal(window.clientCode(), "", "код клиента существует без аккаунта");
+});
+
+await test("зарегистрированный аккаунт получает код клиента", () => {
+  window.eval(`(function(){
+    const acc = { id: "acc-smoke", name: "Смоук", method: "email", createdAt: Date.now(), devices: [] };
+    localStorage.setItem(AUTH_KEY, JSON.stringify([acc]));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ id: acc.id, ts: Date.now() }));
+  })()`);
   const code = window.clientCode();
   assert.match(code, /^\d{6}-[A-Z0-9]{6}-[a-z]{6}$/);
   assert.match($("#modelChip").textContent, /Искра/, "в шапке нет версии Искры");
