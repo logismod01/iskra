@@ -103,3 +103,24 @@ test("иконки на месте и правильного размера", ()
   assert.ok(fs.existsSync(path.join(ROOT, "assets/icon.ico")));
   assert.ok(fs.statSync(path.join(ROOT, "assets/tray.png")).size > 200);
 });
+
+test("в окне активации написано, где взять ключ Pro", () => {
+  // «где ключ» — самый частый вопрос: в окне активации должна быть короткая инструкция,
+  // а не тупик с одной кнопкой
+  assert.match(html, /id="gateHelp"/);
+  assert.match(html, /Где взять ключ/);
+  assert.match(html, /⚙\s*→\s*«Доступ»/);
+  assert.match(html, /ISKRA-24-XXXX-XXXX-XXXX/);
+  // кнопки подсказки ведут на сайт и в буфер обмена, а не в пустоту
+  assert.match(appJs, /gateHelpOpen"\)\.addEventListener/);
+  assert.match(appJs, /logismod01\.github\.io\/iskra\/#access/);
+  assert.match(appJs, /gateHelpCopy"\)\.addEventListener/);
+  assert.match(appJs, /window\.sye\.copy\(/);
+  // «Где взять ключ» раскрывает подсказку, а не уводит со страницы
+  assert.match(appJs, /gateGetKey"\)\.addEventListener\("click", \(\) => \{[\s\S]{0,200}help\.open = true/);
+});
+
+test("ключ у агента тот же, что на сайте — второго покупать не надо", () => {
+  assert.match(html, /тот же Pro, что на сайте/);
+  assert.match(html, /ключ отдельно покупать не нужно/);
+});

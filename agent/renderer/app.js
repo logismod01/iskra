@@ -9,7 +9,7 @@ const state = {
   license: null,
   account: null,
   settings: null,
-  brand: { name: "Sye", version: "0.3.0" },
+  brand: { name: "Sye", version: "0.3.1" },
   history: [],
   shot: null,
   running: false
@@ -524,7 +524,19 @@ function wireUi() {
   $("#gateActivate").addEventListener("click", activate);
   $("#gateKey").addEventListener("keydown", (e) => { if (e.key === "Enter") activate(); });
   $("#gateClient").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#gateKey").focus(); });
-  $("#gateGetKey").addEventListener("click", () => window.sye.openExternal("https://logismod01.github.io/iskra/"));
+  $("#gateGetKey").addEventListener("click", () => {
+    // сначала подсказка «где взять ключ», а не переход в неизвестное место
+    const help = $("#gateHelp");
+    if (help) help.open = true;
+    if (help && help.scrollIntoView) help.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+  $("#gateHelpOpen").addEventListener("click", () => window.sye.openExternal("https://logismod01.github.io/iskra/#access"));
+  $("#gateHelpCopy").addEventListener("click", async () => {
+    const code = String(($("#gateClient") || {}).value || ($("#accClient") || {}).value || "").trim();
+    if (!code) { toast("Сначала вставь код клиента из Искры — ⚙ → «Доступ»", "err"); return; }
+    await window.sye.copy(code);
+    toast("Код клиента скопирован — вставь его в Искре, когда будешь брать ключ");
+  });
   $("#gateLater").addEventListener("click", () => { $("#gate").hidden = true; });
 
   document.addEventListener("keydown", (e) => {
