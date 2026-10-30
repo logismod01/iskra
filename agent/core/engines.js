@@ -47,40 +47,152 @@ function endpointOf(engine) {
   return base + "/chat/completions";
 }
 
-/* Куда нести ключ, если человек вставил только его: вид ключа говорит сам за себя. */
+/* Куда нести ключ, если человек вставил только его: вид ключа говорит сам за себя.
+   models — по порядку: если первая модель не найдена или упёрлась в лимит, берём следующую. */
 const KEY_ROUTES = [
-  { test: /^gsk_[A-Za-z0-9]{20,}$/, base: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b" },
-  { test: /^sk-or-[A-Za-z0-9-]{20,}$/, base: "https://openrouter.ai/api/v1", model: "openai/gpt-oss-120b:free" },
-  { test: /^hf_[A-Za-z0-9]{20,}$/, base: "https://router.huggingface.co/v1", model: "meta-llama/Llama-3.3-70B-Instruct" }
+  {
+    kind: "groq", test: /^gsk_[A-Za-z0-9]{20,}$/, base: "https://api.groq.com/openai/v1",
+    models: ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+  },
+  {
+    // бесплатные модели здесь меняются каждый месяц — имя подбирается у сервиса
+    kind: "openrouter", test: /^sk-or-[A-Za-z0-9-]{20,}$/, base: "https://openrouter.ai/api/v1",
+    discovery: "openrouter",
+    models: ["deepseek/deepseek-chat-v3.1:free", "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen3-235b-a22b:free"]
+  },
+  {
+    kind: "huggingface", test: /^hf_[A-Za-z0-9]{20,}$/, base: "https://router.huggingface.co/v1",
+    models: ["meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct"]
+  }
 ];
 
 function routeForKey(key) {
   const k = String(key || "").trim();
-  for (const r of KEY_ROUTES) if (r.test.test(k)) return { base: r.base, model: r.model };
+  for (const r of KEY_ROUTES) if (r.test.test(k)) return { base: r.base, models: r.models.slice(), discovery: r.discovery || "", kind: r.kind };
   return null;
 }
 
+/** Ключей может быть несколько: человек вставляет оба, по одному в строке. */
+function parseKeys(text) {
+  const parts = String(text || "").split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
+  const out = [];
+  for (const p of parts) {
+    if (routeForKey(p) && !out.includes(p)) out.push(p);
+  }
+  return out;
+}
+
 /**
- * Свой ключ человека важнее бесплатных движков.
- * Достаточно одного ключа: адрес и модель подставляются по его виду.
+ * Свои ключи человека важнее бесплатных движков.
+ * Достаточно одного ключа: адрес и модели подставляются по его виду.
  * Если человек вписал адрес и модель сам — они главнее.
+ * @returns {Array<object>} движки; у openrouter model пустая — имя подберётся при запросе
  */
-function customEngine(settings) {
-  const key = String((settings && settings.apiKey) || "").trim();
+function customEngines(settings) {
+  const raw = String((settings && settings.apiKey) || "");
   const base = String((settings && settings.apiBase) || "").trim();
   const model = String((settings && settings.apiModel) || "").trim();
-  if (!key) return null;
-  if (base && model) return { id: "custom", base, model, key, timeout: 60000 };
-  const route = routeForKey(key);
-  if (route) return { id: "custom", base: route.base, model: model || route.model, key, timeout: 60000 };
-  return null;
+  // со своим адресом и моделью подходит любой ключ; без них — только узнаваемый по виду
+  const any = raw.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
+  const keys = (base && model) ? any : parseKeys(raw);
+  if (!keys.length) return [];
+  const out = [];
+  keys.forEach((key, index) => {
+    const id = index === 0 ? "custom" : "custom" + (index + 1);
+    if (base && model) {
+      out.push({ id, base, model, key, timeout: 60000 });
+      return;
+    }
+    const route = routeForKey(key);
+    if (!route) return;
+    if (route.discovery) {
+      out.push({ id, base: route.base, model: "", models: route.models, key, timeout: 60000, discovery: route.discovery });
+      return;
+    }
+    route.models.forEach((name, i) => {
+      out.push({ id: i === 0 ? id : id + "-" + (i + 1), base: route.base, model: name, key, timeout: 60000 });
+    });
+  });
+  return out;
+}
+
+/** Первый свой движок — для совместимости со старыми вызовами. */
+function customEngine(settings) {
+  const list = customEngines(settings);
+  return list.length ? list[0] : null;
 }
 
 function order(settings, vision) {
   const list = vision ? VISION_ENGINES.slice() : ENGINES.slice();
-  const custom = customEngine(settings);
-  if (custom) list.unshift(custom);
+  const own = customEngines(settings);
+  if (own.length) list.unshift(...own);
   return list;
+}
+
+/* Бесплатные модели OpenRouter меняются каждый месяц: спрашиваем у сервиса список
+   и берём самые крупные бесплатные. Не вышло — работают запасные имена. */
+let freeModelsCache = null;
+let freeModelsAt = 0;
+
+/** Забыть подобранный список (например, если модели на сервисе сменились). */
+function resetFreeModelsCache() {
+  freeModelsCache = null;
+  freeModelsAt = 0;
+}
+
+async function discoverFreeModels(fetchImpl) {
+  if (freeModelsCache && Date.now() - freeModelsAt < 6 * 3600e3) return freeModelsCache;
+  const doFetch = fetchImpl || (typeof fetch === "function" ? fetch : null);
+  if (!doFetch) return freeModelsCache || [];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await doFetch("https://openrouter.ai/api/v1/models", { signal: controller.signal });
+    if (!res || !res.ok) return freeModelsCache || [];
+    const json = await res.json();
+    const all = (json && Array.isArray(json.data)) ? json.data : [];
+    const free = all
+      .filter((m) => m && typeof m.id === "string" && /:free$/.test(m.id))
+      .map((m) => ({
+        id: m.id,
+        ctx: Number((m.top_provider && m.top_provider.context_length) || m.context_length || 0),
+        vision: Array.isArray(m.architecture && m.architecture.input_modalities)
+          && m.architecture.input_modalities.includes("image")
+      }))
+      .filter((m) => m.ctx >= 8000)
+      .sort((a, b) => b.ctx - a.ctx)
+      .slice(0, 6);
+    if (free.length) { freeModelsCache = free; freeModelsAt = Date.now(); }
+    return free;
+  } catch (e) {
+    return freeModelsCache || [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Подставляет реальные имена моделей в движки, ждущие подбора. */
+async function resolveEngines(list, opts) {
+  const options = opts || {};
+  if (!list.some((e) => e.discovery && !e.model)) return list;
+  const found = await discoverFreeModels(options.fetch);
+  const out = [];
+  for (const e of list) {
+    if (!e.discovery || e.model) { out.push(e); continue; }
+    const usable = found && found.length
+      ? found.filter((m) => !options.vision || m.vision).map((m) => m.id)
+      : [];
+    const names = (usable.length ? usable : (e.models || [])).slice(0, 3);
+    names.forEach((model, i) => {
+      const meta = (found || []).find((m) => m.id === model) || {};
+      out.push(Object.assign({}, e, {
+        id: i === 0 ? e.id : e.id + "-" + (i + 1),
+        model,
+        vision: !!meta.vision
+      }));
+    });
+  }
+  return out;
 }
 
 /** Один запрос к одному движку. Возвращает текст (и зовёт onDelta по кускам). */
@@ -151,8 +263,8 @@ async function streamOnce(engine, payload, { signal, onDelta } = {}) {
  * Спросить модель, перебирая движки. Если один занят или молчит — берём следующий.
  * @returns {Promise<{text:string, engine:string}>}
  */
-async function askModel({ messages, liteMessages, settings = {}, vision = false, onDelta, signal, maxTokens = 1800, onTry }) {
-  const list = order(settings, vision);
+async function askModel({ messages, liteMessages, settings = {}, vision = false, onDelta, signal, maxTokens = 1800, onTry, fetchImpl }) {
+  const list = await resolveEngines(order(settings, vision), { vision, fetch: fetchImpl });
   let lastError = null;
   for (let i = 0; i < list.length; i++) {
     const engine = list[i];
@@ -192,4 +304,8 @@ async function askVision({ imageDataUrl, question, settings = {}, onDelta, signa
   return askModel({ messages, settings, vision: true, onDelta, signal, maxTokens });
 }
 
-module.exports = { ENGINES, VISION_ENGINES, EngineError, askModel, askVision, streamOnce, order, customEngine, routeForKey, endpointOf, headersFor };
+module.exports = {
+  ENGINES, VISION_ENGINES, EngineError, askModel, askVision, streamOnce, order,
+  customEngine, customEngines, parseKeys, routeForKey, KEY_ROUTES,
+  discoverFreeModels, resolveEngines, resetFreeModelsCache, endpointOf, headersFor
+};
