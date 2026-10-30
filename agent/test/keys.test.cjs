@@ -43,7 +43,10 @@ test("офлайн-ключ не подходит чужому коду клие
 });
 
 test("подделанная подпись ломает ключ", () => {
-  const key = issueKey(CLIENT, 24, Date.now()).slice(0, -1) + "0";
+  const good = issueKey(CLIENT, 24, Date.now());
+  // меняем последний символ на другой: если там уже 0, ставим 1 — иначе подделки не будет
+  const key = good.slice(0, -1) + (good.endsWith("0") ? "1" : "0");
+  assert.notEqual(key, good, "ключ не изменился");
   const v = keys.verifyLocalKey(key, CLIENT);
   assert.equal(v.ok, false);
 });
