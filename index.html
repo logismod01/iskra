@@ -933,6 +933,15 @@ html, body { overflow-x: hidden; }  /* без горизонтального с�
 .kb-del:hover { color: var(--err); background: var(--bg-soft); }
 .kb-empty { font-size: 13px; color: var(--text-dim); padding: 14px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
 .kb-add { display: flex; flex-direction: column; gap: 8px; }
+.kb-teach { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; background: var(--bg-soft); }
+.kb-teach-row { display: flex; gap: 8px; }
+.kb-teach-row input {
+  flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 13.5px;
+  font-family: inherit; outline: 0;
+}
+.kb-teach-row input:focus { border-color: var(--accent); }
+.kb-teach .hint { margin-top: 8px; }
 .kb-add input, .kb-add textarea {
   width: 100%; background: var(--bg-soft-2); border: 1px solid var(--line);
   border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--text); outline: none;
@@ -2154,7 +2163,8 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
           <summary>Свой ключ доступа <em>необязательно</em></summary>
           <p class="set-p">Без ключа всё работает: у Искры несколько бесплатных движков. Ключ снимает общий лимит и даёт более сильную модель — ответы становятся точнее. Хранится только в этом браузере и никуда не отправляется.</p>
           <textarea id="apiKey" rows="2" placeholder="вставь ключ — или два, по одному в строке" autocomplete="off" spellcheck="false"></textarea>
-          <div class="hint" style="margin-top:6px">Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.</div>
+          <div class="hint" style="margin-top:6px">Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.
+            Нажми «Проверить ключ»: если сервис не пускает запросы прямо из браузера, кнопка так и скажет — такой ключ работает в приложении Sye.</div>
           <details class="set-adv-inner" style="margin-top:10px">
             <summary>Свой адрес и модель <em>для любого совместимого сервиса</em></summary>
             <p class="set-p">Если сервис не распознаётся по ключу — впиши адрес вида `…/v1` и название модели. Тогда Искра будет отвечать именно этой моделью.</p>
@@ -7646,7 +7656,8 @@ const CHAT_ONLY = /(whisper|tts|speech|audio|guard|embed|rerank|moderation|image
 async function discoverChatModels(provider, key, base) {
   const tag = provider + "|" + String(base || "");
   const hit = _chatModelsCache.get(tag);
-  if (hit && Date.now() - hit.at < 6 * 3600e3) return hit.ids;
+  if (hit && hit.fail && Date.now() - hit.at < 5 * 60e3) return [];   // сервис молчит — не дёргаем каждую минуту
+  if (hit && !hit.fail && Date.now() - hit.at < 6 * 3600e3) return hit.ids;
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
@@ -7654,15 +7665,20 @@ async function discoverChatModels(provider, key, base) {
       headers: { Authorization: "Bearer " + key }, signal: ctrl.signal
     });
     clearTimeout(t);
-    if (!res || !res.ok) return hit ? hit.ids : [];
+    if (!res || !res.ok) {
+      _chatModelsCache.set(tag, { at: Date.now(), ids: [], fail: true });
+      return hit && !hit.fail ? hit.ids : [];
+    }
     const json = await res.json();
     const ids = ((json && json.data) || [])
       .map(m => (m && (m.id || m.model)) || "")
       .filter(id => typeof id === "string" && id && !CHAT_ONLY.test(id));
     if (ids.length) _chatModelsCache.set(tag, { at: Date.now(), ids });
+    else _chatModelsCache.set(tag, { at: Date.now(), ids: [], fail: true });
     return ids;
   } catch (e) {
-    return hit ? hit.ids : [];
+    _chatModelsCache.set(tag, { at: Date.now(), ids: [], fail: true });
+    return hit && !hit.fail ? hit.ids : [];
   }
 }
 
@@ -7718,6 +7734,16 @@ async function resolveKeyEngines(list, needVision) {
   return out;
 }
 
+/* Если адрес только что не ответил (ключ не пускает браузер, сервис лежит),
+   на 10 минут ставим его в конец очереди: не тратим время на заведомый отказ. */
+const _deadBases = new Map();
+const DEAD_MS = 10 * 60e3;
+function baseKeyOf(e) { return String((e && (e.base || e.url)) || (e && e.id) || ""); }
+function isDeadBase(e) {
+  const t = _deadBases.get(baseKeyOf(e));
+  return !!t && Date.now() - t < DEAD_MS;
+}
+
 /* Когда последний удачный движок ответил — начинаем с него: так ответы быстрее */
 let _lastGoodEngine = "";
 function orderedEngines(needVision) {
@@ -7728,7 +7754,8 @@ function orderedEngines(needVision) {
   }
   const i = list.findIndex(e => e.id === _lastGoodEngine);
   if (i > 0) list.unshift(list.splice(i, 1)[0]);
-  return list;
+  // живые адреса вперёд, недавно отвалившиеся — в конец
+  return list.filter(e => !isDeadBase(e)).concat(list.filter(isDeadBase));
 }
 
 /* ---------- Характеры ---------- */
@@ -8863,7 +8890,8 @@ function showFailCard(contentEl, aiMsg, question, err) {
   const head = baseAnswer
     ? `Сейчас движки молчат (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}`
     : hasKey
-      ? `Не получилось ответить: ${reason}. Я попробовала все движки, включая твой ключ.\n\nНажми «Повторить» — обычно со второго раза получается. Если повторяется, проверь ключ или удали его: без ключа я тоже отвечаю.`
+      ? `Не получилось ответить: ${reason}. Я попробовала все движки, включая твой ключ.\n\nНажми «Повторить» — обычно со второго раза получается. Если повторяется, проверь ключ или удали его: без ключа я тоже отвечаю.` +
+        (err && err.keyBlocked ? `\n\nПохоже, этот сервис не пускает запросы прямо из браузера. Такой ключ работает в приложении Sye, а здесь отвечают другие движки.` : "")
       : `Не получилось ответить: ${reason}. Я попробовала все движки по очереди — сейчас они молчат.\n\nПодожди 15–20 секунд и нажми «Повторить». Если так каждый раз — проверь интернет.`;
   aiMsg.content = head;
   aiMsg.failedSoft = true;
@@ -8937,6 +8965,7 @@ function toApiMsg(m) {
 /* ---------- 1. Библиотека навыков ---------- */
 const SKILLS = [
   { cat: "Учёба", items: [
+    { t: "Выучи тему", d: "Прочитаю и запомню — будет знать без интернета", p: "/изучи %s" },
     { t: "Объясни тему", d: "Простыми словами, с примером", p: "Объясни тему «%s» простыми словами, по шагам, с примером из жизни. В конце задай мне один вопрос на проверку." },
     { t: "Реши задачу", d: "С «Дано», формулами и проверкой", p: "Реши задачу по шагам. Сначала «Дано», потом формулы, каждое действие с пояснением, ответ и проверка.\n\nУсловие: %s" },
     { t: "Сделай конспект", d: "Тезисы, формулы, что спросят", p: "Сделай конспект по теме «%s»: главное тезисами, определения и формулы отдельно, в конце 5 фактов, которые точно спросят на контрольной." },
@@ -9117,6 +9146,11 @@ function updateKnowledgeChip() {
   b.classList.toggle("on", !!settings.knowledgeOn && n > 0);
   b.title = n ? `База знаний: ${n} док.` : "База знаний пуста";
 }
+function renderKnowledgePanelSafe() {
+  try { renderKnowledgePanel(); } catch (e) { /* панель могла не отрисоваться — не критично */ }
+  try { updateKnowledgeChip(); } catch (e) {}
+}
+
 function openKnowledge() {
   renderKnowledge();
   updateKnowledgeChip();
@@ -9510,6 +9544,7 @@ async function askIskra(payload, onDelta, signal, onTry) {
   const list = await resolveKeyEngines(orderedEngines(needVision), needVision);
   let lastErr = null;
   let httpErr = null;      // настоящий ответ сервера важнее «нет связи»
+  let keyBlocked = false;  // ключ есть, но сервис не пускает браузер
   let n = 0;
   for (const engine of list) {
     if (signal && signal.aborted) throw new ApiError(0, "остановлено", "abort");
@@ -9517,16 +9552,19 @@ async function askIskra(payload, onDelta, signal, onTry) {
     if (typeof onTry === "function") { try { onTry(n, list.length); } catch (e) {} }
     try {
       const r = await streamOnce(engine, payload, onDelta, signal);
-      if (r && r.text) { _lastGoodEngine = engine.id; return r; }
+      if (r && r.text) { _lastGoodEngine = engine.id; _deadBases.delete(baseKeyOf(engine)); return r; }
     } catch (e) {
       if (e && e.kind === "abort") throw e;
       lastErr = e;
+      if (engine.key && !Number(e && e.status)) keyBlocked = true;
+      if (e && (e.kind === "net" || e.kind === "timeout")) _deadBases.set(baseKeyOf(engine), Date.now());
       if (Number(e && e.status) >= 400) httpErr = e;
     }
   }
   const err = httpErr || lastErr || new ApiError(503, "все движки заняты", "all-busy");
   err.kind = err.kind || "all-busy";
   err.tried = n;
+  err.keyBlocked = keyBlocked;
   throw err;
 }
 
@@ -11218,6 +11256,22 @@ function updateModelChip() {
    Ключей может быть два — проверяем оба сразу, параллельно. */
 const KEY_PROBE_REPLY = [{ role: "user", content: "Скажи одно слово: привет" }];
 
+/* Браузер не даёт читать ответ чужого сервера, если тот не разрешил это (CORS).
+   Для человека это выглядит как «нет связи», хотя сервер живой и ключ рабочий.
+   Отличить одно от другого можно запросом без чтения ответа: он проходит, если
+   сервер вообще ответил. Так и рождается честный диагноз. */
+async function hostReachable(url) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 6000);
+    await fetch(url, { mode: "no-cors", signal: ctrl.signal });
+    clearTimeout(t);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function probeKey(key) {
   const kind = detectKeyKind(key);
   if (!kind) return { state: "unknown", status: 0 };
@@ -11230,7 +11284,8 @@ async function probeKey(key) {
     try {
       res = await fetch(kind.base + "/models", { headers: auth, signal: ctrl.signal });
     } catch (e) {
-      return { state: "net", status: 0 };
+      const alive = await hostReachable(kind.base + "/models");
+      return { state: alive ? "cors" : "net", status: 0 };
     }
     if (res.status === 401 || res.status === 403) return { state: "auth", status: res.status };
     /* 2. И он правда отвечает: короткий живой запрос в чат. */
@@ -11255,7 +11310,8 @@ async function probeKey(key) {
           signal: ctrl.signal
         });
       } catch (e) {
-        return { state: "net", status: 0 };
+        const alive = await hostReachable(kind.base + "/models");
+        return { state: alive ? "cors" : "net", status: 0 };
       }
       if (rr.ok) return { state: "ok", status: 200 };
       last = rr.status;
@@ -11278,6 +11334,7 @@ function describeProbe(r) {
   if (r.state === "auth") return "не принят (" + r.status + ") — ключ неверный, обрезанный или отозван";
   if (r.state === "model") return "принят, но ни одна модель не ответила (" + r.status + ")";
   if (r.state === "unknown") return "не распознан";
+  if (r.state === "cors") return "сервис не пускает браузер — этот ключ работает в приложении Sye";
   return "нет связи — проверить не вышло";
 }
 
@@ -14729,6 +14786,33 @@ function wire() {
   $("#kbToggle") && $("#kbToggle").addEventListener("change", (e) => {
     settings.knowledgeOn = e.target.checked; saveSettings(); updateKnowledgeChip();
   });
+  /* «Научить»: человек не обязан помнить команду /изучи — есть поле и кнопка. */
+  const teachGo = async () => {
+    const topic = ($("#teachTopic")?.value || "").trim();
+    const res = $("#teachResult");
+    if (topic.length < 2) {
+      if (res) { res.className = "conn-result err"; res.textContent = "Напиши тему или вставь ссылку."; }
+      return;
+    }
+    if (res) { res.className = "conn-result wait"; res.textContent = "Читаю материалы…"; }
+    const r = await learnCore(topic);
+    if (!r.ok) {
+      if (res) { res.className = "conn-result err"; res.textContent = r.msg; }
+      return;
+    }
+    if (learnedAdd(r.title, r.text, r.source)) {
+      if (res) { res.className = "conn-result ok"; res.textContent = "Запомнила: «" + r.title + "» (" + r.note + ")."; }
+      if ($("#teachTopic")) $("#teachTopic").value = "";
+      renderKnowledgePanelSafe();
+      toast("Запомнила: " + r.title, "ok");
+    } else {
+      if (res) { res.className = "conn-result err"; res.textContent = "Материала слишком мало, чтобы запомнить. Попробуй другую тему или ссылку."; }
+    }
+  };
+  $("#teachGo") && $("#teachGo").addEventListener("click", teachGo);
+  $("#teachTopic") && $("#teachTopic").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); teachGo(); }
+  });
 
   // 3D-мастерская
   $("#makerBtn") && $("#makerBtn").addEventListener("click", openMaker);
@@ -15039,6 +15123,15 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="hint" style="margin-bottom:12px">
       Вставь свои конспекты, правила или загрузи <b>.txt</b> — Искра найдёт нужный кусок и ответит по нему.
       Это поиск по ключевым словам: чем точнее вопрос, тем лучше находит.
+    </div>
+    <div class="kb-teach">
+      <div class="kb-teach-row">
+        <input type="text" id="teachTopic" placeholder="Тема или ссылка: фотосинтез, https://…" autocomplete="off" />
+        <button class="btn" id="teachGo" type="button">Научить</button>
+      </div>
+      <div class="hint">Искра найдёт материалы, прочитает и запомнит — потом будет отвечать по этой теме без интернета.
+        То же самое словами в чате: «/изучи тема».</div>
+      <div class="conn-result" id="teachResult"></div>
     </div>
     <label class="check-row"><input type="checkbox" id="kbToggle" /> Использовать базу знаний в ответах</label>
     <div class="kb-list" id="kbList"></div>
