@@ -153,14 +153,29 @@
         <button class="primary" id="gateActivate">Активировать</button>
         <p class="gate-err" id="gateErr"></p>
         <div class="gate-links">
-          <button class="link" id="gateGetKey">Как получить ключ</button>
+          <button class="link" id="gateGetKey">Где взять ключ</button>
         </div>
       </div>
+
+      <details class="gate-help" id="gateHelp">
+        <summary>Где взять ключ Pro</summary>
+        <ol>
+          <li>Открой Искру на сайте — <b>logismod01.github.io/iskra</b>.</li>
+          <li>Войди в аккаунт, потом <b>⚙ → «Доступ»</b>: там тарифы и твой <b>код клиента</b>.</li>
+          <li>Выбери тариф (сутки, месяц, год или навсегда) и оплати так, как написано в «Доступе».</li>
+          <li>Владелец пришлёт ключ вида <b>ISKRA-24-XXXX-XXXX-XXXX</b> — он привязан к твоему коду клиента.</li>
+          <li>Вставь код клиента и ключ на вкладке «Ключ Pro» → «Активировать».</li>
+        </ol>
+        <p>Своей подписки на агента нет: тот же Pro, что на сайте, — ключ отдельно покупать не нужно. Если проще без ключа — войди
+          на вкладке «Аккаунт Искры»: Sye сам спросит сервер, жива ли подписка.</p>
+        <button class="link" id="gateHelpOpen">Открыть «Доступ» на сайте</button>
+        <button class="link" id="gateHelpCopy">Скопировать код клиента</button>
+      </details>
 
       <div class="gate-links gate-footer">
         <button class="link" id="gateLater" hidden>Продолжить в ограниченном режиме</button>
       </div>
-      <p class="gate-note">Аккаунт и код клиента — в Искре: ⚙ → «Доступ». Подписка привязывается к этому компьютеру: один Pro — один агент.</p>
+      <p class="gate-note">Код клиента — в Искре: ⚙ → «Доступ» (шапка → плашка «Бесплатная / Pro»). Подписка привязывается к этому компьютеру: один Pro — один агент.</p>
     </div>
   </div>
 

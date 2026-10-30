@@ -219,6 +219,28 @@ await test("релиз кладёт файлы под постоянными и�
   if (!urls.includes("releases/latest/download/Sye-Portable.exe")) throw new Error("сайт не ссылается на постоянный адрес portable");
 });
 
+await test("ссылка …/#access из окна агента сразу открывает «Доступ»", async () => {
+  const dom = new JSDOM(html, {
+    url: "https://logismod01.github.io/iskra/#access",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+    virtualConsole: new VirtualConsole(),
+    beforeParse(win) {
+      win.TextEncoder = TextEncoder;
+      win.TextDecoder = TextDecoder;
+      win.AbortSignal = AbortSignal;
+      Object.defineProperty(win, "crypto", { value: webcrypto, configurable: true });
+    }
+  });
+  await wait(500);
+  const w = dom.window;
+  const modal = w.document.querySelector("#settingsModal");
+  if (!modal.classList.contains("open")) throw new Error("настройки не открылись по ссылке #access");
+  const tab = [...w.document.querySelectorAll("#setTabs button")].find((b) => b.classList.contains("on"));
+  if (!tab || tab.dataset.tab !== "access") throw new Error("открылась не вкладка «Доступ»: " + (tab && tab.dataset.tab));
+  try { w.close(); } catch (e) {}
+});
+
 try { free.window.close(); pro.window.close(); } catch (e) {}
 console.log(`\nГотово: ${passed} проверок пройдено` + (failed ? `, ${failed} провалено` : ""));
 process.exit(failed ? 1 : 0);

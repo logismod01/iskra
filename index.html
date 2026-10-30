@@ -2097,7 +2097,7 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
             <a class="btn btn-ghost set-wide agent-portable" id="agentPortable" href="#" target="_blank" rel="noopener">Портативная версия (без установки)</a>
             <ol class="agent-steps">
               <li>Скачай файл и запусти: SmartScreen может спросить — «Подробнее» → «Выполнить всё равно».</li>
-              <li>В агенте войди <b>аккаунтом Искры</b> или вставь <b>ключ Pro</b> — подписка подтянется сама.</li>
+              <li>В агенте войди <b>аккаунтом Искры</b> или вставь <b>ключ Pro</b> — подписка подтянется сама. Ключ тот же, что на сайте: его выдают после оплаты тарифа, отдельно для агента покупать не нужно.</li>
               <li>Выбери рабочую папку и напиши первую задачу. <b>Ctrl+Alt+Space</b> — показать окно.</li>
             </ol>
             <div class="agent-meta" id="agentMeta">
@@ -10847,13 +10847,13 @@ function setSettingsTab(tab) {
   $$("#settingsModal .set-pane").forEach(p => { p.hidden = p.dataset.pane !== tab; });
 }
 
-function openSettings() {
+function openSettings(tab) {
   try { if (typeof renderInstallCard === "function") renderInstallCard(); } catch (e) {}
   try { if (typeof renderAgentCard === "function") renderAgentCard(); } catch (e) {}
   const m = $("#settingsModal");
   if (!m) return;
   m.classList.add("open");
-  setSettingsTab("main");
+  setSettingsTab(tab === "access" || tab === "look" ? tab : "main");
   renderEditionUI();
   renderPersonaGrid();
   renderThemeGrid();
@@ -14586,6 +14586,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const cb = document.getElementById("checkAll");
   if (cb) cb.addEventListener("click", () => { cb.disabled = true; cb.textContent = "Проверяю…"; runSelfCheck().finally(() => { cb.disabled = false; cb.textContent = "Проверить ИИ"; }); });
   wire();
+  // Ссылка …/#access открывает сразу «Доступ» — по ней из окна агента Sye идут за ключом.
+  const wantAccess = () => /^#(access|tariff|pro)$/i.test(String(location.hash || ""));
+  const showAccess = () => {
+    if (!wantAccess()) return;
+    try { openSettings("access"); } catch (e) {}
+  };
+  showAccess();
+  window.addEventListener("hashchange", showAccess);
   window.__iskraBoot = true;
   document.documentElement.classList.add("booted");
   const bar = document.getElementById("crashBar");
