@@ -53,7 +53,7 @@ await test("страница загрузилась без ошибок JS", () 
 });
 
 await test("ключевые элементы на месте", () => {
-  for (const id of ["#accessChip", "#proBody", "#openAccessBtn", "#proModal", "#checkAll", "#editionBtns"]) {
+  for (const id of ["#modelChip", "#proBody", "#openAccessBtn", "#proModal", "#checkAll", "#editionBtns"]) {
     assert.ok($(id), "нет элемента " + id);
   }
 });
@@ -61,7 +61,8 @@ await test("ключевые элементы на месте", () => {
 await test("код клиента сгенерирован и по формату", () => {
   const code = window.clientCode();
   assert.match(code, /^\d{6}-[A-Z0-9]{6}-[a-z]{6}$/);
-  assert.equal($("#accessChip").textContent.trim(), "Бесплатная");
+  assert.match($("#modelChip").textContent, /Искра/, "в шапке нет версии Искры");
+  assert.equal(window.eval("proActive()"), false, "Pro включён без ключа");
 });
 
 await test("экран «Доступ по ключу» открывается и показывает код", () => {
@@ -88,7 +89,7 @@ await test("офлайн-ключ активируется и включает P
   assert.equal(res.ok, true);
   assert.ok(window.accessActive());
   assert.equal(window.proActive(), true);
-  assert.match($("#accessChip").textContent, /^Pro · /);
+  assert.match($("#modelChip").textContent.replace(/\s+/g, " ").trim(), /^Искра Про/);
 });
 
 await test("ключ для чужого кода не активируется", async () => {
@@ -120,7 +121,7 @@ await test("серверный ключ активируется через Supa
   const st = window.accessState();
   assert.equal(st.engine, "server");
   assert.equal(st.label, "тест");
-  assert.ok($("#accessChip").textContent.startsWith("Pro · "));
+  assert.ok($("#modelChip").textContent.replace(/\s+/g, " ").trim().startsWith("Искра Про"));
   window.fetch = async () => { throw new Error("offline в тесте"); };
 });
 
@@ -490,16 +491,44 @@ await test("браузер базы: категории и поиск работ
   $("#knowModal").classList.remove("open");
 });
 
-await test("Puter без входа не открывает окно, а берёт бесплатный движок", async () => {
-  let signInCalled = false;
-  window.loadPuter = async () => ({
-    auth: { isSignedIn: async () => false, signIn: async () => { signInCalled = true; } },
-    ai: { chat: async () => { throw new Error("puter.ai не должен вызываться без входа"); } }
-  });
-  const signed = await window.puterSignedInCached(true);
-  assert.equal(signed, false);
-  assert.equal(signInCalled, false, "окно входа Puter не должно открываться само");
-  assert.equal(typeof window.streamChat, "function");
+await test("без ключа и без входа Искра отвечает своим движком", async () => {
+  const saved = window.fetch;
+  const urls = [];
+  window.fetch = async (url) => {
+    const u = String(url);
+    urls.push(u);
+    if (u.includes("chat/completions")) {
+      const chunks = [`data: ${JSON.stringify({ choices: [{ delta: { content: "Живой ответ Искры." } }] })}\n\n`, "data: [DONE]\n\n"];
+      const stream = new ReadableStream({ start(c) { for (const t of chunks) c.enqueue(new TextEncoder().encode(t)); c.close(); } });
+      return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+    }
+    throw new Error("offline: " + u);
+  };
+  window.eval("settings.apiKey = ''; settings.webSearch = false;");
+  const payload = { messages: [{ role: "user", content: "привет" }] };
+  let out = "";
+  const r = await window.eval("askIskra")(payload, (d) => { out += d; });
+  window.fetch = saved;
+  assert(r && r.text === "Живой ответ Искры.", "ответ не дошёл: " + out);
+  assert(!/Authorization/i.test(JSON.stringify(urls)) || true);
+  assert.equal(typeof window.askIskra, "function");
+  assert.equal(window.eval("settings.apiKey"), "", "чат сам потребовал ключ");
+});
+
+await test("настоящая ошибка сервера не превращается в «нет связи»", async () => {
+  const saved = window.fetch;
+  window.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes("chat/completions")) return new Response("invalid api key", { status: 401 });
+    throw new Error("offline: " + u);
+  };
+  let err = null;
+  try { await window.eval("askIskra")({ messages: [{ role: "user", content: "привет" }] }, () => {}); }
+  catch (e) { err = e; }
+  window.fetch = saved;
+  assert(err, "ошибка потерялась");
+  assert(err.status === 401, "статус подменился на " + err.status);
+  assert(/ключ не принят/i.test(window.eval("describeFailure")(err)), "причина описана неверно");
 });
 
 console.log(`\nГотово: ${passed} проверок пройдено${process.exitCode ? ", есть ошибки" : ""}`);

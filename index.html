@@ -338,29 +338,6 @@ textarea { resize: none; }
 .welcome .tag {
   color: var(--text-soft); font-size: 15px; margin-bottom: 28px;
 }
-.chips {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 12px;
-  max-width: 560px; margin: 0 auto;
-}
-.chip {
-  background: var(--bg-soft);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 16px;
-  text-align: left;
-  transition: transform .15s, background .2s, border-color .2s;
-}
-.chip:hover {
-  transform: translateY(-2px);
-  background: var(--bg-soft-2);
-  border-color: var(--accent-soft);
-}
-.chip .ic { color: var(--accent); margin-bottom: 8px; display: block; }
-.chip .ct { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text); }
-.chip .cs { font-size: 12px; color: var(--text-soft); }
-
 /* ============ Composer ============ */
 .composer-wrap {
   padding: 10px 20px 18px;
@@ -845,7 +822,7 @@ html, body { overflow-x: hidden; }  /* без горизонтального с�
 .mcard .mdesc { font-size: 12px; color: var(--text-soft); line-height: 1.3; }
 .modes-hint { margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
 
-/* Крупные кнопки инструментов (как в DeepSeek/Gemini) */
+/* Крупные кнопки инструментов */
 .comp-tools .tool-btn {
   width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
   color: var(--text-soft); border: 1px solid transparent;
@@ -1349,68 +1326,7 @@ button:active:not(:disabled) { transform: scale(.975); }
 .auth-badge.on { background: rgba(84,180,120,.16); color: #7ed6a1; }
 .auth-badge.off { background: rgba(255,255,255,.07); color: var(--text-dim); }
 
-/* Puter и проверка ошибок */
-.puter-list { margin: 10px 0 14px; padding-left: 18px; font-size: 13.5px; line-height: 1.6; color: var(--text); }
-.puter-list li { margin-bottom: 6px; }
-.proof-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; background: var(--bg-soft-2); font-size: 13.5px; }
-.proof-fix { color: #7ed6a1; }
-.proof-bad { color: #ff8a7a; text-decoration: line-through; }
-.proof-rule { font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.45; }
-.proof-ok { color: #7ed6a1; font-size: 13.5px; }
-/* Формулы */
-.math-frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; font-size: .92em; }
-.math-frac .num { border-bottom: 1px solid currentColor; padding: 0 3px; }
-.math-frac .den { padding: 0 3px; }
-.math-sqrt { border-top: 1px solid currentColor; padding: 0 2px; margin-left: 1px; }
-.math-block { display: block; text-align: center; margin: 10px 0; font-size: 1.06em; overflow-x: auto; }
-.proof-count { font-weight: 600; margin-bottom: 8px; display: block; }
-
-/* ===== Поиск: подсветка и фрагменты ===== */
-.chat-row.find { flex-wrap: wrap; align-items: flex-start; }
-.chat-row.find .find-snip { flex-basis: 100%; font-size: 11.5px; color: var(--text-dim); line-height: 1.45; margin: 4px 0 0 22px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.chat-row.find mark, .msg mark { background: rgba(226,122,95,.32); color: var(--text); border-radius: 3px; padding: 0 2px; }
-.sb-empty { padding: 20px 14px; color: var(--text-dim); font-size: 13px; text-align: center; line-height: 1.5; }
-
-/* Заголовок модалки с кнопкой закрытия */
-.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-.modal-head h3 { margin: 0; font-size: 17px; font-weight: 600; }
-.modal-body { padding-top: 4px; }
-.switch-row { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13.5px; }
-.switch-row input { width: 18px; height: 18px; accent-color: var(--accent); }
-.dev-off { background: none; border: none; color: #ff6b5a; font-size: 11.5px; cursor: pointer; padding: 2px 0; text-decoration: underline; font-family: inherit; }
-.puter-help { margin-top: 14px; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; }
-.puter-help summary { cursor: pointer; color: var(--accent); font-size: 13px; }
-.puter-help ol { margin: 8px 0 0; padding-left: 18px; }
-.puter-help li { margin-bottom: 6px; }
-.puter-help code { background: var(--bg-soft-2); padding: 1px 4px; border-radius: 4px; font-size: 11.5px; }
-
-/* ===== Консоль администратора ===== */
-.console-win { width: 100%; max-width: 720px; height: 78vh; display: flex; flex-direction: column;
-  background: #06090c; border: 1px solid #16303a; border-radius: 14px; overflow: hidden;
-  box-shadow: 0 30px 90px rgba(0,0,0,.7), 0 0 0 1px rgba(80,255,180,.05) inset;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: #7dffb0; }
-.console-bar { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #0b1418; border-bottom: 1px solid #16303a; }
-.console-dots { display: flex; gap: 5px; }
-.console-dots i { width: 9px; height: 9px; border-radius: 50%; background: #24404a; display: block; }
-.console-dots i:nth-child(1) { background: #ff5f57; }
-.console-dots i:nth-child(2) { background: #ffbd2e; }
-.console-dots i:nth-child(3) { background: #28c840; }
-.console-title { flex: 1; text-align: center; font-size: 11.5px; letter-spacing: .18em; color: #4fa882; }
-.console-x { background: none; border: none; color: #4fa882; font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
-.console-out { flex: 1; overflow-y: auto; padding: 14px 16px; font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
-.console-out .c-cmd { color: #7cc7ff; }
-.console-out .c-ok { color: #7dffb0; }
-.console-out .c-err { color: #ff7a6b; }
-.console-out .c-dim { color: #4a7a72; }
-.console-out .c-head { color: #ffd479; }
-.console-line { display: flex; align-items: center; gap: 8px; padding: 10px 16px 14px; border-top: 1px solid #16303a; background: #0b1418; }
-.console-prompt { font-size: 12.5px; color: #4fa882; white-space: nowrap; }
-.console-line input { flex: 1; background: none; border: none; outline: none; color: #7dffb0; font-family: inherit; font-size: 13px; caret-color: #7dffb0; }
-
-.puter-alt { margin-top: 16px; padding: 12px; border: 1px dashed rgba(226,122,95,.4); border-radius: 12px; background: rgba(226,122,95,.05); }
-.puter-alt-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-.puter-alt-steps { margin: 0 0 10px; padding-left: 18px; font-size: 12.5px; line-height: 1.6; color: var(--text-dim); }
-.puter-alt-steps code { background: rgba(255,255,255,.07); padding: 1px 4px; border-radius: 4px; }
+/* Модалки аккаунта и проверки ошибок */
 .auth-field-input { background: var(--bg-soft-2); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit; outline: none; }
 .auth-field-input:focus { border-color: var(--accent); }
 
@@ -1572,6 +1488,247 @@ button:active:not(:disabled) { transform: scale(.975); }
 .access-server { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
 .access-server.ok { color: var(--ok); }
 .access-server.bad { color: var(--warn); }
+
+/* ============ Обновлённый интерфейс (v1.5) ============ */
+
+/* Быстрые действия на приветственном экране */
+.welcome-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  max-width: 620px;
+  margin: 0 auto 18px;
+}
+.wa-card {
+  text-align: left;
+  padding: 14px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: grid;
+  gap: 3px;
+  transition: transform .15s, border-color .15s, background .15s;
+}
+.wa-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: var(--bg-soft-2); }
+.wa-ico {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 15px; margin-bottom: 4px;
+}
+.wa-t { font-size: 14px; font-weight: 650; color: var(--text); }
+.wa-d { font-size: 12px; color: var(--text-dim); }
+.welcome-foot { font-size: 12px; color: var(--text-dim); }
+
+/* Версия в шапке */
+.model-chip .mc-dot { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 18%, transparent); }
+.model-chip.is-pro { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); color: var(--accent); }
+.model-chip.is-pro .mc-dot { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+
+/* Настройки: карточки, вкладки, переключатели */
+.modal.modal-set { width: min(620px, 100%); padding: 0; display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
+.set-top { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 10px; }
+.set-top h2 { margin: 0; font-size: 20px; }
+.set-x { color: var(--text-soft); }
+.set-tabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+.set-tabs button {
+  padding: 10px 14px;
+  font-size: 13.5px; font-weight: 600;
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+}
+.set-tabs button:hover { color: var(--text-soft); }
+.set-tabs button.on { color: var(--accent); border-bottom-color: var(--accent); }
+.set-body { padding: 16px 20px 6px; overflow-y: auto; flex: 1; }
+.set-pane > * + * { margin-top: 12px; }
+.set-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+.set-h {
+  font-size: 13px; font-weight: 700; letter-spacing: .02em;
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px; color: var(--text);
+}
+.set-ico { color: var(--accent); font-size: 14px; }
+.set-p { margin: 0 0 10px; font-size: 13px; color: var(--text-soft); line-height: 1.5; }
+.set-wide { width: 100%; margin-top: 8px; }
+.set-foot {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.edition-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.edition-grid button {
+  text-align: left; padding: 12px; border-radius: 12px;
+  background: var(--bg-soft); border: 1px solid var(--line);
+  display: grid; gap: 2px; transition: all .15s;
+}
+.edition-grid button b { font-size: 14px; }
+.edition-grid button span { font-size: 11.5px; color: var(--text-dim); }
+.edition-grid button.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.edition-grid button.active b { color: var(--accent); }
+.set-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--line);
+}
+.set-row:first-of-type { border-top: none; }
+.set-row span { display: grid; gap: 2px; }
+.set-row b { font-size: 13.5px; font-weight: 600; }
+.set-row em { font-style: normal; font-size: 11.5px; color: var(--text-dim); }
+.set-adv summary { cursor: pointer; font-size: 13.5px; font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.set-adv summary em { font-style: normal; font-size: 11.5px; color: var(--text-dim); font-weight: 400; }
+.set-adv > * + * { margin-top: 10px; }
+.set-adv input[type=password] {
+  width: 100%; background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 10px; padding: 11px 14px; color: var(--text); font-size: 14px;
+}
+.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.chips button {
+  padding: 10px 8px; border-radius: 10px;
+  background: var(--bg-soft); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 600;
+  transition: all .15s;
+}
+.chips button.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
+.chips button:hover:not(.active) { background: var(--bg-soft-2); }
+
+/* Переключатель */
+input.switch {
+  appearance: none; -webkit-appearance: none;
+  width: 44px; height: 26px; border-radius: 999px;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  position: relative; cursor: pointer; transition: background .15s, border-color .15s;
+  flex: 0 0 auto; margin: 0;
+}
+input.switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--text-soft); transition: transform .15s, background .15s;
+}
+input.switch:checked { background: var(--accent); border-color: var(--accent); }
+input.switch:checked::after { transform: translateX(18px); background: #fff; }
+
+/* Кнопки карточки «Не получилось» */
+.fail-actions { margin-top: 12px; display: grid; gap: 8px; }
+.fail-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.fail-btns button {
+  padding: 9px 14px; border-radius: 10px;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 600;
+  transition: background .15s, border-color .15s;
+}
+.fail-btns button:hover { border-color: var(--accent); color: var(--accent); }
+.fail-note { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+.fail-key { display: flex; gap: 8px; }
+.fail-key input {
+  flex: 1; min-width: 0;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 13px;
+}
+.fail-key button {
+  padding: 0 16px; border-radius: 10px;
+  background: var(--accent); color: #fff; font-weight: 600; font-size: 13px;
+}
+
+/* Мобильная мелочь */
+@media (max-width: 720px) {
+  .welcome { padding-top: 22px; }
+  .welcome h1 { font-size: 26px; }
+  .welcome-actions { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .wa-card { padding: 12px; }
+  .edition-grid { grid-template-columns: 1fr; }
+  .set-body { padding: 14px 14px 6px; }
+  .set-tabs { padding: 0 14px; }
+  .set-top { padding: 14px 14px 8px; }
+  .set-foot { padding: 12px 14px; }
+}
+
+/* ============ Заголовки модалок, консоль и мелочи ============ */
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.modal-head h3 { margin: 0; font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+.modal-body { font-size: 14px; color: var(--text); }
+.auth-p { font-size: 13.5px; color: var(--text-soft); margin: 0 0 10px; line-height: 1.55; }
+.auth-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 13px;
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 10px;
+  transition: border-color .15s;
+}
+.auth-input:focus { outline: none; border-color: var(--accent); }
+.mt-icon { display: inline-flex; align-items: center; }
+.mt-icon .ic { display: block; }
+.mt-name { font-weight: 600; }
+
+/* Консоль владельца */
+.console-win {
+  width: min(680px, 100%);
+  height: min(460px, 80vh);
+  background: #0d0d0f;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  box-shadow: var(--shadow);
+}
+.console-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #161619; border-bottom: 1px solid #26262b; }
+.console-dots { display: flex; gap: 6px; }
+.console-dots i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; display: block; }
+.console-dots i:nth-child(2) { background: #febc2e; }
+.console-dots i:nth-child(3) { background: #28c840; }
+.console-title { flex: 1; text-align: center; font-size: 11px; letter-spacing: 1.5px; color: #8a8a92; }
+.console-x { color: #8a8a92; font-size: 20px; line-height: 1; padding: 0 4px; }
+.console-x:hover { color: #fff; }
+.console-out { flex: 1; overflow-y: auto; padding: 12px 14px; font-size: 12.5px; line-height: 1.55; color: #d6d6de; white-space: pre-wrap; }
+.console-line { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-top: 1px solid #26262b; }
+.console-prompt { color: #7ee787; font-size: 12.5px; white-space: nowrap; }
+.console-line input { flex: 1; background: transparent; border: none; outline: none; color: #f2f2f5; font-family: inherit; font-size: 12.5px; }
+
+/* ============ Пустые состояния и мелкие блоки ============ */
+.sb-empty { padding: 18px 12px; font-size: 12.5px; color: var(--text-dim); line-height: 1.5; text-align: center; }
+.find-snip { display: block; font-size: 11.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.switch-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-soft); cursor: pointer; }
+.switch-row input { width: 16px; height: 16px; accent-color: var(--accent); }
+.gen-note2 { font-size: 12px; color: var(--text-dim); margin: -4px 0 10px; }
+.gen-progress { font-size: 12px; color: var(--text-dim); }
+.proof-ok { color: var(--ok); font-size: 13.5px; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+.proof-count { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.proof-item { background: var(--bg-soft-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+.proof-bad { color: var(--err); text-decoration: line-through; }
+.proof-fix { color: var(--ok); font-weight: 600; }
+.proof-rule { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.dev-off { background: var(--bg); border: 1px solid var(--line); color: var(--text-dim); border-radius: 8px; padding: 6px 11px; font-size: 12px; font-family: inherit; cursor: pointer; }
+.dev-off:hover { border-color: var(--err); color: var(--err); }
+.dev-confirm { font-size: 12px; color: var(--text-dim); }
+.dev-yes, .dev-no { font-family: inherit; cursor: pointer; }
+.c-head { color: var(--accent); }
+.c-dim { color: #8a8a92; }
+.math-block { background: var(--bg-soft-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 8px 0; overflow-x: auto; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
+.math-frac, .math-sqrt { color: var(--text); }
+
+/* Мобильная шапка: чип версии и иконки не разъезжаются */
+@media (max-width: 560px) {
+  .topbar { gap: 4px; padding: 10px 10px; }
+  .topbar .icon-btn { width: 34px; height: 34px; }
+  .model-chip { max-width: 118px; font-size: 11px; padding: 5px 9px; }
+  .profile-btn { padding: 3px; }
+  .set-card { padding: 12px; }
+  .set-foot { flex-direction: column-reverse; }
+  .set-foot .btn { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -1673,12 +1830,11 @@ button:active:not(:disabled) { transform: scale(.975); }
         </svg>
       </button>
       <div class="title" id="chatTitle">Новый чат</div>
-      <button class="access-chip" id="accessChip" title="Доступ по ключу">Бесплатная</button>
       <button class="profile-btn" id="profileBtn" title="Аккаунт">
         <span class="profile-ava" id="profileAva">?</span>
         <span class="pname" id="profileName">Войти</span>
       </button>
-      <button class="model-chip" id="modelChip" title="Выбрать модель">
+      <button class="model-chip" id="modelChip" title="Версия Искры и настройки" aria-label="Версия Искры и настройки">
         <span class="mc-dot"></span>
         <span class="mn" id="modelChipName">—</span>
         <svg class="ic mc-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -1714,7 +1870,30 @@ button:active:not(:disabled) { transform: scale(.975); }
           <svg class="ic fill" viewBox="0 0 24 24" width="34" height="34"><path d="M12 2 L13.5 9.5 L21 12 L13.5 14.5 L12 22 L10.5 14.5 L3 12 L10.5 9.5 Z"/></svg>
         </div>
         <h1>Привет, я Искра</h1>
-        <div class="tag" id="welcomeTag">Просто поговорим — спрашивай что угодно</div>
+        <div class="tag" id="welcomeTag">Спроси что угодно — отвечу сразу, без ключа и регистрации</div>
+        <div class="welcome-actions" id="welcomeActions">
+          <button type="button" class="wa-card" data-wa="объясни простыми словами, как работает " >
+            <span class="wa-ico">✎</span>
+            <span class="wa-t">Объяснить тему</span>
+            <span class="wa-d">простыми словами</span>
+          </button>
+          <button type="button" class="wa-card" data-wa="напиши код на Python: ">
+            <span class="wa-ico">⌘</span>
+            <span class="wa-t">Написать код</span>
+            <span class="wa-d">с пояснениями</span>
+          </button>
+          <button type="button" class="wa-card" data-wa="реши задачу по шагам: ">
+            <span class="wa-ico">∑</span>
+            <span class="wa-t">Решить задачу</span>
+            <span class="wa-d">по шагам</span>
+          </button>
+          <button type="button" class="wa-card" data-wa="проверь ошибки в тексте: ">
+            <span class="wa-ico">✓</span>
+            <span class="wa-t">Проверить текст</span>
+            <span class="wa-d">орфография и смысл</span>
+          </button>
+        </div>
+        <div class="welcome-foot">Работает без ключа · Отвечает на русском и английском · Важное проверяй</div>
       </div>
     </div>
 
@@ -1783,7 +1962,7 @@ button:active:not(:disabled) { transform: scale(.975); }
           </button>
         </div>
       </form>
-      <div class="composer-note">Искра может ошибаться — важное проверяй сам. Ключ хранится только в твоём браузере.</div>
+      <div class="composer-note">Искра может ошибаться — важное проверяй. Работает без ключа и регистрации.</div>
     </div>
   </main>
 </div>
@@ -1803,121 +1982,103 @@ button:active:not(:disabled) { transform: scale(.975); }
   </div>
 </div>
 
-<!-- Модалка настроек -->
+<!-- ================= Настройки ================= -->
 <div class="modal-bg" id="settingsModal">
-  <div class="modal">
-    <h2>
-      <svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-      Настройки
-    </h2>
-
-    <div class="field">
-      <label>Провайдер</label>
-      <div class="provider-btns" id="providerBtns">
-        <button data-p="demo">Без ключа</button>
-        <button data-p="groq">Groq</button>
-        <button data-p="openrouter">OpenRouter</button>
-        <button data-p="huggingface">Hugging Face</button>
-        <button data-p="llm7">llm7 · без ключа</button>
-        <button data-p="puter">Puter · 500+</button>
-        <button data-p="custom">Свой URL</button>
-      </div>
-      <div class="hint" id="provHint"></div>
-    </div>
-
-    <div class="field">
-      <label>Проверка</label>
-      <button class="auth-btn ghost" id="checkAll">Проверить ИИ</button>
-      <div class="selfcheck-list" id="checkResult"></div>
-      <div class="hint">Честная проверка: отправит живой запрос выбранной модели, проверит бесплатные движки, базу знаний и вход в Puter. Если что-то красное — сразу видно, что именно.</div>
-    </div>
-
-    <div class="field" id="customUrlField" style="display:none">
-      <label>Базовый URL</label>
-      <input type="text" id="baseUrl" placeholder="https://..." />
-      <div class="hint" id="baseUrlWarn" style="color:var(--err);display:none">Укажи адрес сервера, иначе запрос уйдёт в пустоту (ошибка 405)</div>
-    </div>
-
-    <div class="field">
-      <label>API ключ</label>
-      <input type="password" id="apiKey" placeholder="hf_... · gsk_... · sk-or-v1-..." />
-      <div class="hint">Groq: <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>. OpenRouter: <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>. Ключ хранится только у тебя.</div>
-      <div class="modal-row" style="margin-top:8px">
-        <button class="btn btn-ghost" id="testConn" type="button" style="white-space:nowrap">Проверить подключение</button>
-        <button class="btn btn-ghost" id="puterLogin" type="button" style="white-space:nowrap;display:none">Войти в Puter</button>
-        <div class="conn-result" id="connResult"></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Модель</label>
-      <button class="model-open-btn" id="openModelPicker" type="button">
-        <span class="mob-left">
-          <span class="mob-name" id="modelCurrent">—</span>
-          <span class="mob-sub" id="modelCurrentSub">нажми, чтобы выбрать</span>
-        </span>
-        <span class="mob-chev">›</span>
+  <div class="modal modal-set">
+    <div class="set-top">
+      <h2>Настройки</h2>
+      <button class="icon-btn set-x" id="closeSettings" type="button" aria-label="Закрыть">
+        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-      <!-- скрытые поля для совместимости -->
-      <input type="text" id="model" style="display:none" />
-      <div id="modelHint" style="display:none"></div>
-      <div id="modelsBox" style="display:none"></div>
-      <button id="loadModels" style="display:none"></button>
-      <div id="modelsListField" style="display:none"></div>
     </div>
 
-    <div class="field">
-      <label>Версия</label>
-      <div class="provider-btns" id="editionBtns">
-        <button data-e="free">Бесплатная</button>
-        <button data-e="pro">Искра Pro</button>
+    <div class="set-tabs" id="setTabs" role="tablist">
+      <button type="button" class="on" data-tab="main" role="tab">Искра</button>
+      <button type="button" data-tab="look" role="tab">Вид</button>
+      <button type="button" data-tab="access" role="tab">Доступ</button>
+    </div>
+
+    <div class="set-body">
+      <!-- Основное -->
+      <div class="set-pane" data-pane="main">
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">✦</span> Версия</div>
+          <div class="edition-grid" id="editionBtns">
+            <button type="button" data-e="free"><b>Искра</b><span>бесплатная · всё главное</span></button>
+            <button type="button" data-e="pro"><b>Искра Про</b><span>картинки, видео, любые языки</span></button>
+          </div>
+          <div class="hint" id="editionHint"></div>
+          <button class="btn btn-ghost set-wide" id="openAccessBtn" type="button">Тарифы и ключ Про</button>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">☺</span> Как общаться</div>
+          <div class="chips" id="toneBtns">
+            <button type="button" data-t="neutral">Обычный</button>
+            <button type="button" data-t="warm">Душевный</button>
+            <button type="button" data-t="female">Женский</button>
+            <button type="button" data-t="male">Мужской</button>
+          </div>
+          <label class="set-row">
+            <span><b>Память между чатами</b><em>Помнить факты о тебе</em></span>
+            <input type="checkbox" id="memoryOn" class="switch" checked />
+          </label>
+          <label class="set-row">
+            <span><b>Искать в интернете</b><em>Когда нужны свежие факты</em></span>
+            <input type="checkbox" id="webSearch" class="switch" />
+          </label>
+          <label class="set-row" id="matRow" style="display:none">
+            <span><b>Крепкие выражения</b><em>Только в Искре Про</em></span>
+            <input type="checkbox" id="matToggle" class="switch" />
+          </label>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">☺</span> Характер</div>
+          <div class="persona-grid" id="personaGrid"></div>
+          <textarea id="customPersona" rows="3" placeholder="Опиши свой характер…" style="display:none"></textarea>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">◎</span> Проверка</div>
+          <p class="set-p">Отправлю живой вопрос и проверю, что всё отвечает. Занимает пару секунд.</p>
+          <button class="btn btn-ghost set-wide" id="checkAll" type="button">Проверить Искру</button>
+          <div class="selfcheck-list" id="checkResult"></div>
+        </section>
+
+        <details class="set-card set-adv">
+          <summary>Свой ключ доступа <em>необязательно</em></summary>
+          <p class="set-p">Без ключа всё работает: у Искры несколько бесплатных движков. Ключ просто снимает общий лимит и делает ответы точнее. Хранится только в этом браузере.</p>
+          <input type="password" id="apiKey" placeholder="вставь ключ целиком" autocomplete="off" spellcheck="false" />
+          <div class="modal-row" style="margin-top:8px">
+            <button class="btn btn-ghost" id="testConn" type="button">Проверить ключ</button>
+            <button class="btn btn-ghost" id="keyClear" type="button">Убрать ключ</button>
+          </div>
+          <div class="conn-result" id="connResult"></div>
+        </details>
       </div>
-      <div class="hint" id="editionHint"></div>
-      <button class="auth-btn ghost" id="openAccessBtn" type="button" style="margin-top:8px">Получить ключ Pro — от 99 ₽</button>
-    </div>
 
-    <div class="field">
-      <label>Стиль общения</label>
-      <div class="provider-btns" id="toneBtns">
-        <button data-t="neutral">Обычный</button>
-        <button data-t="warm">Душевный</button>
-        <button data-t="female">Женский</button>
-        <button data-t="male">Мужской</button>
+      <!-- Вид -->
+      <div class="set-pane" data-pane="look" hidden>
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">◐</span> Тема</div>
+          <div class="theme-grid" id="themeGrid"></div>
+        </section>
+      </div>
+
+      <!-- Доступ -->
+      <div class="set-pane" data-pane="access" hidden>
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">★</span> Доступ</div>
+          <p class="set-p">Искра бесплатна. <b>Искра Про</b> открывает картинки в высоком качестве, видео, Blender-модели и любые языки — по ключу на 24 часа, месяц, год или навсегда.</p>
+          <button class="btn btn-primary set-wide" id="openAccessBtn2" type="button">Открыть тарифы</button>
+          <button class="btn btn-ghost set-wide" id="openRules2" type="button" style="margin-top:8px">Правила Искры</button>
+        </section>
       </div>
     </div>
 
-    <label class="check-row" id="matRow" style="display:none"><input type="checkbox" id="matToggle" /> Разрешить мат (только Pro)</label>
-
-    <div class="field">
-      <label>Характер Искрa</label>
-      <div class="persona-grid" id="personaGrid"></div>
-      <textarea id="customPersona" placeholder="Опиши свой характер..." style="display:none"></textarea>
-    </div>
-
-    <div class="field">
-      <label>Тема оформления</label>
-      <div class="theme-grid" id="themeGrid"></div>
-    </div>
-
-    <div class="field" style="margin-top:24px">
-      <label class="check-row">
-        <input type="checkbox" id="memoryOn" checked />
-        <span class="cl">Память между чатами</span>
-        <span class="cs">Запоминать факты о тебе</span>
-      </label>
-      <label class="check-row" style="margin-top:8px">
-        <input type="checkbox" id="webSearch" />
-        <span class="cl">Веб-поиск перед ответом</span>
-        <span class="cs">Требует баланса OpenRouter</span>
-      </label>
-    </div>
-
-    <div class="btn-row">
+    <div class="set-foot">
       <button class="btn btn-ghost" type="button" id="openRules">Правила</button>
-      <button class="btn btn-ghost" type="button" id="closeSettings">Закрыть</button>
       <button class="btn btn-primary" type="button" id="saveSettings">Сохранить</button>
     </div>
   </div>
@@ -5623,201 +5784,14 @@ function motifSvg(mode) {
 }
 
 
-/* ---------- Каталог моделей: Искра +1, бесплатные, платные, свои ---------- */
-const BRAND_MODELS = {
-  demo: [
-    { id: "openai-fast", name: "Искра +1", ver: "демо", desc: "Работает без ключа · GPT-OSS 20B · рассуждает", vision: false }
-  ],
-  groq: [
-    { id: "qwen/qwen3.6-27b", name: "Искра +1", ver: "v1", desc: "Наша модель · видит фото · быстро", vision: true },
-    { id: "openai/gpt-oss-120b", name: "Искра +1 Pro", ver: "v1", desc: "Наша модель · сложные задачи · без зрения", vision: false }
-  ],
-  openrouter: [
-    { id: "thinkingmachines/inkling:free", name: "Искра +1", ver: "v1", desc: "Наша модель · 1M контекст · видит фото", vision: true },
-    { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "Искра +1 Pro", ver: "v1", desc: "Наша модель · рассуждает · 550B", vision: false }
-  ],
-  puter: [
-    { id: "gpt-5.4-nano", name: "Искра +1", ver: "puter", desc: "Наша модель · бесплатно через Puter · быстрая", vision: false }
-  ],
-  custom: []
-};
-
-const PAID_FALLBACK = [];
-
-let modelPickerSection = "all";
-let paidModelsCache = null;
-let paidLoading = false;
-
+/* ---------- Названия версий ---------- */
+/* У Искры нет «чужих моделей» в интерфейсе: есть только Искра и Искра Pro. */
 function modelDisplayName(id) {
-  for (const list of Object.values(BRAND_MODELS)) {
-    const hit = list.find(m => m.id === id);
-    if (hit) return hit.name;
-  }
-  for (const list of Object.values(FALLBACK_MODELS)) {
-    const hit = list.find(m => m.id === id);
-    if (hit && hit.name) return hit.name.replace(/ —.*$/, "");
-  }
-  return id ? id.split("/").pop().replace(":free", "") : "—";
+  const s2 = String(id || "");
+  if (s2 === "iskra-pro") return "Искра Про";
+  return "Искра";
 }
 
-async function loadPaidModels() {
-  if (paidModelsCache || paidLoading) return;
-  paidLoading = true;
-  try {
-    const r = await fetch("https://openrouter.ai/api/v1/models");
-    const j = await r.json();
-    const list = (j.data || [])
-      .filter(m => {
-        const p = parseFloat(m.pricing?.prompt || "0");
-        return p > 0;
-      })
-      .map(m => ({
-        id: m.id,
-        name: m.name || m.id,
-        price: parseFloat(m.pricing?.prompt || "0") * 1e6,
-        ctx: Math.round((m.context_length || 0) / 1000)
-      }))
-      .sort((a, b) => a.price - b.price);
-    paidModelsCache = list.slice(0, 40);
-  } catch (e) {
-    paidModelsCache = PAID_FALLBACK;
-  } finally {
-    paidLoading = false;
-    renderModelPicker();
-  }
-}
-
-let _puterModels = null, _puterLoading = false;
-async function loadPuterModels() {
-  if (_puterModels || _puterLoading) return;
-  _puterLoading = true;
-  try {
-    const puter = await loadPuter();
-    const list = await puter.ai.listModels();
-    const arr = Array.isArray(list) ? list : (list?.models || []);
-    const ids = arr.map(m => (typeof m === "string" ? m : (m.id || m.name))).filter(Boolean);
-    if (ids.length) {
-      _puterModels = ids.slice(0, 60).map(id => ({ id, name: id, desc: "модель Puter" }));
-      renderModelPicker();
-    }
-  } catch (e) { /* нет доступа — остаётся статический список */ }
-  _puterLoading = false;
-}
-
-function renderModelPicker() {
-  const box = $("#mpBody");
-  if (!box) return;
-  box.innerHTML = "";
-  const provider = settings.provider;
-  const isCustom = provider === "custom";
-
-  const section = (title, note) => {
-    const h = document.createElement("div");
-    h.className = "mp-sec";
-    h.innerHTML = `<span>${esc(title)}</span>${note ? `<em>${esc(note)}</em>` : ""}`;
-    box.appendChild(h);
-  };
-
-  const row = (m, opts = {}) => {
-    const el2 = document.createElement("button");
-    el2.type = "button";
-    el2.className = "mp-row" + (settings.model === m.id ? " sel" : "");
-    const right = [];
-    if (m.vision) right.push('<span class="mp-tag eye">фото</span>');
-    if (opts.brand) right.push('<span class="mp-tag brand">наша</span>');
-    if (opts.price !== undefined) right.push(`<span class="mp-tag price">$${(opts.price < 0.1 ? opts.price.toFixed(3) : opts.price.toFixed(2))}/1M</span>`);
-    if (m.ctx) right.push(`<span class="mp-ctx">${m.ctx}K</span>`);
-    el2.innerHTML = `
-      <span class="mp-main">
-        <span class="mp-name">${esc(m.name)}${m.ver ? `<em>${esc(m.ver)}</em>` : ""}</span>
-        <span class="mp-desc">${esc(m.desc || m.id)}</span>
-      </span>
-      <span class="mp-right">${right.join("")}${settings.model === m.id ? ic("check", 16, "mp-check") : ""}</span>`;
-    el2.addEventListener("click", () => chooseModel(m.id));
-    box.appendChild(el2);
-  };
-
-  if (provider === "puter") {
-    const info = document.createElement("div");
-    info.className = "mp-note";
-    info.style.cssText = "background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:10px;padding:9px 11px;margin-bottom:12px;color:var(--text-soft)";
-    info.innerHTML = "<b>Puter</b>: 500+ моделей бесплатно и без наших ключей. Вход в Puter — по желанию: без входа Искра сама ответит бесплатным движком, окно регистрации не вылезет. " + (_puterModels ? "" : "<i>Список моделей подгружается…</i>");
-    box.appendChild(info);
-    if (!_puterModels) loadPuterModels();
-  }
-
-  if (provider === "demo") {
-    const warn = document.createElement("div");
-    warn.className = "mp-note";
-    warn.style.cssText = "background:color-mix(in srgb,var(--warn) 12%,transparent);border:1px solid color-mix(in srgb,var(--warn) 35%,var(--line));border-radius:10px;padding:9px 11px;margin-bottom:12px;color:var(--text-soft)";
-    warn.innerHTML = "<b>Демо без ключа</b>: 1 ответ в 30 секунд. Для нормальной работы возьми бесплатный ключ Groq — кнопка «Получить ключ» в настройках.";
-    box.appendChild(warn);
-  }
-
-  // Наша модель
-  const brand = BRAND_MODELS[provider] || [];
-  if (brand.length) {
-    section("Искра", "наша модель");
-    brand.forEach(m => row(m, { brand: true }));
-  }
-
-  // Бесплатные
-  const free = (FALLBACK_MODELS[provider] || []).filter(m => !brand.some(b => b.id === m.id));
-  if (free.length) {
-    section(isCustom ? "Модели сервера" : "Бесплатные", `${free.length} шт · без карты`);
-    free.forEach(m => row(m));
-  }
-
-  // Платные (OpenRouter)
-  if (provider === "openrouter") {
-    section("Платные", "нужен баланс на OpenRouter");
-    if (!paidModelsCache && !paidLoading) loadPaidModels();
-    if (paidLoading) {
-      const w = document.createElement("div");
-      w.className = "mp-loading";
-      w.innerHTML = '<span class="spin"></span> Загружаю список платных моделей…';
-      box.appendChild(w);
-    } else if (paidModelsCache && paidModelsCache.length) {
-      paidModelsCache.slice(0, 12).forEach(m => row({ id: m.id, name: m.name, ctx: m.ctx }, { price: m.price }));
-    } else {
-      const w = document.createElement("div");
-      w.className = "mp-note";
-      w.textContent = "Не удалось загрузить список. Проверь интернет.";
-      box.appendChild(w);
-    }
-  }
-
-  // Своя модель
-  section("Своя модель", "любой id");
-  const custom = document.createElement("div");
-  custom.className = "mp-custom";
-  custom.innerHTML = `<input type="text" id="mpCustomInput" placeholder="например: meta-llama/llama-4-scout-17b-16e-instruct" value="${settings.model.startsWith("qwen/") || FALLBACK_MODELS[provider]?.some(m => m.id === settings.model) || BRAND_MODELS[provider]?.some(m => m.id === settings.model) ? "" : esc(settings.model)}" />
-    <button class="btn btn-ghost" id="mpCustomApply" type="button">Применить</button>`;
-  box.appendChild(custom);
-  custom.querySelector("#mpCustomApply").addEventListener("click", () => {
-    const v = custom.querySelector("#mpCustomInput").value.trim();
-    if (!v) { toast("Впиши id модели", "err"); return; }
-    chooseModel(v);
-  });
-  custom.querySelector("#mpCustomInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); custom.querySelector("#mpCustomApply").click(); }
-  });
-}
-
-function chooseModel(id) {
-  settings.model = id;
-  updateComposerNote();
-  lastModelVision = guessVision(id) || !!(BRAND_MODELS[settings.provider] || []).find(m => m.id === id && m.vision);
-  saveSettings();
-  updateModelChip();
-  renderModelPicker();
-  const hint = $("#modelHint");
-  if (hint) updateModelHint();
-  closeModelPicker();
-  toast(`Модель: ${modelDisplayName(id)}`, "ok");
-}
-function openModelPicker() { renderModelPicker(); $("#modelModal").classList.add("open"); }
-function closeModelPicker() { $("#modelModal").classList.remove("open"); }
 function closeSettings() { const m = $("#settingsModal"); if (m) m.classList.remove("open"); }
 function closeMemory() { const m = $("#memoryModal"); if (m) m.classList.remove("open"); }
 
@@ -5898,7 +5872,6 @@ async function runSelfCheck() {
   const box = document.getElementById("checkResult");
   if (!box) return;
   const rows = [];
-  const put = (name, ok, text) => rows.push({ name, ok, text });
   const render = () => {
     box.innerHTML = rows.map(r =>
       `<div class="selfcheck-row ${r.ok === true ? "ok" : r.ok === false ? "bad" : "wait"}">
@@ -5907,205 +5880,109 @@ async function runSelfCheck() {
          <span class="selfcheck-text">${esc(r.text)}</span>
        </div>`).join("");
   };
-
-  const names = ["Движок Pollinations", "Движок llm7", "База знаний", "Вход в Puter", "Версия", "Твой движок"];
-  names.forEach(n => put(n, null, "проверяю…"));
+  rows.push({ name: "Ответ Искры", ok: null, text: "отправляю живой вопрос…" });
+  rows.push({ name: "База знаний", ok: null, text: "считаю темы…" });
+  rows.push({ name: "Версия", ok: null, text: "…" });
   render();
 
-  // движки
-  for (let i = 0; i < DEMO_BACKENDS.length; i++) {
-    const b = DEMO_BACKENDS[i];
-    let res;
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 12000);
-      const r = await fetch(b.base + "/chat/completions", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        signal: ctrl.signal,
-        body: JSON.stringify({ model: b.model, messages: [{ role: "user", content: "скажи: ок" }], max_tokens: 5, stream: false })
-      });
-      clearTimeout(timer);
-      if (r.ok) res = { ok: true, text: "отвечает" };
-      else if (r.status === 429 || r.status === 503) res = { ok: false, text: "занят, лимит на всех (это нормально, подожди 20–30 секунд)" };
-      else res = { ok: false, text: "ответил ошибкой " + r.status };
-    } catch (e) {
-      res = { ok: false, text: e && e.name === "AbortError" ? "не ответил за 12 секунд" : "нет связи с сервером" };
-    }
-    rows[i] = { name: names[i], ok: res.ok, text: res.text };
-    render();
-  }
-
-  // база знаний
   const total = ((typeof KNOWLEDGE_PACK !== "undefined" && KNOWLEDGE_PACK.items) ? KNOWLEDGE_PACK.items.length : 0)
     + (typeof learnedList === "function" ? learnedList().length : 0);
-  rows[2] = { name: "База знаний", ok: total > 0, text: total + " тем — отвечаю из неё, когда движки заняты" };
+  rows[1] = { name: "База знаний", ok: total > 0, text: total + " тем — отвечаю из неё, даже когда движки молчат" };
 
-  // Puter
-  let puterOk = false;
-  try {
-    const puter = await loadPuter();
-    const t = new Promise((r) => setTimeout(() => r(false), 4000));
-    puterOk = await Promise.race([puter.auth.isSignedIn(), t]);
-  } catch (e) { puterOk = false; }
-  rows[3] = { name: "Вход в Puter", ok: puterOk, text: puterOk ? "есть — доступны видео и лучшее качество картинок" : "не нужен — без него Искра отвечает бесплатным движком" };
-
-  // версия
   const pro = proActive();
-  const accSt = accessState();
-  rows[4] = { name: "Версия", ok: true, text: pro ? ("Pro" + (accSt && accSt.expiresAt > Date.now() ? " по ключу, осталось " + accessLeft(accSt.expiresAt - Date.now()) : " — картинки, видео, любые языки")) : "бесплатная — всё главное работает, Pro открывается ключом" };
+  const st = accessState();
+  rows[2] = { name: "Версия", ok: true, text: pro
+    ? "Искра Про" + (st && st.expiresAt > Date.now() ? " · осталось " + accessLeft(st.expiresAt - Date.now()) : "")
+    : "Искра (бесплатная) · всё главное работает без ключа" };
   render();
 
-  // живая проверка выбранного движка: реально отправляем короткое сообщение
-  rows[5] = { name: "Твой движок", ok: null, text: "проверяю живым запросом…" };
-  render();
+  const ctrl = new AbortController();
+  let got = "";
   try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 25000);
-    let got = "";
-    await streamChat(
-      { model: settings.model, messages: [{ role: "user", content: "Ответь одним словом: ок" }], max_tokens: 12, temperature: 0.2 },
+    await askIskra(
+      { messages: [{ role: "user", content: "Ответь одним словом: ок" }], max_tokens: 16, temperature: 0.2 },
       (d) => { got += d; },
       ctrl.signal
     );
-    clearTimeout(timer);
-    rows[5] = { name: "Твой движок", ok: !!got.trim(), text: got.trim() ? "отвечает: «" + got.trim().replace(/\s+/g, " ").slice(0, 60) + "»" : "ответил пусто — попробуй другую модель" };
-  } catch (e) {
-    rows[5] = { name: "Твой движок", ok: false, text: (e && e.name === "AbortError") ? "не ответил за 25 секунд" : "ошибка: " + ((e && e.message) || "нет связи") };
-  }
+  } catch (e) { /* покажем как ошибку ниже */ }
+  rows[0] = got.trim()
+    ? { name: "Ответ Искры", ok: true, text: "отвечает: «" + got.trim().replace(/\s+/g, " ").slice(0, 60) + "»" }
+    : { name: "Ответ Искры", ok: false, text: "движки сейчас молчат — попробуй ещё раз через 15 секунд" };
   render();
 }
 
 /* ---------- Бесплатные движки без ключа и регистрации ----------
    Если первый занят (503), Искра сама пробует второй, потом третий. */
-const DEMO_BACKENDS = [
-  { name: "Pollinations", base: "https://text.pollinations.ai/openai", model: "openai-fast" },
-  { name: "llm7",         base: "https://api.llm7.io/v1",               model: "gpt-oss:20b" }
+/* ============================================================
+   ДВИЖКИ ИСКРЫ
+   Для человека движок один — Искра. Внутри она сама выбирает,
+   где ей сейчас ответить. Регистрации, ключи и окна входа
+   для обычной работы не нужны: бесплатных движков несколько,
+   чтобы один сбой не оставлял без ответа.
+   ============================================================ */
+
+/* Бесплатные движки без ключа и без регистрации.
+   id нужен только консоли и логам — в интерфейсе его нет. */
+const ISKRA_ENGINES = [
+  { id: "e1", base: "https://api.llm7.io/v1", model: "gpt-oss:20b", timeout: 25 },
+  { id: "e2", base: "https://api.llm7.io/v1", model: "mistral-Nemo-Instruct-2407", timeout: 25 },
+  /* Открытый шлюз, который годами отвечает без ключа: страховка, если первые два заняты */
+  { id: "e3", url: "https://text.pollinations.ai/openai", model: "openai-fast", timeout: 30, auth: "none" },
+  /* Ещё два бесплатных, без регистрации: включаются, когда первые молчат */
+  { id: "e4", base: "https://api.kilo.ai/api/gateway", model: "kilo-auto/free", timeout: 30, auth: "anonymous" },
+  { id: "e5", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "gpt-oss-120b", timeout: 30, auth: "none" },
+  /* Эта модель понимает фото — сюда Искра уходит, когда приложили картинку */
+  { id: "e6", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "Qwen3.5-397B-A17B", timeout: 30, auth: "none", vision: true }
 ];
 
-/* ---------- Провайдеры ---------- */
-const PROVIDERS = {
-  demo: {
-    name: "Без ключа",
-    base: "https://text.pollinations.ai",
-    path: "/openai",
-    noAuth: true,
-    hint: "Самый простой путь: работает сразу, без регистрации, без ключа и без карты. Внутри два бесплатных движка (Pollinations и llm7) — если один занят, Искра сама берёт второй. Лимит у них общий на всех людей, поэтому в час пик иногда надо подождать 20–30 секунд. Хочешь без лимитов — вставь бесплатный ключ Hugging Face (hf_…) ниже.",
-    keyHelp: 'Ключ не нужен — просто напиши сообщение. Хочешь быстрее и без лимитов? Возьми бесплатный ключ на <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> и переключись на Groq.'
-  },
-  huggingface: {
-    name: "Hugging Face",
-    base: "https://router.huggingface.co/v1",
-    hint: "Бесплатный токен без карты. Регистрация: huggingface.co/join → Settings → Access Tokens → New token (тип Read). Модели: Llama, Qwen, DeepSeek. Если Groq не даёт зарегистрироваться — бери этот.",
-    keyHelp: 'Токен: <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a> → New token → Read.',
-    models: [
-      { id: "meta-llama/Llama-3.3-70B-Instruct", vision: false },
-      { id: "Qwen/Qwen2.5-72B-Instruct", vision: false },
-      { id: "deepseek-ai/DeepSeek-V3", vision: false },
-      { id: "mistralai/Mistral-7B-Instruct-v0.3", vision: false }
-    ]
-  },
-  groq: {
-    name: "Groq",
-    base: "https://api.groq.com/openai/v1",
-    hint: "Самый быстрый бесплатный API. 30 запросов в минуту. Ключ: console.groq.com/keys (вход через Google)."
-  },
-  openrouter: {
-    name: "OpenRouter",
-    base: "https://openrouter.ai/api/v1",
-    hint: "Много моделей. Бесплатные помечены :free. Ключ: openrouter.ai/keys (вход через Google)."
-  },
-  llm7: {
-    name: "llm7 · без ключа",
-    base: "https://api.llm7.io/v1",
-    noAuth: true,
-    hint: "Бесплатно и без регистрации вообще. Один движок (gpt-oss 20B), зато не нужен ни ключ, ни вход. Если «Без ключа» молчит — переключись сюда."
-  },
-  puter: {
-    name: "Puter",
-    base: "https://api.puter.com",
-    noAuth: true,
-    sdk: true,
-    hint: "Puter.js — бесплатный доступ к 500+ моделям (OpenAI, Anthropic, Google, Meta и другие) без нашего ключа. Вход по желанию: если не вошла, Искра отвечает через бесплатный движок и ничего не требует."
-  },
-  custom: {
-    name: "Свой URL",
-    base: "",
-    hint: "Любой OpenAI-совместимый API (Cloudflare, Ollama, LocalAI, LM Studio)."
-  }
-};
-
-/* Бесплатные модели. Список сверен с openrouter.ai/api/v1/models (16 бесплатных на 29.10.2026).
-   В приложении он всё равно подтягивается живой из API — это запасной вариант. */
-const PUTER_MODELS = [
-  { id: "gpt-5.4-nano", name: "GPT-5.4 nano", desc: "быстрая по умолчанию", ctx: 128 },
-  { id: "gpt-5-nano", name: "GPT-5 nano", desc: "лёгкая и быстрая", ctx: 128 },
-  { id: "gpt-5-mini", name: "GPT-5 mini", desc: "баланс скорости и ума", ctx: 128 },
-  { id: "claude-sonnet-4.5", name: "Claude Sonnet 4.5", desc: "умная: код и тексты", ctx: 200 },
-  { id: "claude-haiku-4.5", name: "Claude Haiku 4.5", desc: "быстрая, дешёвая", ctx: 200 },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", desc: "быстрая и лёгкая", ctx: 1000 },
-  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", desc: "длинный контекст", ctx: 1000 },
-  { id: "deepseek-chat", name: "DeepSeek Chat", desc: "сильна в математике", ctx: 64 },
-  { id: "deepseek-reasoner", name: "DeepSeek Reasoner", desc: "рассуждает по шагам", ctx: 64 },
-  { id: "llama-3.3-70b", name: "Llama 3.3 70B", desc: "открытая модель Meta", ctx: 128 },
-  { id: "mistral-large-latest", name: "Mistral Large", desc: "европейская модель", ctx: 128 },
-  { id: "qwen3-235b-a22b", name: "Qwen3 235B", desc: "сильна в коде", ctx: 128 },
-  { id: "grok-3-mini", name: "Grok 3 mini", desc: "быстрая от xAI", ctx: 128 }
-];
-
-const FALLBACK_MODELS = {
-  demo: [
-    { id: "openai-fast", name: "Демо-модель (без ключа)", vision: false, ctx: 128 }
-  ],
-  groq: [
-    { id: "qwen/qwen3.6-27b", name: "Qwen3.6 27B — видит фото", vision: true, ctx: 131 },
-    { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B — умная", vision: false, ctx: 131 },
-    { id: "openai/gpt-oss-20b", name: "GPT-OSS 20B — быстрая", vision: false, ctx: 131 },
-    { id: "groq/compound", name: "Compound — агент с веб-поиском", vision: false, ctx: 131 },
-    { id: "groq/compound-mini", name: "Compound Mini — быстрый агент", vision: false, ctx: 131 }
-  ],
-  openrouter: [
-    { id: "thinkingmachines/inkling:free", name: "Inkling 975B · со зрением — самая умная", vision: true, ctx: 1048 },
-    { id: "thinkingmachines/inkling-small:free", name: "Inkling Small · со зрением — 1M контекст", vision: true, ctx: 1048 },
-    { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "Nemotron 3 Ultra 550B — рассуждает", vision: false, ctx: 1000 },
-    { id: "nvidia/nemotron-3.5-lightning:free", name: "Nemotron 3.5 Lightning — очень быстрая", vision: false, ctx: 1000 },
-    { id: "nvidia/nemotron-3.5-super-vl:free", name: "Nemotron 3.5 Super VL · со зрением", vision: true, ctx: 1000 },
-    { id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", name: "Nemotron 3 Nano Omni · со зрением", vision: true, ctx: 256 },
-    { id: "google/gemma-4-31b-it:free", name: "Gemma 4 31B · со зрением (Google)", vision: true, ctx: 262 },
-    { id: "google/gemma-4-26b-a4b-it:free", name: "Gemma 4 26B · со зрением (Google)", vision: true, ctx: 262 },
-    { id: "cohere/north-mini-code:free", name: "North Mini Code — для кода", vision: false, ctx: 256 },
-    { id: "poolside/laguna-s-2.1:free", name: "Laguna S 2.1 — код 118B", vision: false, ctx: 262 },
-    { id: "poolside/laguna-xs-2.1:free", name: "Laguna XS 2.1 — код лёгкий", vision: false, ctx: 262 },
-    { id: "dots-studio/dots-3-note-preview:free", name: "Dots3 Note · со зрением", vision: true, ctx: 512 },
-    { id: "recursive/flint-v1.0:free", name: "Flint v1.0", vision: false, ctx: 262 },
-    { id: "xingchen-agi/xing4.0-29b-a4b:free", name: "Xing4.0 29B", vision: false, ctx: 262 },
-    { id: "liquid/lfm-2.5-2.6b:free", name: "LFM 2.5 — самая быстрая", vision: false, ctx: 65 }
-  ],
-  puter: PUTER_MODELS,
-  custom: []
-};
-
-/* Модели, которые уже удалили — чтобы у старых пользователей не было 404 */
-const DEAD_MODELS = {
-  "deepseek/deepseek-chat-v3.1:free": "thinkingmachines/inkling:free",
-  "deepseek/deepseek-r1:free": "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "meta-llama/llama-3.3-70b-instruct:free": "thinkingmachines/inkling-small:free",
-  "qwen/qwen3-235b-a22b:free": "nvidia/nemotron-3.5-lightning:free",
-  "qwen/qwen3-coder:free": "cohere/north-mini-code:free",
-  "google/gemma-3-27b-it:free": "google/gemma-4-31b-it:free",
-  "google/gemma-3-12b-it:free": "google/gemma-4-26b-a4b-it:free",
-  "mistralai/mistral-small-3.2-24b-instruct:free": "thinkingmachines/inkling-small:free",
-  "meta-llama/llama-4-scout:free": "thinkingmachines/inkling-small:free",
-  "meta-llama/llama-4-maverick:free": "thinkingmachines/inkling:free",
-  "meta-llama/llama-4-scout-17b-16e-instruct": "openai/gpt-oss-120b",
-  "meta-llama/llama-4-maverick-17b-128e-instruct": "openai/gpt-oss-120b",
-  "llama-3.3-70b-versatile": "openai/gpt-oss-120b",
-  "moonshotai/kimi-k2-instruct": "openai/gpt-oss-120b",
-  "deepseek-r1-distill-llama-70b": "openai/gpt-oss-120b"
+/* Необязательный свой ключ. Если он есть — Искра отвечает через него
+   первой: быстрее и без общих лимитов. Названий сервисов в интерфейсе нет. */
+const KEY_PROVIDERS = {
+  groq:        { base: "https://api.groq.com/openai/v1",   model: "openai/gpt-oss-120b", keyed: true },
+  huggingface: { base: "https://router.huggingface.co/v1", model: "meta-llama/Llama-3.3-70B-Instruct", keyed: true },
+  openrouter:  { base: "https://openrouter.ai/api/v1",     model: "thinkingmachines/inkling:free", keyed: true, vision: true },
+  custom:      { base: "", model: "", keyed: false }
 };
 
 function guessVision(id) {
-  const s = String(id || "").toLowerCase();
-  return /(\bvl\b|vision|llama-4|scout|maverick|gemma-3|gemini|gpt-4o|gpt-5|claude-3|claude-sonnet-4|pixtral|llava|internvl|glm-4\.5v|mistral-small-3|qwen[\d.]*-vl|qwen3\.6|domo|paligemma)/.test(s);
+  const t = String(id || "").toLowerCase();
+  return /(vl|vision|llama-4|scout|maverick|gemma-3|gemini|gpt-4o|gpt-5|claude-3|claude-sonnet-4|pixtral|llava|internvl|qwen[\d.]*-vl|qwen3\.[5-9])/.test(t);
+}
+
+/* Какой это ключ — по началу строки. Нужно только чтобы понять,
+   куда его нести: человеку в интерфейсе эти названия не показываются. */
+function detectKeyKind(key) {
+  const k = String(key || "").trim();
+  if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", base: KEY_PROVIDERS.groq.base, model: KEY_PROVIDERS.groq.model };
+  if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", base: KEY_PROVIDERS.huggingface.base, model: KEY_PROVIDERS.huggingface.model };
+  if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", base: KEY_PROVIDERS.openrouter.base, model: KEY_PROVIDERS.openrouter.model };
+  return null;
+}
+
+/* Движки, которые есть только благодаря ключу человека (если он его вписал) */
+function keyEngines() {
+  const out = [];
+  const key = String(settings.apiKey || "").trim();
+  const kind = key ? detectKeyKind(key) : null;
+  if (kind && kind.base) out.push({ id: "key", base: kind.base, model: kind.model, key, timeout: 25, vision: !!KEY_PROVIDERS[kind.provider].vision });
+  const customBase = String(settings.baseUrl || "").trim().replace(/\/+$/, "");
+  if (customBase && /^https?:\/\//i.test(customBase) && (!kind || settings.provider === "custom")) {
+    out.push({ id: "own", base: customBase, model: settings.customModel || "", key, timeout: 25 });
+  }
+  return out;
+}
+
+/* Когда последний удачный движок ответил — начинаем с него: так ответы быстрее */
+let _lastGoodEngine = "";
+function orderedEngines(needVision) {
+  let list = [...keyEngines(), ...ISKRA_ENGINES];
+  if (needVision) {
+    list = list.filter(e => e.vision || guessVision(e.model))
+      .concat(list.filter(e => !(e.vision || guessVision(e.model))));
+  }
+  const i = list.findIndex(e => e.id === _lastGoodEngine);
+  if (i > 0) list.unshift(list.splice(i, 1)[0]);
+  return list;
 }
 
 /* ---------- Характеры ---------- */
@@ -6172,16 +6049,21 @@ let pendingWeb = false;
 let abortCtrl = null;
 /* Что сейчас генерируется: нужно, чтобы удаление чата не обрывало ответ */
 let liveStream = null;
-let lastModelVision = guessVision(settings.model);
 
 /* Чиним настройки: мёртвые модели и неизвестный режим */
 (function migrate() {
-  if (DEAD_MODELS[settings.model]) {
-    settings.model = DEAD_MODELS[settings.model];
-    lastModelVision = guessVision(settings.model);
-    saveSettings();
+  /* Старые настройки хранили чужие названия моделей и провайдеров.
+     Искра теперь одна, поэтому чистим это при запуске. */
+  if (settings.model !== "iskra" && settings.model !== "iskra-pro") { settings.model = "iskra"; saveSettings(); }
+  if (settings.provider && settings.provider !== "custom" && !KEY_PROVIDERS[settings.provider]) {
+    settings.provider = "custom"; saveSettings();
   }
-  if (typeof settings.puterExplained !== "boolean") settings.puterExplained = false;
+  delete settings.hordeKey;
+  delete settings.pollinationsToken;
+  delete settings.imageEngine;
+  if (!["auto", "hq", "fast"].includes(settings.imageQuality)) settings.imageQuality = "auto";
+  delete settings.provider;
+  delete settings.model2;
   if (typeof settings.autoLearn !== "boolean") settings.autoLearn = true;
   if (typeof settings.nuke !== "boolean") settings.nuke = false;
   if (!MODES[settings.mode]) settings.mode = "chat";
@@ -6210,13 +6092,14 @@ let lastModelVision = guessVision(settings.model);
     settings.mode = "study"; saveSettings();
   }
   if (!settings.modeChats || typeof settings.modeChats !== "object") settings.modeChats = {};
-  /* Ключ в настройках есть, а провайдер «Без ключа» — частая жалоба «ключ есть, а не отвечает».
-     При запуске приводим их в соответствие один раз. */
-  try { syncProviderWithKey(); ensureModelForProvider(); } catch (e) {}
-  /* Движок картинок: по умолчанию авто (Puter → Stable Horde → Pollinations) */
-  if (!settings.imageEngine) settings.imageEngine = "auto";
-  if (typeof settings.hordeKey !== "string") settings.hordeKey = "";
-  if (typeof settings.pollinationsToken !== "string") settings.pollinationsToken = "";
+  /* Ключ (если человек его вписал) определяем сами — по началу строки */
+  const k = String(settings.apiKey || "").trim();
+  const kind = k ? detectKeyKind(k) : null;
+  settings.provider = kind ? kind.provider : "custom";
+  if (typeof settings.customModel !== "string") settings.customModel = "";
+  if (!settings.imageQuality) settings.imageQuality = "auto";
+  if (typeof settings.imageKey !== "string") settings.imageKey = "";
+  saveSettings();
 })();
 
 /* ---------- Настройки настоящего входа (Supabase) ----------
@@ -6237,10 +6120,11 @@ function loadSettings() {
     if (raw) return JSON.parse(raw);
   } catch(e) {}
   return {
-    provider: "demo",
+    provider: "custom",
     baseUrl: "",
+    customModel: "",
     apiKey: "",
-    model: "openai-fast",
+    model: "iskra",
     mode: "chat",
     persona: "universal",
     customPersona: "",
@@ -6249,7 +6133,7 @@ function loadSettings() {
     memory: [],
     knowledge: [],
     knowledgeOn: true,
-    webSearch: true,
+    webSearch: false,
     edition: "free",
     tone: "neutral",
     mat: false,
@@ -6257,9 +6141,8 @@ function loadSettings() {
     riskMode: false,
     supabaseUrl: "",
     supabaseKey: "",
-    imageEngine: "auto",
-    hordeKey: "",
-    pollinationsToken: ""
+    imageQuality: "auto",
+    imageKey: ""
   };
 }
 function saveSettings() {
@@ -6871,206 +6754,7 @@ function resendLast() {
 }
 
 
-/* ---------- Puter.js: бесплатные модели без ключа ---------- */
-function loadPuter() {
-  if (window.puter && window.puter.ai) return Promise.resolve(window.puter);
-  if (loadPuter._p) return loadPuter._p;
-  loadPuter._p = new Promise((resolve, reject) => {
-    const sc = document.createElement("script");
-    sc.src = "https://js.puter.com/v2/";
-    sc.async = true;
-    sc.onload = () => (window.puter && window.puter.ai) ? resolve(window.puter)
-      : reject(new ApiError(0, "Puter.js загрузился, но API не появился", "puter-sdk"));
-    sc.onerror = () => reject(new ApiError(0, "Не удалось загрузить Puter.js. Проверь интернет или блокировщик рекламы.", "puter-sdk"));
-    setTimeout(() => reject(new ApiError(0, "Puter.js не загрузился за 12 секунд — работаю без него", "puter-timeout")), 12000);
-    document.head.appendChild(sc);
-  });
-  return loadPuter._p;
-}
-
-
-
-/* Проверка входа в Puter без открытия окон. Кэш на 5 минут. */
-let _puterSigned = null, _puterSignedAt = 0;
-async function puterSignedInCached(force) {
-  if (!force && _puterSigned !== null && Date.now() - _puterSignedAt < 5 * 60000) return _puterSigned;
-  try {
-    const puter = await loadPuter();
-    if (!puter.auth || typeof puter.auth.isSignedIn !== "function") { _puterSigned = false; }
-    else {
-      const t = new Promise((r) => setTimeout(() => r(false), 3000));
-      _puterSigned = !!(await Promise.race([puter.auth.isSignedIn(), t]));
-    }
-  } catch (e) { _puterSigned = false; }
-  _puterSignedAt = Date.now();
-  return _puterSigned;
-}
-
-async function puterStream(payload, onDelta, signal) {
-  const puter = await loadPuter();
-  const model = settings.model && settings.model !== "iskra-1" ? settings.model : "gpt-5.4-nano";
-  let res;
-  try {
-    res = await puter.ai.chat(payload.messages, {
-      model,
-      stream: true,
-      temperature: payload.temperature,
-      max_tokens: payload.max_tokens,
-      signal
-    });
-  } catch (e) {
-    const msg = (e && (e.message || e.error?.message)) || "";
-    if (/auth|sign|login|permission/i.test(msg)) {
-      throw new ApiError(401, "Нужен вход в Puter. Нажми «Войти в Puter» в настройках — это бесплатно, без карты.", "puter-auth");
-    }
-    throw new ApiError(0, msg || "Puter не ответил", "puter");
-  }
-  const take = (part) => {
-    if (!part) return "";
-    if (typeof part === "string") return part;
-    if (typeof part.text === "string") return part.text;
-    const c = part.delta?.content ?? part.message?.content ?? part.choices?.[0]?.delta?.content;
-    if (typeof c === "string") return c;
-    if (Array.isArray(c)) return c.map(x => x?.text || "").join("");
-    return "";
-  };
-  if (res && typeof res[Symbol.asyncIterator] === "function") {
-    for await (const part of res) { const d = take(part); if (d) onDelta(d); }
-  } else {
-    const d = take(res);
-    if (d) onDelta(d);
-  }
-}
-
-
-
-/* ---------- Puter: предзагрузка и вход по клику (без блокировки окон) ---------- */
-let puterPreloaded = false;
-let puterSignInPromise = null;
-
-function preloadPuter() {
-  if (puterPreloaded) return;
-  puterPreloaded = true;
-  const sc = document.createElement("script");
-  sc.src = "https://js.puter.com/v2/";
-  sc.async = true;
-  sc.onload = () => { try { window.puter.quiet = true; } catch (e) {} };
-  document.head.appendChild(sc);
-}
-
-/* Вызывается СИНХРОННО из обработчика клика — тогда браузер не блокирует окно */
-function startPuterSignInNow() {
-  if (!window.puter || !window.puter.auth) return false;
-  try {
-    puterSignInPromise = window.puter.auth.signIn();
-    puterSignInPromise.catch(() => {});
-    return true;
-  } catch (e) { return false; }
-}
-
-/* ---------- Объяснение про Puter (чтобы окно не пугало) ---------- */
-function askPuterFirst() {
-  preloadPuter();
-  return new Promise((resolve) => {
-    const m = $("#puterModal");
-    if (!m) return resolve(true);
-    m.classList.add("open");
-    const done = (v) => { m.classList.remove("open"); resolve(v); };
-    const go = $("#puterGo"), skip = $("#puterSkip"), cl = $("#puterClose");
-    if (go) go.onclick = () => { startPuterSignInNow(); done(true); };
-    if (skip) skip.onclick = () => { done(false); useNoKeyMode(); };
-    if (cl) cl.onclick = () => done(false);
-    const groqSave = $("#groqSave");
-    if (groqSave) groqSave.onclick = async () => {
-      const key = ($("#groqKeyInput").value || "").trim();
-      const pick = detectKeyKind(key);
-      if (!pick) { toast("Ключ должен начинаться на gsk_ (Groq) или hf_ (Hugging Face) — проверь, что скопировала целиком", "err"); return; }
-      settings.provider = pick.provider;
-      settings.apiKey = key;
-      settings.model = pick.model;
-      lastModelVision = false;
-      saveSettings();
-      syncProviderUI && syncProviderUI();
-      updateModelChip && updateModelChip();
-      done(true);
-      toast(pick.provider === "huggingface" ? "Готово: работаю через Hugging Face — ключ бесплатный" : "Готово: работаю через Groq — быстро и без окон входа", "ok");
-      // проверяем ключ живым запросом
-      try {
-        const base = PROVIDERS[pick.provider].base;
-        const r = await fetch(base + "/models", { headers: { Authorization: "Bearer " + key } });
-        if (!r.ok) toast("Ключ сохранён, но сервер ответил ошибкой " + r.status + ". Проверь, что ключ активен.", "err");
-        else toast("Ключ рабочий — модели доступны", "ok");
-      } catch (e) {}
-    };
-    const groqOpen = $("#groqOpen");
-    if (groqOpen) groqOpen.onclick = () => window.open("https://console.groq.com/keys", "_blank", "noopener");
-    const hfOpen = $("#hfOpen");
-    if (hfOpen) hfOpen.onclick = () => window.open("https://huggingface.co/settings/tokens", "_blank", "noopener");
-    const tab = $("#puterTab");
-    if (tab) tab.onclick = () => window.open("https://puter.com/?action=sign-in", "_blank", "noopener");
-    const chk = $("#puterCheck");
-    if (chk) chk.onclick = async () => {
-      try {
-        const puter = await loadPuter();
-        const yes = await puter.auth.isSignedIn();
-        if (yes) { done(true); toast("Вход в Puter есть — модели доступны", "ok"); }
-        else toast("Пока не вошла. Войди на вкладке puter.com и нажми «Проверить вход» снова.", "err");
-      } catch (e) { toast("Не получилось проверить: " + (e.message || "ошибка сети"), "err"); }
-    };
-    m.onclick = (e) => { if (e.target === m) done(false); };
-  });
-}
-
-/* «Без Puter» — переключаемся на бесплатный движок без входа */
-function useNoKeyMode() {
-  settings.provider = "demo";
-  const demoModels = (PROVIDERS.demo && PROVIDERS.demo.models) || [];
-  settings.model = (demoModels[0] && demoModels[0].id) || "openai-fast";
-  lastModelVision = false;
-  saveSettings(); syncProviderUI && syncProviderUI(); updateModelChip && updateModelChip();
-  toast("Работаю на своих знаниях и бесплатном движке без входа", "ok");
-}
-async function puterSignIn() {
-  if (!settings.puterExplained) {
-    const go = await askPuterFirst();
-    if (!go) return false;
-    settings.puterExplained = true;
-    saveSettings();
-  }
-  try {
-    const puter = await loadPuter();
-    if (puterSignInPromise) {
-      try { await Promise.race([puterSignInPromise, new Promise(r => setTimeout(r, 120000))]); } catch (e) {}
-    } else {
-      await puter.auth.signIn();
-    }
-    // Этап 2: подтвердился ли вход на самом деле
-    let signed = false;
-    try {
-      signed = await Promise.race([
-        puter.auth.isSignedIn(),
-        new Promise(r => setTimeout(() => r(false), 6000))
-      ]);
-    } catch (e) { signed = false; }
-    if (!signed) {
-      _puterSigned = false; _puterSignedAt = Date.now();
-      // окно закрылось, но браузер не отдал вход приложению — почти всегда это cookie
-      toast("Окно Puter закрылось, но браузер не передал вход обратно. Это блокировка сторонних cookies в Firefox. Решение: значок щита у адреса → «Выключить защиту на этом сайте», либо взять бесплатный ключ Groq.", "err");
-      settings.puterExplained = false;
-      saveSettings();
-      return false;
-    }
-    _puterSigned = true; _puterSignedAt = Date.now();
-    toast("Вход в Puter выполнен — модели доступны", "ok");
-    return true;
-  } catch (e) {
-    const msg = ((e && e.message) || "окно закрыто");
-    toast("Вход в Puter не выполнен: " + msg + ". Открой Puter в новой вкладке и войди там — потом нажми «Проверить вход».", "err");
-    settings.puterExplained = false;   // покажем подсказки ещё раз
-    saveSettings();
-    return false;
-  }
-}
+/* Никаких внешних кабинетов: Искра отвечает своими движками без входа и регистрации. */
 
 /* ---------- API вызов ---------- */
 const GENDER_RULE = "ВАЖНО ПРО РОД: ты — Искра, женского рода. О себе говори ТОЛЬКО в женском роде: «я сделала», «я нашла», «я подумала», «я рада», «я готова», «я поняла», «я посмотрела», «я ошиблась». Никогда не пиши о себе в мужском роде («я сделал», «я рад», «я готов»). Это правило важнее стиля.";
@@ -7251,17 +6935,13 @@ function apiPayload(chatMessages, opts = {}) {
   const sys = buildSystemPrompt(lastText);
   const msgs = [{ role: "system", content: sys }, ...chatMessages.map(toApiMsg)];
   const body = {
-    model: settings.model,
     messages: msgs,
     stream: true,
     temperature: 0.7,
     max_tokens: 4096
   };
-  if (settings.webSearch && settings.provider === "openrouter") {
+  if (settings.webSearch && settings.apiKey && settings.provider === "openrouter") {
     body.plugins = [{ id: "web", max_results: 3 }];
-  }
-  if (settings.provider === "openrouter") {
-    body.provider = { sort: "throughput" };
   }
   // скорость и глубина
   if (settings.riskMode) {
@@ -7294,147 +6974,78 @@ function offlineAnswer(question) {
 function baseAnswerExists(q) { return kbSearch(q, 1).length > 0 || learnedList().length > 0; }
 
 /* К какому провайдеру относится модель (по id) */
-function modelOwner(id) {
-  const m = String(id || "");
-  if (!m) return "";
-  for (const [prov, list] of Object.entries(FALLBACK_MODELS)) {
-    if ((list || []).some(x => x.id === m)) return prov;
-  }
-  for (const [prov, list] of Object.entries(BRAND_MODELS || {})) {
-    if ((list || []).some(x => x.id === m)) return prov;
-  }
-  for (const [prov, cfg] of Object.entries(PROVIDERS)) {
-    if ((cfg.models || []).some(x => x.id === m)) return prov;
-  }
-  return "";
-}
-
-/* Главная причина «ключ есть, а Искра молчит»: ключ лежал в настройках,
-   но провайдер оставался «Без ключа», и ключ вообще не использовался.
-   Эта функция сверяет ключ, провайдера и модель и приводит их в порядок. */
-function syncProviderWithKey() {
-  const key = String(settings.apiKey || "").trim();
-  const kind = detectKeyKind(key);
-  let changed = null;
-  if (kind && settings.provider !== "custom" && settings.provider !== kind.provider) {
-    changed = { from: settings.provider, to: kind.provider };
-    settings.provider = kind.provider;
-    const owner = modelOwner(settings.model);
-    if (!owner || owner !== kind.provider) settings.model = kind.model;
-    lastModelVision = guessVision(settings.model);
-    saveSettings();
-    return changed;
-  }
-  // ключ не опознан, но провайдер требует ключ, а его нет — не падаем: остаёмся как есть
-  return changed;
-}
-
-/* Модель от другого провайдера — частая причина 404. Подставляем родную. */
-function ensureModelForProvider() {
-  const prov = settings.provider;
-  if (!prov || prov === "custom") return false;
-  const owner = modelOwner(settings.model);
-  if (!owner || owner === prov) return false;
-  const def = (FALLBACK_MODELS[prov] || [])[0] || (PROVIDERS[prov].models || [])[0];
-  if (!def) return false;
-  settings.model = def.id;
-  lastModelVision = guessVision(settings.model);
-  saveSettings();
-  return true;
-}
-
-/* Рабочая модель по умолчанию для провайдера — берём из нашего же списка,
-   чтобы ключ никогда не включал модель, которой уже нет */
-function defaultModelFor(provider) {
-  const a = (FALLBACK_MODELS[provider] || [])[0];
-  if (a && a.id) return a.id;
-  const b = ((PROVIDERS[provider] && PROVIDERS[provider].models) || [])[0];
-  return b && b.id ? b.id : "";
-}
-
-/* Какой это ключ — по началу строки */
-function detectKeyKind(key) {
-  const k = String(key || "").trim();
-  if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", model: defaultModelFor("groq") || "llama-3.3-70b-versatile" };
-  if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", model: defaultModelFor("huggingface") || "meta-llama/Llama-3.3-70B-Instruct" };
-  if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", model: defaultModelFor("openrouter") || "meta-llama/llama-3.3-70b-instruct:free" };
-  return null;
-}
-
-/* Что именно случилось — своими словами и без выдумок */
+/* Что именно случилось — своими словами и без выдумок.
+   Никаких названий сторонних сервисов: для человека это всё «движки Искры». */
 function describeFailure(err) {
-  if (!err) return "нет ответа от модели";
-  if (err.kind === "custom-empty") return "в настройках выбран «Свой URL», но адрес пустой";
-  if (err.kind === "all-busy") return "бесплатные движки без ключа заняты — общий лимит на всех";
-  const st = Number(err.status) || 0;
-  if (st === 0) return "нет связи с сервером (интернет, блокировка или CORS)";
-  if (st === 400) return "сервер не принял запрос (400) — чаще всего модель не та";
-  if (st === 401) return "ключ не принят (401) — он неверный, обрезанный или отозван";
-  if (st === 402) return "на ключе кончились кредиты (402)";
-  if (st === 403) return "ключ есть, но доступ закрыт (403) — модель недоступна аккаунту";
-  if (st === 404) return "модель не найдена (404) — её нет у этого провайдера";
-  if (st === 413) return "запрос слишком длинный (413) — сократи текст или переписку";
-  if (st === 422) return "сервер не понял поля запроса (422)";
-  if (st === 429) return "лимит запросов (429) — слишком часто для этого ключа";
-  if (st === 500 || st === 502 || st === 503 || st === 504) return "сервер провайдера занят или упал (" + st + ")";
-  return "HTTP " + st;
+  const st = Number(err && err.status) || 0;
+  const kind = err && err.kind;
+  if (kind === "abort") return "остановлено";
+  if (st === 401) return "ключ не принят — он неверный, обрезанный или отозван";
+  if (st === 402) return "на ключе закончились кредиты";
+  if (st === 403) return "доступ закрыт для этого ключа";
+  if (st === 404) return "движок не нашёл модель (404)";
+  if (st === 413) return "запрос слишком длинный — сократи текст или переписку";
+  if (st === 429) return "лимит запросов — слишком часто";
+  if (st >= 500) return "движок занят (ошибка " + st + ")";
+  if (st >= 400) return "движок отклонил запрос (ошибка " + st + ")";
+  if (kind === "timeout") return "движок не ответил вовремя";
+  return "нет связи с движком — интернет, блокировка или фильтр в сети";
 }
 function failureRaw(err) {
   const raw = String((err && (err.body || err.message)) || "").replace(/\s+/g, " ").trim();
-  return raw && !/^HTTP \d+$/.test(raw) ? raw.slice(0, 180) : "";
+  return raw && !/^HTTP \d+$/.test(raw) ? raw.slice(0, 160) : "";
 }
 
+/* Карточка «сейчас не получилось»: честная причина, ответ из базы знаний,
+   если он есть, и понятные кнопки. Никаких выдуманных отговорок. */
 function showFailCard(contentEl, aiMsg, question, err) {
   const baseAnswer = offlineAnswer(question);
   const reason = typeof err === "string" ? err : describeFailure(err);
   const raw = typeof err === "string" ? "" : failureRaw(err);
   const hasKey = !!String(settings.apiKey || "").trim();
-  const provName = (PROVIDERS[settings.provider] && PROVIDERS[settings.provider].name) || settings.provider || "модель";
   const head = baseAnswer
-    ? `Модель сейчас недоступна (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}`
+    ? `Сейчас движки молчат (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}`
     : hasKey
-      ? `Ключ есть, но ${provName} не ответил: ${reason}. Запасные бесплатные движки я тоже попробовала — они сейчас молчат.\n\nЧто можно сделать: проверь ключ кнопкой ниже (это 2 секунды), выбери другую модель или нажми «Повторить запрос» — часто помогает со второго раза.`
-      : `Сейчас не могу ответить: бесплатные движки без ключа не ответили — ${reason}.\n\nПодожди 20–30 секунд и нажми «Повторить запрос». Или вставь бесплатный ключ — с ним лимита почти не бывает и отвечаю я гораздо умнее.`;
+      ? `Не получилось ответить: ${reason}. Я попробовала все движки, включая твой ключ.\n\nНажми «Повторить» — обычно со второго раза получается. Если повторяется, проверь ключ или удали его: без ключа я тоже отвечаю.`
+      : `Не получилось ответить: ${reason}. Я попробовала все движки по очереди — сейчас они молчат.\n\nПодожди 15–20 секунд и нажми «Повторить». Если так каждый раз — проверь интернет.`;
   aiMsg.content = head;
   aiMsg.failedSoft = true;
   contentEl.innerHTML = renderMarkdown(aiMsg.content);
   const box = document.createElement("div");
   box.className = "fail-actions";
   box.innerHTML = `
-    <div class="fail-note">${baseAnswer ? "Это ответ из моей базы — без интернета." : raw ? "Что ответил сервер: " + esc(raw) : "Модель не ответила."}</div>
     <div class="fail-btns">
-      ${hasKey
-        ? `<button data-fail="check">Проверить ключ</button><button data-fail="groq">Сменить ключ</button>`
-        : `<button data-fail="groq">Ввести ключ</button>`}
-      <button data-fail="puter">Войти в Puter</button>
-      <button data-fail="retry">Повторить запрос</button>
+      <button type="button" data-fail="retry">Повторить запрос</button>
+      <button type="button" data-fail="key">${hasKey ? "Сменить ключ" : "Ввести свой ключ"}</button>
+      <button type="button" data-fail="kb" ${baseAnswer ? "" : "hidden"}>Открыть базу знаний</button>
     </div>
-    <div class="fail-key" id="failKeyBox" style="${hasKey ? "" : "display:none"}">
-      <input id="failKeyInput" placeholder="gsk_… · hf_… · sk-or-v1-…" autocomplete="off" spellcheck="false" value="${hasKey ? "" : ""}">
-      <button id="failKeySave">Включить</button>
+    ${raw ? `<div class="fail-note">Ответ движка: ${esc(raw)}</div>` : ""}
+    <div class="fail-key" id="failKeyBox" style="display:none">
+      <input id="failKeyInput" placeholder="вставь ключ доступа" autocomplete="off" spellcheck="false" value="">
+      <button id="failKeySave" type="button">Включить</button>
     </div>
-    <div class="fail-note" style="margin-top:8px">Подходит любой бесплатный ключ: <b>Groq</b> (gsk_…) или <b>Hugging Face</b> (hf_…). Совсем без ключа тоже работает, но с лимитом на всех. <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Взять ключ Hugging Face</a> · <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Взять ключ Groq</a></div>`;
+    <div class="fail-note">Ключ не обязателен: без него Искра тоже отвечает. Ключ просто снимает общий лимит и делает ответы точнее. Хранится только в твоём браузере.</div>`;
   contentEl.appendChild(box);
 
-  const checkBtn = box.querySelector('[data-fail="check"]');
-  if (checkBtn) checkBtn.onclick = () => { openSettings(); setTimeout(() => { try { testConnection(); } catch (e) {} }, 250); };
   const keyBox = box.querySelector("#failKeyBox");
-  box.querySelector('[data-fail="groq"]').onclick = () => {
+  box.querySelector('[data-fail="retry"]').onclick = () => sendMessage(question, [], false, true);
+  box.querySelector('[data-fail="key"]').onclick = () => {
     keyBox.style.display = keyBox.style.display === "none" ? "flex" : "none";
     const inp = box.querySelector("#failKeyInput");
-    if (inp) { inp.value = ""; inp.focus(); }
+    if (inp) { inp.value = settings.apiKey || ""; inp.focus(); }
   };
-  box.querySelector('[data-fail="puter"]').onclick = () => puterSignIn();
-  box.querySelector('[data-fail="retry"]').onclick = () => sendMessage(question, [], false, true);
-  box.querySelector("#failKeySave").onclick = async () => {
+  const kbBtn = box.querySelector('[data-fail="kb"]');
+  if (kbBtn) kbBtn.onclick = () => openKnowledge();
+  box.querySelector("#failKeySave").onclick = () => {
     const key = (box.querySelector("#failKeyInput").value || "").trim();
-    const pick = detectKeyKind(key);
-    if (!pick) { toast("Ключ должен начинаться на gsk_ (Groq), hf_ (Hugging Face) или sk-or-v1- (OpenRouter)", "err"); return; }
-    settings.provider = pick.provider; settings.apiKey = key; settings.model = pick.model;
-    lastModelVision = guessVision(pick.model); saveSettings();
-    try { syncProviderWithKey(); } catch (e) {}
-    syncProviderUI && syncProviderUI(); updateModelChip && updateModelChip();
-    toast("Ключ сохранён — повторяю вопрос", "ok");
+    if (key && !detectKeyKind(key) && !/^https?:/i.test(settings.baseUrl || "")) {
+      toast("Такой ключ не распознан. Вставь его целиком или очисти поле, чтобы отвечала без ключа.", "err");
+      return;
+    }
+    settings.apiKey = key;
+    settings.provider = key ? (detectKeyKind(key)?.provider || "custom") : "custom";
+    saveSettings(); updateComposerNote();
+    toast(key ? "Ключ сохранён — повторяю вопрос" : "Ключ убран — отвечаю без него", "ok");
     sendMessage(question, [], false, true);
   };
   saveChats();
@@ -7444,44 +7055,16 @@ function showFailCard(contentEl, aiMsg, question, err) {
 /* ---------- Домашка по фото ---------- */
 const HOMEWORK_HINT = "ДОМАШКА ПО ФОТО: пользователь прислал снимок. Сначала прочитай, что на нём написано (условие задачи, номер упражнения), потом: 1) кратко перескажи условие своими словами — чтобы было видно, что прочитано верно; 2) реши по шагам с пояснениями; 3) в конце дай ответ отдельной строкой. Если почерк неразборчив или фото смазано — скажи прямо, что именно не видно, и попроси переснять крупнее, а не выдумывай условие.";
 
-/* Модели со зрением для каждого провайдера */
-const VISION_MODEL = {
-  puter: "claude-sonnet-4.5",
-  groq: "qwen/qwen3.6-27b",
-  openrouter: "google/gemma-4-31b-it:free",
-  demo: "",
-  custom: ""
-};
-
 function needsVision(images) { return Array.isArray(images) && images.length > 0; }
 
-/* Если текущая модель не видит картинки — подсказываем и предлагаем переключить */
-function ensureVisionModel() {
-  if (lastModelVision) return true;
-  let alt = VISION_MODEL[settings.provider];
-  if (!alt) {
-    // у демо-режима зрения нет: переключаемся на Puter, там модели с фото
-    settings.provider = "puter";
-    alt = VISION_MODEL.puter;
-    syncProviderUI && syncProviderUI();
-    toast("Фото понимает только модель со зрением — включила Puter (Claude Sonnet 4.5). При первом сообщении попросит бесплатный вход.", "err");
-  }
-  const prev = settings.model;
-  settings.model = alt;
-  lastModelVision = true;
-  saveSettings(); updateModelChip(); updateModelHint();
-  if (settings.provider !== "puter") toast("Включила модель со зрением: " + modelDisplayName(alt), "ok");
-  if (prev) lastModelVisionPrev = prev;
-  return true;
-}
-let lastModelVisionPrev = "";
+/* Фото видят не все движки. Искра сама отправит такой запрос туда,
+   где картинки понимают, — человеку ничего переключать не нужно. */
+function ensureVisionModel() { return true; }
 
 function toApiMsg(m) {
   if (!m.images?.length) return { role: m.role, content: m.content };
-  if (!lastModelVision) {
-    // модель без зрения — отправим только текст + предупрежение
-    return { role: m.role, content: m.content + "\n\n[Пользователь прикрепил фото, но текущая модель не поддерживает изображения. Попроси его сменить модель на ту, что с · со зрением.]" };
-  }
+  /* Фото Искра всегда отдаёт тому движку, который умеет их видеть, —
+     человеку ничего переключать не нужно. */
   const parts = [];
   if (m.content) parts.push({ type: "text", text: m.content });
   for (const src of m.images) parts.push({ type: "image_url", image_url: { url: src } });
@@ -7938,221 +7521,148 @@ function sanitizeMessages(msgs) {
   return [{ role: "system", content: sys || "Ты — Искра, полезный ассистент. Отвечай по-русски." }, ...rest];
 }
 
-/* Поток с автоматическим переходом на запасной движок */
-async function chainStream(payload, onDelta, signal) {
-  // одна тихая повторная попытка: бесплатные движки иногда отдают 503/429 на пару секунд
-  try {
-    return await chainOnce(payload, onDelta, signal);
-  } catch (e) {
-    if (e && e.name === "AbortError") throw e;
-    if (!e || !(e.status === 429 || e.status === 503 || e.kind === "all-busy")) throw e;
-    // если база знаний может ответить по теме — не томим человека ожиданием
-    const lastUser = [...(payload.messages || [])].reverse().find(m => m.role === "user");
-    const qText = lastUser ? (typeof lastUser.content === "string" ? lastUser.content : "") : "";
-    let canAnswerFromBase = false;
-    try { canAnswerFromBase = !!qText && baseAnswerExists(qText); } catch (err) {}
-    if (canAnswerFromBase) throw e;
-    const waitSec = Math.min(Math.max(Number(e && e.retryAfter) || 5, 4), 8);
-    await wait(waitSec * 1000);
-    if (signal && signal.aborted) throw new ApiError(0, "остановлено", "abort");
-    return await chainOnce(payload, onDelta, signal);
+/* Один движок: отправляем запрос, читаем поток, отдаём куски по мере появления.
+   Каждый движок ограничен по времени — чтобы зависший сервис не держал человека. */
+async function streamOnce(engine, payload, onDelta, signal) {
+  const ctrl = new AbortController();
+  const timeoutSec = engine.timeout || 25;
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; try { ctrl.abort(); } catch (e) {} }, timeoutSec * 1000);
+  const onAbort = () => { try { ctrl.abort(); } catch (e) {} };
+  if (signal) {
+    if (signal.aborted) { clearTimeout(timer); throw new ApiError(0, "остановлено", "abort"); }
+    signal.addEventListener("abort", onAbort);
   }
-}
-
-async function chainOnce(payload, onDelta, signal) {
-  const order = settings.provider === "llm7"
-    ? [DEMO_BACKENDS[1], DEMO_BACKENDS[0]]
-    : DEMO_BACKENDS.slice();
-  // тот движок, что отвечал последним, пробуем первым
-  let cached = "";
-  try { cached = localStorage.getItem("iskra.backend.v1") || ""; } catch (e) {}
-  if (cached) order.sort((a, b) => (b.name === cached ? 1 : 0) - (a.name === cached ? 1 : 0));
-  let lastErr = null;
-  for (let i = 0; i < order.length; i++) {
-    const b = order[i];
-    let got = 0;
-    try {
-      const body = { ...payload, model: b.model, stream: true, messages: sanitizeMessages(payload.messages) };
-      // бесплатные движки не понимают часть настроек — убираем, иначе 400
-      delete body.reasoning_effort;
-      delete body.reasoning;
-      delete body.verbosity;
-      delete body.service_tier;
-      delete body.provider;
-      const res = await fetch(b.base + "/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        const e = new ApiError(res.status, txt);
-        e.backend = b.name;
-        let ra = Number(res.headers.get("retry-after")) || 0;
-        if (!ra) { try { ra = Number(JSON.parse(txt).error.retry_after) || 0; } catch (err) {} }
-        e.retryAfter = ra;
-        throw e;
-      }
-      if (!res.body || typeof res.body.getReader !== "function") {
-        const data = await res.json();
-        const txt = data.choices?.[0]?.message?.content || "";
-        if (!txt) throw new ApiError(503, "пустой ответ " + b.name, "empty");
-        onDelta(txt);
-        try { localStorage.setItem("iskra.backend.v1", b.name); } catch (e) {}
-        return { backend: b.name };
-      }
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split("\n");
-        buf = lines.pop();
-        for (const line of lines) {
-          const t = line.trim();
-          if (!t.startsWith("data:")) continue;
-          const d = t.slice(5).trim();
-          if (d === "[DONE]") continue;
-          try {
-            const j = JSON.parse(d);
-            const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || "";
-            if (delta) { onDelta(delta); got += delta.length; }
-          } catch (e) { /* пропускаем битые куски */ }
-        }
-      }
-      const rest = buf.trim();
-      if (rest.startsWith("data:")) {
-        try {
-          const j = JSON.parse(rest.slice(5).trim());
-          const delta = j.choices?.[0]?.delta?.content || "";
-          if (delta) { onDelta(delta); got += delta.length; }
-        } catch (e) {}
-      }
-      if (got > 0) {
-        try { localStorage.setItem("iskra.backend.v1", b.name); } catch (e) {}
-        return { backend: b.name };
-      }
-      lastErr = new ApiError(503, "пустой ответ " + b.name, "empty");
-    } catch (e) {
-      if (e && e.name === "AbortError") throw e;
-      lastErr = e;
-      // если движок успел что-то прислать — не начинаем заново, чтобы не дублировать текст
-      if (got > 0) throw e;
-    }
-  }
-  throw lastErr || new ApiError(503, "все бесплатные движки заняты", "all-busy");
-}
-
-async function streamChat(payload, onDelta, signal) {
-  if (settings.provider === "puter") {
-    /* Puter без входа открывает окно регистрации и ломает первый ответ.
-       Поэтому сначала тихо проверяем вход, а если его нет — отвечаем
-       бесплатным движком, без окон и без регистрации. */
-    if (await puterSignedInCached()) return puterStream(payload, onDelta, signal);
-    if (!streamChat._puterFallbackSaid) {
-      streamChat._puterFallbackSaid = true;
-      toast("Puter просит вход — отвечаю бесплатным движком, без регистрации", "");
-    }
-    return chainStream(payload, onDelta, signal);
-  }
-  if (settings.provider === "demo" || settings.provider === "llm7") return chainStream(payload, onDelta, signal);
-  const base = settings.provider === "custom" ? (settings.baseUrl || "").replace(/\/+$/, "") : PROVIDERS[settings.provider].base;
-  if (!/^https?:\/\//i.test(base)) {
-    throw new ApiError(0, "Не указан адрес сервера (Base URL). Открой настройки → провайдер «Свой URL» → впиши адрес вида https://api.example.com/v1, либо переключись на Groq или OpenRouter.", "custom-empty");
-  }
-  const url = base + (PROVIDERS[settings.provider]?.path || "/chat/completions");
   const headers = { "Content-Type": "application/json" };
-  if (settings.apiKey && !PROVIDERS[settings.provider]?.noAuth) headers["Authorization"] = "Bearer " + settings.apiKey;
-  if (settings.provider === "openrouter") {
+  if (engine.auth === "anonymous") headers.Authorization = "Bearer anonymous";
+  else if (engine.key) headers.Authorization = "Bearer " + engine.key;
+  if (engine.id === "key" && detectKeyKind(engine.key)?.provider === "openrouter") {
     headers["HTTP-Referer"] = location.origin || "https://iskra.app";
     headers["X-Title"] = BRAND.name;
   }
-  const res = await fetch(url, {
-    method: "POST", headers, body: JSON.stringify(payload), signal
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    const e = new ApiError(res.status, txt);
-    e.url = url;
-    throw e;
-  }
-  if (!res.body || typeof res.body.getReader !== "function") {
-    const data = await res.json();
-    onDelta(data.choices?.[0]?.message?.content || "");
-    return;
-  }
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split("\n");
-    buf = lines.pop();
-    for (const line of lines) {
-      const t = line.trim();
-      if (!t.startsWith("data:")) continue;
-      const data = t.slice(5).trim();
-      if (data === "[DONE]") return;
-      try {
-        const j = JSON.parse(data);
-        const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || "";
-        if (delta) onDelta(delta);
-      } catch(e) { /* skip */ }
-    }
-  }
-}
-
-/* ===== Если основной провайдер не ответил — пробуем другие пути =====
-   Человеку нужен ответ, а не карточка с ошибкой. Порядок:
-   1) провайдер, к которому относится сохранённый ключ;
-   2) бесплатный движок без ключа (llm7 → Pollinations).
-   Настройки пользователя при этом не меняются — всё возвращаем на место. */
-async function attemptWith(attempt, payload, onDelta, signal) {
-  const before = { provider: settings.provider, model: settings.model, apiKey: settings.apiKey };
-  if (signal && signal.aborted) return false;
-  const ctrl = new AbortController();
-  const onAbort = () => { try { ctrl.abort(); } catch (e) {} };
-  if (signal) signal.addEventListener("abort", onAbort);
-  const timer = setTimeout(onAbort, 45000);
+  const body = { ...payload, model: engine.model, stream: true, messages: sanitizeMessages(payload.messages) };
+  // бесплатные движки не понимают половину настроек — лишнее убираем, иначе 400
+  delete body.reasoning_effort;
+  delete body.reasoning;
+  delete body.verbosity;
+  delete body.service_tier;
+  delete body.provider;
+  delete body.plugins;
+  delete body.reasoning_effort;
   let got = 0;
+  let acc = "";
+  let res;
   try {
-    settings.provider = attempt.provider;
-    settings.model = attempt.model;
-    settings.apiKey = attempt.key;
-    await streamChat(payload, (d) => { got += String(d || "").length; onDelta(d); }, ctrl.signal);
-    return got > 0;
+    const endpoint = engine.url || (engine.base.replace(/\/+$/, "") + "/chat/completions");
+    res = await fetch(endpoint, {
+      method: "POST", headers, body: JSON.stringify(body), signal: ctrl.signal
+    });
   } catch (e) {
-    return false;
+    clearTimeout(timer);
+    if (signal) signal.removeEventListener("abort", onAbort);
+    if (e && e.name === "AbortError") {
+      throw timedOut ? new ApiError(0, "движок не ответил за " + timeoutSec + " с", "timeout") : new ApiError(0, "остановлено", "abort");
+    }
+    throw new ApiError(0, e && e.message ? e.message : "нет связи", "net");
+  }
+  try {
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      const err = new ApiError(res.status, txt);
+      const ra = Number(res.headers.get("retry-after")) || 0;
+      err.retryAfter = ra;
+      if (!txt && res.status >= 500) err.message = "движок занят";
+      throw err;
+    }
+    const ctype = (res.headers.get("content-type") || "").toLowerCase();
+    const take = (delta) => {
+      if (!delta) return;
+      got += delta.length;
+      acc += delta;
+      onDelta(delta);
+    };
+    if (!res.body || typeof res.body.getReader !== "function" || (!ctype.includes("event-stream") && ctype.includes("json"))) {
+      const data = await res.json();
+      take(data.choices?.[0]?.message?.content || data.choices?.[0]?.text || "");
+      if (!got) throw new ApiError(503, "пустой ответ движка", "empty");
+      return { engine: engine.id, text: acc };
+    }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop();
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t.startsWith("data:")) continue;
+        const d = t.slice(5).trim();
+        if (d === "[DONE]") continue;
+        try {
+          const j = JSON.parse(d);
+          const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || j.choices?.[0]?.text || "";
+          if (delta) take(delta);
+        } catch (e) { /* битые куски пропускаем */ }
+      }
+    }
+    const rest = buf.trim();
+    if (rest.startsWith("data:")) {
+      try {
+        const j = JSON.parse(rest.slice(5).trim());
+        take(j.choices?.[0]?.delta?.content || "");
+      } catch (e) {}
+    }
+    if (!got) throw new ApiError(503, "пустой ответ движка", "empty");
+    return { engine: engine.id, text: acc };
+  } catch (e) {
+    if (e && e.name === "AbortError") {
+      if (got > 0) return { engine: engine.id, text: acc };   // уже что-то сказала — не начинаем заново
+      throw timedOut ? new ApiError(0, "движок не ответил за " + timeoutSec + " с", "timeout") : new ApiError(0, "остановлено", "abort");
+    }
+    /* Настоящий ответ сервера (401, 429, 500…) нельзя превращать в «нет связи»:
+       иначе карточка врёт о причине. Пробрасываем как есть. */
+    if (e instanceof ApiError) throw e;
+    if (e && e.kind) throw e;
+    throw new ApiError(0, (e && e.message) || "ошибка связи", "stream");
   } finally {
     clearTimeout(timer);
     if (signal) signal.removeEventListener("abort", onAbort);
-    settings.provider = before.provider;
-    settings.model = before.model;
-    settings.apiKey = before.apiKey;
   }
 }
 
-async function rescueAnswer(payload, onDelta, signal) {
-  const attempts = [];
-  const key = String(settings.apiKey || "").trim();
-  const kind = detectKeyKind(key);
-  if (kind && kind.provider !== settings.provider) {
-    attempts.push({ provider: kind.provider, model: kind.model, key, label: PROVIDERS[kind.provider].name + " (по твоему ключу)" });
+/* Главный ответ Искры: пробуем движки по очереди, пока кто-нибудь не ответит.
+   Человеку не показываем, кто именно ответил — для него это всегда Искра. */
+async function askIskra(payload, onDelta, signal, onTry) {
+  const needVision = (payload.messages || []).some(m => Array.isArray(m.content) && m.content.some(x => x && (x.type === "image_url" || x.image_url)));
+  const list = orderedEngines(needVision);
+  let lastErr = null;
+  let httpErr = null;      // настоящий ответ сервера важнее «нет связи»
+  let n = 0;
+  for (const engine of list) {
+    if (signal && signal.aborted) throw new ApiError(0, "остановлено", "abort");
+    n++;
+    if (typeof onTry === "function") { try { onTry(n, list.length); } catch (e) {} }
+    try {
+      const r = await streamOnce(engine, payload, onDelta, signal);
+      if (r && r.text) { _lastGoodEngine = engine.id; return r; }
+    } catch (e) {
+      if (e && e.kind === "abort") throw e;
+      lastErr = e;
+      if (Number(e && e.status) >= 400) httpErr = e;
+    }
   }
-  if (settings.provider !== "llm7") {
-    attempts.push({ provider: "llm7", model: "gpt-oss:20b", key: "", label: "llm7 (без ключа)" });
-  }
-  for (const a of attempts) {
-    if (signal && signal.aborted) return false;
-    const ok = await attemptWith(a, payload, onDelta, signal);
-    if (ok) { toast("Ответила запасная модель: " + a.label, "ok"); return true; }
-  }
-  return false;
+  const err = httpErr || lastErr || new ApiError(503, "все движки заняты", "all-busy");
+  err.kind = err.kind || "all-busy";
+  err.tried = n;
+  throw err;
+}
+
+/* Совместимость: старые вызовы ждут именно streamChat */
+async function streamChat(payload, onDelta, signal) {
+  return askIskra(payload, onDelta, signal);
 }
 
 class ApiError extends Error {
@@ -8163,30 +7673,6 @@ class ApiError extends Error {
     this.kind = kind;
   }
 }
-function friendlyError(err) {
-  if (err && err.kind === "custom-empty") {
-    return { status: 0, hint: "В настройках выбран «Свой URL», но адрес пустой — запрос уходит в пустоту. Открой ⚙ и либо впиши адрес вида https://api.example.com/v1, либо переключись на Groq." };
-  }
-  const s = err.status;
-  const hint = {
-    401: "Неверный API ключ. Проверь в настройках.",
-    402: settings.provider === "demo"
-      ? "Демо-режим разрешает 1 ответ в 30 секунд. Подожди полминуты и отправь снова. Хочешь без ожиданий — возьми бесплатный ключ Groq (console.groq.com/keys)."
-      : "Кончились кредиты. Попробуй другую :free модель или провайдера.",
-    403: "Доступ закрыт. Возможно, регион или модель не разрешены.",
-    404: "Модель не найдена или удалена. Выбери другую из списка.",
-    405: "Сервер не принимает такой запрос. Чаще всего это значит: в настройках выбран «Свой URL», но адрес пустой или неверный — тогда запрос уходит не туда. Переключись на Groq или OpenRouter.",
-    429: "Слишком много запросов. Подожди 30 секунд.",
-    500: "Ошибка сервера провайдера. Попробуй ещё раз.",
-    503: settings.provider === "demo"
-      ? "оба бесплатных движка без ключа сейчас заняты — у них общий лимит на всех"
-      : "сервис временно недоступен"
-  }[s] || (err && err.message && !/^HTTP \d+$/.test(err.message)
-        ? "Не удалось получить ответ: " + err.message
-        : "Не удалось получить ответ. Проверь интернет и настройки.");
-  return { status: s, hint };
-}
-
 /* ---------- Отправка ---------- */
 async function sendMessage(text, images = [], addChat = true, isResend = false) {
   const trimmed = text.trim();
@@ -8224,18 +7710,6 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     autoresize();
     return generateImage(trimmed);
   }
-  /* Ключ, провайдер и модель должны совпадать: иначе ключ лежит без дела,
-     а Искра отвечает бесплатным движком с лимитом на всех. */
-  try {
-    const switched = syncProviderWithKey();
-    if (switched) {
-      toast("Нашла твой ключ — переключилась на " + (PROVIDERS[switched.to]?.name || switched.to), "ok");
-      updateModelChip && updateModelChip();
-      syncProviderUI && syncProviderUI();
-      updateComposerNote && updateComposerNote();
-    }
-    ensureModelForProvider();
-  } catch (e) {}
 
   /* Прямая просьба «нарисуй кота» или «сделай видео закат» — даже в обычном чате.
      Раньше такой запрос уходил в текстовую модель, и она рисовала ASCII-картинку
@@ -8253,23 +7727,6 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     }
   }
 
-  /* Не заставляем регистрироваться в Puter: нет входа — работаем без него */
-  if (settings.provider === "puter" && !(await puterSignedInCached())) {
-    settings.provider = "demo";
-    settings.model = "openai-fast";
-    lastModelVision = false;
-    saveSettings(); syncProviderUI && syncProviderUI(); updateModelChip && updateModelChip();
-    toast("Puter требует вход — переключилась на бесплатный движок. Войти можно в ⚙ → «Войти в Puter».", "");
-  }
-  if (!settings.apiKey && settings.provider !== "custom" && PROVIDERS[settings.provider]?.noAuth !== true) {
-    toast("Сначала добавь API ключ в настройках ⚙", "err");
-    openSettings();
-    return;
-  }
-  if (!settings.model) {
-    toast("Выбери модель в настройках", "err");
-    return;
-  }
 
   // проверка правил безопасности
   const check = safetyCheck(trimmed);
@@ -8335,7 +7792,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     const t = streamEl();
     if (!t.isConnected) return;
     if (!t.textContent.trim() || t.querySelector(".typing")) {
-      t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note">Готовлю ответ… если модель занята, отвечу из своей базы знаний.</p>`;
+      t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="gen-note">Готовлю ответ… если все заняты, отвечу из своей базы знаний.</p>`;
     }
   }, 8000);
 
@@ -8362,7 +7819,16 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
 
     const recent = chat.messages.slice(-20);
     payload = apiPayload(recent);
-    await streamChat(payload, (delta) => {
+    let triedNote = false;
+    const onTry = (n) => {
+      if (n <= 1) return;
+      const t = streamEl();
+      if (!t || acc.trim()) return;
+      triedNote = true;
+      t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
+        `<p class="gen-note">Секунду — подбираю, кто ответит…</p>`;
+    };
+    await askIskra(payload, (delta) => {
       acc += delta;
       el.classList.remove("thinking");
       const t = streamEl();
@@ -8379,7 +7845,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
         };
       });
       scrollToBottom();
-    }, signal);
+    }, signal, onTry);
 
     clearTimeout(slowTimer);
     if (!acc.trim()) {
@@ -8417,32 +7883,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       streamEl().innerHTML = renderMarkdown(aiMsg.content);
       saveChats();
     } else {
-      /* Сначала честно пробуем другие движки — человеку нужен ответ, а не ошибка */
-      let rescued = false;
-      if (!acc.trim() && payload) {
-        streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
-          `<p class="gen-note">${esc((PROVIDERS[settings.provider] && PROVIDERS[settings.provider].name) || "Модель")} не ответила — пробую запасной движок…</p>`;
-        try {
-          rescued = await rescueAnswer(payload, (d) => {
-            acc += d;
-            const t = streamEl();
-            if (t) t.innerHTML = renderMarkdown(acc);
-            scrollToBottom();
-          }, signal);
-        } catch (e) { rescued = false; }
-      }
-      if (rescued && acc.trim()) {
-        aiMsg.content = acc;
-        streamEl().innerHTML = renderMarkdown(acc);
-        saveChats();
-        toast("Ответила запасная модель", "ok");
-      } else {
-        const { status, hint } = friendlyError(err);
-        const hadBase = baseAnswerExists(trimmed);
-        showFailCard(contentEl, aiMsg, trimmed, err);
-        if (!hadBase) toast(`Не ответило${status ? " (HTTP " + status + ")" : ""}: ${describeFailure(err)}`, "err");
-        if (status === 401 && !hadBase && !String(settings.apiKey || "").trim()) openSettings();
-      }
+      showFailCard(contentEl, aiMsg, trimmed, err);
     }
   } finally {
     sendBtn.classList.remove("stop");
@@ -8488,7 +7929,6 @@ async function handleFiles(files) {
     try {
       const data = await compressImage(f);
       pendingImages.push(data);
-      if (!lastModelVision) ensureVisionModel();
     } catch(e) {
       toast("Не удалось прочитать фото", "err");
     }
@@ -9068,7 +8508,7 @@ function openMaker() {
   mkRenderPanel();
 }
 
-/* ---------- Генерация картинок (Pollinations) ---------- */
+/* ---------- Генерация картинок ---------- */
 /* ---------- Генерация картинок ---------- */
 function imageLockedMessage() {
   return "Картинки рисует только версия «Искра Pro». Включить: ⚙ → Версия → Искра Pro.";
@@ -9082,9 +8522,9 @@ function imageAllowed() {
 }
 
 
-/* ---------- Генерация видео (Puter, модели Wan/Veo/Kling) ---------- */
+/* ---------- Генерация видео ---------- */
 function videoLockedMessage() {
-  return "Видео собирает только версия «Искра Pro». Включить: ⚙ → Версия → Искра Pro.";
+  return "Видео собирает только «Искра Про». Включить: настройки → Доступ → тарифы.";
 }
 function videoAllowed() {
   if (settings.edition === "pro") return true;
@@ -9092,42 +8532,7 @@ function videoAllowed() {
   return false;
 }
 
-/* Puter отдаёт видео по-разному: строка, объект, или готовый <video> */
-function puterVideoSrc(out) {
-  if (!out) return "";
-  if (typeof out === "string") return out;
-  if (typeof out.src === "string" && out.src) return out.src;
-  if (typeof out.url === "string" && out.url) return out.url;
-  try {
-    if (out.nodeType === 1) {
-      const v = out.tagName === "VIDEO" ? out : out.querySelector("video");
-      if (v) return v.src || (v.querySelector("source") && v.querySelector("source").src) || "";
-    }
-  } catch (e) {}
-  return "";
-}
-
-async function puterVideo(prompt, seconds) {
-  const puter = await loadPuter();
-  let signed = false;
-  try { signed = await Promise.race([puter.auth.isSignedIn(), wait(4000).then(() => false)]); }
-  catch (e) { signed = false; }
-  if (!signed) throw new ApiError(401, "Нет входа в Puter", "puter-auth");
-  const out = await Promise.race([
-    puter.ai.txt2vid(prompt, {
-      model: "togetherai:wan-ai/wan2.7-t2v",
-      seconds: seconds || 5,
-      test_mode: true
-    }),
-    wait(240000).then(() => { throw new ApiError(0, "Puter не собрал видео за 4 минуты", "video-timeout"); })
-  ]);
-  const src = puterVideoSrc(out);
-  if (!src) throw new ApiError(0, "Puter не вернул видео", "video-empty");
-  return src;
-}
-
-
-/* ---------- Видео без регистрации и без Puter: открытая модель в браузере ---------- */
+/* ---------- Видео без регистрации: открытая модель в браузере ---------- */
 const HF_VIDEO_SPACE = "https://lightricks-ltx-video-distilled.hf.space";
 
 async function hfSpaceVideo(prompt, signal, dims) {
@@ -9255,20 +8660,13 @@ async function generateVideo(prompt, attempt = 0) {
     saveChats();
   };
 
-  const showFail = (text, kind) => {
+  const showFail = (text) => {
     aiMsg.content = text;
-    const canLogin = kind === "puter-auth";
     contentEl.innerHTML = `<p>${esc(text)}</p>
       <div class="gen-actions">
-        ${canLogin ? `<button data-act="login">${ic("user", 16)} Войти в Puter</button>` : ""}
         <button data-act="again">${ic("regen", 16)} Попробовать снова</button>
       </div>
-      <p class="gen-note">Видео делает открытая модель LTX-Video — без регистрации, ключа и карты. У неё общий бесплатный лимит на всех: если он кончился, помогает подождать или сменить сеть (Cloudflare WARP).</p>`;
-    const lb = contentEl.querySelector('[data-act="login"]');
-    if (lb) lb.addEventListener("click", async () => {
-      const ok = await puterSignIn();
-      if (ok) generateVideo(prompt);
-    });
+      <p class="gen-note">Видео собирается на открытой модели в браузере — без регистрации, ключа и карты. У неё общий бесплатный лимит: если он кончился, помогает подождать или сменить сеть.</p>`;
     contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateVideo(prompt));
     saveChats();
   };
@@ -9280,21 +8678,6 @@ async function generateVideo(prompt, attempt = 0) {
   const finalPrompt = basePrompt + (proVideo
     ? ", cinematic lighting, shallow depth of field, smooth camera motion, film grain, 4k, highly detailed, sfw, family friendly"
     : ", cinematic, smooth camera motion, sfw, family friendly");
-
-  // 1) Pro: сначала Puter (Wan 2.7 — заметно лучше LTX). Вход не навязываем:
-  //    если человек не вошёл, молча идём на открытую модель.
-  if (proVideo && settings.proVideoQuality !== "fast") {
-    try {
-      const src = await puterVideo(finalPrompt, 10);
-      showVideo(src, "Искра Pro · Puter (Wan 2.7), 10 секунд, кинематографичный промпт. Промпт: " + finalPrompt);
-      return;
-    } catch (e) {
-      if (e && e.kind !== "puter-auth") {
-        // не молчим о реальной ошибке, но всё равно пробуем запасную модель
-        console.warn("Puter video:", e && e.message);
-      }
-    }
-  }
 
   try {
     // Качество: сначала широкий кадр побольше, затем привычный — узкая вертикаль только
@@ -9311,18 +8694,16 @@ async function generateVideo(prompt, attempt = 0) {
       catch (e) { lastErr = e; if (e && e.kind === "hf-quota") throw e; }
     }
     if (!src) throw lastErr || new ApiError(503, "видео-сервис не ответил", "hf-none");
-    showVideo(src, (proVideo
-      ? "Запасная открытая модель LTX-Video, " + used.w + "×" + used.h + ": короткий ролик ~2 секунды. Чтобы получать длинные HD-видео, войди в Puter."
-      : "LTX-Video, " + used.w + "×" + used.h + ", без регистрации и Puter. Это короткий ролик (около 2 секунд) — демо-режим. Скачай сразу: ссылка живёт недолго.") +
+    showVideo(src, "Искра · видео " + used.w + "×" + used.h + ", без регистрации. Это короткий ролик (около 2 секунд) — демо-режим. Скачай сразу: ссылка живёт недолго." +
       " Промпт: " + finalPrompt);
   } catch (e) {
     const msg = (e && (e.message || (e.error && e.error.message))) || "не получилось";
     if (e && e.kind === "hf-quota") {
-      showFail("У бесплатного видео на этом интернете закончился дневной лимит — такое бывает, он общий на всех. Что можно сделать: 1) подожди несколько часов; 2) включи или выключи Cloudflare WARP и попробуй снова (лимит считается по адресу сети); 3) войди в Puter — тогда работает другая модель.", "quota");
+      showFail("У бесплатного видео на этом интернете закончился дневной лимит — он общий на всех. Подожди несколько часов или смени сеть и попробуй снова.");
     } else if (e && e.kind === "hf-timeout" || e && e.kind === "video-timeout") {
-      showFail("Видео-сервис не успел за 5 минут — обычно значит, что там очередь. Попробуй ещё раз или сделай описание короче.", "timeout");
+      showFail("Видео-сервис не успел за 5 минут — обычно значит, что там очередь. Попробуй ещё раз или сделай описание короче.");
     } else {
-      showFail("Видео не получилось: " + msg + ". Попробуй ещё раз или упрости описание.", "other");
+      showFail("Видео не получилось: " + msg + ". Попробуй ещё раз или упрости описание.");
     }
   }
 }
@@ -9349,33 +8730,30 @@ const GEN_QUALITY = [
 
 function genPick(list, id) { return list.find(x => x.id === id) || list[0]; }
 
-/* Движки картинок. Pollinations — быстрый, но бесплатный слой ставит водяной знак
-   и отдаёт жёлтую заглушку «Free limit reached» раз в 45 секунд.
-   Stable Horde — бесплатное сообщество видеокарт: SDXL, без водяного знака. */
-const IMG_ENGINES = [
-  { id: "auto",         name: "Авто",            hint: "Puter → Stable Horde → Pollinations" },
-  { id: "horde",        name: "Stable Horde",    hint: "бесплатно · SDXL · без водяного знака" },
-  { id: "pollinations", name: "Pollinations",    hint: "быстро · лимит 1 картинка в 45 с · водяной знак" }
+/* Качество рисунка. Для человека это одна настройка, а не список сервисов. */
+const IMG_QUALITY = [
+  { id: "auto",   name: "Авто",     hint: "Искра сама выбирает: свободный движок, потом быстрый" },
+  { id: "hq",     name: "Качество", hint: "Медленнее, зато крупнее и чище" },
+  { id: "fast",   name: "Быстро",   hint: "Один лёгкий запрос, без очереди" }
 ];
-function imgEngine() {
-  const id = settings.imageEngine || "auto";
-  return IMG_ENGINES.find(x => x.id === id) || IMG_ENGINES[0];
+function imgQuality() {
+  const id = settings.imageQuality || "auto";
+  return IMG_QUALITY.find(x => x.id === id) || IMG_QUALITY[0];
 }
 
-/* Stable Horde: бесплатные чужие видеокарты. Без ключа — аноним, 512 px и низкий приоритет;
-   с бесплатным ключом (stablehorde.net → Register → API Key) — 1024 px и быстрее. */
+/* Свободный движок рисунков: чужие видеокарты, без регистрации и ключей. */
 const HORDE_API = "https://stablehorde.net/api/v2";
 async function hordeImage(prompt, opts, onNote) {
   const o = opts || genImageOpts();
   const note = typeof onNote === "function" ? onNote : () => {};
-  const personal = (settings.hordeKey || "").trim();
-  const key = personal || "0000000000";
-  const cap = personal ? 1024 : 512;
+  const personal = false;
+  const key = "0000000000";
+  const cap = 768;
   const side = (v) => Math.max(256, Math.min(cap, Math.round(v / 64) * 64));
   const width = side(o.width), height = side(o.height);
   const job = {
     prompt: prompt,
-    params: { width, height, steps: personal ? 28 : 20, n: 1, sampler_name: "k_euler", cfg_scale: 6.5 },
+    params: { width, height, steps: 24, n: 1, sampler_name: "k_euler", cfg_scale: 6.5 },
     nsfw: false, censor_nsfw: true, trusted_workers: false, slow_workers: true
   };
   const join = await fetch(HORDE_API + "/generate/async", {
@@ -9390,29 +8768,28 @@ async function hordeImage(prompt, opts, onNote) {
   if (!join.ok) {
     let msg = "HTTP " + join.status;
     try { const j = await join.json(); if (j && j.message) msg = j.message; } catch (e) {}
-    if (/invalid api key|wrong api key|incorrect/i.test(msg)) throw new ApiError(401, "ключ Stable Horde неверный", "horde-key");
-    if (/kudos/i.test(msg)) throw new ApiError(429, "на ключе Stable Horde закончились kudos", "horde-kudos");
-    throw new ApiError(503, "Stable Horde не принял запрос: " + msg, "horde-join");
+    if (/kudos/i.test(msg)) throw new ApiError(429, "на движке закончились free-kudos", "horde-kudos");
+    throw new ApiError(503, "движок не принял задание: " + msg, "horde-join");
   }
   const { id } = await join.json();
-  if (!id) throw new ApiError(503, "Stable Horde не вернул номер задания", "horde-id");
+  if (!id) throw new ApiError(503, "движок не вернул номер задания", "horde-id");
 
   const deadline = Date.now() + 150000;
-  note("Stable Horde: задание принято, ищем свободную видеокарту…");
+  note("Рисую: задание принято, ищу свободный движок…");
   while (Date.now() < deadline) {
     await wait(2500);
     let chk = {};
     try { chk = await (await fetch(HORDE_API + "/generate/check/" + id)).json(); } catch (e) { continue; }
     if (chk && (chk.queue_position > 0 || chk.wait_time > 0)) {
-      note("Stable Horde: в очереди " + (chk.queue_position ? chk.queue_position + "-й, " : "") +
-        "ещё ~" + Math.max(1, Math.round(chk.wait_time || 0)) + " с. Держись, это бесплатные чужие видеокарты.");
+      note("Рисую: в очереди " + (chk.queue_position ? chk.queue_position + "-й, " : "") +
+        "ещё ~" + Math.max(1, Math.round(chk.wait_time || 0)) + " с. Это бесплатные чужие видеокарты.");
     }
-    if (chk && chk.faulted) throw new ApiError(503, "Stable Horde не смог собрать картинку", "horde-fault");
-    if (chk && chk.is_possible === false) throw new ApiError(503, "Stable Horde не нашёл свободную видеокарту", "horde-noworker");
+    if (chk && chk.faulted) throw new ApiError(503, "движок не смог собрать картинку", "horde-fault");
+    if (chk && chk.is_possible === false) throw new ApiError(503, "свободная видеокарта не нашлась", "horde-noworker");
     if (chk && chk.done) {
       const st = await (await fetch(HORDE_API + "/generate/status/" + id)).json();
       const g = st && st.generations && st.generations[0];
-      if (!g || !g.img) throw new ApiError(503, "Stable Horde вернул пустой ответ", "horde-empty");
+      if (!g || !g.img) throw new ApiError(503, "движок вернул пустой ответ", "horde-empty");
       // картинку хорды проксируем в data:, иначе она теряется после перезагрузки
       try {
         const r = await fetch(g.img);
@@ -9428,7 +8805,7 @@ async function hordeImage(prompt, opts, onNote) {
       return { src: g.img, width, height, personal: !!personal };
     }
   }
-  throw new ApiError(503, "Stable Horde не успел за 2,5 минуты — очередь большая", "horde-timeout");
+  throw new ApiError(503, "движок не успел за 2,5 минуты — очередь большая", "horde-timeout");
 }
 
 /* Настройки генерации: бесплатным — как раньше, Pro — по своим пресетам */
@@ -9447,42 +8824,9 @@ function genImageOpts() {
     suffix: style.suffix + ", " + qs };
 }
 
-/* Картинка через Puter (gpt-image-2, высокое качество) */
-async function puterImage(prompt, opts) {
-  const o = opts || genImageOpts();
-  const puter = await loadPuter();
-  // без входа Puter молча зависает — проверяем заранее
-  let signed = false;
-  try { signed = await Promise.race([puter.auth.isSignedIn(), wait(4000).then(() => false)]); }
-  catch (e) { signed = false; }
-  if (!signed) throw new ApiError(401, "Нет входа в Puter", "puter-auth");
-  const ratio = o.aspect.id === "16:9" ? { w: 16, h: 9 }
-    : o.aspect.id === "9:16" ? { w: 9, h: 16 }
-    : o.aspect.id === "4:3" ? { w: 4, h: 3 } : { w: 1, h: 1 };
-  const out = await Promise.race([
-    puter.ai.txt2img(prompt, { model: "gpt-image-2", quality: o.quality.id === "std" ? "medium" : "high", ratio }),
-    wait(45000).then(() => { throw new ApiError(0, "Puter не ответил за 45 секунд", "puter-timeout"); })
-  ]);
-  let src = out && (out.src || out.url || (typeof out === "string" ? out : ""));
-  if (!src) throw new ApiError(0, "Puter не вернул картинку", "img-puter");
-  if (src.startsWith("data:") || src.startsWith("blob:")) return src;
-  // пробуем перевести во встроенный формат, чтобы картинка не пропала после перезагрузки
-  try {
-    const r = await fetch(src);
-    if (!r.ok) return src;
-    const blob = await r.blob();
-    return await new Promise((res) => {
-      const fr = new FileReader();
-      fr.onload = () => res(String(fr.result));
-      fr.onerror = () => res(src);
-      fr.readAsDataURL(blob);
-    });
-  } catch (e) { return src; }
-}
-
-/* Бесплатный Pollinations. Главная беда сервиса — вместо картинки он отдаёт
-   рекламный плакат «Free limit reached» с кодом 200, то есть выглядит как успех.
-   Поэтому сначала пробуем fetch: он при лимите получает 402 + Retry-After,
+/* Быстрый резервный сервер рисунков. Главная беда таких сервисов — вместо картинки
+   они отдают рекламный плакат «лимит» с кодом 200, то есть выглядит как успех.
+   Поэтому сначала пробуем fetch: при лимите приходит 402 + Retry-After,
    а при удаче — сами байты картинки (по ним видно, плакат это или рисунок).
    Если fetch режет CORS — падаем на <img> и проверяем цвет по холсту. */
 const IMG_COOLDOWN_KEY = "iskra.imgNextAt";
@@ -9494,7 +8838,7 @@ function imgCooldownSet(sec) {
   try { localStorage.setItem(IMG_COOLDOWN_KEY, String(Date.now() + sec * 1000)); } catch (e) {}
 }
 function imgLimitError(sec) {
-  const e = new ApiError(429, "бесплатный Pollinations держит лимит: одна картинка в 45 секунд", "img-limit");
+  const e = new ApiError(429, "движок держит лимит: одна картинка в 45 секунд", "img-limit");
   e.retryAfter = sec || 45;
   return e;
 }
@@ -9539,9 +8883,9 @@ async function looksLikeBannerData(src) {
   try { return (await bannerPixels(await loadImg(src))) === true; } catch (e) { return false; }
 }
 
-async function pollinationsImage(prompt, opts) {
+async function fastImageServer(prompt, opts) {
   const o = opts || genImageOpts();
-  const token = (settings.pollinationsToken || "").trim();
+  const token = "";
   // без токена сервис разрешает одну картинку в 45 секунд — не жжём лимит зря
   if (!token) {
     const left = imgCooldown();
@@ -9602,7 +8946,7 @@ async function pollinationsImage(prompt, opts) {
     if (st === "ok") { if (!token) imgCooldownSet(45); return { url, model }; }
     if (st === "limit") throw asLimit(45);
   }
-  throw new ApiError(503, "бесплатный движок картинок сейчас занят", "img-busy");
+  throw new ApiError(503, "движок картинок сейчас занят", "img-busy");
 }
 
 /* Перевод запроса в понятный модели английский промпт */
@@ -9735,66 +9079,47 @@ async function generateImage(prompt, attempt = 0) {
   // Pro-пресеты добавляют к промпту стиль и детализацию — именно они дают «дорогую» картинку
   if (imgOpts.suffix) finalPrompt = finalPrompt.replace(/,?\s*sfw, family friendly\.?$/i, "") + ", " + imgOpts.suffix + " sfw, family friendly";
 
-  const engine = imgEngine();
+  const quality = imgQuality();
   const errors = [];
 
-  // 1) Puter — лучшее качество и ни водяного знака, ни лимита (нужен бесплатный вход)
-  if (engine.id !== "pollinations") {
+  // 1) Свободный движок: без регистрации и ключа, рисунок без водяного знака
+  if (quality.id !== "fast") {
     try {
-      prog("Puter · gpt-image-2: рисую… (до 45 секунд)");
-      const src = await puterImage(finalPrompt, imgOpts);
-      showImage(src, "puter", "Puter · gpt-image-2" + (imgOpts.pro ? " · " + imgOpts.quality.name : "") +
-        " · " + imgOpts.width + "×" + imgOpts.height + " · промпт: " + finalPrompt);
-      return;
-    } catch (e) {
-      // нет входа в Puter — идём дальше молча
-      errors.push("Puter: " + ((e && e.kind) || "нет входа"));
-    }
-  }
-
-  // 2) Stable Horde — бесплатные чужие видеокарты, SDXL, без водяного знака
-  if (engine.id !== "pollinations") {
-    try {
-      prog("Stable Horde: отправляю задание…");
+      prog("Рисую на свободном движке: отправляю задание…");
       const got = await hordeImage(finalPrompt, imgOpts, prog);
-      const note = (got.personal ? "Stable Horde · SDXL · " : "Stable Horde (аноним, 512 px) · ") +
-        got.width + "×" + got.height + " · без водяного знака. Промпт: " + finalPrompt +
-        (got.personal ? "" : " · Впиши бесплатный ключ Horde в ⚙ — будет 1024 px и быстрее.");
+      const note = "Искра · " + got.width + "×" + got.height +
+        (imgOpts.pro ? " · " + imgOpts.style.name + " · " + imgOpts.quality.name : "") +
+        " · без водяного знака. Промпт: " + finalPrompt;
       showImage(got.src, "horde", note);
       return;
     } catch (e) {
-      errors.push("Horde: " + ((e && (e.kind || e.message)) || "ошибка"));
+      errors.push("свободный движок: " + ((e && (e.kind || e.message)) || "ошибка"));
     }
   }
 
-  // 3) Pollinations — самый быстрый, но с лимитом и водяным знаком на бесплатном слое
-  prog("Pollinations: рисую…");
+  // 2) Быстрый сервер рисунков: отвечает сразу, но может поставить водяной знак
+  prog("Рисую: быстрый движок…");
   try {
-    const got = await pollinationsImage(finalPrompt, imgOpts);
-    const modelName = got.model === "flux" ? "Flux" : got.model === "turbo" ? "Turbo" : "Sana";
-    const token = !!(settings.pollinationsToken || "").trim();
-    const note = imgOpts.pro
-      ? "Искра Pro · " + modelName + " · " + imgOpts.width + "×" + imgOpts.height + " · " + imgOpts.style.name + " · " + imgOpts.quality.name +
-        ". Промпт: " + finalPrompt
-      : "Pollinations · " + modelName + " · " + imgOpts.width + "×" + imgOpts.height +
-        (errors.length ? " · запасной движок (Puter и Stable Horde не ответили)" : "") +
-        (token ? "" : " · бесплатный слой: водяной знак и лимит одна картинка в 45 с. Если вместо рисунка плакат «Free limit reached» — это лимит сервера, а не ошибка Искры") +
-        ". Промпт: " + finalPrompt;
+    const got = await fastImageServer(finalPrompt, imgOpts);
+    const note = "Искра · " + imgOpts.width + "×" + imgOpts.height +
+      (imgOpts.pro ? " · " + imgOpts.style.name + " · " + imgOpts.quality.name : "") +
+      (errors.length ? " · запасной движок" : "") +
+      ". Промпт: " + finalPrompt;
     showImage(got.url, got.model, note);
   } catch (e) {
     if (e && e.kind === "img-limit" && attempt === 0) {
       const w = e.retryAfter || 45;
       // ждём лимит и рисуем сами — без «нажми ещё раз»
       aiMsg.content = "";
-      contentEl.innerHTML = `<p class="gen-note">Бесплатный сервер держит лимит: одна картинка в 45 секунд. Подожду <b id="genCount">${w}</b> с и нарисую сама…</p>
+      contentEl.innerHTML = `<p class="gen-note">Движок держит лимит: одна картинка в 45 секунд. Подожду <b id="genCount">${w}</b> с и нарисую сама…</p>
         <div class="gen-actions">
-          <button data-act="horde">${ic("spark", 16)} Без лимита — Stable Horde</button>
+          <button data-act="horde">${ic("spark", 16)} Без лимита — свободный движок</button>
           <button data-act="again">${ic("regen", 16)} Попробовать сейчас</button>
         </div>`;
       contentEl.querySelector('[data-act="again"]').addEventListener("click", () => generateImage(prompt, 1));
       contentEl.querySelector('[data-act="horde"]').addEventListener("click", () => {
-        settings.imageEngine = "horde"; saveSettings();
-        toast("Движок картинок: Stable Horde — без водяного знака", "ok");
+        settings.imageQuality = "hq"; saveSettings();
+        toast("Рисую на свободном движке — без водяного знака", "ok");
         generateImage(prompt, 1);
       });
       let left = w;
@@ -9813,16 +9138,14 @@ async function generateImage(prompt, attempt = 0) {
     if (e && e.kind === "img-limit") {
       const w = e.retryAfter || 45;
       const sec = `${w} ${plural(w, "секунду", "секунды", "секунд")}`;
-      showFail(`Движок всё ещё держит лимит: одна картинка раз в ${sec}. Переключи движок на Stable Horde в ⚙ → «Качество генерации» — там очередь, зато без водяного знака.`);
+      showFail(`Движок всё ещё держит лимит: одна картинка раз в ${sec}. Переключи качество на «Без лимита» в настройках → Доступ — там очередь, зато без водяного знака.`);
       return;
     }
     // все движки отказали — честная ошибка и что нажать
     const why = e && e.message ? e.message : "сервер картинок не ответил";
-    const hint = (e && e.kind) === "horde-key"
-      ? "Ключ Stable Horde не подошёл: возьми новый на stablehorde.net → Register → API Key (он бесплатный)."
-      : (e && e.kind) === "horde-timeout"
-        ? "Очередь Stable Horde оказалась длинной. Попробуй ещё раз через минуту или впиши бесплатный ключ Horde — с ключом очередь короче."
-        : "Проверь интернет и попробуй ещё раз. Если повторяется — смени движок в ⚙ → «Качество генерации».";
+    const hint = (e && e.kind) === "horde-timeout"
+      ? "Очередь свободного движка оказалась длинной. Попробуй ещё раз через минуту или переключи качество на «Быстро»."
+      : "Проверь интернет и попробуй ещё раз. Если повторяется — переключи качество рисунка в настройках → Доступ.";
     showFail("Нарисовать не получилось. " + why + ". " + hint);
     toast("Ошибка генерации картинки", "err");
   }
@@ -9844,71 +9167,55 @@ async function downloadImage(url, prompt) {
 }
 
 /* ---------- UI: настройки ---------- */
-/* Показывает/прячет поле «Base URL» и предупреждение о пустом адресе */
-function syncProviderUI() {
-  const activeProv = document.querySelector('#providerBtns button.active')?.dataset.p || settings.provider;
-  const isCustom = activeProv === "custom";
-  const field = $("#customUrlField");
-  if (field) field.style.display = isCustom ? "" : "none";
-  const hint = $("#provHint");
-  if (hint && PROVIDERS[activeProv]) hint.textContent = PROVIDERS[activeProv].hint;
-  const warn = $("#baseUrlWarn");
-  if (warn) {
-    const empty = !(($("#baseUrl")?.value || "").trim());
-    warn.style.display = (isCustom && empty) ? "block" : "none";
-  }
+function syncProviderUI() { updateComposerNote(); updateModelChip(); }
+
+function setSettingsTab(tab) {
+  $$("#setTabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  $$("#settingsModal .set-pane").forEach(p => { p.hidden = p.dataset.pane !== tab; });
 }
 
 function openSettings() {
-  $("#settingsModal").classList.add("open");
-  // populate
-  $$("#providerBtns button").forEach(b => b.classList.toggle("active", b.dataset.p === settings.provider));
-  syncPuterButton();
-  syncProviderUI();
-  $("#apiKey").value = settings.apiKey || "";
-  $("#model").value = settings.model || "";
-  const mc = $("#modelCurrent"), mcs = $("#modelCurrentSub");
-  if (mc) mc.textContent = modelDisplayName(settings.model);
-  if (mcs) {
-    const prov = PROVIDERS[settings.provider];
-    mcs.textContent = prov?.noAuth ? "без ключа · нажми, чтобы сменить" : (prov?.name || "") + " · нажми, чтобы сменить";
-  }
-  $("#baseUrl").value = settings.baseUrl || "";
-  $("#customUrlField").style.display = settings.provider === "custom" ? "" : "none";
-  $("#provHint").textContent = PROVIDERS[settings.provider].hint;
-
-  $("#memoryOn").checked = !!settings.memoryOn;
-  $("#webSearch").checked = !!settings.webSearch;
-  $$("#editionBtns button").forEach(b => b.classList.toggle("active", b.dataset.e === (settings.edition || "free")));
-  $$("#toneBtns button").forEach(b => b.classList.toggle("active", b.dataset.t === (settings.tone || "neutral")));
-  syncPuterButton();
+  const m = $("#settingsModal");
+  if (!m) return;
+  m.classList.add("open");
+  setSettingsTab("main");
   renderEditionUI();
   renderPersonaGrid();
   renderThemeGrid();
-  updateModelHint();
-  showFallbackModels();
-  const cr = $("#connResult"); if (cr) { cr.textContent = ""; cr.className = "conn-result"; }   // сразу показываем проверенный список бесплатных моделей
+  const key = $("#apiKey"); if (key) key.value = settings.apiKey || "";
+  const mo = $("#memoryOn"); if (mo) mo.checked = !!settings.memoryOn;
+  const ws = $("#webSearch"); if (ws) ws.checked = !!settings.webSearch;
+  $$("#toneBtns button").forEach(b => b.classList.toggle("active", b.dataset.t === (settings.tone || "neutral")));
+  const cr = $("#connResult"); if (cr) { cr.textContent = ""; cr.className = "conn-result"; }
 }
+
 function renderPersonaGrid() {
   const g = $("#personaGrid");
+  if (!g) return;
   g.innerHTML = "";
-  for (const [k, p] of Object.entries(PERSONAS)) {
+  for (const [k, pr] of Object.entries(PERSONAS)) {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "persona-btn" + (settings.persona === k ? " active" : "");
-    b.innerHTML = `<span class="pn">${esc(p.name)}</span><span class="pd">${esc(p.desc)}</span>`;
+    b.innerHTML = `<span class="pn">${esc(pr.name)}</span><span class="pd">${esc(pr.desc)}</span>`;
     b.addEventListener("click", () => {
       settings.persona = k;
       renderPersonaGrid();
-      $("#customPersona").style.display = k === "custom" ? "" : "none";
+      const cp = $("#customPersona");
+      if (cp) cp.style.display = k === "custom" ? "" : "none";
     });
     g.appendChild(b);
   }
-  $("#customPersona").value = settings.customPersona || "";
-  $("#customPersona").style.display = settings.persona === "custom" ? "" : "none";
+  const cp = $("#customPersona");
+  if (cp) {
+    cp.value = settings.customPersona || "";
+    cp.style.display = settings.persona === "custom" ? "" : "none";
+  }
 }
+
 function renderThemeGrid() {
   const g = $("#themeGrid");
+  if (!g) return;
   g.innerHTML = "";
   for (const k of THEME_ORDER) {
     const t = THEMES[k];
@@ -9932,44 +9239,7 @@ function renderThemeGrid() {
     g.appendChild(b);
   }
 }
-function updateModelHint() {
-  const models = FALLBACK_MODELS[settings.provider] || [];
-  const hit = models.find(m => m.id === settings.model);
-  const def = models[0];
-  if (hit) {
-    $("#modelHint").textContent = `${hit.name} • контекст ${hit.ctx}K`;
-  } else if (def) {
-    $("#modelHint").textContent = `По умолчанию: ${def.name}`;
-  } else {
-    $("#modelHint").textContent = "Введи id модели";
-  }
-}
-async function loadModelsList() {
-  const base = settings.provider === "custom" ? settings.baseUrl.replace(/\/+$/, "") : PROVIDERS[settings.provider].base;
-  const headers = {};
-  if (settings.apiKey && !PROVIDERS[settings.provider]?.noAuth) headers["Authorization"] = "Bearer " + settings.apiKey;
-  $("#loadModels").textContent = "...";
-  try {
-    const r = await fetch(base + "/models", { headers });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    const list = (j.data || j.models || []).map(m => {
-      const id = m.id || m.name;
-      const ctx = Math.round((m.context_length || 4096) / 1000);
-      const modalities = m.architecture?.input_modalities || m.input_modalities || [];
-      const vision = Array.isArray(modalities) ? modalities.includes("image") : guessVision(id);
-      return { id, ctx, vision };
-    }).filter(m => m.id).sort((a,b) => a.id.localeCompare(b.id));
-    if (!list.length) { showFallbackModels(); return; }
-    renderModelsBox(list);
-    $("#modelsListField").style.display = "";
-    toast(`Загружено ${list.length} моделей`, "ok");
-  } catch(e) {
-    showFallbackModels();
-  } finally {
-    $("#loadModels").textContent = "Список";
-  }
-}
+
 function plural(n, one, few, many) {
   const a = Math.abs(n) % 100, b = a % 10;
   if (a > 10 && a < 20) return many;
@@ -9978,65 +9248,62 @@ function plural(n, one, few, many) {
   return many;
 }
 
-/* Проверенный список бесплатных моделей — если живой не загрузился */
-function showFallbackModels() {
-  const list = (FALLBACK_MODELS[settings.provider] || []).map(m => ({
-    id: m.id, name: m.name, ctx: m.ctx, vision: m.vision
-  }));
-  if (!list.length) {
-    renderModelsBox([]);
-    $("#modelsListField").style.display = "";
-    const box = $("#modelsBox");
-    if (box) box.innerHTML = '<div class="mp-note">Для своего сервера список неизвестен — впиши id модели в поле выше.</div>';
-    return;
-  }
-  renderModelsBox(list);
-  $("#modelsListField").style.display = "";
-  toast(`${list.length} ${plural(list.length, "бесплатная модель", "бесплатные модели", "бесплатных моделей")}`, "ok");
-}
-function renderModelsBox(list) {
-  const box = $("#modelsBox");
-  box.innerHTML = "";
-  for (const m of list) {
-    const row = document.createElement("div");
-    row.className = "model-row" + (settings.model === m.id ? " sel" : "");
-    row.innerHTML = `
-      ${m.vision ? ic("eye", 14) : ""}
-      <span class="mid">${esc(m.name || m.id)}<em>${m.name ? esc(m.id) : ""}</em></span>
-      <span class="mbadge">${m.ctx}K</span>`;
-    row.addEventListener("click", () => {
-      settings.model = m.id;
-      lastModelVision = m.vision;
-      $("#model").value = m.id;
-      renderModelsBox(list);
-      updateModelChip();
-      updateModelHint();
-    });
-    box.appendChild(row);
-  }
-}
+/* Строка под полем ввода: чем именно отвечает Искра прямо сейчас */
 function updateComposerNote() {
   const n = document.querySelector(".composer-note");
   if (!n) return;
+  if (settings.riskMode) {
+    n.textContent = "Режим «Риск»: очень быстро, возможны ошибки.";
+    return;
+  }
   const key = String(settings.apiKey || "").trim();
-  const prov = (PROVIDERS[settings.provider] && PROVIDERS[settings.provider].name) || settings.provider;
-  if (settings.provider === "demo" && !key) {
-    n.textContent = "Демо-режим без ключа: 1 ответ в 30 секунд. Для нормальной работы добавь бесплатный ключ в ⚙";
-    return;
-  }
-  if (settings.provider === "llm7" && !key) {
-    n.textContent = "Бесплатный движок без ключа. Если молчит — добавь бесплатный ключ Hugging Face в ⚙";
-    return;
-  }
-  n.textContent = "Отвечает: " + prov + (settings.model ? " · " + modelDisplayName(settings.model) : "") +
-    ". Ключ хранится только в твоём браузере. Важное проверяй сам.";
+  n.textContent = key
+    ? "Искра · свой ключ подключён. Ключ хранится только в твоём браузере."
+    : "Искра · работает без ключа и регистрации. Важное проверяй сам.";
 }
 
+/* Чип в шапке: версия и остаток Pro — вместо чужих названий моделей */
 function updateModelChip() {
-  const n = settings.model || "—";
-  const short = modelDisplayName(n);
-  $("#modelChipName").textContent = short;
-  $("#modelChip").title = n;
+  const pro = proActive();
+  const st = accessState();
+  let name = pro ? "Искра Про" : "Искра";
+  if (pro && st && st.forever) name = "Искра Про · ∞";
+  else if (pro && st && Number(st.expiresAt) > Date.now()) name = "Искра Про · " + accessLeft(st.expiresAt - Date.now());
+  const el = $("#modelChipName");
+  if (el) el.textContent = name;
+  const chip = $("#modelChip");
+  if (chip) {
+    chip.classList.toggle("is-pro", pro);
+    chip.title = pro ? "Искра Про — тарифы и продление" : "Искра — версия и настройки";
+  }
+}
+
+/* Проверка своего ключа (если человек его вписал) */
+async function testConnection() {
+  const box = $("#connResult");
+  const key = ($("#apiKey")?.value || "").trim();
+  if (!key) {
+    if (box) { box.className = "conn-result ok"; box.textContent = "Ключ не нужен: без него Искра отвечает своими движками."; }
+    return;
+  }
+  const kind = detectKeyKind(key);
+  if (!kind) {
+    if (box) { box.className = "conn-result err"; box.textContent = "Ключ не распознан. Скопируй его целиком."; }
+    return;
+  }
+  if (box) { box.className = "conn-result"; box.textContent = "Проверяю…"; }
+  try {
+    const r = await fetch(kind.base + "/models", { headers: { Authorization: "Bearer " + key } });
+    if (r.ok) {
+      if (box) { box.className = "conn-result ok"; box.textContent = "Ключ рабочий — теперь ответы будут точнее."; }
+    } else if (r.status === 401 || r.status === 403) {
+      if (box) { box.className = "conn-result err"; box.textContent = "Ключ не принят (" + r.status + "). Проверь, что скопирован целиком и не отозван."; }
+    } else {
+      if (box) { box.className = "conn-result err"; box.textContent = "Сервер ключа ответил ошибкой " + r.status + ". Сохранить его всё равно можно."; }
+    }
+  } catch (e) {
+    if (box) { box.className = "conn-result err"; box.textContent = "Не удалось проверить: нет связи. Ключ всё равно сохранится."; }
+  }
 }
 
 /* ---------- Память ---------- */
@@ -10242,7 +9509,8 @@ async function myIp() {
   const cached = sessionStorage.getItem(IP_KEY);
   if (cached) return cached;
   try {
-    const r = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(4000) });
+    /* короткий таймаут: регистрация не должна ждать «плохой» сервис */
+    const r = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(2500) });
     const j = await r.json();
     if (j && j.ip) { sessionStorage.setItem(IP_KEY, j.ip); return j.ip; }
   } catch (e) {}
@@ -10256,9 +9524,12 @@ async function canCreateAccount(login) {
   // повторный вход в свой же аккаунт — не считается новым
   if (key && reg.some(r => r.key === key)) return true;
   const ip = await myIp();
-  const sameIp = ip && ip !== "нет-сети" ? reg.filter(r => r.ip === ip).length : 0;
+  const ipKnown = !!ip && ip !== "нет-сети";
+  const sameIp = ipKnown ? reg.filter(r => r.ip === ip).length : reg.filter(r => !r.ip || r.ip === "нет-сети").length;
   if (sameIp >= MAX_ACCOUNTS) {
-    toast(`С этого IP уже ${sameIp} аккаунта — больше нельзя (лимит ${MAX_ACCOUNTS} на адрес). Войди в существующий: у каждого аккаунта свой код клиента и свой ключ.`, "err");
+    toast(ipKnown
+      ? `С этого IP уже ${sameIp} аккаунта — больше нельзя (лимит ${MAX_ACCOUNTS} на адрес). Войди в существующий: у каждого аккаунта свой код клиента и свой ключ.`
+      : `На этом устройстве уже ${sameIp} аккаунта — больше нельзя (лимит ${MAX_ACCOUNTS}). Войди в существующий: у каждого аккаунта свой код клиента и свой ключ.`, "err");
     return false;
   }
   if (reg.length >= MAX_ACCOUNTS * 2) {
@@ -10324,6 +9595,14 @@ function makeRecoveryCode() {
 }
 
 function authCreate({ method, name, email, phone, passwordHash }) {
+  /* Одна почта (и один телефон) — один аккаунт. Раньше повторный вход по коду
+     создавал второй аккаунт-двойник, и человек терял свои чаты. */
+  const dup = authAccounts().find(a =>
+    (email && a.email && a.email.toLowerCase() === String(email).toLowerCase()) ||
+    (phone && a.phone && a.phone === String(phone)) ||
+    (!email && !phone && name && a.name.toLowerCase() === String(name).toLowerCase() && a.method === method)
+  );
+  if (dup) { authSetSession(dup.id); return dup; }
   const cleanName = String(name || "").trim();
   if (cleanName && !/@/.test(cleanName)) {
     const chk = checkNick(cleanName);
@@ -10444,6 +9723,8 @@ async function checkEmailCode() {
     }
   }
   if (!localCodeOk) { err.textContent = "Код не совпал. Проверь цифры."; return; }
+  const known = authFind(authPending.email);
+  if (known) { authAfterSignup(known, true); return; }
   if (!(await canCreateAccount(authPending.email))) return;
   const acc = authCreate({ method: "email", email: authPending.email });
   if (!acc) return;
@@ -10472,6 +9753,8 @@ async function checkPhoneCode() {
   const err = $("#authPhoneErr");
   err.textContent = "";
   if (code !== authPending.code) { err.textContent = "Код не совпал."; return; }
+  const knownPhone = authFind(authPending.phone);
+  if (knownPhone) { authAfterSignup(knownPhone, true); return; }
   if (!(await canCreateAccount(authPending.phone))) return;
   const acc = authCreate({ method: "phone", phone: authPending.phone });
   if (!acc) return;
@@ -10497,13 +9780,32 @@ async function passSubmit() {
   if (login.length < 3) { err.textContent = "Логин слишком короткий."; return; }
   if (pass.length < 6) { err.textContent = "Пароль минимум 6 символов."; return; }
 
+  /* Сначала свой браузер: если аккаунт уже есть здесь, проверяем пароль локально.
+     Так вход работает даже когда сервер молчит или интернет пропал. */
+  if (!authPassRegister) {
+    const local = authFind(login);
+    if (local && local.passHash) {
+      if (local.passHash !== (await hashPass(pass))) { err.textContent = "Пароль не подошёл. Если забыла — восстанови аккаунт кодом."; return; }
+      authSetSession(local.id);
+      authAfterSignup(local, true);
+      return;
+    }
+  }
+
   if (supabaseConfigured() && /@/.test(login)) {
     try {
       if (authPassRegister) {
         // аккаунт создаём сразу и локально: письмо от Supabase может не прийти, а вход нужен сейчас
         if (!(await canCreateAccount(login))) return;
+        const hash = await hashPass(pass);
         let acc = authFind(login);
-        if (!acc) acc = authCreate({ method: "pass", email: login, name: login.split("@")[0], passwordHash: await hashPass(pass) });
+        if (acc) {
+          /* Аккаунт уже есть: пароль обязан совпасть, иначе это чужой вход */
+          if (acc.passHash && acc.passHash !== hash) { err.textContent = "Такой аккаунт уже есть — пароль другой. Войди или восстанови его кодом."; return; }
+          if (!acc.passHash) { acc.passHash = hash; authSaveAccounts(authAccounts().map(a => (a.id === acc.id ? acc : a))); }
+        } else {
+          acc = authCreate({ method: "pass", email: login, name: login.split("@")[0], passwordHash: hash });
+        }
         if (!acc) return;
         await rememberSignup(login);
         authAfterSignup(acc);
@@ -10618,11 +9920,11 @@ async function oauthGo() {
     const chk = checkNick(nm);
     if (!chk.ok) { toast(chk.msg, "err"); return; }
   }
-  if (!(await canCreateAccount(nm))) return;
   const name = ($("#authOauthName").value || "").trim();
   const err = $("#authOauthErr");
   err.textContent = "";
   if (name.length < 2) { err.textContent = "Напиши имя или ник."; return; }
+  if (!(await canCreateAccount(name))) return;
 
   /* Главное правило: нажал «продолжить» — аккаунт есть всегда.
      Сначала создаём его локально, и только потом (если включено) идём в Google/GitHub. */
@@ -10643,8 +9945,8 @@ async function oauthGo() {
 function authAfterSignup(acc, isLogin) {
   authDoneIsNew = !isLogin;
   authShow("authDone");
-  $("#authDone .auth-sub").textContent = (isLogin ? "С возвращением, " : "Привет, ") + acc.name + "! " + (isLogin ? "" : "Осталось выбрать модель.");
-  $("#authDoneGo").textContent = isLogin ? "Продолжить" : "Выбрать модель";
+  $("#authDone .auth-sub").textContent = (isLogin ? "С возвращением, " : "Привет, ") + acc.name + "! " + (isLogin ? "" : "Осталось выбрать версию.");
+  $("#authDoneGo").textContent = isLogin ? "Продолжить" : "Выбрать версию";
   authPending.doneAccount = acc;
 }
 
@@ -10654,14 +9956,9 @@ function openOnboarding() {
   if (!grid) return;
   grid.innerHTML = "";
   const items = [
-    { id: "iskra", title: "Искра", tag: "наша", desc: "Бесплатная версия: русский и английский, душевный стиль. Без Pro.", apply: () => { settings.provider = "demo"; settings.model = "openai-fast"; settings.edition = "free"; } },
-    { id: "iskra-puter", title: "Искра через Puter", tag: "500+", desc: "Те же бесплатные модели, но качества выше. Нужен вход в Puter.", apply: () => { settings.provider = "puter"; settings.model = "gpt-5.4-nano"; settings.edition = "free"; } }
+    { id: "iskra", title: "Искра", tag: "бесплатно", desc: "Русский и английский, учёба, код, тексты и домашка. Без ключа и регистрации.", apply: () => { settings.model = "iskra"; settings.edition = "free"; } },
+    { id: "iskra-pro", title: "Искра Про", tag: "по ключу", desc: "Картинки в высоком качестве, видео, Blender-модели и любые языки.", apply: () => { settings.model = "iskra-pro"; } }
   ];
-  PUTER_MODELS.slice(0, 6).forEach(m => items.push({
-    id: "p-" + m.id, title: m.name, tag: "free", desc: m.desc + " · Puter, без нашего ключа",
-    apply: () => { settings.provider = "puter"; settings.model = m.id; }
-  }));
-  items.push({ id: "own", title: "Свой ключ", tag: "своё", desc: "Groq, OpenRouter, Cloudflare — вставишь ключ в настройках.", apply: () => { settings.provider = "groq"; } });
 
   let chosen = null;
   items.forEach((it, i) => {
@@ -10680,9 +9977,9 @@ function openOnboarding() {
   });
   $("#obFinish").onclick = () => {
     if (chosen) chosen.apply();
-    saveSettings(); syncProviderUI(); updateModelChip(); renderModelPicker();
+    saveSettings(); syncProviderUI(); updateModelChip();
     $("#onboardModal").classList.remove("open");
-    toast("Модель выбрана: " + modelDisplayName(settings.model), "ok");
+    toast("Готово: " + modelDisplayName(settings.model), "ok");
   };
   $("#onboardModal").classList.add("open");
 }
@@ -11231,14 +10528,16 @@ function applyAccess() {
 }
 function updateAccessBadge() {
   const chip = $("#accessChip");
-  if (!chip) return;
   const st = accessState();
   const forever = !!(st && st.forever === true);
   const on = forever || (st && st.expiresAt > Date.now());
-  if (forever) chip.textContent = "Pro · навсегда";
-  else if (on) chip.textContent = "Pro · " + accessLeft(st.expiresAt - Date.now());
-  else chip.textContent = proActive() ? "Pro" : "Бесплатная";
-  chip.className = "access-chip" + ((on || proActive()) ? " on" : "");
+  if (chip) {
+    if (forever) chip.textContent = "Pro · навсегда";
+    else if (on) chip.textContent = "Pro · " + accessLeft(st.expiresAt - Date.now());
+    else chip.textContent = proActive() ? "Pro" : "Бесплатная";
+    chip.className = "access-chip" + ((on || proActive()) ? " on" : "");
+  }
+  if (typeof updateModelChip === "function") updateModelChip();
 }
 
 /* ---------- Сервер ключей (Supabase) ---------- */
@@ -11514,21 +10813,12 @@ function renderProPanel() {
       <div class="acct-h">Качество генерации</div>
       ${proOn ? "" : `<div class="acct-note" style="margin:0 0 10px">Пресеты включаются вместе с ключом. Сейчас рисует бесплатный движок в 1024×1024.</div>`}
       <div class="gen-row">
-        <div class="gen-lab">Движок</div>
+        <div class="gen-lab">Качество</div>
         <div class="gen-chips">
-          ${IMG_ENGINES.map(x => `<button type="button" class="gen-chip ${(settings.imageEngine || "auto") === x.id ? "on" : ""}" data-imgengine="${x.id}" title="${esc(x.hint)}">${esc(x.name)}</button>`).join("")}
+          ${IMG_QUALITY.map(x => `<button type="button" class="gen-chip ${(settings.imageQuality || "auto") === x.id ? "on" : ""}" data-imgquality="${x.id}" title="${esc(x.hint)}">${esc(x.name)}</button>`).join("")}
         </div>
       </div>
-      <div class="gen-note2" style="font-size:12px;color:var(--text-dim);margin:-4px 0 10px">${esc(imgEngine().hint)}</div>
-      ${(settings.imageEngine || "auto") === "pollinations" ? `<div class="acct-note" style="margin:0 0 10px">Pollinations на бесплатном слое ставит водяной знак и держит лимит 1 картинка в 45 секунд. Бесплатный токен (auth.pollinations.ai) снимает и то, и другое.</div>` : ""}
-      <div class="gen-row">
-        <div class="gen-lab">Ключ Horde</div>
-        <input id="hordeKey" class="gen-input" type="text" placeholder="бесплатный ключ со stablehorde.net (можно пусто)" value="${esc(settings.hordeKey || "")}"/>
-      </div>
-      <div class="gen-row">
-        <div class="gen-lab">Токен Pollinations</div>
-        <input id="pollToken" class="gen-input" type="text" placeholder="бесплатный токен — убирает водяной знак" value="${esc(settings.pollinationsToken || "")}"/>
-      </div>
+      <div class="gen-note2" style="font-size:12px;color:var(--text-dim);margin:-4px 0 10px">${esc(imgQuality().hint)}</div>
       <div class="gen-row">
         <div class="gen-lab">Стиль</div>
         <div class="gen-chips">
@@ -11547,21 +10837,14 @@ function renderProPanel() {
           ${GEN_QUALITY.map(x => `<button type="button" class="gen-chip ${settings.proImageQuality === x.id ? "on" : ""}" data-quality="${x.id}" ${proOn ? "" : "disabled"}>${esc(x.name)}</button>`).join("")}
         </div>
       </div>
-      <div class="gen-row">
-        <div class="gen-lab">Видео</div>
-        <div class="gen-chips">
-          <button type="button" class="gen-chip ${settings.proVideoQuality === "hd" ? "on" : ""}" data-vquality="hd" ${proOn ? "" : "disabled"}>Puter · 10 с</button>
-          <button type="button" class="gen-chip ${settings.proVideoQuality === "fast" ? "on" : ""}" data-vquality="fast" ${proOn ? "" : "disabled"}>Быстро · LTX</button>
-        </div>
-      </div>
-      <div class="acct-note">Pro рисует через Flux и gpt-image-2: стиль, формат и детализация реально меняют результат. Бесплатное видео — короткое демо открытой модели, честно: оно скромное по качеству.</div>
+      <div class="acct-note">Pro-режим рисует крупнее и чище: стиль, формат и детализация реально меняют результат. Видео — короткое демо свободной модели, честно: оно скромное по качеству.</div>
     </div>
 
     <div class="acct-sec">
       <div class="acct-h">Что открывает ключ</div>
       <ul class="access-feat">
         <li>Картинки в высоком качестве (стили, форматы 1:1 / 16:9 / 9:16)</li>
-        <li>Видео: улучшенный режим и модель через Puter</li>
+        <li>Видео: короткие ролики по описанию</li>
         <li>Blender 3D: скрипты и готовые модели .obj по описанию</li>
         <li>Любые языки, а не только русский и английский</li>
         <li>Свободный стиль общения и крепкие выражения (по желанию)</li>
@@ -11618,33 +10901,9 @@ function renderProPanel() {
     settings.proImageQuality = btn.dataset.quality; saveSettings(); renderProPanel();
     toast("Детализация: " + genPick(GEN_QUALITY, btn.dataset.quality).name, "ok");
   });
-  box.querySelectorAll("[data-imgengine]").forEach(btn => btn.onclick = () => {
-    settings.imageEngine = btn.dataset.imgengine; saveSettings(); renderProPanel();
-    toast("Движок картинок: " + imgEngine().name + " — " + imgEngine().hint, "ok");
-  });
-  const hk = box.querySelector("#hordeKey");
-  if (hk) {
-    const saveHk = () => {
-      settings.hordeKey = hk.value.trim();
-      saveSettings();
-      toast(settings.hordeKey ? "Ключ Stable Horde сохранён — 1024 px и очередь короче" : "Ключ Horde убран", "ok");
-    };
-    hk.onchange = saveHk;
-    hk.onblur = saveHk;
-  }
-  const pt = box.querySelector("#pollToken");
-  if (pt) {
-    const savePt = () => {
-      settings.pollinationsToken = pt.value.trim();
-      saveSettings();
-      toast(settings.pollinationsToken ? "Токен Pollinations сохранён — без водяного знака" : "Токен Pollinations убран", "ok");
-    };
-    pt.onchange = savePt;
-    pt.onblur = savePt;
-  }
-  box.querySelectorAll("[data-vquality]").forEach(btn => btn.onclick = () => {
-    settings.proVideoQuality = btn.dataset.vquality; saveSettings(); renderProPanel();
-    toast(btn.dataset.vquality === "fast" ? "Видео: сразу открытая LTX, без Puter" : "Видео: сначала Puter (Wan 2.7), затем LTX", "ok");
+  box.querySelectorAll("[data-imgquality]").forEach(btn => btn.onclick = () => {
+    settings.imageQuality = btn.dataset.imgquality; saveSettings(); renderProPanel();
+    toast("Рисую: " + imgQuality().name + " — " + imgQuality().hint, "ok");
   });
 
   const tgGet = box.querySelector("#tgGetKey");
@@ -12605,9 +11864,10 @@ async function consoleRun(raw) {
     }
   }
   if (c === "model") {
-    if (!arg) return "Текущая модель: " + settings.model;
-    settings.model = arg; lastModelVision = guessVision(arg); saveSettings(); updateModelChip && updateModelChip();
-    return "Модель: " + arg;
+    if (!arg) return "Версия: " + modelDisplayName(settings.model);
+    const id = /^pro/i.test(arg) ? "iskra-pro" : "iskra";
+    settings.model = id; saveSettings(); updateModelChip && updateModelChip();
+    return "Версия: " + modelDisplayName(id);
   }
   if (c === "theme") {
     if (!arg || !THEMES[arg]) return "Темы: " + THEME_ORDER.join(", ");
@@ -12978,59 +12238,6 @@ function onModeChipClick() {
 }
 
 
-/* ---------- Проверка подключения ---------- */
-async function testConnection() {
-  const box = $("#connResult");
-  if (!box) return;
-  const key = ($("#apiKey").value || "").trim();
-  const provider = $("#provider") ? (document.querySelector('#providerBtns button.active')?.dataset.p || settings.provider) : settings.provider;
-  const model = ($("#model").value || "").trim();
-  const base = provider === "custom" ? ($("#baseUrl").value || "").replace(/\/+$/, "") : PROVIDERS[provider].base;
-
-  if (!key && provider !== "custom" && !PROVIDERS[provider]?.noAuth) { box.className = "conn-result err"; box.textContent = "Сначала вставь ключ"; return; }
-  if (!model) { box.className = "conn-result err"; box.textContent = "Выбери модель"; return; }
-  if (!base) { box.className = "conn-result err"; box.textContent = "Укажи Base URL"; return; }
-
-  box.className = "conn-result wait";
-  box.innerHTML = '<span class="spin"></span> Проверяю…';
-
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 20000);
-
-  try {
-    const headers = { "Content-Type": "application/json", "Authorization": "Bearer " + key };
-    if (provider === "openrouter") { headers["HTTP-Referer"] = location.origin; headers["X-Title"] = BRAND.name; }
-    const res = await fetch(base + "/chat/completions", {
-      method: "POST", headers, signal: ctrl.signal,
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: "Скажи одно слово: работает" }],
-        max_tokens: 20,
-        stream: false
-      })
-    });
-    clearTimeout(timer);
-    if (!res.ok) {
-      let detail = "";
-      try { const j = await res.json(); detail = j.error?.message || j.message || ""; } catch(e) {}
-      box.className = "conn-result err";
-      box.textContent = `Не работает: HTTP ${res.status}${detail ? " — " + String(detail).slice(0, 90) : ""}`;
-      return;
-    }
-    const j = await res.json().catch(() => ({}));
-    const answer = j.choices?.[0]?.message?.content;
-    box.className = "conn-result ok";
-    box.textContent = answer ? `Работает ✓ Модель ответила: «${String(answer).trim().slice(0, 40)}»` : "Ключ и модель работают ✓";
-  } catch (e) {
-    clearTimeout(timer);
-    box.className = "conn-result err";
-    box.textContent = e.name === "AbortError"
-      ? "Нет ответа за 20 секунд. Проверь интернет (в превью внутри чата сети нет)"
-      : "Ошибка сети: " + e.message;
-  }
-}
-
-
 /* ---------- Версия, тон, режимы: интерфейс ---------- */
 function renderEditionUI() {
   const active = proActive();
@@ -13076,12 +12283,6 @@ function setRiskMode(on) {
   if (on) settings.deepThink = false;
   saveSettings(); renderModeToggles();
   if (on) toast("Внимание: режим «Риск» — очень быстро, возможны ошибки. Не рекомендовано к использованию.", "err");
-}
-
-function syncPuterButton() {
-  const b = $("#puterLogin");
-  if (!b) return;
-  b.style.display = settings.provider === "puter" ? "" : "none";
 }
 
 function openRules() { $("#rulesModal").classList.add("open"); }
@@ -13133,13 +12334,11 @@ function wire() {
     $("#webBtn").classList.toggle("on", on);
     settings.webSearch = on;
     saveSettings();
-    if (on && settings.provider !== "openrouter") {
-      toast("Веб-поиск работает только на OpenRouter", "err");
-    }
+    if (on) toast("Буду искать свежие факты в интернете", "ok");
   });
 
   // Чип модели
-  $("#modelChip").addEventListener("click", openModelPicker);
+  $("#modelChip") && $("#modelChip").addEventListener("click", openSettings);
   $("#baseUrl") && $("#baseUrl").addEventListener("input", syncProviderUI);
   $("#deepBtn") && $("#deepBtn").addEventListener("click", () => setDeepThink(!settings.deepThink));
   $("#riskBtn") && $("#riskBtn").addEventListener("click", () => setRiskMode(!settings.riskMode));
@@ -13233,7 +12432,6 @@ function wire() {
   $("#authCodeInput") && $("#authCodeInput").addEventListener("keydown", (e) => { if (e.key === "Enter") checkEmailCode(); });
   $("#authPhoneCode") && $("#authPhoneCode").addEventListener("keydown", (e) => { if (e.key === "Enter") checkPhoneCode(); });
   $("#authPassword") && $("#authPassword").addEventListener("keydown", (e) => { if (e.key === "Enter") passSubmit(); });
-  $("#puterLogin") && $("#puterLogin").addEventListener("click", puterSignIn);
   $("#accessChip") && $("#accessChip").addEventListener("click", openAccessPanel);
   $("#rulesClose") && $("#rulesClose").addEventListener("click", closeRules);
   $("#rulesModal") && $("#rulesModal").addEventListener("click", (e) => { if (e.target.id === "rulesModal") closeRules(); });
@@ -13257,9 +12455,6 @@ function wire() {
   $("#matToggle") && $("#matToggle").addEventListener("change", (e) => {
     settings.mat = e.target.checked; saveSettings();
   });
-  $("#openModelPicker") && $("#openModelPicker").addEventListener("click", () => { closeSettings(); setTimeout(openModelPicker, 120); });
-  $("#modelClose") && $("#modelClose").addEventListener("click", closeModelPicker);
-  $("#modelModal") && $("#modelModal").addEventListener("click", (e) => { if (e.target.id === "modelModal") closeModelPicker(); });
 
   // Сайдбар
   $("#menuBtn").addEventListener("click", openSidebar);
@@ -13293,27 +12488,36 @@ function wire() {
     applyTheme(next, ev);
     toast(`Тема: ${THEMES[next].name}`, "ok");
   });
+  // Быстрые действия на стартовом экране
+  $$("#welcomeActions .wa-card").forEach(b => b.addEventListener("click", () => {
+    const prompt = b.dataset.wa || "";
+    const input = $("#input");
+    input.value = prompt;
+    autoresize();
+    input.focus();
+    input.setSelectionRange(prompt.length, prompt.length);
+  }));
   $("#memoryTop").addEventListener("click", openMemory);
   $("#settingsIcon").addEventListener("click", openSettings);
 
-  // Модалка настроек
-  $$("#providerBtns button").forEach(b => b.addEventListener("click", () => {
-    settings.provider = b.dataset.p;
-    $$("#providerBtns button").forEach(x => x.classList.toggle("active", x === b));
-    $("#customUrlField").style.display = b.dataset.p === "custom" ? "" : "none";
-    syncPuterButton();
-    syncProviderUI();
-    $("#provHint").textContent = PROVIDERS[b.dataset.p].hint;
-    const fb = FALLBACK_MODELS[b.dataset.p]?.[0];
-    if (fb && !settings.model) {
-      settings.model = fb.id;
-      $("#model").value = fb.id;
-    }
-    updateModelHint();
-    updateModelChip();
-  }));
-  $("#loadModels").addEventListener("click", loadModelsList);
+  // Модалка настроек: вкладки, ключ, проверка
+  $$("#setTabs button").forEach(b => b.addEventListener("click", () => setSettingsTab(b.dataset.tab)));
   $("#testConn") && $("#testConn").addEventListener("click", testConnection);
+  $("#keyClear") && $("#keyClear").addEventListener("click", () => {
+    settings.apiKey = ""; settings.provider = "custom"; saveSettings();
+    const inp = $("#apiKey"); if (inp) inp.value = "";
+    syncProviderUI();
+    toast("Ключ убран — отвечаю без него", "ok");
+  });
+  $("#checkAll") && $("#checkAll").addEventListener("click", runSelfCheck);
+  ["#openAccessBtn", "#openAccessBtn2"].forEach(sel => {
+    const b = $(sel);
+    if (b) b.addEventListener("click", () => { closeSettings(); setTimeout(openAccessPanel, 120); });
+  });
+  ["#openRules", "#openRules2"].forEach(sel => {
+    const b = $(sel);
+    if (b) b.addEventListener("click", () => openRules());
+  });
 
   // Навыки
   $("#skillsBtn") && $("#skillsBtn").addEventListener("click", openSkills);
@@ -13362,21 +12566,20 @@ function wire() {
   });
   $("#closeSettings").addEventListener("click", () => $("#settingsModal").classList.remove("open"));
   $("#saveSettings").addEventListener("click", () => {
-    settings.apiKey = $("#apiKey").value.trim();
-    settings.model = $("#model").value.trim() || (FALLBACK_MODELS[settings.provider]?.[0]?.id) || "";
-    lastModelVision = guessVision(settings.model);
-    const switched = syncProviderWithKey();
-    if (switched) toast("Ключ от " + (PROVIDERS[switched.to]?.name || switched.to) + " — переключилась на него", "ok");
-    ensureModelForProvider();
-    settings.baseUrl = $("#baseUrl").value.trim();
-    settings.customPersona = $("#customPersona").value.trim();
-    settings.memoryOn = $("#memoryOn").checked;
-    settings.webSearch = $("#webSearch").checked;
-    $("#webBtn").classList.toggle("on", settings.webSearch);
+    const key = ($("#apiKey")?.value || "").trim();
+    const kind = key ? detectKeyKind(key) : null;
+    settings.apiKey = key;
+    settings.provider = kind ? kind.provider : "custom";
+    settings.model = proActive() ? "iskra-pro" : "iskra";
+    settings.customPersona = ($("#customPersona")?.value || "").trim();
+    settings.memoryOn = !!$("#memoryOn")?.checked;
+    settings.webSearch = !!$("#webSearch")?.checked;
+    $("#webBtn") && $("#webBtn").classList.toggle("on", settings.webSearch);
     saveSettings();
     updateModelChip();
+    updateComposerNote();
     $("#settingsModal").classList.remove("open");
-    toast("Настройки сохранены", "ok");
+    toast(key && !kind ? "Настройки сохранены. Ключ не распознан — отвечаю своими движками." : "Настройки сохранены", "ok");
   });
 
   // Память
@@ -13395,7 +12598,7 @@ function wire() {
   // Lightbox
   $("#lbClose").addEventListener("click", closeLightbox);
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox") closeLightbox(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeModelPicker(); closeSettings(); closeMemory(); closeRules(); closeAuth(); const om=$("#onboardModal"); if(om) om.classList.remove("open"); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeSettings(); closeMemory(); closeRules(); closeAuth(); const om=$("#onboardModal"); if(om) om.classList.remove("open"); } });
 
   // Режимы работы
   renderModeCards();
@@ -13421,13 +12624,7 @@ function wire() {
   applyTheme(settings.theme);
   $("#webBtn").classList.toggle("on", !!settings.webSearch);
 
-  // Модель по умолчанию
-  if (!settings.model) {
-    const fb = FALLBACK_MODELS[settings.provider]?.[0];
-    if (fb) settings.model = fb.id;
-    saveSettings();
-  }
-  lastModelVision = guessVision(settings.model);
+  // Версия в шапке
   updateModelChip();
   updateComposerNote();
   renderImgStrip();
@@ -13505,20 +12702,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 </script>
-
-
-<!-- Выбор модели -->
-<div class="modal-bg" id="modelModal">
-  <div class="modal modal-wide">
-    <h2>
-      <svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L13.5 9.5 L21 12 L13.5 14.5 L12 22 L10.5 14.5 L3 12 L10.5 9.5 Z"/></svg>
-      Выбор модели
-    </h2>
-    <div class="hint" style="margin-bottom:10px">Искра +1 — наша модель. Ниже — бесплатные, платные и своя.</div>
-    <div class="mp-body" id="mpBody"></div>
-    <div class="modal-foot"><button class="btn btn-ghost" id="modelClose">Закрыть</button></div>
-  </div>
-</div>
 
 
 <!-- Правила -->
@@ -13625,67 +12808,6 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- ================= Аккаунт ================= -->
 <div id="profileMenu"></div>
 
-<!-- Объяснение про Puter -->
-<div id="puterModal" class="modal-bg">
-  <div class="modal" style="max-width:520px">
-    <div class="modal-head"><h3>Что это за окно Puter</h3><button class="icon-btn" id="puterClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-    <div class="modal-body">
-      <p class="auth-p">Окно, которое откроется дальше — <b>не Искра</b>. Это вход в <b>Puter</b>: бесплатный сервис, через который Искра получает сильные модели (GPT, Claude, Gemini) без наших ключей.</p>
-      <ul class="puter-list">
-        <li><b>Деньги не нужны</b>, карту не просит.</li>
-        <li>Проще всего нажать там <b>Sign up with Google</b> — вход в один клик.</li>
-        <li>Логин и пароль от Искры Puter не видит и не получает.</li>
-        <li>Можно не входить вообще: чат, учёба, код, картинки и видео работают и без Puter.</li>
-      </ul>
-      <button class="auth-btn" id="puterGo">Продолжить — откроется окно Puter</button>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="auth-btn ghost" id="puterTab" style="flex:1">Открыть Puter в новой вкладке</button>
-        <button class="auth-btn ghost" id="puterCheck" style="flex:1">Проверить вход</button>
-      </div>
-      <button class="auth-btn ghost" id="puterSkip" style="margin-top:8px">Без Puter — отвечать на своих знаниях</button>
-      <div class="puter-alt">
-        <div class="puter-alt-title">Puter не пускает регистрацию? Делай так, по порядку</div>
-        <ol class="puter-alt-steps">
-          <li><b>Не через окно, а напрямую:</b> открой <b>puter.com</b> в обычной новой вкладке (не в маленьком окне) — там регистрация проходит чаще.</li>
-          <li><b>Не через Google:</b> нажми там <b>Sign up using email</b> — обычная почта и пароль. Google-вход у Puter часто зацикливается.</li>
-          <li><b>Смени сеть:</b> выключи Cloudflare WARP полностью и попробуй снова. Если не помогло — включи WARP и попробуй ещё раз. Блокировка у Puter по адресу сети, а не по тебе.</li>
-          <li><b>Другой браузер:</b> Chrome или режим инкогнито без расширений. В Firefox вход в чужое окно часто не передаётся.</li>
-          <li>Зашёл на puter.com? Вернись сюда и нажми <b>«Проверить вход»</b>.</li>
-        </ol>
-        <div class="hint" style="margin-top:6px">И главное: <b>без Puter всё основное тоже работает.</b> Чат, учёба, код, домашка, картинки и видео — на бесплатных движках, без входа и без карты.</div>
-      </div>
-      <div class="puter-alt">
-        <div class="puter-alt-title">Не получается с Puter? Есть путь без окон — бесплатный ключ</div>
-        <ol class="puter-alt-steps">
-          <li><b>Проще всего — Hugging Face:</b> открой <b>huggingface.co/join</b>, почта и пароль, без карты.</li>
-          <li>Зайди в <b>Settings → Access Tokens → New token</b> (тип Read) и скопируй ключ — он начинается на <code>hf_</code>.</li>
-          <li>Если хочется Groq: <b>console.groq.com/keys</b> → Create API Key → ключ <code>gsk_</code>. Если Groq пишет «signup blocked» — это блокировка сети, бери Hugging Face.</li>
-          <li>Вставь ключ сюда — Искра переключится сама, карта не нужна.</li>
-        </ol>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="groqKeyInput" class="auth-field-input" placeholder="hf_... или gsk_..." style="flex:1;min-width:180px">
-          <button class="auth-btn" id="groqSave" style="width:auto;padding:0 16px">Включить</button>
-        </div>
-        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
-          <button class="auth-link" id="hfOpen">Взять ключ Hugging Face</button>
-          <button class="auth-link" id="groqOpen">Взять ключ Groq</button>
-        </div>
-      </div>
-      <details class="puter-help">
-        <summary>Не пускает в Puter? Что делать по шагам</summary>
-        <ol>
-          <li><b>Предупреждения в консоли</b> («Автоматически предоставлен доступ к хранилищу») — это нормально, браузер так всегда пишет про окна Puter и Google. Они ни на что не влияют.</li>
-          <li><b>Разреши всплывающие окна</b> для <code>logismod01.github.io</code>: в Firefox нажми на значок с замком слева от адреса → «Разрешения» → «Открывать всплывающие окна».</li>
-          <li><b>Разреши сторонние куки</b> для <code>puter.com</code>: настройки → «Приватность и защита» → «Куки и данные сайтов» → не блокировать сторонние.</li>
-          <li><b>Не помогло?</b> Открой Puter в новой вкладке (кнопка выше), войди там через Google, вернись сюда и нажми «Проверить вход».</li>
-          <li><b>Google не пускает?</b> На странице Puter выбери «Sign up using email» — почта и пароль.</li>
-          <li><b>Совсем никак?</b> Нажми «Без Puter» — Искра работает на своих знаниях, это бесплатно и без входа.</li>
-        </ol>
-      </details>
-    </div>
-  </div>
-</div>
-
 <!-- Проверка ошибок -->
 <div id="proofModal" class="modal-bg">
   <div class="modal" style="max-width:600px">
@@ -13739,7 +12861,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="auth-side">
       <div class="auth-orbs"><span></span><span></span><span></span></div>
       <h2>Искра</h2>
-      <p>Аккаунт нужен, чтобы чаты, настройки и выбранная модель были твоими. Вход занимает 20 секунд.</p>
+      <p>Аккаунт нужен, чтобы чаты, настройки и версия Искры были твоими. Вход занимает 20 секунд.</p>
       <p style="color:var(--text-dim);font-size:12.5px">Без аккаунта всё тоже работает: история хранится в этом браузере.</p>
     </div>
     <div class="auth-main">
@@ -13834,8 +12956,8 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- 6. готово -->
       <div class="auth-step" id="authDone">
         <h3 class="auth-title">Готово</h3>
-        <p class="auth-sub">Аккаунт создан. Сейчас выберешь модель — и начнём.</p>
-        <button class="auth-btn" id="authDoneGo">Выбрать модель</button>
+        <p class="auth-sub">Аккаунт создан. Сейчас выберешь версию — и начнём.</p>
+        <button class="auth-btn" id="authDoneGo">Выбрать версию</button>
       </div>
     </div>
   </div>
@@ -13844,10 +12966,10 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- ================= Выбор модели при регистрации ================= -->
 <div id="onboardModal" aria-hidden="true">
   <div class="ob-card">
-    <h3 class="auth-title">Какую модель выбрать?</h3>
-    <p class="auth-sub">Можно поменять в любой момент — в настройках.</p>
+    <h3 class="auth-title">С чего начнём?</h3>
+    <p class="auth-sub">Версию можно поменять в любой момент — в настройках.</p>
     <div class="ob-grid" id="obGrid"></div>
-    <button class="auth-btn" id="obFinish">Продолжить с этой моделью</button>
+    <button class="auth-btn" id="obFinish">Продолжить</button>
   </div>
 </div>
 
