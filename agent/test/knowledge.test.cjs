@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const knowledge = require("../core/knowledge.js");
-const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ALL } = knowledge;
+const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ERRORS, TASKS, ALL } = knowledge;
 const { systemPrompt } = require("../core/agent.js");
 const { LIMITS } = require("../core/license.js");
 const { TOOL_NAMES } = require("../core/protocol.js");
@@ -112,14 +112,16 @@ test("справка не выдаёт себя за код и не ломает
 test("справка выросла: языки, баги, инструменты и порядки действий", () => {
   assert.ok(TOOLS.length >= 14, "мало карточек про инструменты: " + TOOLS.length);
   assert.ok(RECIPES.length >= 8, "мало порядков действий: " + RECIPES.length);
-  assert.equal(ALL.length, LANGUAGES.length + BUGS.length + TOOLS.length + RECIPES.length);
+  assert.ok(ERRORS.length >= 10, "мало карточек про сообщения ошибок: " + ERRORS.length);
+  assert.ok(TASKS.length >= 10, "мало карточек про рабочие задачи: " + TASKS.length);
+  assert.equal(ALL.length, LANGUAGES.length + BUGS.length + TOOLS.length + RECIPES.length + ERRORS.length + TASKS.length);
   const ids = ALL.map((x) => x.id);
   assert.equal(new Set(ids).size, ids.length, "есть повторяющиеся id");
 });
 
 test("каждая новая карточка заполнена и уникальна по названию", () => {
   const titles = new Set();
-  for (const card of TOOLS.concat(RECIPES)) {
+  for (const card of TOOLS.concat(RECIPES, ERRORS, TASKS)) {
     assert.ok(card.title.length >= 5, card.id + ": короткое название");
     assert.ok(card.text.length >= 120, card.id + ": слишком короткий текст");
     assert.ok(card.keys.length >= 3, card.id + ": мало ключей");
@@ -155,8 +157,34 @@ test("порядок действий попадает в промпт цели�
 });
 
 test("каждая карточка находится по своему названию", () => {
-  for (const card of TOOLS.concat(RECIPES)) {
+  for (const card of TOOLS.concat(RECIPES, ERRORS, TASKS)) {
     const found = search(card.title, 3).map((x) => x.id);
     assert.ok(found.includes(card.id), card.id + " не находится по названию: " + found.join(","));
   }
+});
+
+test("сообщения об ошибках находят свою карточку", () => {
+  assert.equal(search("CORS policy: No 'Access-Control-Allow-Origin'", 1)[0].id, "cors");
+  assert.ok(search("429 Too Many Requests", 2).map((x) => x.id).includes("rate-limit"), "нет карточки про лимит запросов");
+  assert.equal(search("ENOSPC: no space left on device", 1)[0].id, "disk-full");
+  assert.equal(search("JavaScript heap out of memory", 1)[0].id, "oom");
+  assert.ok(search("command not found: node", 3).map((x) => x.id).includes("command-not-found"));
+  assert.equal(search("autocrlf crlf весь файл изменён", 1)[0].id, "line-endings");
+  assert.equal(search("database is locked sqlite", 1)[0].id, "db-lock");
+  assert.equal(search("тест иногда падает без причины", 1)[0].id, "flaky-tests");
+  assert.equal(search("SSL certificate verify failed", 1)[0].id, "ssl");
+});
+
+test("рабочие задачи, а не только код, тоже находятся", () => {
+  assert.equal(search("напиши письмо клиенту", 1)[0].id, "task-letter");
+  assert.equal(search("сделай презентацию для встречи", 1)[0].id, "task-slides");
+  assert.equal(search("посчитай в таблице excel", 1)[0].id, "task-spreadsheet");
+  assert.equal(search("разбери скриншот с ошибкой", 1)[0].id, "task-screenshot");
+  assert.equal(search("составь план на неделю", 1)[0].id, "task-plan");
+});
+
+test("справка не выдаёт лишнего на пустой задаче", () => {
+  const block = promptBlock("", 2600);
+  assert.doesNotMatch(block, /СПРАВКА ИЗ ОБЩЕЙ БАЗЫ/);
+  assert.ok(block.length > 0, "порядок отладки должен остаться");
 });
