@@ -12,6 +12,7 @@ const { parseModelOutput, formatCorrection, toolsPrompt } = require("./protocol.
 const guard = require("./guard.js");
 const { runTool } = require("./tools.js");
 const knowledge = require("./knowledge.js");
+const shared = require("./shared.js");
 const brand = require("./brand.js");
 
 const IDENTITY = [
@@ -61,8 +62,10 @@ function systemPrompt(opts) {
     "ИНСТРУМЕНТЫ:",
     toolsPrompt(),
     "",
-    // своя справка по языкам и багам — подбирается под задачу
-    knowledge.promptBlock(task || "", 2200),
+    // своя справка: языки, баги, инструменты, порядки действий — подбирается под задачу
+    knowledge.promptBlock(task || "", 2600),
+    // темы, которые владелец опубликовал для всех (сайт Искры пишет в ту же базу)
+    shared.promptBlock(task || "", 1200),
     "",
     "ФОРМАТ ОТВЕТА — строго один из двух вариантов, без лишнего текста:",
     '  1) действие: <action>{"tool":"имя","args":{...},"why":"зачем это делаю"}</action>',
@@ -98,6 +101,7 @@ function liteSystemPrompt(opts) {
     frozen ? "ПРО ПОДПИСКА НЕАКТИВНА: только чтение файлов и объяснения, без терминала и записи. Скажи об этом." : "Подписка Pro активна.",
     "ИНСТРУМЕНТЫ: " + toolNames + ".",
     knowledge.promptBlock(task || "", 900),
+    shared.promptBlock(task || "", 500),
     "ОТВЕЧАЙ РОВНО ОДНИМ ИЗ ДВУХ, без другого текста:",
     '  <action>{"tool":"имя","args":{...},"why":"зачем"}</action>',
     "  <final>что сделано и что проверить</final>",

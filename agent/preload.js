@@ -28,6 +28,8 @@ contextBridge.exposeInMainWorld("sye", {
   saveSettings: (patch) => ipcRenderer.invoke("settings:save", patch),
   pickWorkspace: () => ipcRenderer.invoke("workspace:pick"),
   screenshot: () => ipcRenderer.invoke("shot:capture"),
+  kbInfo: () => ipcRenderer.invoke("kb:info"),
+  kbRefresh: () => ipcRenderer.invoke("kb:refresh"),
   startTask: (task, shot) => ipcRenderer.invoke("task:start", { task, shot }),
   stopTask: () => ipcRenderer.invoke("task:stop"),
   clearHistory: () => ipcRenderer.invoke("history:clear"),
