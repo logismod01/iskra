@@ -204,6 +204,161 @@ const BUGS = [
   }
 ];
 
+/* Инструменты и быт разработки: то, на чём спотыкаются чаще, чем на самом языке.
+   Те же поля, что у языков и багов: id, title, keys, text. */
+const TOOLS = [
+  {
+    id: "git-work",
+    title: "Git на каждый день",
+    keys: ["git", "коммит", "commit", "ветк", "branch", "merge", "конфликт", "rebase", "stash", "push", "pull"],
+    text: "Порядок: git status → git diff → git add -A → git commit -m \"что и зачем\". Ветка: git switch -c имя. Влить: git switch main && git merge ветка. Конфликт — открой файл, убери маркеры <<<<<<<, =======, >>>>>>>, потом git add и git commit. Отменить правки в файле: git checkout -- файл. Убрать последний коммит, оставив правки: git reset --soft HEAD~1. Спрятать на время: git stash, вернуть: git stash pop."
+  },
+  {
+    id: "npm-errors",
+    title: "npm падает",
+    keys: ["npm", "node_modules", "package.json", "lock", "eacces", "eresolve", "peer", "npx"],
+    text: "ENOENT package.json — команда не в той папке. ERESOLVE / unable to resolve dependency tree — конфликт версий: npx npm install --legacy-peer-deps, потом разберись с версиями. EACCES — права: не запускай npm через sudo, поправь владельца папки. Странные ошибки после обновлений: удали node_modules и package-lock.json, затем npm install. Проверка: npm ls --depth=0."
+  },
+  {
+    id: "python-env",
+    title: "Python: окружение и пакеты",
+    keys: ["venv", "virtualenv", "pip", "requirements", "python не найден", "модуль не найден", "modulenotfound"],
+    text: "Своё окружение: python -m venv .venv, Windows: .venv\\Scripts\\activate, Linux и macOS: source .venv/bin/activate. Ставить: pip install -r requirements.txt. ModuleNotFoundError при установленном пакете — активируй нужное окружение и сравни python -c \"import sys; print(sys.executable)\" с pip -V: они должны быть из одной папки. На Windows python может запускать Store-заглушку — тогда py -3."
+  },
+  {
+    id: "windows-shell",
+    title: "Windows: PowerShell и cmd",
+    keys: ["powershell", "cmd", "windows", "bat", "пробел в пути", "chcp", "переменная среды"],
+    text: "В PowerShell путь с пробелами — в кавычках или через оператор &. Список файлов: Get-ChildItem, поиск: Get-ChildItem -Recurse -Filter *.py. Переменные: $env:PATH. Кодировка вывода: chcp 65001, а файлы пиши с encoding=\"utf-8\". Скрипт .ps1 не запускай двойным кликом — окно откроется и закроется; запускай из терминала."
+  },
+  {
+    id: "ports",
+    title: "Порт занят",
+    keys: ["порт", "port", "eaddrinuse", "8000", "3000", "занят"],
+    text: "EADDRINUSE — порт уже слушает другой процесс. Windows: netstat -ano | findstr :3000, затем taskkill /PID номер /F. Linux и macOS: lsof -i :3000 и kill -9 PID. Быстрый обход — другой порт (3001). В коде не прибивай порт жёстко: бери из переменной окружения с запасным значением."
+  },
+  {
+    id: "env-vars",
+    title: "Переменные окружения и .env",
+    keys: [".env", "dotenv", "переменн", "env", "секрет", "токен", "конфиг"],
+    text: "Секреты и настройки — в .env, а сам файл в .gitignore. Загрузка: Node — dotenv/config или process.env, Python — python-dotenv (load_dotenv). В репозиторий кладут .env.example с пустыми значениями. Значения из .env всегда строки: числа приводи через int() или Number(). Переменная не видна — проверь имя без кавычек в файле и что файл лежит в рабочей папке."
+  },
+  {
+    id: "http-api",
+    title: "Запросы к API",
+    keys: ["api", "http", "fetch", "axios", "requests", "401", "403", "429", "cors", "таймаут"],
+    text: "401 — нет или протух токен, 403 — нет прав, 404 — не тот адрес, 429 — лимит запросов (жди и повторяй с паузой), 5xx — проблема на сервере. Всегда ставь таймаут и проверяй код ответа до чтения JSON: json() на странице ошибки падает. Тело POST — Content-Type: application/json. Не уходит из браузера, а из консоли уходит — это CORS, а не ключ."
+  },
+  {
+    id: "json-yaml",
+    title: "JSON и YAML",
+    keys: ["json", "yaml", "yml", "парсинг", "config"],
+    text: "JSON: только двойные кавычки, без висячих запятых, без комментариев. Проверка: python -m json.tool файл.json. YAML: отступы пробелами, табы запрещены, после двоеточия нужен пробел. Чтобы не было кракозябр: json.dump(..., ensure_ascii=False)."
+  },
+  {
+    id: "regex",
+    title: "Регулярные выражения",
+    keys: ["regex", "regexp", "регулярк", "шаблон", "grep"],
+    text: "Проверяй на regex101.com — там объяснение по шагам. Частые ошибки: точка ловит больше, чем нужно (экранируй \\.); жадность — ставь *?; забыл якоря ^ и $; в Python нужна сырая строка r\"\\d+\". Ищи по одной части за раз: сначала слово, потом окружение. Замена с группами: re.sub(r\"(\\w+)@(\\w+)\", r\"\\1 [at] \\2\", s)."
+  },
+  {
+    id: "encoding-csv",
+    title: "Кодировки и CSV/Excel",
+    keys: ["кодировк", "utf-8", "cp1251", "кракозябр", "csv", "excel", "xlsx", "pandas"],
+    text: "Кракозябры — файл не в UTF-8: читай с encoding=\"utf-8\" или encoding=\"cp1251\", а для диагностики errors=\"replace\" и посмотри, что вышло. CSV в Excel: открывай через «Данные → Из текста» с разделителем либо сохраняй с BOM (utf-8-sig), иначе кириллица сломается. pandas: read_csv(..., encoding=\"utf-8\"), read_excel для .xlsx (нужен openpyxl). Пиши index=False, чтобы не появился лишний столбец."
+  },
+  {
+    id: "tests-work",
+    title: "Тесты: как писать и чинить",
+    keys: ["тест", "pytest", "jest", "vitest", "unit", "assert", "фикстур"],
+    text: "Один тест — одно утверждение. Название описывает поведение: «возвращает 0 на пустом списке». Падающий тест читай сверху вниз: что ожидалось, что пришло, где строка. Сначала воспроизведи падение отдельно (pytest -k имя, npm test -- -t имя), потом правь код, а не тест. Мокай сеть и время, иначе тесты нестабильны."
+  },
+  {
+    id: "docker-basics",
+    title: "Docker: минимум",
+    keys: ["docker", "контейнер", "compose", "dockerfile", "образ"],
+    text: "Собрать: docker build -t имя . Запустить: docker run -p 8000:8000 имя. Список: docker ps -a, логи: docker logs -f контейнер, зайти внутрь: docker exec -it контейнер sh. Compose: docker compose up -d и docker compose down. В Dockerfile ставь установку зависимостей отдельным слоем до копирования кода — сборка быстрее. Порт внутри и снаружи должен совпадать."
+  },
+  {
+    id: "html-page",
+    title: "Страница не открывается или пустая",
+    keys: ["html", "сайт", "страниц", "белый экран", "localhost", "assets", "404"],
+    text: "Белый экран — открой F12 → Console: обычно 404 на .js или .css либо ошибка JS. Пути к файлам считаются от html, регистр букв на сервере важен (Windows прощает, Linux нет). Локальный сервер вместо file://: python -m http.server 8000. Кэш сбрасывай Ctrl+F5. Проверь, что index.html лежит в корне публикуемой папки."
+  },
+  {
+    id: "security-basics",
+    title: "Безопасность кода",
+    keys: ["безопасн", "sql инъекц", "xss", "пароль", "csrf", "инъекц", "утечк"],
+    text: "SQL — только параметрами (? или %s через драйвер), не склейкой строк. HTML — экранируй пользовательский текст, не вставляй его через innerHTML. Пароли — хешем с солью (bcrypt или argon2), никогда в открытом виде. Секреты — в переменных окружения, не в коде и не в git. Файлы от пользователя — проверяй расширение и размер, не доверяй пути из запроса."
+  },
+  {
+    id: "blender-script",
+    title: "Скрипт для Blender",
+    keys: ["blender", "bpy", "3d", "рендер", "модель"],
+    text: "Скрипт запускают в Blender → Scripting → Run Script. Начало: import bpy. Очистка сцены: select_all(action='SELECT') и delete(). Создать: primitive_uv_sphere_add(location=(0,0,0)). Материал: use_nodes=True, цвет в Base Color узла Principled BSDF. Затем свет, камера и render(write_still=True). Внешние аддоны не нужны."
+  },
+  {
+    id: "git-hosting",
+    title: "Выложить проект на GitHub",
+    keys: ["github", "remote", "origin", "pages", "deploy", "выложить", "репозитори"],
+    text: "Первый раз: git init, git add -A, git commit -m \"первый коммит\", git branch -M main, git remote add origin адрес, git push -u origin main. Дальше — git push. Ошибка failed to push some refs — сначала git pull --rebase. Статику раздают через GitHub Pages; проверь, что index.html в корне. .gitignore обязателен: node_modules, .venv, .env."
+  }
+];
+
+/* Готовые порядки действий для частых задач: агент идёт по шагам,
+   а не изобретает заново. Это подсказка, а не жёсткий сценарий. */
+const RECIPES = [
+  {
+    id: "recipe-fix-bug",
+    title: "Починить ошибку в проекте",
+    keys: ["починить", "исправь", "ошибк", "падает", "не работает", "баг"],
+    text: "1) Найди точку входа: scripts в package.json, main.py, README. 2) Запусти и получи текст ошибки. 3) Найди файл и строку из стека. 4) Прочитай функцию целиком. 5) Назови причину одной фразой. 6) Правь минимально. 7) Повтори запуск и покажи, что стало."
+  },
+  {
+    id: "recipe-new-project",
+    title: "Собрать проект с нуля",
+    keys: ["сделай сайт", "создай проект", "с нуля", "напиши программу", "скрипт"],
+    text: "1) Уточни стек и папку. 2) Создай структуру: точка входа, список зависимостей, README с командой запуска. 3) Сделай минимальный работающий вариант и сразу запусти. 4) Добавляй по одной функции, после каждой проверяй. 5) В конце напиши, как запускать."
+  },
+  {
+    id: "recipe-failing-test",
+    title: "Почему падает тест",
+    keys: ["тест падает", "не проходят тесты", "красные тесты", "failed"],
+    text: "1) Запусти только этот тест. 2) Прочитай: ожидалось, получилось, строка. 3) Проверь входные данные, время, часовой пояс, случайность. 4) Повторится ли в одиночку или только вместе со всеми — тогда дело в общем состоянии. 5) Правь код, а не утверждение теста, если требование не менялось."
+  },
+  {
+    id: "recipe-read-project",
+    title: "Разобраться в чужом коде",
+    keys: ["разберись", "чужой код", "как устроен", "прочитай проект"],
+    text: "1) README и package.json или requirements.txt: что это и как запускать. 2) Найди точку входа. 3) Пройди один путь: от действия пользователя до работы с данными. 4) Составь карту: где логика, где хранение, где интерфейс. 5) Только потом правь. Не читай проект целиком — иди по своей задаче."
+  },
+  {
+    id: "recipe-publish",
+    title: "Выложить в интернет",
+    keys: ["выложи", "опубликов", "задеплой", "хостинг", "netlify", "vercel", "pages"],
+    text: "1) Убедись, что проект собирается и в коде нет секретов. 2) .gitignore: зависимости, окружение, большие файлы. 3) Коммит и push в репозиторий. 4) Статика — Pages или Netlify, сервер — Vercel или Render. 5) Открой опубликованный адрес и проверь именно там, а не локально."
+  },
+  {
+    id: "recipe-windows-exe",
+    title: "Собрать .exe",
+    keys: ["exe", "собра", "установщик", "pyinstaller", "electron", "инсталля"],
+    text: "Python: pip install pyinstaller, затем pyinstaller --onefile --windowed main.py, результат в dist. Electron: electron-builder с разделом build в package.json, запуск npm run dist. Частые причины пустого окна: неверный путь к ресурсам (в сборке путь другой), файла нет в списке files, антивирус блокирует свежий exe."
+  },
+  {
+    id: "recipe-data",
+    title: "Разобрать данные из файла",
+    keys: ["данн", "таблиц", "статистик", "график", "сводк"],
+    text: "1) Посмотри первые строки и типы. 2) Почисти: пропуски, дубли, единицы измерения, даты к одному формату. 3) Посчитай нужные числа один раз и покажи их. 4) Проверь себя: сумма долей, общее число строк. 5) Сохрани результат отдельным файлом, исходник не перезаписывай."
+  },
+  {
+    id: "recipe-security-check",
+    title: "Проверить проект перед выкладкой",
+    keys: ["проверь перед", "секрет в коде", "ключи в репозитори", "аудит"],
+    text: "1) Поищи в проекте ключи и пароли: grep по словам key, secret, token, password. 2) Проверь .gitignore. 3) Убедись, что в логах не печатаются секреты и тела запросов с токенами. 4) Проверь обработку ввода: SQL только параметрами, HTML экранирован. 5) Если секрет уже был в git — смени его, чистки истории мало."
+  }
+];
+
+const ALL = LANGUAGES.concat(BUGS, TOOLS, RECIPES);
 /** Нижний регистр и «ё» → «е», чтобы совпадения не зависели от раскладки. */
 function norm(text) {
   return String(text == null ? "" : text).toLowerCase().replace(/ё/g, "е");
@@ -245,7 +400,7 @@ function pickKnowledge(task, opts) {
   const hay = norm(task);
   const max = o.max || 3;
   const scored = [];
-  for (const entry of LANGUAGES.concat(BUGS)) {
+  for (const entry of ALL) {
     const score = scoreOf(entry, hay);
     if (score > 0) scored.push({ entry, score });
   }
@@ -266,7 +421,7 @@ function search(query, limit) {
   if (!hay) return [];
   const words = hay.split(/[^a-zа-я0-9+#.]+/).filter((w) => w.length >= 3 && !STOP.has(w));
   const scored = [];
-  for (const entry of LANGUAGES.concat(BUGS)) {
+  for (const entry of ALL) {
     let score = scoreOf(entry, hay);
     if (norm(entry.title).includes(hay)) score += 4;
     const body = norm(entry.text);
@@ -302,4 +457,4 @@ function promptBlock(task, maxChars) {
   return text;
 }
 
-module.exports = { METHOD, LANGUAGES, BUGS, pickKnowledge, search, promptBlock, norm };
+module.exports = { METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ALL, pickKnowledge, search, promptBlock, norm };

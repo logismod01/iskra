@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const knowledge = require("../core/knowledge.js");
-const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS } = knowledge;
+const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ALL } = knowledge;
 const { systemPrompt } = require("../core/agent.js");
 const { LIMITS } = require("../core/license.js");
 const { TOOL_NAMES } = require("../core/protocol.js");
@@ -107,4 +107,56 @@ test("справка не выдаёт себя за код и не ломает
   const block = promptBlock("python");
   assert.doesNotMatch(block, /<action>/);
   assert.ok(block.length <= 2200);
+});
+
+test("справка выросла: языки, баги, инструменты и порядки действий", () => {
+  assert.ok(TOOLS.length >= 14, "мало карточек про инструменты: " + TOOLS.length);
+  assert.ok(RECIPES.length >= 8, "мало порядков действий: " + RECIPES.length);
+  assert.equal(ALL.length, LANGUAGES.length + BUGS.length + TOOLS.length + RECIPES.length);
+  const ids = ALL.map((x) => x.id);
+  assert.equal(new Set(ids).size, ids.length, "есть повторяющиеся id");
+});
+
+test("каждая новая карточка заполнена и уникальна по названию", () => {
+  const titles = new Set();
+  for (const card of TOOLS.concat(RECIPES)) {
+    assert.ok(card.title.length >= 5, card.id + ": короткое название");
+    assert.ok(card.text.length >= 120, card.id + ": слишком короткий текст");
+    assert.ok(card.keys.length >= 3, card.id + ": мало ключей");
+    assert.match(card.id, /^[a-z0-9-]+$/);
+    assert.ok(!titles.has(card.title), "повтор названия: " + card.title);
+    titles.add(card.title);
+  }
+});
+
+test("житейские задачи находят свою карточку", () => {
+  assert.equal(search("порт 3000 занят, EADDRINUSE", 1)[0].id, "ports");
+  assert.equal(search("как отменить последний коммит git", 1)[0].id, "git-work");
+  assert.equal(search("npm ERR! ERESOLVE could not resolve", 1)[0].id, "npm-errors");
+  assert.equal(search("ModuleNotFoundError после pip install", 1)[0].id, "python-env");
+  assert.equal(search("кракозябры при открытии csv в excel", 1)[0].id, "encoding-csv");
+  assert.equal(search("белый экран, страница не открывается", 1)[0].id, "html-page");
+});
+
+test("порядки действий подтягиваются к задаче целиком", () => {
+  const deploy = search("выложи сайт в интернет", 3).map((x) => x.id);
+  assert.ok(deploy.includes("recipe-publish"), deploy.join(","));
+  const bug = search("починить ошибку в проекте", 3).map((x) => x.id);
+  assert.ok(bug.includes("recipe-fix-bug"), bug.join(","));
+  const exe = search("собрать exe из python", 3).map((x) => x.id);
+  assert.ok(exe.includes("recipe-windows-exe"), exe.join(","));
+});
+
+test("порядок действий попадает в промпт целиком, а не обрывком", () => {
+  const p = promptBlock("выложи проект в интернет", 2600);
+  assert.match(p, /СПРАВКА ПО ТЕМЕ/);
+  assert.match(p, /Выложить в интернет/);
+  assert.ok(!p.endsWith("…"), "справка обрезана на середине");
+});
+
+test("каждая карточка находится по своему названию", () => {
+  for (const card of TOOLS.concat(RECIPES)) {
+    const found = search(card.title, 3).map((x) => x.id);
+    assert.ok(found.includes(card.id), card.id + " не находится по названию: " + found.join(","));
+  }
 });

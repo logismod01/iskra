@@ -18,6 +18,7 @@ const fsp = require("node:fs/promises");
 const path = require("node:path");
 const guard = require("./guard.js");
 const knowledge = require("./knowledge.js");
+const shared = require("./shared.js");
 
 const SKIP_DIRS = new Set([".git", "node_modules", ".next", "dist", "build", "out", "target", "__pycache__", ".venv", "venv", ".idea", ".vscode", "coverage"]);
 const MAX_READ = 300 * 1024;
@@ -298,17 +299,23 @@ async function runTool(action, ctx) {
       case "kb.search": {
         const query = String(args.query || "").trim();
         if (!query) return { ok: false, summary: "Пустой запрос", output: "Что искать? Например: python, IndentationError, null." };
-        const found = knowledge.search(query, 3);
-        if (!found.length) {
+        const found = knowledge.search(query, 3).map((x) => ({ title: x.title, text: x.text }));
+        // плюс темы, которые владелец опубликовал для всех пользователей Искры
+        const fromBase = shared.search(query, 2).map((x) => ({ title: x.topic, text: x.text }));
+        const all = found.concat(fromBase);
+        if (!all.length) {
+          const hint = shared.isEmpty()
+            ? " Общая база ещё не загружена — попробуй позже или спроси иначе."
+            : "";
           return {
             ok: false,
             summary: "В справке нет такой темы",
-            output: "Ничего не нашлось по запросу «" + query + "». Спроси иначе: язык (python, js, sql) или текст ошибки."
+            output: "Ничего не нашлось по запросу «" + query + "». Спроси иначе: язык (python, js, sql), текст ошибки или название темы." + hint
           };
         }
-        const body = found.map((x) => "• " + x.title + ": " + x.text).join("\n\n");
+        const body = all.map((x) => "• " + x.title + ": " + x.text).join("\n\n");
         const packed = tooBig(limits, body);
-        return { ok: true, summary: "Справка: " + found.map((x) => x.title).join(", "), output: packed.text };
+        return { ok: true, summary: "Справка: " + all.map((x) => x.title).join(", "), output: packed.text };
       }
 
       case "task.done": {

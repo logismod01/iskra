@@ -17,6 +17,8 @@ const guard = require("./core/guard.js");
 const { createLicense } = require("./core/license.js");
 const { createAccount } = require("./core/account.js");
 const { runTask } = require("./core/agent.js");
+const shared = require("./core/shared.js");
+const knowledge = require("./core/knowledge.js");
 const { askModel, askVision } = require("./core/engines.js");
 const { stripHtml } = require("./core/tools.js");
 
@@ -366,6 +368,21 @@ async function startTask(payload) {
 
 /* ---------- IPC ---------- */
 function wireIpc() {
+  /* ---------- Справка и общая база ---------- */
+  const kbInfo = () => ({
+    local: knowledge.ALL.length,
+    topics: shared.list().length,
+    updatedAt: shared.age() === Infinity ? 0 : Date.now() - shared.age(),
+    error: shared.error()
+  });
+
+  ipcMain.handle("kb:info", () => kbInfo());
+  ipcMain.handle("kb:refresh", async () => {
+    await shared.refresh({ force: true });
+    await shared.saveCache(USER_DIR);
+    return kbInfo();
+  });
+
   ipcMain.handle("state:get", () => ({
     license: licenseView(),
     account: account.view(),
@@ -373,6 +390,7 @@ function wireIpc() {
     brand,
     device: DEVICE_NAME,
     version: app.getVersion(),
+    kb: kbInfo(),
     history: historyList()
   }));
 
@@ -527,6 +545,9 @@ if (!gotLock) {
       globalShortcut.register("CommandOrControl+Alt+S", () => takeShot(true));
       globalShortcut.register("CommandOrControl+Alt+Space", () => showWindow());
     } catch (e) { /* другие приложения могли занять эти клавиши */ }
+
+    // общая база Искры: сначала копия с диска, потом тихое обновление с сайта
+    shared.boot(USER_DIR).catch(() => {});
 
     license.sync(false).then(() => {
       broadcastState();

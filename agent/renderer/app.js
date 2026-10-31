@@ -9,7 +9,7 @@ const state = {
   license: null,
   account: null,
   settings: null,
-  brand: { name: "Sye", version: "0.4.2" },
+  brand: { name: "Sye", version: "0.4.3" },
   history: [],
   shot: null,
   running: false
@@ -126,6 +126,18 @@ function gateNote(text, isErr) {
   const el = $("#accErr");
   el.textContent = text || "";
   el.style.color = isErr ? "var(--err)" : "var(--text-soft)";
+}
+
+function renderKb(kb) {
+  if (!kb) return;
+  $("#kbLocal").textContent = kb.local + " карточек";
+  $("#kbShared").textContent = kb.topics ? kb.topics + " тем" : "пока пусто";
+  if (!kb.updatedAt) {
+    $("#kbWhen").textContent = "ещё не загружалась";
+  } else {
+    const min = Math.round((Date.now() - Number(kb.updatedAt)) / 60000);
+    $("#kbWhen").textContent = min < 1 ? "только что" : min < 60 ? min + " мин назад" : Math.round(min / 60) + " ч назад";
+  }
 }
 
 function renderWorkspace(path) {
@@ -399,6 +411,7 @@ function wireEvents() {
     if (payload.account) renderAccount(payload.account);
     if (payload.settings) { state.settings = payload.settings; renderWorkspace(payload.settings.workspace); renderSettings(); }
     if (payload.brand) state.brand = payload.brand;
+    if (payload.kb) renderKb(payload.kb);
   });
 
   window.sye.onHistory((list) => renderHistory(list));
@@ -503,6 +516,17 @@ function wireUi() {
     const res = await window.sye.syncLicense();
     toast("Подписка: " + ((res && res.label) || "проверено"));
   });
+  $("#kbRefreshBtn").addEventListener("click", async () => {
+    const btn = $("#kbRefreshBtn");
+    btn.disabled = true;
+    btn.textContent = "Обновляю…";
+    const kb = await window.sye.kbRefresh();
+    btn.disabled = false;
+    btn.textContent = "Обновить базу";
+    renderKb(kb);
+    toast(kb && kb.topics ? "В базе " + kb.topics + " тем" : "База пока пустая — проверь связь", kb && kb.topics ? "ok" : "err");
+  });
+
   $("#buyBtn").addEventListener("click", () => window.sye.openExternal("https://logismod01.github.io/iskra/"));
   $("#quitBtn").addEventListener("click", () => window.sye.quit());
 
@@ -655,6 +679,7 @@ function wirePresets() {
   renderAccount(s.account);
   renderLicense(s.license);
   renderHistory(s.history);
+  renderKb(s.kb);
   renderSettings();
   wirePresets();
   if (s.license.state === "none" || s.license.state === "wrong-device") {
