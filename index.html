@@ -13814,6 +13814,29 @@ function sharedTopicsLower() {
   return sharedKbList().map(x => String(x.topic || "").toLowerCase().replace(/ё/g, "е").trim());
 }
 
+/* Проверка «а знает ли Искра?»: показывает найденные темы и откуда они —
+   общая база, выучено или встроенная. Чтобы человек не гадал, есть ли тема. */
+function kbCheckRun(query) {
+  const out = document.querySelector("#kbCheckOut");
+  if (!out) return;
+  const q = String(query || "").trim();
+  if (q.length < 2) {
+    out.innerHTML = `<div class="acct-dim">Напиши хотя бы слово — например «давление» или «фотосинтез».</div>`;
+    return;
+  }
+  const hits = kbSearch(q, 6);
+  if (!hits.length) {
+    out.innerHTML = `<div class="acct-dim">Такой темы нет ни в одной базе. Спроси обычным вопросом: если найдётся в интернете — нажми «Выучить», и это появится здесь.</div>`;
+    return;
+  }
+  out.innerHTML = hits.map(h => {
+    const from = h.shared ? "общая база" : h.learned ? "выучено Искрой" : "встроенная база";
+    const text = String(h.text || "").replace(/\s+/g, " ").trim();
+    const short = text.length > 170 ? text.slice(0, 170).trim() + "…" : text;
+    return `<div class="acct-dev"><div><b>${esc(h.title)}</b><div class="acct-dim">${from} · ${esc(short)}</div></div></div>`;
+  }).join("");
+}
+
 function renderKnowledgePanel() {
   const list = learnedList().sort((a, b) => b.ts - a.ts);
   const shared = sharedKbList();
@@ -13853,6 +13876,18 @@ function renderKnowledgePanel() {
       <div id="kbCards"></div>
     </div>
     <div class="acct-sec">
+      <div class="acct-h">Проверить, что Искра знает</div>
+      <div class="acct-note">Напиши слово или вопрос — покажу, какие темы найдутся и откуда они: общая база, выучено или встроенная. Если пусто — этой темы пока нет.</div>
+      <div class="auth-field" style="margin-top:10px">
+        <label>Слово или вопрос</label>
+        <input id="kbCheckInput" placeholder="например: давление, вклад, фотосинтез" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="pay-row">
+        <button class="auth-btn" id="kbCheckGo" type="button">Проверить</button>
+      </div>
+      <div id="kbCheckOut"></div>
+    </div>
+    <div class="acct-sec">
       <div class="acct-h">Выученные темы (${list.length})</div>
       ${list.length ? list.map(x => `<div class="acct-dev">
         <div><b>${esc(x.topic)}</b><div class="acct-dim">${new Date(x.ts).toLocaleDateString("ru-RU")} · ${x.text.length} символов</div></div>
@@ -13883,6 +13918,15 @@ function renderKnowledgePanel() {
     </div>`;
   // поиск и папки по встроенной базе
   renderKbCards();
+  const chkGo = box.querySelector("#kbCheckGo");
+  const chkIn = box.querySelector("#kbCheckInput");
+  if (chkGo && chkIn) {
+    const run = () => kbCheckRun(chkIn.value);
+    chkGo.onclick = run;
+    chkIn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); run(); }
+    });
+  }
   const search = box.querySelector("#kbSearchInput");
   if (search) {
     search.value = kbView.q;
