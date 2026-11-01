@@ -179,6 +179,23 @@ function renderSettings() {
   $("#apiKey").value = s.apiKey || "";
   $("#apiBase").value = s.apiBase || "";
   $("#apiModel").value = s.apiModel || "";
+  const cp = $("#compactToggle"); if (cp) cp.checked = s.compact === true;
+  const an = $("#animToggle"); if (an) an.checked = s.animations !== false;
+  applyLook();
+}
+
+/* Вид: плотность и движение. Классы на <html>, настройки — в sye-settings.json. */
+function applyLook() {
+  const s = state.settings || {};
+  const html = document.documentElement;
+  html.classList.toggle("compact", s.compact === true);
+  html.classList.toggle("no-anim", s.animations === false);
+}
+
+/* Маскот: idle → работаю → ошибка. Без лишней мимики. */
+function mascotMood(mood) {
+  const wrap = document.querySelector(".brand-mark.sye-wrap");
+  if (wrap) wrap.dataset.mood = mood || "idle";
 }
 
 /* ---------- Лента ---------- */
@@ -294,6 +311,8 @@ function appendFinal(text, ok) {
 }
 
 function appendError(text) {
+  mascotMood("error");
+  setTimeout(() => mascotMood(state.running ? "work" : "idle"), 1400);
   const el = document.createElement("div");
   el.className = "msg";
   el.innerHTML = `<div class="err-line">${esc(text)}</div>`;
@@ -306,6 +325,7 @@ let currentRun = null;
 
 function setBusy(on) {
   state.running = on;
+  mascotMood(on ? "work" : "idle");
   $("#sendBtn").hidden = on;
   $("#stopBtn").hidden = !on;
   $("#input").disabled = false;
@@ -440,7 +460,17 @@ function wireUi() {
     if (state.running) return;
     feedEl().innerHTML = `
       <div class="hello" id="hello">
-        <div class="hello-mark"><span class="spark big"></span></div>
+        <div class="hello-mark sye-mascot-pic"><div class="sye-wrap" data-mood="idle"><svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="Сью">
+            <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
+            <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
+            <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
+            <ellipse class="sye-belly" cx="32" cy="45.6" rx="9.4" ry="5.8"/>
+            <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
+            <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
+            <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>
+            <circle class="sye-cheek" cx="43.8" cy="37.4" r="2.3"/>
+            <path class="sye-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>
+          </svg></div></div>
         <h1>Новая задача</h1>
         <p>Опиши, что сделать. Я прочитаю файлы, поправлю код, запущу проверку и покажу результат.</p>
       </div>`;
@@ -493,6 +523,19 @@ function wireUi() {
       state.settings = await window.sye.saveSettings({ access: r.value });
       toast("Уровень доступа: " + r.closest(".radio").querySelector("b").textContent);
     });
+  });
+
+  const cp = $("#compactToggle");
+  if (cp) cp.addEventListener("change", async () => {
+    state.settings = await window.sye.saveSettings({ compact: !!cp.checked });
+    applyLook();
+    toast(cp.checked ? "Компактно" : "Обычный вид");
+  });
+  const an = $("#animToggle");
+  if (an) an.addEventListener("change", async () => {
+    state.settings = await window.sye.saveSettings({ animations: !!an.checked });
+    applyLook();
+    toast(an.checked ? "Анимации включены" : "Анимации выключены");
   });
 
   $("#saveApi").addEventListener("click", async () => {
@@ -681,6 +724,7 @@ function wirePresets() {
   renderHistory(s.history);
   renderKb(s.kb);
   renderSettings();
+  applyLook();
   wirePresets();
   if (s.license.state === "none" || s.license.state === "wrong-device") {
     $("#gate").hidden = false;

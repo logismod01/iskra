@@ -71,6 +71,13 @@ function keyKind(raw) {
 }
 
 /* ---------- Сервер ключей ---------- */
+
+/** Ответ PostgREST «функции нет в схеме» — значит, sql не выполняли. */
+function isMissingFunction(err) {
+  const s = String((err && (err.code || "")) + " " + (err && err.message) + " " + (err && err.status)).toLowerCase();
+  return /pgrst202|42883|schema cache|could not find the function|function .* does not exist/.test(s);
+}
+
 async function rpc(name, args, timeoutMs = 12000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -92,6 +99,10 @@ async function rpc(name, args, timeoutMs = 12000) {
       const msg = (json && (json.message || json.error)) || ("HTTP " + res.status);
       const err = new Error(msg);
       err.status = res.status;
+      err.code = json && json.code;
+      /* Сервер знает функцию, но её нет в базе: это не «неверный пароль»,
+         а не выполненный sql. Различаем, чтобы не пугать человека. */
+      err.missingFunction = isMissingFunction(err);
       throw err;
     }
     return json;
@@ -120,7 +131,7 @@ async function activateServerKey(raw, client) {
 /** Спросить у сервера, живёт ли ещё ключ этого кода клиента. */
 async function fetchServerAccess(client) {
   const j = await rpc("iskra_access", { p_client: canonClient(client) });
-  if (!j || !j.ok) return { ok: false, active: false };
+  if (!j || !j.ok) return { ok: false, active: false, msg: (j && j.error) || "" };
   const forever = j.forever === true || !j.expires_at;
   const expiresAt = forever ? 0 : new Date(j.expires_at).getTime();
   return { ok: true, active: !!j.active && (forever || expiresAt > Date.now()), forever, expiresAt, plan: j.plan || "", label: j.label || "" };
@@ -128,5 +139,5 @@ async function fetchServerAccess(client) {
 
 module.exports = {
   ACCESS, SUPABASE, CLIENT_RE, LOCAL_RE, SERVER_RE,
-  canonClient, sha256, hmac, verifyLocalKey, keyKind, activateServerKey, fetchServerAccess, rpc
+  canonClient, sha256, hmac, verifyLocalKey, keyKind, activateServerKey, fetchServerAccess, rpc, isMissingFunction
 };

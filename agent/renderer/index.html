@@ -12,8 +12,18 @@
     <!-- Слева: задачи -->
     <aside class="side">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          <span class="spark"></span>
+        <div class="brand-mark sye-wrap" data-mood="idle" aria-hidden="true">
+          <svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="Сью">
+            <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
+            <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
+            <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
+            <ellipse class="sye-belly" cx="32" cy="45.6" rx="9.4" ry="5.8"/>
+            <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
+            <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
+            <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>
+            <circle class="sye-cheek" cx="43.8" cy="37.4" r="2.3"/>
+            <path class="sye-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>
+          </svg>
         </div>
         <div class="brand-text">
           <b id="brandName">Sye</b>
@@ -61,7 +71,17 @@
 
       <section class="feed" id="feed">
         <div class="hello" id="hello">
-          <div class="hello-mark"><span class="spark big"></span></div>
+          <div class="hello-mark sye-mascot-pic"><div class="sye-wrap" data-mood="idle"><svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="Сью">
+            <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
+            <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
+            <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
+            <ellipse class="sye-belly" cx="32" cy="45.6" rx="9.4" ry="5.8"/>
+            <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
+            <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
+            <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>
+            <circle class="sye-cheek" cx="43.8" cy="37.4" r="2.3"/>
+            <path class="sye-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>
+          </svg></div></div>
           <h1>Я <b>Sye</b>. Скажи, что сделать — сделаю.</h1>
           <p>Читаю и правлю файлы, запускаю команды, ищу причины ошибок и смотрю на экран, если показать скриншот.</p>
           <div class="presets" id="presets">
@@ -102,7 +122,17 @@
   <!-- Доступ -->
   <div class="gate" id="gate" hidden>
     <div class="gate-card">
-      <div class="gate-mark"><span class="spark big"></span></div>
+      <div class="gate-mark sye-mascot-pic"><div class="sye-wrap" data-mood="idle"><svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="Сью">
+            <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
+            <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
+            <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
+            <ellipse class="sye-belly" cx="32" cy="45.6" rx="9.4" ry="5.8"/>
+            <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
+            <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
+            <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>
+            <circle class="sye-cheek" cx="43.8" cy="37.4" r="2.3"/>
+            <path class="sye-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>
+          </svg></div></div>
       <h2 id="gateTitle">Нужна подписка Pro</h2>
       <p id="gateText">Sye — агент для подписчиков Искры Pro. Без ключа он не работает: один Pro — один агент на одном компьютере.</p>
       <div class="gate-benefits">
@@ -233,6 +263,12 @@
         <div class="row">
           <button class="ghost" id="kbRefreshBtn">Обновить базу</button>
         </div>
+      </section>
+
+      <section>
+        <h3>Вид</h3>
+        <label class="check"><input type="checkbox" id="compactToggle" /><span><b>Компактно</b><i>меньше отступов, больше текста</i></span></label>
+        <label class="check"><input type="checkbox" id="animToggle" /><span><b>Анимации</b><i>мягкие появления; система «уменьшить движение» важнее</i></span></label>
       </section>
 
       <section>

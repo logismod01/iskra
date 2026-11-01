@@ -1807,6 +1807,81 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
   .composer-wrap { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
   .sidebar { padding-left: max(0px, env(safe-area-inset-left)); }
 }
+
+/* ============ Сью: маскот ============ */
+.sye-mascot { display: block; width: 100%; height: 100%; }
+.sye-mascot .sye-body { fill: var(--accent); }
+.sye-mascot .sye-body-2 { fill: var(--accent-soft); }
+.sye-mascot .sye-eye { fill: #241a15; }
+.sye-mascot .sye-cheek { fill: #fff; opacity: .35; }
+.sye-mascot .sye-belly { fill: var(--accent-soft); opacity: .5; }
+.sye-mascot .sye-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
+.sye-mascot .sye-tuft { fill: var(--accent); }
+.sye-mascot .sye-shadow { fill: #000; opacity: .18; }
+.sye-wrap { position: relative; overflow: hidden; }
+.sye-wrap[data-mood="work"] .sye-mascot { animation: syeBob 1.6s ease-in-out infinite; }
+.sye-wrap[data-mood="error"] .sye-mascot { animation: syeShake .5s ease-in-out 2; }
+@keyframes syeBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes syeShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+
+/* Маскот в карточке агента */
+.agent-sye { display: flex; gap: 14px; align-items: center; margin: 2px 0 12px; }
+.agent-sye-pic {
+  width: 64px; height: 64px; flex: 0 0 auto;
+  border-radius: 20px;
+  background: radial-gradient(120% 120% at 30% 20%, var(--bg-soft-2), var(--bg-soft) 70%);
+  border: 1px solid var(--line);
+  padding: 7px;
+  box-shadow: 0 8px 24px -14px var(--accent);
+}
+.agent-sye-say {
+  flex: 1; min-width: 0;
+  background: var(--bg-soft-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 13px; line-height: 1.5; color: var(--text-soft);
+}
+.agent-sye-say b { color: var(--text); }
+
+/* Превью маскота в настройках */
+.look-sye { display: flex; gap: 14px; align-items: center; }
+.look-sye-pic {
+  width: 72px; height: 72px; flex: 0 0 auto;
+  border-radius: 22px; padding: 8px;
+  background: radial-gradient(120% 120% at 30% 20%, var(--bg-soft-2), var(--bg-soft) 70%);
+  border: 1px solid var(--line);
+}
+.look-sye-pic.small { width: 46px; height: 46px; border-radius: 14px; padding: 5px; }
+.look-sye-t { font-size: 13px; line-height: 1.55; color: var(--text-soft); }
+.look-sye-t b { color: var(--text); }
+
+/* ============ Компактный вид ============ */
+html.compact .messages { padding: 12px 14px 12px; }
+html.compact .msg { margin-bottom: 12px; gap: 10px; }
+html.compact .msg .ava { width: 30px; height: 30px; border-radius: 8px; }
+html.compact .msg .content { font-size: 14.5px; line-height: 1.55; }
+html.compact .msg .content p { margin-bottom: 8px; }
+html.compact .msg .who { font-size: 11px; }
+html.compact .topbar { padding: 8px 14px; }
+html.compact .icon-btn { width: 34px; height: 34px; }
+html.compact .welcome { padding: 20px 16px 10px; }
+html.compact .welcome .big-logo { width: 58px; height: 58px; border-radius: 17px; margin-bottom: 10px; }
+html.compact .welcome h1 { font-size: 25px; }
+html.compact .welcome .tag { margin-bottom: 16px; font-size: 14px; }
+html.compact .welcome-actions { gap: 8px; }
+html.compact .composer-wrap { padding: 6px 14px 12px; }
+html.compact .composer { border-radius: 14px; }
+html.compact .set-card { padding: 12px; }
+html.compact .msg .actions { margin-top: 6px; }
+
+/* ============ Анимации: выключение ============ */
+html.no-anim *, html.no-anim *::before, html.no-anim *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+html.no-anim .theme-flash { display: none; }
 </style>
 </head>
 <body>
@@ -2102,6 +2177,22 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
 
         <section class="set-card agent-card" id="agentCard">
           <div class="set-h"><span class="set-ico">◆</span> Агент Sye на рабочем столе <span class="agent-badge">Pro</span></div>
+          <div class="agent-sye">
+            <div class="sye-wrap agent-sye-pic" data-mood="idle">
+              <svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="Сью">
+              <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
+              <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
+              <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
+              <ellipse class="sye-belly" cx="32" cy="45.6" rx="9.4" ry="5.8"/>
+              <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
+              <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
+              <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>
+              <circle class="sye-cheek" cx="43.8" cy="37.4" r="2.3"/>
+              <path class="sye-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>
+            </svg>
+            </div>
+            <div class="agent-sye-say"><b>Сью</b> живёт в трее и ждёт задачу. Показывает, когда думает, а когда упёрся в ошибку.</div>
+          </div>
           <p class="set-p"><b>Sye</b> — отдельная программа для Windows: сама читает файлы, пишет и правит код, ищет баги, запускает тесты и смотрит на скриншот экрана. Живёт в трее, вызывается по <b>Ctrl+Alt+S</b>.</p>
           <div class="agent-lock" id="agentLocked">
             <div class="agent-lock-t">🔒 Скачать агента можно только с подпиской <b>Искра Про</b></div>
@@ -2184,6 +2275,39 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
         <section class="set-card">
           <div class="set-h"><span class="set-ico">◐</span> Тема</div>
           <div class="theme-grid" id="themeGrid"></div>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">▤</span> Плотность и движение</div>
+          <label class="set-row">
+            <span><b>Компактный вид</b><em>Меньше отступов — больше текста на экране</em></span>
+            <input type="checkbox" id="compactToggle" class="switch" />
+          </label>
+          <label class="set-row">
+            <span><b>Анимации</b><em>Мягкие появления и переходы</em></span>
+            <input type="checkbox" id="animToggle" class="switch" checked />
+          </label>
+          <div class="hint">Если в системе включено «уменьшить движение», анимации не играют, даже когда переключатель включён.</div>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">◆</span> Сью</div>
+          <div class="look-sye">
+            <div class="sye-wrap look-sye-pic" data-mood="idle">
+              <svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="Сью">
+              <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
+              <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
+              <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
+              <ellipse class="sye-belly" cx="32" cy="45.6" rx="9.4" ry="5.8"/>
+              <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
+              <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
+              <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>
+              <circle class="sye-cheek" cx="43.8" cy="37.4" r="2.3"/>
+              <path class="sye-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>
+            </svg>
+            </div>
+            <div class="look-sye-t"><b>Маскот агента.</b> Рыжий, спокойный, без лишних движений. Появляется в окне Sye и в карточке агента.</div>
+          </div>
         </section>
       </div>
 
@@ -7872,6 +7996,9 @@ let liveStream = null;
   if (typeof settings.customModel !== "string") settings.customModel = "";
   if (!settings.imageQuality) settings.imageQuality = "auto";
   if (typeof settings.imageKey !== "string") settings.imageKey = "";
+  /* Вид: плотность и движение. Старые настройки этих полей не знали. */
+  if (typeof settings.compact !== "boolean") settings.compact = false;
+  if (typeof settings.animations !== "boolean") settings.animations = true;
   saveSettings();
 })();
 
@@ -7902,6 +8029,8 @@ function loadSettings() {
     persona: "universal",
     customPersona: "",
     theme: "claude",
+    compact: false,
+    animations: true,
     memoryOn: true,
     memory: [],
     knowledge: [],
@@ -7985,6 +8114,17 @@ function applyTheme(name, ev) {
   root.setProperty("--user", t.user);
   root.setProperty("--ai", t.ai);
   document.querySelector('meta[name="theme-color"]').setAttribute("content", t.bg);
+}
+
+/* ---------- Вид: плотность и движение ----------
+   Два переключателя из настроек → два класса на <html>.
+   compact сжимает отступы, no-anim выключает анимации целиком
+   (системную настройку «уменьшить движение» это не отменяет). */
+function applyLook() {
+  const html = document.documentElement;
+  if (!html) return;
+  html.classList.toggle("compact", settings.compact === true);
+  html.classList.toggle("no-anim", settings.animations === false);
 }
 
 /* ---------- Markdown-рендер ---------- */
@@ -11167,11 +11307,15 @@ function openSettings(tab) {
   renderEditionUI();
   renderPersonaGrid();
   renderThemeGrid();
+  renderLookControls();
+  wireLookControls();
   const key = $("#apiKey"); if (key) key.value = settings.apiKey || "";
   const bu = $("#baseUrl"); if (bu) bu.value = settings.baseUrl || "";
   const cm = $("#customModel"); if (cm) cm.value = settings.customModel || "";
   const mo = $("#memoryOn"); if (mo) mo.checked = !!settings.memoryOn;
   const ws = $("#webSearch"); if (ws) ws.checked = !!settings.webSearch;
+  const cp = $("#compactToggle"); if (cp) cp.checked = settings.compact === true;
+  const an = $("#animToggle"); if (an) an.checked = settings.animations !== false;
   $$("#toneBtns button").forEach(b => b.classList.toggle("active", b.dataset.t === (settings.tone || "neutral")));
   const cr = $("#connResult"); if (cr) { cr.textContent = ""; cr.className = "conn-result"; }
 }
@@ -11197,6 +11341,37 @@ function renderPersonaGrid() {
   if (cp) {
     cp.value = settings.customPersona || "";
     cp.style.display = settings.persona === "custom" ? "" : "none";
+  }
+}
+
+/* Вид: два переключателя. Классы на <html> применяет applyLook(). */
+function renderLookControls() {
+  const cp = $("#compactToggle");
+  const an = $("#animToggle");
+  if (cp) cp.checked = settings.compact === true;
+  if (an) an.checked = settings.animations !== false;
+  applyLook();
+}
+function wireLookControls() {
+  const cp = $("#compactToggle");
+  const an = $("#animToggle");
+  if (cp && !cp.dataset.wired) {
+    cp.dataset.wired = "1";
+    cp.addEventListener("change", () => {
+      settings.compact = !!cp.checked;
+      saveSettings();
+      applyLook();
+      toast(settings.compact ? "Компактный вид включён" : "Обычный вид включён");
+    });
+  }
+  if (an && !an.dataset.wired) {
+    an.dataset.wired = "1";
+    an.addEventListener("change", () => {
+      settings.animations = !!an.checked;
+      saveSettings();
+      applyLook();
+      toast(settings.animations ? "Анимации включены" : "Анимации выключены");
+    });
   }
 }
 
@@ -12479,6 +12654,8 @@ const PAY_TG_URL = "https://t.me/Yehndhkw";
 const PAY_PRICE_RUB = 450;       // цена Pro на 30 дней
 let PAY_PRICE_TON = "4.6";       // пересчитывается по курсу ниже
 
+/* Последняя ошибка проверки доступа: показываем в панели, а не молчим. */
+let accessProblem = "";
 const ACCESS = {
   clientStore: "iskra.client.v1",
   historyStore: "iskra.client.history.v1",
@@ -12890,6 +13067,7 @@ async function syncAccess() {
   try {
     if (!(await accessServerReady())) return;
     const j = await sbRpc("iskra_access", { p_client: myClient }, 8000);
+    if (j && j.ok) { accessProblem = ""; }
     if (j && j.ok && j.active) {
       const forever = j.forever === true || !j.expires_at;
       const exp = forever ? 0 : new Date(j.expires_at).getTime();
@@ -12910,7 +13088,18 @@ async function syncAccess() {
         renderEditionUI();
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    /* Раньше здесь стоял пустой catch: любой сбой выглядел как «ничего не произошло».
+       Теперь причина видна — один раз за сессию тостом и всегда в панели доступа. */
+    accessProblem = sbMissingFunction(e)
+      ? "На сервере не хватает функций доступа. Владельцу: один раз выполнить sql из supabase/iskra-access.sql в SQL Editor."
+      : "Сервер доступа не ответил: " + ((e && e.message) || "проверь интернет");
+    try { renderProPanel(); } catch (_) {}
+    if (!syncAccess._warned) {
+      syncAccess._warned = true;
+      toast(accessProblem, "err");
+    }
+  }
 }
 
 /* ---------- Экран «Доступ по ключу» ---------- */
@@ -12970,6 +13159,7 @@ function renderProPanel() {
           <div class="acct-dim">${statusSub}</div>
         </div>
       </div>
+      ${accessProblem ? `<div class="acct-note" style="margin-top:8px;color:var(--err)">${esc(accessProblem)}</div>` : ""}
     </div>
 
     <div class="acct-sec">
@@ -15154,8 +15344,9 @@ function wire() {
   // Приложение: подсказки по установке
   try { renderInstallCard(); } catch (e) {}
 
-  // Тема
+  // Тема и плотность
   applyTheme(settings.theme);
+  applyLook();
   $("#webBtn").classList.toggle("on", !!settings.webSearch);
 
   // Версия в шапке

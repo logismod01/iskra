@@ -56,7 +56,10 @@ const DEFAULT_SETTINGS = {
   apiBase: "",
   apiModel: "",
   autoStart: false,
-  lastTask: ""
+  lastTask: "",
+  /* Вид: плотность и движение. Меняются в настройках без перезапуска. */
+  compact: false,
+  animations: true
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS, readJson(FILES.settings, {}));
 
