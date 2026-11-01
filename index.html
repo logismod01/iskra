@@ -12927,7 +12927,7 @@ async function sbRpc(name, args, ms) {
 }
 function sbMissingFunction(e) {
   const s = ((e && (e.code || "")) + " " + (e && e.message) + " " + (e && e.status)).toLowerCase();
-  return /pgrst202|42883|function .* does not exist|schema cache|not found/.test(s);
+  return /pgrst202|42883|function .* does not exist|schema cache|could not find the function/.test(s);
 }
 let _accessServer = null, _accessServerAt = 0;
 async function accessServerReady(force) {
@@ -12936,7 +12936,15 @@ async function accessServerReady(force) {
   try {
     const j = await sbRpc("iskra_health", {}, 6000);
     _accessServer = !!(j && j.ok);
-  } catch (e) { _accessServer = false; }
+    if (!_accessServer) accessProblem = "Сервер доступа ответил, что не готов: проверь, что в базе выполнен sql из supabase/iskra-access.sql.";
+  } catch (e) {
+    /* Молчать нельзя: раньше проверка «сервер готов?» падала в пустой catch,
+       и человек видел, что ничего не происходит. */
+    _accessServer = false;
+    accessProblem = sbMissingFunction(e)
+      ? "На сервере не хватает функций доступа: владельцу нужно один раз выполнить sql из supabase/iskra-access.sql в SQL Editor."
+      : "Сервер доступа не ответил: " + ((e && e.message) || "проверь интернет") + ". Ключи, уже сохранённые в браузере, продолжают работать.";
+  }
   _accessServerAt = Date.now();
   return _accessServer;
 }
