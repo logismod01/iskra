@@ -181,6 +181,9 @@ function renderSettings() {
   $("#apiModel").value = s.apiModel || "";
   const cp = $("#compactToggle"); if (cp) cp.checked = s.compact === true;
   const an = $("#animToggle"); if (an) an.checked = s.animations !== false;
+  const pOn = $("#petOn"); if (pOn) pOn.checked = s.petOn !== false;
+  const pTalk = $("#petTalk"); if (pTalk) pTalk.checked = s.petTalk !== false;
+  const pVoice = $("#petVoice"); if (pVoice) pVoice.checked = s.petVoice !== false;
   applyLook();
 }
 
@@ -535,6 +538,27 @@ function wireUi() {
     state.settings = await window.sye.saveSettings({ animations: !!an.checked });
     applyLook();
     toast(an.checked ? "Анимации включены" : "Анимации выключены");
+  });
+
+  /* Сью на рабочем столе */
+  const pOn = $("#petOn");
+  if (pOn) pOn.addEventListener("change", async () => {
+    state.settings = await window.sye.saveSettings({ petOn: !!pOn.checked });
+    toast(pOn.checked ? "Сью вышел на рабочий стол" : "Сью ушёл в трей");
+  });
+  const pTalk = $("#petTalk");
+  if (pTalk) pTalk.addEventListener("change", async () => {
+    state.settings = await window.sye.saveSettings({ petTalk: !!pTalk.checked });
+    toast(pTalk.checked ? "Сью разговаривает" : "Сью молчит");
+  });
+  const pVoice = $("#petVoice");
+  if (pVoice) pVoice.addEventListener("change", async () => {
+    state.settings = await window.sye.saveSettings({ petVoice: !!pVoice.checked });
+    toast(pVoice.checked ? "Сью говорит голосом" : "Сью говорит только облачком");
+  });
+  const pCall = $("#petCallBtn");
+  if (pCall) pCall.addEventListener("click", async () => {
+    await window.sye.petCall();
   });
 
   $("#saveApi").addEventListener("click", async () => {

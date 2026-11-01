@@ -5,7 +5,7 @@
 
 "use strict";
 
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, globalShortcut, desktopCapturer, nativeImage, clipboard } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, globalShortcut, desktopCapturer, nativeImage, clipboard, screen } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -19,6 +19,7 @@ const { createAccount } = require("./core/account.js");
 const { runTask } = require("./core/agent.js");
 const shared = require("./core/shared.js");
 const knowledge = require("./core/knowledge.js");
+const petModule = require("./core/pet.js");
 const { askModel, askVision } = require("./core/engines.js");
 const { stripHtml } = require("./core/tools.js");
 
@@ -59,7 +60,12 @@ const DEFAULT_SETTINGS = {
   lastTask: "",
   /* Вид: плотность и движение. Меняются в настройках без перезапуска. */
   compact: false,
-  animations: true
+  animations: true,
+  /* Сью на рабочем столе: ходит по низу экрана, прыгает и говорит. */
+  petOn: true,
+  petTalk: true,
+  petVoice: true,
+  petX: 0
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS, readJson(FILES.settings, {}));
 
@@ -171,6 +177,11 @@ function runCommand(command, opts) {
 
 /* ---------- Скриншот ---------- */
 async function captureScreen() {
+  /* Сью прячется на время снимка: модель не должна искать баги в агенте. */
+  return petHidden(() => captureScreenRaw());
+}
+
+async function captureScreenRaw() {
   const sources = await desktopCapturer.getSources({
     types: ["screen"],
     thumbnailSize: { width: 1600, height: 1000 },
@@ -246,6 +257,218 @@ function showWindow() {
   win.focus();
 }
 
+/* ---------- Сью на рабочем столе ---------- */
+const PET_W = 160;
+const PET_H = 178;
+const PET_MASCOT_W = 96;   // видимая часть окна — сам Сью по центру
+
+let petWin = null;
+let petCore = null;
+let petTimer = null;
+let petDrag = null;
+let petLastPhrase = "";
+let petGreeted = false;
+
+function petEnabled() {
+  return settings.petOn !== false;
+}
+
+function petArea() {
+  try {
+    const area = screen.getPrimaryDisplay().workArea;
+    if (area && area.width > 200) return area;
+  } catch (e) { /* экран ещё не готов — берём запасные размеры */ }
+  return { x: 0, y: 0, width: 1280, height: 800 };
+}
+
+/* Окно живёт по низу экрана; ходит внутри рабочей области. */
+function petStartX() {
+  const area = petArea();
+  const saved = Number(settings.petX);
+  const x = Number.isFinite(saved) && saved > 0 ? saved : area.x + area.width - PET_W - 24;
+  return Math.min(Math.max(x, area.x), area.x + area.width - PET_W);
+}
+
+function ensurePetCore() {
+  if (petCore) return petCore;
+  petCore = petModule.createPet({
+    width: PET_MASCOT_W,
+    quiet: settings.petTalk === false
+  });
+  const area = petArea();
+  petCore.setBounds(area.x + (PET_W - PET_MASCOT_W) / 2, area.x + area.width - (PET_W - PET_MASCOT_W) / 2);
+  petCore.place(petStartX() + (PET_W - PET_MASCOT_W) / 2);
+  return petCore;
+}
+
+function createPetWindow() {
+  if (petWin && !petWin.isDestroyed()) return petWin;
+  const area = petArea();
+  petWin = new BrowserWindow({
+    width: PET_W,
+    height: PET_H,
+    x: Math.round(petStartX()),
+    y: Math.round(area.y + area.height - PET_H),
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    hasShadow: false,
+    show: false,
+    title: brand.name,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  try {
+    petWin.setAlwaysOnTop(true, "floating");
+    petWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+  } catch (e) { /* на некоторых системах этих настроек нет */ }
+  petWin.loadFile(path.join(__dirname, "renderer", "pet.html"));
+  petWin.once("ready-to-show", () => {
+    if (!petWin || petWin.isDestroyed()) return;
+    petWin.showInactive();
+    if (!petGreeted) {
+      petGreeted = true;
+      const core = ensurePetCore();
+      core.greet(new Date().getHours());
+      petPush();
+    }
+  });
+  petWin.on("closed", () => { petWin = null; });
+  return petWin;
+}
+
+function petPush() {
+  if (!petWin || petWin.isDestroyed() || !petCore) return;
+  if (!petWin.webContents || petWin.webContents.isLoading()) return;
+  const snap = petCore.snapshot();
+  snap.voice = settings.petVoice !== false;
+  petLastPhrase = snap.phrase || "";
+  try { petWin.webContents.send("pet:state", snap); } catch (e) { /* окно закрывается */ }
+}
+
+function petTickLoop() {
+  if (!petCore || !petWin || petWin.isDestroyed()) return;
+  const before = petCore.snapshot();
+  const snap = petCore.tick(petModule.TICK_MS, Date.now());
+  petCore.maybeNudge(Date.now());
+
+  const area = petArea();
+  const x = Math.round(snap.x - (PET_W - PET_MASCOT_W) / 2);
+  const y = Math.round(area.y + area.height - PET_H);
+  const b = petWin.getBounds();
+  if (b.x !== x || b.y !== y) {
+    try { petWin.setBounds({ x, y, width: PET_W, height: PET_H }); } catch (e) { /* окно переехало в другой поток */ }
+  }
+
+  const after = petCore.snapshot();
+  if (after.action !== before.action || after.mood !== before.mood || after.phrase !== petLastPhrase) petPush();
+}
+
+function startPet() {
+  if (!petEnabled()) return;
+  createPetWindow();
+  ensurePetCore();
+  if (!petTimer) petTimer = setInterval(petTickLoop, petModule.TICK_MS);
+  petPush();
+}
+
+function stopPet() {
+  if (petTimer) { clearInterval(petTimer); petTimer = null; }
+  if (petCore) saveSettings({ petX: Math.round(petCore.state.x) });
+  if (petWin && !petWin.isDestroyed()) {
+    try { petWin.destroy(); } catch (e) { /* уже закрыто */ }
+  }
+  petWin = null;
+}
+
+/* Реакция на задачу: думает, закончил, упёрся в ошибку. */
+function petReact(kind) {
+  if (!petEnabled()) return;
+  if (!petCore && !petWin) return;      // Сью выключен человеком — не заводим его молча
+  ensurePetCore();
+  petCore.react(kind);
+  petPush();
+}
+
+function petCall() {
+  ensurePetCore();
+  petCore.call();
+  petPush();
+}
+
+function petPoke() {
+  ensurePetCore();
+  petCore.poke();
+  petPush();
+}
+
+function petDragTo(x) {
+  const area = petArea();
+  const width = petCore ? petCore.state.width : PET_MASCOT_W;
+  const left = area.x + (PET_W - width) / 2;
+  const right = area.x + area.width - (PET_W - width) / 2 - width;
+  const next = Math.min(Math.max(Math.round(x), Math.round(left)), Math.round(right));
+  if (petCore) petCore.place(next);
+  if (petWin && !petWin.isDestroyed()) {
+    const b = petWin.getBounds();
+    const y = Math.round(area.y + area.height - PET_H);
+    if (b.x !== Math.round(next - (PET_W - width) / 2) || b.y !== y) {
+      try { petWin.setBounds({ x: Math.round(next - (PET_W - width) / 2), y, width: PET_W, height: PET_H }); } catch (e) {}
+    }
+  }
+  petPush();
+}
+
+function petMenu() {
+  const menu = Menu.buildFromTemplate([
+    { label: "Позвать", click: () => { petCall(); } },
+    { label: "Сказать что-нибудь", click: () => { if (!petCore) ensurePetCore(); petCore.say("idle"); petPush(); } },
+    { type: "separator" },
+    {
+      label: "Разговаривать",
+      type: "checkbox",
+      checked: settings.petTalk !== false,
+      click: () => {
+        saveSettings({ petTalk: settings.petTalk === false });
+        if (petCore) petCore.setQuiet(settings.petTalk === false);
+        broadcastState();
+        petPush();
+      }
+    },
+    {
+      label: "Голосом",
+      type: "checkbox",
+      checked: settings.petVoice !== false,
+      click: () => { saveSettings({ petVoice: settings.petVoice === false }); broadcastState(); petPush(); }
+    },
+    { type: "separator" },
+    { label: "Открыть " + brand.name, click: () => showWindow() },
+    { label: "Убрать с рабочего стола", click: () => { saveSettings({ petOn: false }); stopPet(); broadcastState(); } }
+  ]);
+  menu.popup({});
+}
+
+/* Сью не должен попадать на скриншоты, которые агент делает для модели. */
+async function petHidden(fn) {
+  const wasVisible = !!(petWin && !petWin.isDestroyed() && petWin.isVisible());
+  if (wasVisible) { try { petWin.hide(); } catch (e) {} await new Promise((r) => setTimeout(r, 140)); }
+  try {
+    return await fn();
+  } finally {
+    if (wasVisible && petWin && !petWin.isDestroyed()) { try { petWin.showInactive(); } catch (e) {} }
+  }
+}
+
 /* ---------- Трей ---------- */
 function createTray() {
   const iconPath = path.join(__dirname, "assets", "tray.png");
@@ -257,6 +480,17 @@ function createTray() {
   const menu = Menu.buildFromTemplate([
     { label: "Открыть " + brand.name, click: () => showWindow() },
     { label: "Снимок экрана и задача", accelerator: "CommandOrControl+Alt+S", click: () => takeShot(true) },
+    {
+      label: "Сью на рабочем столе",
+      type: "checkbox",
+      checked: settings.petOn !== false,
+      click: (item) => {
+        saveSettings({ petOn: !!item.checked });
+        if (settings.petOn) startPet(); else stopPet();
+        broadcastState();
+      }
+    },
+    { label: "Позвать Сью", click: () => { if (!petEnabled()) { saveSettings({ petOn: true }); startPet(); } petCall(); } },
     { type: "separator" },
     { label: "Состояние подписки", click: () => { showWindow(); if (win) win.webContents.send("ui:openSettings"); } },
     { type: "separator" },
@@ -333,6 +567,7 @@ async function startTask(payload) {
   const shot = (payload && payload.shot) || (pendingShot && pendingShot.dataUrl) || null;
   const ctx = makeContext(st, { shot });
   const send = (event) => { if (win && !win.isDestroyed()) win.webContents.send("task:event", Object.assign({ taskId }, event)); };
+  petReact("start");
 
   const model = async ({ messages, liteMessages, signal, maxTokens, onDelta }) => {
     return askModel({ messages, liteMessages, settings, signal, maxTokens, onDelta, onTry: (i, total) => send({ type: "engine", n: i, total }) });
@@ -356,11 +591,13 @@ async function startTask(payload) {
       at: Date.now(),
       state: st.state
     });
+    petReact(result && result.ok ? "done" : "error");
     if (win && !win.isDestroyed()) win.webContents.send("task:done", { taskId, result: { ok: result.ok, final: result.final, steps: result.steps, exhausted: !!result.exhausted, stopped: !!result.stopped } });
     if (win && !win.isDestroyed()) win.webContents.send("history:changed", historyList());
     return { ok: true, taskId };
   } catch (e) {
     send({ type: "error", text: e.message || String(e) });
+    petReact("error");
     if (win && !win.isDestroyed()) win.webContents.send("task:done", { taskId, result: { ok: false, final: e.message || "Ошибка" } });
     return { ok: false, error: e.message };
   } finally {
@@ -467,9 +704,46 @@ function wireIpc() {
 
   ipcMain.handle("settings:save", (event, patch) => {
     const next = saveSettings(patch || {});
+    const p = patch || {};
+    if ("petOn" in p) { if (next.petOn) startPet(); else stopPet(); }
+    if ("petTalk" in p && petCore) { petCore.setQuiet(next.petTalk === false); petPush(); }
+    if ("petVoice" in p) petPush();
     if (win && !win.isDestroyed()) win.webContents.send("state:changed", { license: licenseView(), settings: next, brand });
     return next;
   });
+
+  /* ---------- Сью на рабочем столе ---------- */
+  ipcMain.handle("pet:state", () => {
+    ensurePetCore();
+    const snap = petCore.snapshot();
+    snap.voice = settings.petVoice !== false;
+    return snap;
+  });
+  ipcMain.handle("pet:drag-start", () => {
+    const cursor = screen.getCursorScreenPoint();
+    const b = petWin && !petWin.isDestroyed() ? petWin.getBounds() : { x: 0, y: 0 };
+    petDrag = { dx: cursor.x - b.x, dy: cursor.y - b.y };
+    return { ok: true };
+  });
+  ipcMain.handle("pet:drag-move", () => {
+    if (!petDrag || !petWin || petWin.isDestroyed()) return { ok: false };
+    const cursor = screen.getCursorScreenPoint();
+    const area = petArea();
+    const y = Math.round(area.y + area.height - PET_H);
+    let x = Math.round(cursor.x - petDrag.dx);
+    x = Math.min(Math.max(x, Math.round(area.x)), Math.round(area.x + area.width - PET_W));
+    try { petWin.setBounds({ x, y, width: PET_W, height: PET_H }); } catch (e) {}
+    petDragTo(x + (PET_W - PET_MASCOT_W) / 2);
+    return { ok: true, x };
+  });
+  ipcMain.handle("pet:drag-end", () => {
+    petDrag = null;
+    if (petCore) saveSettings({ petX: Math.round(petCore.state.x - (PET_W - PET_MASCOT_W) / 2) });
+    return { ok: true };
+  });
+  ipcMain.handle("pet:poke", () => { petPoke(); return { ok: true }; });
+  ipcMain.handle("pet:call", () => { petCall(); return { ok: true }; });
+  ipcMain.handle("pet:menu", () => { petMenu(); return { ok: true }; });
 
   ipcMain.handle("workspace:pick", async () => {
     const res = await dialog.showOpenDialog(win, {
@@ -528,11 +802,22 @@ if (!gotLock) {
     if (SMOKE) {
       win.webContents.once("did-finish-load", () => {
         console.log("[smoke] окно загружено");
-        setTimeout(() => {
-          console.log("[smoke] ok");
+        /* Второе окно — Сью на рабочем столе. Оно прозрачное и поверх всех,
+           поэтому ошибка в нём не видна глазами; проверяем загрузку здесь. */
+        const petWindow = createPetWindow();
+        petWindow.webContents.once("did-finish-load", () => {
+          console.log("[smoke] окно Сью загружено");
+          setTimeout(() => {
+            console.log("[smoke] ok");
+            app.isQuitting = true;
+            app.quit();
+          }, 800);
+        });
+        petWindow.webContents.once("did-fail-load", (event, code, desc) => {
+          console.error("[smoke] окно Сью не загрузилось:", code, desc);
           app.isQuitting = true;
-          app.quit();
-        }, 800);
+          app.exit(1);
+        });
       });
       win.webContents.once("did-fail-load", (event, code, desc) => {
         console.error("[smoke] окно не загрузилось:", code, desc);
@@ -543,6 +828,7 @@ if (!gotLock) {
     }
 
     createTray();
+    startPet();
 
     try {
       globalShortcut.register("CommandOrControl+Alt+S", () => takeShot(true));
@@ -570,6 +856,8 @@ if (!gotLock) {
 
   app.on("will-quit", () => {
     globalShortcut.unregisterAll();
+    if (petTimer) clearInterval(petTimer);
+    petTimer = null;
   });
 }
 
