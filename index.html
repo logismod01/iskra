@@ -178,8 +178,8 @@ textarea { resize: none; }
 .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
 
 .topbar {
-  padding: 14px 20px;
-  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
   flex: 0 0 auto;
@@ -190,7 +190,7 @@ textarea { resize: none; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .icon-btn {
-  width: 42px; height: 42px;
+  width: 38px; height: 38px;
   display: grid; place-items: center;
   border-radius: 10px;
   color: var(--text-soft);
@@ -198,6 +198,24 @@ textarea { resize: none; }
 }
 .icon-btn:hover { background: var(--bg-soft-2); color: var(--text); }
 .menu-btn { display: none; }
+
+/* Меньше кнопок в шапке: три редкие спрятаны в одно меню «⋯» */
+.more-wrap { position: relative; flex: 0 0 auto; }
+.more-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60;
+  min-width: 196px; padding: 6px;
+  background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: 0 18px 40px -18px rgba(0,0,0,.55);
+  display: grid; gap: 2px;
+}
+.more-menu[hidden] { display: none; }
+.more-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 10px; border-radius: 9px;
+  font-size: 13.5px; color: var(--text-soft); text-align: left;
+}
+.more-item:hover { background: var(--bg-soft-2); color: var(--text); }
+.more-item .ic { flex: 0 0 auto; opacity: .9; }
 
 .model-chip {
   padding: 6px 12px;
@@ -333,6 +351,15 @@ textarea { resize: none; }
   transition: background .15s, color .15s;
 }
 .msg .actions button:hover { background: var(--bg-soft-2); color: var(--text); }
+
+/* Скрытые действия за кнопкой «Ещё» */
+.msg .actions .act-extra { display: inline-flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.msg .actions:not([data-open="1"]) .act-extra { display: none; }
+
+/* На телефоне наведения нет — иначе кнопки под ответом не увидеть вообще */
+@media (hover: none) {
+  .msg .actions { opacity: 1; }
+}
 
 /* ============ Welcome ============ */
 .welcome {
@@ -1991,23 +2018,37 @@ html.no-anim .theme-flash { display: none; }
         <span class="mn" id="modelChipName">—</span>
         <svg class="ic mc-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <button class="icon-btn" id="themeBtn" title="Сменить тему">
-        <svg class="ic fill" viewBox="0 0 24 24" width="20" height="20">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
-      <button class="icon-btn kb-top" id="kbTop" title="База знаний">
-        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-        </svg>
-      </button>
-      <button class="icon-btn" id="memoryTop" title="Память">
-        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2z"/>
-          <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/>
-        </svg>
-      </button>
+      <div class="more-wrap">
+        <button class="icon-btn" id="moreBtn" title="Ещё" aria-haspopup="true" aria-expanded="false" aria-label="Ещё">
+          <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <div class="more-menu" id="moreMenu" hidden>
+          <button type="button" class="more-item" id="kbTop">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span>База знаний</span>
+          </button>
+          <button type="button" class="more-item" id="memoryTop">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2z"/>
+              <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/>
+            </svg>
+            <span>Память</span>
+          </button>
+          <button type="button" class="more-item" id="themeBtn">
+            <svg class="ic fill" viewBox="0 0 24 24" width="17" height="17">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span>Сменить тему</span>
+          </button>
+        </div>
+      </div>
       <button class="icon-btn" id="settingsIcon" title="Настройки">
         <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
@@ -7994,7 +8035,9 @@ let liveStream = null;
   if (!settings.imageQuality) settings.imageQuality = "auto";
   if (typeof settings.imageKey !== "string") settings.imageKey = "";
   /* Вид: плотность и движение. Старые настройки этих полей не знали. */
-  if (typeof settings.compact !== "boolean") settings.compact = false;
+  /* Компактный вид теперь по умолчанию: у кого настройки ещё без этой пары,
+     получаем плотную вёрстку, а не раздутую. Переключатель в ⚙ → «Вид». */
+  if (typeof settings.compact !== "boolean") settings.compact = true;
   if (typeof settings.animations !== "boolean") settings.animations = true;
   saveSettings();
 })();
@@ -8026,7 +8069,7 @@ function loadSettings() {
     persona: "universal",
     customPersona: "",
     theme: "claude",
-    compact: false,
+    compact: true,
     animations: true,
     memoryOn: true,
     memory: [],
@@ -8601,6 +8644,33 @@ function renderMessages() {
   for (const msg of chat.messages) appendMessage(msg, false);
   scrollToBottom();
 }
+/* Действия под ответом. Видно две кнопки, остальные — за «Ещё»:
+   под каждым ответом не должно висеть по пять кнопок. */
+function answerActionsHtml(extra) {
+  return `<button data-act="copy">${ic("copy", 14)} Копировать</button>` +
+    `<button data-act="more" class="act-toggle" aria-label="Ещё действия">Ещё</button>` +
+    `<span class="act-extra">` +
+      `<button data-act="shorter">Короче</button>` +
+      `<button data-act="simpler">Проще</button>` +
+      `<button data-act="regen">${ic("regen", 14)} Перегенерить</button>` +
+      (extra || "") +
+    `</span>`;
+}
+/* Один обработчик на все кнопки: «Ещё» раскрывает скрытые, остальные — обычные действия. */
+function wireAnswerActions(actions, msgId) {
+  actions.querySelectorAll("button").forEach(b => {
+    if (b.dataset.wired) return;
+    b.dataset.wired = "1";
+    b.addEventListener("click", () => {
+      if (b.dataset.act === "more") {
+        actions.dataset.open = actions.dataset.open === "1" ? "0" : "1";
+        return;
+      }
+      onMsgAction(msgId, b.dataset.act);
+    });
+  });
+}
+
 function scrollToBottom() {
   const m = $("#messages");
   requestAnimationFrame(() => { m.scrollTop = m.scrollHeight; });
@@ -8639,11 +8709,15 @@ function appendMessage(msg, animate = true) {
   if (msg.role === "user") {
     actions.innerHTML = `<button data-act="copy">${ic("copy", 14)} Копировать</button><button data-act="edit">${ic("edit", 14)} Изменить</button>`;
   } else {
-    actions.innerHTML = `<button data-act="copy">${ic("copy", 14)} Копировать</button><button data-act="regen">${ic("regen", 14)} Перегенерить</button>`;
+    actions.innerHTML = answerActionsHtml("");
   }
-  actions.querySelectorAll("button").forEach(b => {
-    b.addEventListener("click", () => onMsgAction(msg.id, b.dataset.act));
-  });
+  if (msg.role === "user") {
+    actions.querySelectorAll("button").forEach(b => {
+      b.addEventListener("click", () => onMsgAction(msg.id, b.dataset.act));
+    });
+  } else {
+    wireAnswerActions(actions, msg.id);
+  }
   /* Ответ прервался при перезагрузке: повторяем сохранённый запрос одной кнопкой */
   if (msg.role === "assistant" && msg.interrupted) {
     const again = document.createElement("button");
@@ -8701,6 +8775,10 @@ function onMsgAction(id, act) {
     $("#input").value = msg.content;
     autoresize();
     $("#input").focus();
+  } else if (act === "shorter") {
+    sendMessage("Сократи последний ответ вдвое: только суть, без воды и повторов.");
+  } else if (act === "simpler") {
+    sendMessage("Объясни то же самое проще: короткими фразами, без терминов, как человеку, который видит это впервые.");
   } else if (act === "regen") {
     // удалить этот и все последующие и переотправить
     chat.messages = chat.messages.slice(0, i);
@@ -9982,15 +10060,14 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
 
     saveChats();
     // rewire action buttons
-    el.querySelector(".actions").innerHTML = `<button data-act="copy">${ic("copy", 14)} Копировать</button><button data-act="regen">${ic("regen", 14)} Перегенерить</button>` +
-      (aiMsg.truncated ? `<button data-act="continue">${ic("arrowDown", 14)} Продолжить</button>` : "");
+    const actBox = el.querySelector(".actions");
+    actBox.innerHTML = answerActionsHtml(aiMsg.truncated ? `<button data-act="continue">${ic("arrowDown", 14)} Продолжить</button>` : "");
+    wireAnswerActions(actBox, aiMsg.id);
     const contBtn = el.querySelector('[data-act="continue"]');
     if (contBtn) contBtn.addEventListener("click", () => {
       sendMessage("Продолжи ровно с того места, где остановился. Не повторяй начало, продолжай текст и код.");
     });
-    el.querySelectorAll(".actions button").forEach(b => {
-      b.addEventListener("click", () => onMsgAction(aiMsg.id, b.dataset.act));
-    });
+
   } catch(err) {
     clearTimeout(slowTimer);
     if (err.name === "AbortError") {
@@ -15188,6 +15265,26 @@ function wire() {
   }));
   $("#memoryTop").addEventListener("click", openMemory);
   $("#settingsIcon").addEventListener("click", openSettings);
+
+  /* Меню «Ещё»: база знаний, память и тема живут в одном месте,
+     чтобы в шапке осталось две кнопки вместо четырёх. */
+  const moreBtn = $("#moreBtn"), moreMenu = $("#moreMenu");
+  if (moreBtn && moreMenu) {
+    const closeMore = () => { moreMenu.hidden = true; moreBtn.setAttribute("aria-expanded", "false"); };
+    moreBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const willOpen = moreMenu.hidden;
+      moreMenu.hidden = !willOpen;
+      moreBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+    document.addEventListener("click", (ev) => {
+      if (moreMenu.hidden) return;
+      if (moreMenu.contains(ev.target) || moreBtn.contains(ev.target)) return;
+      closeMore();
+    });
+    moreMenu.querySelectorAll(".more-item").forEach(b => b.addEventListener("click", closeMore));
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeMore(); });
+  }
 
   // Модалка настроек: вкладки, ключ, проверка
   $$("#setTabs button").forEach(b => b.addEventListener("click", () => setSettingsTab(b.dataset.tab)));
