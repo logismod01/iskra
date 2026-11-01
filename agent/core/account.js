@@ -190,7 +190,11 @@ function createAccount(opts) {
     try {
       const j = await fetchAccess(s.client);
       if (!j || !j.ok) {
-        return { ok: false, active: false, msg: "Сервер Искры не ответил — проверь интернет." };
+        return {
+          ok: false,
+          active: false,
+          msg: (j && j.msg) || "Сервер Искры не ответил — проверь интернет."
+        };
       }
       const active = !!j.active;
       const forever = !!j.forever;
@@ -198,6 +202,16 @@ function createAccount(opts) {
       save({ active, forever, expiresAt, plan: String(j.plan || ""), lastCheck: now() });
       return { ok: true, active, forever, expiresAt, plan: String(j.plan || ""), label: String(j.label || "") };
     } catch (e) {
+      /* Три разных беды — три разных ответа: sql не выполнен, сети нет, сервер молчит. */
+      if (keys.isMissingFunction && keys.isMissingFunction(e)) {
+        return {
+          ok: false, active: false,
+          msg: "Сервер Искры не настроен: в базе нет функций доступа. Владельцу нужно один раз выполнить sql из supabase/iskra-access.sql в SQL Editor — после этого вход заработает без правок."
+        };
+      }
+      if (e && (e.name === "AbortError" || /timed? ?out/i.test(String(e.message)))) {
+        return { ok: false, active: false, msg: "Сервер Искры не ответил за 12 секунд — похоже, интернет слабый. Проверь связь и нажми «Проверить подписку» ещё раз." };
+      }
       return { ok: false, active: false, msg: "Сервер Искры не ответил: " + (e.message || "проверь интернет") };
     }
   }
@@ -274,10 +288,16 @@ function readable(err, fallback) {
   const msg = String((err && err.message) || "");
   const code = String((err && err.code) || "");
   if (code === "otp_expired" || /expired/i.test(msg)) return "Код устарел — запроси новый.";
-  if (code === "invalid_credentials" || /invalid login/i.test(msg)) return "Пароль не подошёл. Можно войти по коду из письма.";
+  if (code === "invalid_credentials" || /invalid login/i.test(msg)) {
+    return "Пароль не подошёл. Если аккаунт создавали кодом из письма, пароля у него нет — жми «Войти по коду из письма».";
+  }
   if (/email not confirmed/i.test(msg)) return "Почта не подтверждена — войди по коду из письма.";
   if (/user not found/i.test(msg)) return "Такого аккаунта на сервере Искры нет. Создай его на сайте или войди по коду из письма.";
   if (/rate limit|too many/i.test(msg)) return "Слишком много попыток — подожди минуту.";
+  if (keys.isMissingFunction && keys.isMissingFunction(err)) {
+    return "Сервер Искры не настроен: в базе нет функций доступа. Владельцу нужно один раз выполнить sql из supabase/iskra-access.sql.";
+  }
+  if (/failed to fetch|network|econnrefused|dns/i.test(msg)) return "Нет связи с сервером Искры. Проверь интернет и попробуй ещё раз.";
   if (msg) return msg;
   return fallback;
 }

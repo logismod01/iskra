@@ -303,6 +303,11 @@ code { font-family: "JetBrains Mono", "Consolas", monospace; font-size: 12px; }
 .radio input { margin-top: 2px; accent-color: var(--accent); }
 .radio span { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
 .radio i { font-style: normal; color: var(--text-dim); font-size: 11.5px; line-height: 1.4; }
+.check { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
+.check:hover { background: var(--bg-soft); }
+.check input { margin-top: 2px; accent-color: var(--accent); }
+.check span { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.check i { font-style: normal; color: var(--text-dim); font-size: 11.5px; line-height: 1.4; }
 .danger { border-top: 1px solid var(--line-soft); }
 
 /* ---------- Тост ---------- */
@@ -327,3 +332,46 @@ code { font-family: "JetBrains Mono", "Consolas", monospace; font-size: 12px; }
 }
 .field-adv summary em { font-style: normal; opacity: .7; }
 .field-adv[open] summary { color: var(--text-soft); }
+
+/* ============ Маскот Сью ============ */
+.sye-mascot { display: block; width: 100%; height: 100%; }
+.sye-mascot .sye-body { fill: var(--accent); }
+.sye-mascot .sye-belly { fill: #3a2418; opacity: .22; }
+.sye-mascot .sye-tuft { fill: var(--accent); }
+.sye-mascot .sye-eye { fill: #24150f; }
+.sye-mascot .sye-cheek { fill: #fff; opacity: .32; }
+.sye-mascot .sye-mouth { fill: none; stroke: #24150f; stroke-width: 2.2; stroke-linecap: round; }
+.sye-mascot .sye-shadow { fill: #000; opacity: .2; }
+.sye-wrap { overflow: hidden; }
+.sye-mascot-pic .sye-wrap { width: 46px; height: 46px; }
+.gate-mark.sye-mascot-pic .sye-wrap { width: 56px; height: 56px; }
+.hello-mark.sye-mascot-pic .sye-wrap {
+  width: 72px; height: 72px; padding: 8px; border-radius: 22px;
+  background: radial-gradient(120% 120% at 30% 20%, var(--bg-soft-2), var(--bg-soft) 70%);
+  border: 1px solid var(--line);
+}
+.sye-wrap[data-mood="work"] .sye-mascot { animation: syeBob 1.6s ease-in-out infinite; }
+.sye-wrap[data-mood="error"] .sye-mascot { animation: syeShake .45s ease-in-out 2; }
+@keyframes syeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes syeShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+
+/* ============ Компактный вид ============ */
+html.compact .feed { padding: 12px 14px; }
+html.compact .msg { margin-bottom: 10px; }
+html.compact .topbar { padding: 8px 14px; }
+html.compact .composer { padding: 10px 12px; }
+html.compact .drawer-card section { padding: 10px 14px; }
+html.compact .hist { padding: 6px 9px; }
+
+/* ============ Движение ============ */
+html.no-anim *, html.no-anim *::before, html.no-anim *::after {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
