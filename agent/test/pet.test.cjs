@@ -199,6 +199,14 @@ test("задача управляет настроением Сью", () => {
   assert.match(mainJs, /petReact\("error"\)/);
 });
 
+test("прозрачные поля окна не ловят клики по чужим программам", () => {
+  assert.match(mainJs, /setIgnoreMouseEvents\(true, \{ forward: true \}\)/);
+  assert.match(mainJs, /ipcMain\.handle\("pet:hover"/);
+  assert.match(mainJs, /setIgnoreMouseEvents\(!inside, \{ forward: true \}\)/);
+  assert.match(petJs, /el\.closest\("\.figure"\)/);
+  assert.match(preload, /petHover:/);
+});
+
 test("в трее Сью можно позвать и убрать", () => {
   assert.match(mainJs, /label: "Сью на рабочем столе"/);
   assert.match(mainJs, /label: "Позвать Сью"/);

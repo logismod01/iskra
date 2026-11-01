@@ -332,6 +332,9 @@ function createPetWindow() {
     petWin.setAlwaysOnTop(true, "floating");
     petWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
   } catch (e) { /* на некоторых системах этих настроек нет */ }
+  /* Прозрачные поля окна не должны ловить клики по чужим программам:
+     окно «сквозное», а интерактивным становится только над самим Сью. */
+  try { petWin.setIgnoreMouseEvents(true, { forward: true }); } catch (e) { /* старые версии Electron */ }
   petWin.loadFile(path.join(__dirname, "renderer", "pet.html"));
   petWin.once("ready-to-show", () => {
     if (!petWin || petWin.isDestroyed()) return;
@@ -744,6 +747,11 @@ function wireIpc() {
   ipcMain.handle("pet:poke", () => { petPoke(); return { ok: true }; });
   ipcMain.handle("pet:call", () => { petCall(); return { ok: true }; });
   ipcMain.handle("pet:menu", () => { petMenu(); return { ok: true }; });
+  ipcMain.handle("pet:hover", (event, inside) => {
+    if (!petWin || petWin.isDestroyed()) return { ok: false };
+    try { petWin.setIgnoreMouseEvents(!inside, { forward: true }); } catch (e) {}
+    return { ok: true, inside: !!inside };
+  });
 
   ipcMain.handle("workspace:pick", async () => {
     const res = await dialog.showOpenDialog(win, {

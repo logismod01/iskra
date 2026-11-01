@@ -123,3 +123,20 @@ petEl.addEventListener("contextmenu", (ev) => {
 });
 
 petEl.addEventListener("dblclick", () => window.sye.petCall());
+
+/* ---------- Сквозные клики ----------
+   Окно прозрачное, и большая его часть — пустое место. Если бы оно ловило клики,
+   под ним нельзя было бы работать. Поэтому по умолчанию окно «сквозное»,
+   а живым становится только когда курсор над самим Сью. */
+let hot = null;
+function setHot(inside) {
+  if (hot === inside) return;
+  hot = inside;
+  window.sye.petHover(inside);
+}
+document.addEventListener("pointermove", (ev) => {
+  const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  setHot(!!(el && el.closest && el.closest(".figure")));
+});
+document.addEventListener("pointerleave", () => setHot(false));
+window.addEventListener("blur", () => setHot(false));
