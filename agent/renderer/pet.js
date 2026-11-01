@@ -1,9 +1,9 @@
 /**
  * Окно Сью на рабочем столе.
  *
- * Рисует настроение и действие, показывает облачко с фразой и, если включён
- * голос, проговаривает её. Движением окна занимается главный процесс —
- * здесь только «лицо» и реакции на мышь.
+ * Рисует настроение и действие и показывает облачко с фразой. Голоса у него
+ * нет: только текст. Движением окна занимается главный процесс — здесь
+ * только «лицо» и реакции на мышь.
  */
 
 "use strict";
@@ -11,41 +11,9 @@
 const petEl = document.getElementById("pet");
 const figureEl = document.getElementById("figure");
 const bubbleEl = document.getElementById("bubble");
+const offEl = document.getElementById("off");
 
 let lastPhrase = "";
-let voiceOn = true;
-let voice = null;
-
-/* ---------- Голос ---------- */
-function pickVoice() {
-  try {
-    const list = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-    if (!list || !list.length) return null;
-    /* Русский голос ищем первым: фразы по-русски. */
-    return list.find((v) => /^ru/i.test(v.lang)) || null;
-  } catch (e) {
-    return null;
-  }
-}
-
-function speak(text) {
-  if (!voiceOn || !text) return;
-  try {
-    if (!window.speechSynthesis) return;
-    if (!voice) voice = pickVoice();
-    /* Нет русского голоса — молчим, но облачко всё равно показываем:
-       английский голос, читающий русские слова, звучит как издевательство. */
-    if (!voice) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.voice = voice;
-    utter.lang = voice.lang || "ru-RU";
-    utter.rate = 1.02;
-    utter.pitch = 0.92;
-    utter.volume = 0.9;
-    window.speechSynthesis.speak(utter);
-  } catch (e) { /* голос — украшение, без него всё работает */ }
-}
 
 /* ---------- Состояние ---------- */
 function apply(state) {
@@ -53,13 +21,11 @@ function apply(state) {
   petEl.dataset.mood = state.mood || "idle";
   petEl.dataset.action = state.action || "stand";
   petEl.dataset.facing = String(state.facing === 1 ? 1 : -1);
-  voiceOn = state.voice !== false;
 
   const phrase = state.phrase || "";
   if (phrase && phrase !== lastPhrase) {
     bubbleEl.textContent = phrase;
     bubbleEl.hidden = false;
-    speak(phrase);
     lastPhrase = phrase;
   } else if (!phrase) {
     bubbleEl.hidden = true;
@@ -70,10 +36,16 @@ function apply(state) {
 window.sye.petState().then(apply).catch(() => {});
 window.sye.petOnState(apply);
 
-/* Список голосов в Windows приходит с задержкой — перечитываем, когда появится. */
-try {
-  if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { voice = pickVoice(); };
-} catch (e) { /* старые версии не умеют — не страшно */ }
+/* ---------- Выключить ----------
+   Крестик появляется при наведении. Он внутри фигуры, иначе прозрачное окно
+   не пропустит по нему клик. */
+if (offEl) {
+  offEl.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); });
+  offEl.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    window.sye.petOff();
+  });
+}
 
 /* ---------- Мышь ---------- */
 let down = null;

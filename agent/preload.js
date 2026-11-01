@@ -46,6 +46,7 @@ contextBridge.exposeInMainWorld("sye", {
   petHit: () => ipcRenderer.invoke("pet:hit"),
   petCall: () => ipcRenderer.invoke("pet:call"),
   petMenu: () => ipcRenderer.invoke("pet:menu"),
+  petOff: () => ipcRenderer.invoke("pet:off"),
   petHover: (inside) => ipcRenderer.invoke("pet:hover", !!inside),
 
   onState: (fn) => on("state:changed", fn),

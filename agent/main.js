@@ -61,12 +61,13 @@ const DEFAULT_SETTINGS = {
   /* Вид: плотность и движение. Меняются в настройках без перезапуска. */
   compact: false,
   animations: true,
-  /* Сью на рабочем столе: ходит по низу экрана, прыгает и говорит. */
+  /* Сью на рабочем столе: стоит, изредка гуляет, прыгает и говорит облачком. */
   petOn: true,
   petTalk: true,
-  petVoice: true,
   petMediaKeys: true,
-  petX: 0
+  petX: 0,
+  petY: 0,
+  petPlaced: false
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS, readJson(FILES.settings, {}));
 
@@ -276,42 +277,69 @@ function petEnabled() {
   return settings.petOn !== false;
 }
 
-function petArea() {
+/* Весь рабочий стол: все мониторы сразу. Сью можно утащить в любое место. */
+function petDesktop() {
+  try {
+    const list = screen.getAllDisplays()
+      .map((d) => d.workArea)
+      .filter((a) => a && a.width > 200 && a.height > 200);
+    if (list.length) {
+      const left = Math.min.apply(null, list.map((a) => a.x));
+      const top = Math.min.apply(null, list.map((a) => a.y));
+      const right = Math.max.apply(null, list.map((a) => a.x + a.width));
+      const bottom = Math.max.apply(null, list.map((a) => a.y + a.height));
+      return { x: left, y: top, width: right - left, height: bottom - top };
+    }
+  } catch (e) { /* экран ещё не готов — берём основной */ }
   try {
     const area = screen.getPrimaryDisplay().workArea;
     if (area && area.width > 200) return area;
-  } catch (e) { /* экран ещё не готов — берём запасные размеры */ }
+  } catch (e) { /* совсем нет экрана — запасные размеры */ }
   return { x: 0, y: 0, width: 1280, height: 800 };
 }
 
-/* Окно живёт по низу экрана; ходит внутри рабочей области. */
-function petStartX() {
-  const area = petArea();
-  const saved = Number(settings.petX);
-  const x = Number.isFinite(saved) && saved > 0 ? saved : area.x + area.width - PET_W - 24;
-  return Math.min(Math.max(x, area.x), area.x + area.width - PET_W);
+/* Где поставить окно: сохранённое место или правый нижний угол. */
+function petStartPos() {
+  const area = petDesktop();
+  const maxX = Math.round(area.x + area.width - PET_W);
+  const maxY = Math.round(area.y + area.height - PET_H);
+  const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  if (settings.petPlaced) {
+    return {
+      x: clamp(Math.round(Number(settings.petX) || 0), Math.round(area.x), maxX),
+      y: clamp(Math.round(Number(settings.petY) || 0), Math.round(area.y), maxY)
+    };
+  }
+  return { x: maxX - 24, y: maxY };
 }
 
 function ensurePetCore() {
   if (petCore) return petCore;
   petCore = petModule.createPet({
     width: PET_MASCOT_W,
+    height: PET_H,
     quiet: settings.petTalk === false
   });
-  const area = petArea();
-  petCore.setBounds(area.x + (PET_W - PET_MASCOT_W) / 2, area.x + area.width - (PET_W - PET_MASCOT_W) / 2);
-  petCore.place(petStartX() + (PET_W - PET_MASCOT_W) / 2);
+  const area = petDesktop();
+  petCore.setBounds(
+    area.x + (PET_W - PET_MASCOT_W) / 2,
+    area.x + area.width - (PET_W - PET_MASCOT_W) / 2,
+    area.y,
+    area.y + area.height
+  );
+  const start = petStartPos();
+  petCore.place(start.x + (PET_W - PET_MASCOT_W) / 2, start.y);
   return petCore;
 }
 
 function createPetWindow() {
   if (petWin && !petWin.isDestroyed()) return petWin;
-  const area = petArea();
+  const start = petStartPos();
   petWin = new BrowserWindow({
     width: PET_W,
     height: PET_H,
-    x: Math.round(petStartX()),
-    y: Math.round(area.y + area.height - PET_H),
+    x: Math.round(start.x),
+    y: Math.round(start.y),
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
@@ -357,9 +385,17 @@ function petPush() {
   if (!petWin || petWin.isDestroyed() || !petCore) return;
   if (!petWin.webContents || petWin.webContents.isLoading()) return;
   const snap = petCore.snapshot();
-  snap.voice = settings.petVoice !== false;
   petLastPhrase = snap.phrase || "";
   try { petWin.webContents.send("pet:state", snap); } catch (e) { /* окно закрывается */ }
+}
+
+/* Где окно, если сам Сью стоит в точке снимка. */
+function petWindowXY(snap) {
+  const width = petCore ? petCore.state.width : PET_MASCOT_W;
+  return {
+    x: Math.round(snap.x - (PET_W - width) / 2),
+    y: Math.round(snap.y)
+  };
 }
 
 function petTickLoop() {
@@ -368,33 +404,53 @@ function petTickLoop() {
   const snap = petCore.tick(petModule.TICK_MS, Date.now());
   petCore.maybeNudge(Date.now());
 
-  const area = petArea();
-  const x = Math.round(snap.x - (PET_W - PET_MASCOT_W) / 2);
-  const y = Math.round(area.y + area.height - PET_H);
+  const pos = petWindowXY(snap);
   const b = petWin.getBounds();
-  if (b.x !== x || b.y !== y) {
-    try { petWin.setBounds({ x, y, width: PET_W, height: PET_H }); } catch (e) { /* окно переехало в другой поток */ }
+  if (b.x !== pos.x || b.y !== pos.y) {
+    try { petWin.setBounds({ x: pos.x, y: pos.y, width: PET_W, height: PET_H }); } catch (e) { /* окно переехало в другой поток */ }
   }
 
   const after = petCore.snapshot();
   if (after.action !== before.action || after.mood !== before.mood || after.phrase !== petLastPhrase) petPush();
 }
 
+/* Экран поменялся — вернуть Сью в пределы рабочего стола, чтобы не потерялся. */
+function petClamp() {
+  if (!petCore) return;
+  const area = petDesktop();
+  petCore.setBounds(
+    area.x + (PET_W - PET_MASCOT_W) / 2,
+    area.x + area.width - (PET_W - PET_MASCOT_W) / 2,
+    area.y,
+    area.y + area.height
+  );
+  if (petWin && !petWin.isDestroyed()) {
+    const pos = petWindowXY(petCore.snapshot());
+    try { petWin.setBounds({ x: pos.x, y: pos.y, width: PET_W, height: PET_H }); } catch (e) {}
+  }
+  petPush();
+}
+
 function startPet() {
   if (!petEnabled()) return;
   createPetWindow();
   ensurePetCore();
+  petClamp();
   if (!petTimer) petTimer = setInterval(petTickLoop, petModule.TICK_MS);
   petPush();
 }
 
 function stopPet() {
   if (petTimer) { clearInterval(petTimer); petTimer = null; }
-  if (petCore) saveSettings({ petX: Math.round(petCore.state.x) });
+  if (petCore) saveSettings({ petX: Math.round(petCore.state.x - (PET_W - petCore.state.width) / 2), petY: Math.round(petCore.state.y) });
   if (petWin && !petWin.isDestroyed()) {
     try { petWin.destroy(); } catch (e) { /* уже закрыто */ }
   }
   petWin = null;
+  petDrag = null;
+  /* Выключен — значит выключен: не реагируем на события и не копим фразы. */
+  petCore = null;
+  petGreeted = false;
 }
 
 /* Реакция на задачу: думает, закончил, упёрся в ошибку. */
@@ -431,18 +487,21 @@ function petHit() {
   return { ok: true, mood: after.mood, anger: after.anger };
 }
 
-function petDragTo(x) {
-  const area = petArea();
+/* Перетаскивание: окно ставится в точку курсора, но не за край рабочего стола. */
+function petDragTo(x, y) {
+  const area = petDesktop();
   const width = petCore ? petCore.state.width : PET_MASCOT_W;
-  const left = area.x + (PET_W - width) / 2;
-  const right = area.x + area.width - (PET_W - width) / 2 - width;
-  const next = Math.min(Math.max(Math.round(x), Math.round(left)), Math.round(right));
-  if (petCore) petCore.place(next);
+  const left = Math.round(area.x);
+  const right = Math.round(area.x + area.width - PET_W);
+  const top = Math.round(area.y);
+  const bottom = Math.round(area.y + area.height - PET_H);
+  const winX = Math.min(Math.max(Math.round(Number(x) || 0), left), Math.max(left, right));
+  const winY = Math.min(Math.max(Math.round(Number(y) || 0), top), Math.max(top, bottom));
+  if (petCore) petCore.place(winX + (PET_W - width) / 2, winY);
   if (petWin && !petWin.isDestroyed()) {
     const b = petWin.getBounds();
-    const y = Math.round(area.y + area.height - PET_H);
-    if (b.x !== Math.round(next - (PET_W - width) / 2) || b.y !== y) {
-      try { petWin.setBounds({ x: Math.round(next - (PET_W - width) / 2), y, width: PET_W, height: PET_H }); } catch (e) {}
+    if (b.x !== winX || b.y !== winY) {
+      try { petWin.setBounds({ x: winX, y: winY, width: PET_W, height: PET_H }); } catch (e) {}
     }
   }
   petPush();
@@ -465,12 +524,6 @@ function petMenu() {
       }
     },
     {
-      label: "Голосом",
-      type: "checkbox",
-      checked: settings.petVoice !== false,
-      click: () => { saveSettings({ petVoice: settings.petVoice === false }); broadcastState(); petPush(); }
-    },
-    {
       label: "Замечать клавиши громкости",
       type: "checkbox",
       checked: settings.petMediaKeys !== false,
@@ -483,7 +536,7 @@ function petMenu() {
     },
     { type: "separator" },
     { label: "Открыть " + brand.name, click: () => showWindow() },
-    { label: "Убрать с рабочего стола", click: () => { saveSettings({ petOn: false }); stopPet(); broadcastState(); } }
+    { label: "Выключить Сью", click: () => { saveSettings({ petOn: false }); stopPet(); broadcastState(); } }
   ]);
   menu.popup({});
 }
@@ -558,9 +611,9 @@ function unregisterVolumeKeys() {
 /* Экран поменялся, компьютер уснул или заблокировался — он это замечает. */
 function wirePetSystemEvents() {
   try {
-    screen.on("display-metrics-changed", () => petReact("screen"));
-    screen.on("display-added", () => petReact("screen"));
-    screen.on("display-removed", () => petReact("screen"));
+    screen.on("display-metrics-changed", () => { petReact("screen"); petClamp(); });
+    screen.on("display-added", () => { petReact("screen"); petClamp(); });
+    screen.on("display-removed", () => { petReact("screen"); petClamp(); });
   } catch (e) { /* на этой системе событий экрана нет */ }
   try {
     const pm = require("electron").powerMonitor;
@@ -820,7 +873,6 @@ function wireIpc() {
     const p = patch || {};
     if ("petOn" in p) { if (next.petOn) startPet(); else stopPet(); }
     if ("petTalk" in p && petCore) { petCore.setQuiet(next.petTalk === false); petPush(); }
-    if ("petVoice" in p) petPush();
     if ("petMediaKeys" in p) {
       unregisterVolumeKeys();
       if (next.petMediaKeys !== false && next.petOn !== false) registerVolumeKeys();
@@ -832,9 +884,7 @@ function wireIpc() {
   /* ---------- Сью на рабочем столе ---------- */
   ipcMain.handle("pet:state", () => {
     ensurePetCore();
-    const snap = petCore.snapshot();
-    snap.voice = settings.petVoice !== false;
-    return snap;
+    return petCore.snapshot();
   });
   ipcMain.handle("pet:drag-start", () => {
     const cursor = screen.getCursorScreenPoint();
@@ -845,17 +895,24 @@ function wireIpc() {
   ipcMain.handle("pet:drag-move", () => {
     if (!petDrag || !petWin || petWin.isDestroyed()) return { ok: false };
     const cursor = screen.getCursorScreenPoint();
-    const area = petArea();
-    const y = Math.round(area.y + area.height - PET_H);
-    let x = Math.round(cursor.x - petDrag.dx);
-    x = Math.min(Math.max(x, Math.round(area.x)), Math.round(area.x + area.width - PET_W));
-    try { petWin.setBounds({ x, y, width: PET_W, height: PET_H }); } catch (e) {}
-    petDragTo(x + (PET_W - PET_MASCOT_W) / 2);
-    return { ok: true, x };
+    const x = Math.round(cursor.x - petDrag.dx);
+    const y = Math.round(cursor.y - petDrag.dy);
+    petDragTo(x, y);
+    return { ok: true, x, y };
   });
   ipcMain.handle("pet:drag-end", () => {
     petDrag = null;
-    if (petCore) saveSettings({ petX: Math.round(petCore.state.x - (PET_W - PET_MASCOT_W) / 2) });
+    if (petWin && !petWin.isDestroyed()) {
+      const b = petWin.getBounds();
+      saveSettings({ petX: b.x, petY: b.y, petPlaced: true });
+    }
+    return { ok: true };
+  });
+  /* Крестик на самом Сью: выключить его совсем, не заходя в настройки. */
+  ipcMain.handle("pet:off", () => {
+    saveSettings({ petOn: false });
+    stopPet();
+    broadcastState();
     return { ok: true };
   });
   ipcMain.handle("pet:poke", () => { petPoke(); return { ok: true }; });

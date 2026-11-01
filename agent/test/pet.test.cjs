@@ -63,7 +63,8 @@ test("Сью ходит, но не выходит за экран", () => {
   let minX = Infinity;
   let maxX = -Infinity;
   let walked = 0;
-  for (let i = 0; i < 4000; i++) {
+  /* 20 минут по 40 мс: гуляет он редко, поэтому и смотрим дольше. */
+  for (let i = 0; i < 30000; i++) {
     const s = tick();
     assert.ok(s.x >= 0, "ушёл левее экрана: " + s.x);
     assert.ok(s.x <= 1920 - 96, "ушёл правее экрана: " + s.x);
@@ -71,8 +72,33 @@ test("Сью ходит, но не выходит за экран", () => {
     maxX = Math.max(maxX, s.x);
     if (s.action === "walk") walked++;
   }
-  assert.ok(maxX - minX > 120, "за 4000 шагов почти не сдвинулся: " + (maxX - minX));
-  assert.ok(walked > 200, "почти не ходил: " + walked + " шагов из 4000");
+  assert.ok(maxX - minX > 120, "за 20 минут почти не сдвинулся: " + (maxX - minX));
+  assert.ok(walked > 200, "почти не ходил: " + walked + " шагов из 30000");
+});
+
+test("гуляет редко, а не каждые полминуты", () => {
+  const { pet, tick } = makePet();
+  pet.setAction("stand", 0);
+  let starts = 0;
+  let prev = pet.snapshot().action;
+  /* Час по 40 мс. Раньше он начинал прогулку каждые ~15 секунд. */
+  for (let i = 0; i < 90000; i++) {
+    const s = tick();
+    if (s.action === "walk" && prev !== "walk") starts++;
+    prev = s.action;
+  }
+  assert.ok(starts >= 2, "за час ни разу не прогулялся");
+  assert.ok(starts <= 14, "слишком часто гуляет: " + starts + " прогулок за час");
+});
+
+test("между делами отдыхает минуту-три, а не прыгает без остановки", () => {
+  assert.ok(petModule.REST_MIN_MS >= 60 * 1000, "отдых короче минуты");
+  assert.ok(petModule.REST_MAX_MS > petModule.REST_MIN_MS, "границы отдыха перепутаны");
+  const { pet } = makePet();
+  pet.setAction("jump", petModule.JUMP_MS);
+  const rest = pet.tick(petModule.JUMP_MS + 60, 1_000_000 + petModule.JUMP_MS + 60);
+  assert.equal(rest.action, "stand", "после прыжка не встал отдыхать");
+  assert.ok(pet.state._until - (1_000_000 + petModule.JUMP_MS + 60) >= petModule.REST_MIN_MS, "отдыхает меньше минуты");
 });
 
 test("у самого края разворачивается, а не топчется в стену", () => {
@@ -185,7 +211,7 @@ test("окно Сью прозрачное, поверх всех и не меш
 test("окно Сью двигается по таймеру и не дёргает экран зря", () => {
   assert.match(mainJs, /function petTickLoop\(\)/);
   assert.match(mainJs, /setInterval\(petTickLoop, petModule\.TICK_MS\)/);
-  assert.match(mainJs, /if \(b\.x !== x \|\| b\.y !== y\)/);
+  assert.match(mainJs, /if \(b\.x !== pos\.x \|\| b\.y !== pos\.y\)/);
 });
 
 test("на скриншот для модели Сью не попадает", () => {
@@ -333,13 +359,53 @@ test("окно Сью: маскот, облачко и три действия",
 });
 
 test("в настройках есть переключатели Сью и кнопка «Позвать»", () => {
-  for (const id of ["petOn", "petTalk", "petVoice", "petCallBtn"]) {
+  for (const id of ["petOn", "petTalk", "petCallBtn"]) {
     assert.ok(html.includes('id="' + id + '"'), "в настройках нет " + id);
   }
   assert.match(appJs, /saveSettings\(\{ petOn: !!pOn\.checked \}\)/);
   assert.match(appJs, /saveSettings\(\{ petTalk: !!pTalk\.checked \}\)/);
-  assert.match(appJs, /saveSettings\(\{ petVoice: !!pVoice\.checked \}\)/);
   assert.match(appJs, /window\.sye\.petCall\(\)/);
+});
+
+test("голоса у Сью нет — только облачко с фразой", () => {
+  assert.doesNotMatch(petJs, /speechSynthesis|SpeechSynthesisUtterance/, "в окне Сью остался синтез речи");
+  assert.doesNotMatch(petJs, /\bvoice\b/i, "в окне Сью остались следы голоса");
+  assert.doesNotMatch(mainJs, /petVoice/, "в главном процессе остался переключатель голоса");
+  assert.doesNotMatch(html, /id="petVoice"/, "в настройках остался переключатель голоса");
+  assert.doesNotMatch(petJs, /Голосом/, "в окне Сью осталась кнопка голоса");
+});
+
+test("его можно перетащить в любое место рабочего стола", () => {
+  const pet = petModule.createPet({ rand: () => 0.5, now: () => 0, width: 96, height: 178 });
+  pet.setBounds(0, 1920, 0, 1080);
+  pet.place(1200, 640);
+  assert.equal(pet.snapshot().x, 1200);
+  assert.equal(pet.snapshot().y, 640, "высота не запомнилась");
+
+  /* За край не пускаем: окно не должно уехать за экран и потеряться. */
+  pet.place(-500, -500);
+  assert.equal(pet.snapshot().x, 0);
+  assert.equal(pet.snapshot().y, 0);
+  pet.place(5000, 5000);
+  assert.equal(pet.snapshot().x, 1920 - 96);
+  assert.equal(pet.snapshot().y, 1080 - 178);
+
+  /* Тянем в обе стороны и запоминаем место между запусками. */
+  assert.match(mainJs, /function petDragTo\(x, y\)/);
+  assert.match(mainJs, /cursor\.y - petDrag\.dy/);
+  assert.match(mainJs, /saveSettings\(\{ petX: b\.x, petY: b\.y, petPlaced: true \}\)/);
+  assert.match(mainJs, /petPlaced/);
+  assert.match(mainJs, /getAllDisplays\(\)/, "считаем только основной монитор");
+});
+
+test("выключить можно крестиком на самом Сью, из меню и из настроек", () => {
+  assert.match(petHtml, /id="off"/, "на Сью нет крестика");
+  assert.match(petCss, /\.off \{/);
+  assert.match(petJs, /window\.sye\.petOff\(\)/, "крестик ничего не выключает");
+  assert.match(preload, /petOff:/);
+  assert.match(mainJs, /ipcMain\.handle\("pet:off"/);
+  assert.match(mainJs, /label: "Выключить Сью"/);
+  assert.match(mainJs, /saveSettings\(\{ petOn: false \}\);/);
 });
 
 test("Сью включён по умолчанию, но его можно выключить", () => {
