@@ -12,6 +12,8 @@
  * Запуск: node tests/round17.test.mjs
  */
 import fs from "node:fs";
+import { JSDOM, VirtualConsole } from "jsdom";
+import { webcrypto } from "node:crypto";
 
 let passed = 0;
 const assert = (cond, msg) => { if (!cond) throw new Error(msg || "условие не выполнено"); };
@@ -63,6 +65,82 @@ await test("переключатели в панели «Вид» присутс
     "вид не применяется при запуске");
 });
 
+await test("вид действительно включается в живом окне", async () => {
+  const boot = async (saved) => {
+    const vc = new VirtualConsole();
+    const dom = new JSDOM(html, {
+      url: "https://logismod01.github.io/iskra/",
+      runScripts: "dangerously",
+      pretendToBeVisual: true,
+      virtualConsole: vc,
+      beforeParse(win) {
+        win.TextEncoder = TextEncoder;
+        win.TextDecoder = TextDecoder;
+        win.AbortSignal = AbortSignal;
+        Object.defineProperty(win, "crypto", { value: webcrypto, configurable: true });
+        if (saved) win.localStorage.setItem("iskra.settings.v1", JSON.stringify(saved));
+      }
+    });
+    await new Promise((r) => setTimeout(r, 700));
+    const doc = dom.window.document;
+    const html_cls = doc.documentElement.classList;
+    const stored = JSON.parse(dom.window.localStorage.getItem("iskra.settings.v1") || "{}");
+    const res = { compact: html_cls.contains("compact"), noAnim: html_cls.contains("no-anim"), stored, doc };
+    dom.window.close();
+    return res;
+  };
+
+  const plain = await boot(null);
+  assert(!plain.compact && !plain.noAnim, "свежие настройки не должны включать компакт/выключение анимаций");
+
+  const old = await boot({ theme: "claude" });
+  assert(old.stored.compact === false, "старые настройки должны получить compact=false");
+  assert(old.stored.animations === true, "старые настройки должны получить animations=true");
+
+  const tight = await boot({ theme: "claude", compact: true, animations: false });
+  assert(tight.compact, "компактный вид не включился");
+  assert(tight.noAnim, "выключение анимаций не сработало");
+
+  /* щёлкаем переключатели в открытых настройках */
+  const vc = new VirtualConsole();
+  const dom = new JSDOM(html, {
+    url: "https://logismod01.github.io/iskra/",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+    virtualConsole: vc,
+    beforeParse(win) {
+      win.TextEncoder = TextEncoder;
+      win.TextDecoder = TextDecoder;
+      win.AbortSignal = AbortSignal;
+      Object.defineProperty(win, "crypto", { value: webcrypto, configurable: true });
+    }
+  });
+  await new Promise((r) => setTimeout(r, 700));
+  const win = dom.window;
+  const doc = win.document;
+  win.openSettings("look");
+  const cp = doc.getElementById("compactToggle");
+  const an = doc.getElementById("animToggle");
+  assert(cp && an, "переключатели не нашлись в настройках после открытия");
+  assert(!cp.checked && an.checked, "переключатели не отражают настройки по умолчанию");
+
+  cp.checked = true; cp.dispatchEvent(new win.Event("change"));
+  an.checked = false; an.dispatchEvent(new win.Event("change"));
+  await new Promise((r) => setTimeout(r, 50));
+
+  assert(doc.documentElement.classList.contains("compact"), "щёлкнутый переключатель не включил компактный вид");
+  assert(doc.documentElement.classList.contains("no-anim"), "щёлкнутый переключатель не выключил анимации");
+  const savedNow = JSON.parse(win.localStorage.getItem("iskra.settings.v1") || "{}");
+  assert(savedNow.compact === true && savedNow.animations === false, "выбор вида не сохранился: " + JSON.stringify({ c: savedNow.compact, a: savedNow.animations }));
+
+  cp.checked = false; cp.dispatchEvent(new win.Event("change"));
+  an.checked = true; an.dispatchEvent(new win.Event("change"));
+  await new Promise((r) => setTimeout(r, 50));
+  assert(!doc.documentElement.classList.contains("compact"), "компактный вид не выключился");
+  assert(!doc.documentElement.classList.contains("no-anim"), "анимации не вернулись");
+  win.close();
+});
+
 /* ---------- Сайт: ошибки не проглатываются ---------- */
 await test("проверка доступа не молчит при ошибке", async () => {
   assert(html.includes("let accessProblem"), "нет переменной accessProblem");
@@ -73,6 +151,22 @@ await test("проверка доступа не молчит при ошибк�
 
 await test("причина видна в панели доступа", async () => {
   assert(/accessProblem \? `<div class="acct-note"/.test(html), "панель не показывает причину");
+});
+
+await test("проверка «сервер готов?» тоже не молчит", async () => {
+  const block = html.slice(html.indexOf("async function accessServerReady"));
+  const cut = block.slice(0, block.indexOf("\n}\n"));
+  assert(!/catch \(e\) \{ _accessServer = false; \}/.test(cut), "в проверке сервера остался молчащий catch");
+  assert(/accessProblem = sbMissingFunction\(e\)/.test(cut), "нет объяснения «sql не выполнен»");
+  assert(/Ключи, уже сохранённые в браузере, продолжают работать/.test(cut), "не сказано, что ключи не сломались");
+});
+
+await test("три беды в агенте — три разных ответа", async () => {
+  const src = read("agent/core/account.js");
+  assert(/Нет связи с сервером Искры/.test(src), "нет ответа про интернет");
+  assert(/не ответил за 12 секунд/.test(src), "нет ответа про таймаут");
+  assert(/в базе нет функций доступа/.test(src), "нет ответа про не выполненный sql");
+  assert(/fetch failed/.test(src), "не распознаётся сетевой сбой node (fetch failed)");
 });
 
 /* ---------- Маскот ---------- */
@@ -117,6 +211,32 @@ await test("про пароль сказано, что его может не б
   assert(/«Войти по коду из письма»/.test(accountJs), "нет подсказки про вход кодом");
 });
 
+await test("account.access объясняет причину, а не «ничего не произошло»", async () => {
+  const { createAccount } = await import("../agent/core/account.js");
+  const st = { email: "a@b.ru", userId: "u1", client: "123456-abc123-slovo", accessToken: "tok", refreshToken: "r", tokenAt: Date.now() };
+  const mk = (fetchAccess) => createAccount({ read: () => st, write: () => {}, fetchAccess });
+
+  const noSql = await mk(async () => {
+    const e = new Error("Could not find the function public.iskra_access(p_client) in the schema cache");
+    e.code = "PGRST202";
+    throw e;
+  }).access();
+  assert(!noSql.ok && /нет функций доступа/.test(noSql.msg), "не распознан не выполненный sql: " + noSql.msg);
+
+  const timeout = await mk(async () => {
+    const e = new Error("The operation was aborted");
+    e.name = "AbortError";
+    throw e;
+  }).access();
+  assert(/12 секунд/.test(timeout.msg), "таймаут не объяснён: " + timeout.msg);
+
+  const offline = await mk(async () => { throw new TypeError("fetch failed"); }).access();
+  assert(/Нет связи с сервером Искры/.test(offline.msg), "сетевой сбой не объяснён: " + offline.msg);
+
+  const live = await mk(async () => ({ ok: true, active: true, forever: false, expiresAt: Date.now() + 86400000, plan: "month" })).access();
+  assert(live.ok && live.active, "живой ключ не распознан");
+});
+
 /* ---------- Версии ---------- */
 await test("версии подняты", async () => {
   assert(pkg.version === "1.16.0", "версия сайта: " + pkg.version);
@@ -128,3 +248,5 @@ await test("новый тест подключён к npm test", async () => {
 });
 
 if (!process.exitCode) console.log("round17: " + passed + " проверок пройдено");
+/* jsdom держит таймеры — закрываемся сами, иначе npm test висит */
+setTimeout(() => process.exit(process.exitCode || 0), 50);

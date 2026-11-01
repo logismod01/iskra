@@ -65,7 +65,16 @@ function createAccount(opts) {
         body: body ? JSON.stringify(body) : undefined
       });
     } catch (e) {
-      throw new Error("Нет связи с сервером Искры. Проверь интернет и попробуй ещё раз.");
+      /* Обрыв по таймеру и обрыв сети — разные беды: таймер значит «сервер молчит»,
+         сеть значит «нет интернета». Раньше оба выглядели как «нет связи». */
+      if (e && (e.name === "AbortError" || /abort|timed? ?out/i.test(String(e.message)))) {
+        const t = new Error("Сервер Искры не ответил вовремя.");
+        t.name = "AbortError";
+        throw t;
+      }
+      const n = new Error("Нет связи с сервером Искры. Проверь интернет и попробуй ещё раз.");
+      n.name = "NetworkError";
+      throw n;
     }
     const text = await res.text();
     let json = {};
@@ -212,7 +221,11 @@ function createAccount(opts) {
       if (e && (e.name === "AbortError" || /timed? ?out/i.test(String(e.message)))) {
         return { ok: false, active: false, msg: "Сервер Искры не ответил за 12 секунд — похоже, интернет слабый. Проверь связь и нажми «Проверить подписку» ещё раз." };
       }
-      return { ok: false, active: false, msg: "Сервер Искры не ответил: " + (e.message || "проверь интернет") };
+      const m = String((e && e.message) || "");
+      if (e && (e.name === "NetworkError" || /failed to fetch|fetch failed|network|enotfound|econnrefused|econnreset|etimedout|dns/i.test(m))) {
+        return { ok: false, active: false, msg: "Нет связи с сервером Искры. Проверь интернет и попробуй ещё раз." };
+      }
+      return { ok: false, active: false, msg: "Сервер Искры не ответил: " + (m || "проверь интернет") };
     }
   }
 
