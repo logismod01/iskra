@@ -37,7 +37,7 @@ console.log("round17: вид, маскот и честные ошибки");
 
 /* ---------- Сайт: компактность и анимации ---------- */
 await test("в настройках по умолчанию есть compact и animations", async () => {
-  assert(/compact:\s*false/.test(html), "нет compact:false в настройках по умолчанию");
+  assert(/compact:\s*true/.test(html), "нет compact:true в настройках по умолчанию");
   assert(/animations:\s*true/.test(html), "нет animations:true в настройках по умолчанию");
 });
 
@@ -91,10 +91,11 @@ await test("вид действительно включается в живом
   };
 
   const plain = await boot(null);
-  assert(!plain.compact && !plain.noAnim, "свежие настройки не должны включать компакт/выключение анимаций");
+  assert(plain.compact, "свежие настройки должны открываться в компактном виде");
+  assert(!plain.noAnim, "анимации по умолчанию включены");
 
   const old = await boot({ theme: "claude" });
-  assert(old.stored.compact === false, "старые настройки должны получить compact=false");
+  assert(old.stored.compact === true, "старые настройки должны получить compact=true");
   assert(old.stored.animations === true, "старые настройки должны получить animations=true");
 
   const tight = await boot({ theme: "claude", compact: true, animations: false });
@@ -122,7 +123,7 @@ await test("вид действительно включается в живом
   const cp = doc.getElementById("compactToggle");
   const an = doc.getElementById("animToggle");
   assert(cp && an, "переключатели не нашлись в настройках после открытия");
-  assert(!cp.checked && an.checked, "переключатели не отражают настройки по умолчанию");
+  assert(cp.checked && an.checked, "переключатели не отражают настройки по умолчанию");
 
   cp.checked = true; cp.dispatchEvent(new win.Event("change"));
   an.checked = false; an.dispatchEvent(new win.Event("change"));
@@ -239,7 +240,7 @@ await test("account.access объясняет причину, а не «ниче
 
 /* ---------- Версии ---------- */
 await test("версии подняты", async () => {
-  assert(pkg.version === "1.16.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.17.0", "версия сайта: " + pkg.version);
   assert(/version:\s*"0\.4\.5"/.test(brandJs), "версия Sye не 0.4.5");
 });
 
