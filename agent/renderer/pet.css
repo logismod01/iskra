@@ -75,11 +75,34 @@ body.dragging { cursor: grabbing; }
 }
 
 .figure {
+  position: relative;
   width: 84px;
   height: 84px;
   transform-origin: 50% 92%;
   will-change: transform;
 }
+
+/* Крестик: появляется при наведении и выключает Сью совсем. */
+.off {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid #3a342e;
+  border-radius: 50%;
+  background: #1e1c1a;
+  color: #ece5dd;
+  font: 14px/1 "Segoe UI", system-ui, sans-serif;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s ease;
+  z-index: 2;
+}
+.figure:hover .off,
+.off:focus-visible { opacity: 1; }
+.off:hover { background: #dd5f3f; border-color: #dd5f3f; }
 .pet[data-facing="-1"] .sye-mascot { transform: scaleX(-1); }
 
 .sye-mascot { display: block; width: 100%; height: 100%; }

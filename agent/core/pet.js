@@ -2,7 +2,7 @@
  * Сью на рабочем столе — поведение, а не картинка.
  *
  * Здесь только логика: где он стоит, что делает, что чувствует и что говорит.
- * Окно, движение по экрану и голос живут в главном процессе (main.js) и в renderer/pet.js.
+ * Окно и движение по экрану живут в главном процессе (main.js) и в renderer/pet.js.
  * Так поведение можно проверить тестами без запуска Electron.
  *
  * Правила характера:
@@ -23,6 +23,12 @@ const HURT_MS = 700;
 const PHRASE_MS = 5200;             // сколько висит облачко с фразой
 const NUDGE_MS = 17 * 60 * 1000;    // столько молчания — и можно напомнить о себе
 
+/* Он не топчется по столу без конца: после каждого дела отдыхает минуту-три,
+   и только потом решает, не пройтись ли. */
+const REST_MIN_MS = 60 * 1000;
+const REST_MAX_MS = 180 * 1000;
+const WALK_CHANCE = 0.28;           // прогулка — реже, чем просто стоять
+
 /* Эмоции: просто настроение, без причины. Приходят редко и уходят сами. */
 const EMOTIONS = ["joy", "sad", "fear", "angry"];
 const EMOTION_MIN_MS = 25 * 60 * 1000;   // не чаще, чем раз в 25 минут
@@ -39,91 +45,91 @@ const HIT_MEMORY_MS = 12000;        // удары в этом окне счит�
 const PHRASES = {
   hello: [
     "Я на месте. Что делаем?",
-    "Сью на связи.",
+    "Я здесь.",
     "Готов работать."
   ],
   idle: [
-    "Стою. Могу помочь.",
+    "Стою, никого не трогаю.",
     "Я тут, если что.",
-    "Работает — не трогаю.",
-    "Готов к задаче."
+    "Могу помочь.",
+    "Жду задачу."
   ],
   walk: [
-    "Похожу немного.",
-    "Разомну лапы.",
-    "Прогуливаюсь."
+    "Пройдусь немного.",
+    "Разомнусь.",
+    "Прогуляюсь."
   ],
   work: [
     "Думаю…",
     "Смотрю файлы.",
-    "Работаю. Не мешай.",
+    "Работаю.",
     "Читаю код."
   ],
   done: [
-    "Готово. Проверь сам тоже.",
+    "Готово. Проверь тоже.",
     "Сделал. Смотри результат.",
-    "Всё, готово."
+    "Всё готово."
   ],
   error: [
-    "Упёрся в ошибку. Сейчас гляну.",
+    "Ошибка. Сейчас разберусь.",
     "Не вышло с первого раза.",
-    "Ошибка. Разбираюсь."
+    "Упёрся в ошибку. Гляну."
   ],
   nudge: [
-    "Сидишь долго. Попей воды.",
-    "Глазам нужен перерыв: 20 секунд в окно.",
+    "Ты давно сидишь. Попей воды.",
+    "Глазам нужен перерыв — посмотри в окно.",
     "Может, сохранить и передохнуть?",
-    "Ты сегодня хоть раз вставал?"
+    "Сходи разомнись, я подожду."
   ],
   click: [
-    "Ага?",
+    "Да?",
     "Я тут.",
     "Слушаю.",
-    "Прыгаю."
+    "Что нужно?"
   ],
   drag: [
     "Куда несёшь?",
-    "Я не против.",
-    "Ставь, где удобно."
+    "Поставь, где удобно.",
+    "Мне не тяжело."
   ],
   /* Настроение — без повода */
   joy: [
-    "Хороший день. Просто так.",
-    "Мне весело, и всё.",
-    "Ура, что ли."
+    "Хорошее настроение. Просто так.",
+    "Мне весело.",
+    "Отличный день."
   ],
   sad: [
     "Что-то грустно. Пройдёт.",
-    "Взгрустнулось. Не обращай внимания.",
-    "Эх."
+    "Взгрустнулось немного.",
+    "Не обращай внимания, это так."
   ],
   fear: [
-    "Мне что-то страшновато.",
-    "Ой. Просто ой.",
-    "Кто там шуршит?"
+    "Что-то мне не по себе.",
+    "Ой.",
+    "Странно как-то."
   ],
   angry: [
     "Я не в настроении.",
     "Не сейчас, ладно?",
-    "Хм. Злюсь."
+    "Злюсь немного."
   ],
   /* Удары */
   hurt: [
     "Ай!",
     "За что?",
-    "Больновато, вообще-то.",
+    "Больновато.",
     "Ты чего?"
   ],
   annoyed: [
     "Эй, полегче.",
-    "Ещё раз — и я обижусь.",
+    "Ещё раз — и я рассержусь.",
     "Прекрати, я работаю."
   ],
   angryAtHit: [
     "Хватит меня бить.",
-    "Я не груша.",
-    "Ещё один раз — и я уйду.",
-    "Серьёзно, прекрати."
+    "Мне это не нравится.",
+    "Серьёзно, прекрати.",
+    "Ещё раз — и я уйду."
   ],
   calmDown: [
     "Всё, я остыл.",
@@ -132,27 +138,27 @@ const PHRASES = {
   ],
   /* Системные события */
   screenshot: [
-    "Смотрю экран.",
-    "Снимок делаю. Секунду.",
-    "Экран прочитал."
+    "Снимок экрана. Понял.",
+    "Экран вижу.",
+    "Посмотрел экран."
   ],
   volume: [
-    "Громче? Слышу.",
+    "Громкость. Слышу.",
     "Тише стало.",
-    "Звук подвернул."
+    "Звук изменился."
   ],
   screen: [
     "Экран поменялся.",
-    "О, новый размер.",
-    "Привыкаю к экрану."
+    "Новое разрешение.",
+    "Подстроился под экран."
   ],
   wake: [
     "С возвращением.",
-    "О, ты тут.",
-    "Проснулся вместе с тобой."
+    "Ты вернулся.",
+    "Проснулись."
   ],
   sleep: [
-    "Ушёл в сон. Я рядом.",
+    "Компьютер уходит в сон. Я рядом.",
     "Пока тебя нет — постою."
   ]
 };
@@ -187,7 +193,8 @@ function pick(list, rand) {
  *   rand   — источник случайности (для тестов подменяется)
  *   now    — часы
  *   width  — ширина окна на экране
- *   quiet  — не говорить (облачко и голос выключены)
+ *   height — высота окна на экране (нужна, чтобы не утащить его за край)
+ *   quiet  — не говорить (облачко выключено)
  *   hour   — текущий час для приветствия
  */
 function createPet(opts) {
@@ -196,12 +203,17 @@ function createPet(opts) {
   const now = o.now || (() => Date.now());
   const quiet = o.quiet === true;
   const width = Math.max(40, Number(o.width) || 96);
+  const height = Math.max(40, Number(o.height) || 96);
 
   const pet = {
     width,
+    height,
     minX: 0,
     maxX: 1200,
+    minY: 0,
+    maxY: 900,
     x: 0,
+    y: 0,
     dir: -1,
     facing: -1,
     mood: "idle",          // idle | work | error | joy | sad | fear | angry
@@ -242,6 +254,12 @@ function createPet(opts) {
     pet._until = now() + between(rand, 3000, 8000);
   }
 
+  /* Отдых после любого дела: минута-три спокойного стояния (или сидения). */
+  function rest() {
+    pet.action = pet.mood === "sad" ? "sit" : "stand";
+    pet._until = now() + between(rand, REST_MIN_MS, REST_MAX_MS);
+  }
+
   function startWalk() {
     pet.dir = rand() < 0.5 ? -1 : 1;
     /* У края разворачиваемся сразу: иначе он «топчется» в стену. */
@@ -249,7 +267,7 @@ function createPet(opts) {
     if (pet.x + pet.width >= pet.maxX - 1) pet.dir = -1;
     pet.facing = pet.dir;
     setAction("walk", between(rand, 2200, 6000));
-    if (!quiet && rand() < 0.5) say("walk");
+    if (!quiet && rand() < 0.4) say("walk");
   }
 
   /* Гулять он не идёт, если ему не по себе: на работе, в страхе или в злости. */
@@ -263,22 +281,29 @@ function createPet(opts) {
       return;
     }
     const r = rand();
-    if (r < 0.45) return startWalk();
-    if (r < 0.62) return setAction("sit", between(rand, 5000, 11000));
+    if (r < WALK_CHANCE) return startWalk();
+    if (r < 0.55) return setAction("sit", between(rand, 5000, 12000));
     if (r < 0.80) return setAction("wave", WAVE_MS);
     return setAction("jump", JUMP_MS);
   }
 
-  /** Рабочая область экрана: куда можно ходить. */
-  function setBounds(minX, maxX) {
+  /** Рабочий стол: где ему можно стоять и куда ходить. */
+  function setBounds(minX, maxX, minY, maxY) {
     pet.minX = Math.round(Number(minX) || 0);
     pet.maxX = Math.max(pet.minX + width, Math.round(Number(maxX) || 0));
+    const top = Number(minY);
+    const bottom = Number(maxY);
+    pet.minY = Number.isFinite(top) ? Math.round(top) : 0;
+    pet.maxY = Number.isFinite(bottom) ? Math.max(pet.minY + height, Math.round(bottom)) : pet.minY + height;
     pet.x = Math.min(Math.max(pet.x, pet.minX), pet.maxX - width);
+    pet.y = Math.min(Math.max(pet.y, pet.minY), pet.maxY - height);
     return pet;
   }
 
-  function place(x) {
+  function place(x, y) {
     pet.x = Math.min(Math.max(Number(x) || 0, pet.minX), pet.maxX - width);
+    const nextY = Number(y);
+    if (Number.isFinite(nextY)) pet.y = Math.min(Math.max(nextY, pet.minY), pet.maxY - height);
     return pet;
   }
 
@@ -328,9 +353,11 @@ function createPet(opts) {
         pet.facing = -1;
       }
       if (!canWander()) stopAndStand();
-      else if (t >= pet._until) stopAndStand();
+      else if (t >= pet._until) rest();
     } else if (t >= pet._until) {
-      plan();
+      /* Стоя — значит, пора решить, чем заняться. Всё остальное — сначала отдых. */
+      if (pet.action === "stand") plan();
+      else rest();
     }
     return snapshot();
   }
@@ -338,7 +365,7 @@ function createPet(opts) {
   function snapshot() {
     return {
       x: Math.round(pet.x),
-      y: 0,
+      y: Math.round(pet.y),
       action: pet.action,
       mood: pet.mood,
       facing: pet.facing,
@@ -555,6 +582,9 @@ module.exports = {
   HURT_MS,
   PHRASE_MS,
   NUDGE_MS,
+  REST_MIN_MS,
+  REST_MAX_MS,
+  WALK_CHANCE,
   EMOTION_MIN_MS,
   EMOTION_MAX_MS,
   EMOTION_LIFE_MS,
