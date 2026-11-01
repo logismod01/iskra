@@ -24,9 +24,13 @@ const read = (p) => fs.readFileSync(new URL("../" + p, import.meta.url), "utf8")
 const html = read("index.html");
 const pkg = JSON.parse(read("package.json"));
 
+/* Шапка целиком: от .topbar до начала сообщений. Раньше здесь стоял
+   жёсткий отрезок в 4000 знаков — он ломался, как только меню «⋯» подросло. */
 const topbar = (() => {
   const i = html.indexOf('<div class="topbar">');
-  return html.slice(i, html.indexOf("</header>", i) > -1 ? html.indexOf("</header>", i) : i + 4000);
+  const end = html.indexOf('<div class="messages"', i);
+  assert(i > -1 && end > i, "не нашёл шапку в разметке");
+  return html.slice(i, end);
 })();
 
 console.log("round18: меньше кнопок, плотнее, полезнее");
@@ -127,7 +131,7 @@ await test("шапка стала плотнее", async () => {
 
 /* ---------- Версии ---------- */
 await test("версия сайта поднята", async () => {
-  assert(pkg.version === "1.17.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.18.0", "версия сайта: " + pkg.version);
 });
 
 await test("новый тест подключён к npm test", async () => {
