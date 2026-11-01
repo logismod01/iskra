@@ -87,7 +87,34 @@ body.dragging { cursor: grabbing; }
 .sye-mascot .sye-tuft { fill: #d97757; }
 .sye-mascot .sye-eye { fill: #241a15; }
 .sye-mascot .sye-cheek { fill: #fff; opacity: .3; }
-.sye-mascot .sye-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
+.sye-mascot .sye-mouth,
+.m-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
+.m-mouth.m-scared { fill: #241a15; stroke: none; }
+.brow { fill: none; stroke: #241a15; stroke-width: 1.8; stroke-linecap: round; }
+
+/* Сначала все лица скрыты, дальше показываем нужное настроением. */
+.m-mouth, .eye-wide, .eye-closed, .brow { display: none; }
+.pet[data-mood="idle"] .m-calm,
+.pet[data-mood="work"] .m-calm,
+.pet[data-mood="error"] .m-flat { display: block; }
+.pet[data-mood="error"] .m-calm { display: none; }
+.pet[data-mood="joy"] .m-happy { display: block; }
+.pet[data-mood="joy"] .m-calm { display: none; }
+.pet[data-mood="joy"] .eye-normal { display: none; }
+.pet[data-mood="joy"] .eye-closed { display: block; }
+.pet[data-mood="sad"] .m-sad { display: block; }
+.pet[data-mood="sad"] .m-calm { display: none; }
+.pet[data-mood="sad"] .sye-mascot { filter: saturate(.72) brightness(.94); }
+.pet[data-mood="fear"] .m-scared { display: block; }
+.pet[data-mood="fear"] .m-calm { display: none; }
+.pet[data-mood="fear"] .eye-normal { display: none; }
+.pet[data-mood="fear"] .eye-wide { display: block; }
+.pet[data-mood="fear"] .sye-mascot { filter: saturate(.8); }
+.pet[data-mood="angry"] .m-flat { display: block; }
+.pet[data-mood="angry"] .m-calm { display: none; }
+.pet[data-mood="angry"] .brow { display: block; }
+.pet[data-mood="angry"] .sye-mascot { filter: saturate(1.25) hue-rotate(-8deg); }
+.pet[data-mood="angry"] .sye-body, .pet[data-mood="angry"] .sye-tuft { fill: #dd5f3f; }
 
 .shadow {
   position: absolute;
@@ -143,6 +170,43 @@ body.dragging { cursor: grabbing; }
   100% { transform: translateY(0) scaleY(1); }
 }
 
+/* ---------- Удар ---------- */
+.pet[data-action="hurt"] .figure { animation: petHurt .34s ease-out 2; }
+.pet[data-action="tremble"] .figure { animation: petTremble .12s linear 10; }
+.pet[data-action="hurt"] .shadow { transform: scaleX(1.15); opacity: .4; }
+
+@keyframes petHurt {
+  0% { transform: translateX(0) scaleY(1); }
+  22% { transform: translateX(-4px) scaleY(.86) scaleX(1.1); }
+  55% { transform: translateX(3px) scaleY(1.03); }
+  100% { transform: translateX(0) scaleY(1); }
+}
+@keyframes petTremble {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-1.6px); }
+}
+
+/* ---------- Эмоции ---------- */
+.pet[data-mood="joy"] .figure { animation: petJoy 1.1s ease-in-out infinite; }
+.pet[data-mood="sad"] .figure { animation: petSad 2.6s ease-in-out infinite; }
+.pet[data-mood="fear"] .figure { animation: petTremble .16s linear infinite; }
+.pet[data-mood="angry"] .figure { animation: petAngry .22s ease-in-out infinite; }
+.pet[data-mood="angry"] .shadow { transform: scaleX(1.1); opacity: .42; }
+
+@keyframes petJoy {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-8px) rotate(-4deg); }
+  60% { transform: translateY(0) rotate(4deg); }
+}
+@keyframes petSad {
+  0%, 100% { transform: translateY(3px) scaleY(.97); }
+  50% { transform: translateY(5px) scaleY(.95); }
+}
+@keyframes petAngry {
+  0%, 100% { transform: translateX(0) rotate(-1deg); }
+  50% { transform: translateX(2px) rotate(1deg); }
+}
+
 /* ---------- Настроение ---------- */
 .pet[data-mood="work"] .figure { animation: petThink 1.4s ease-in-out infinite; }
 .pet[data-mood="error"] .figure { animation: petShake .16s ease-in-out 6; }
@@ -164,3 +228,14 @@ body.dragging { cursor: grabbing; }
 
 /* Скрытие персонажа без закрытия окна (например, на время скриншота). */
 body.hidden .pet { opacity: 0; }
+
+/* Облачко, когда он рассердился всерьёз */
+.bubble.angry {
+  border-color: #a8452f;
+  background: #2a1713;
+  animation: bubbleAngry .3s ease-in-out 2;
+}
+@keyframes bubbleAngry {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-3px); }
+}

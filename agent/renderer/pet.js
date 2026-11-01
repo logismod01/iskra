@@ -108,8 +108,8 @@ function endDrag(ev) {
   if (moved) {
     window.sye.petDragEnd();
   } else if (quick && still) {
-    /* Короткий щелчок без движения — он отзывается и подпрыгивает. */
-    window.sye.petPoke();
+    /* Короткий щелчок левой кнопкой — это «удар». Он терпит, злится и остывает. */
+    window.sye.petHit();
   }
   try { figureEl.releasePointerCapture(ev.pointerId); } catch (e) { /* уже отпущен */ }
 }
@@ -123,6 +123,13 @@ petEl.addEventListener("contextmenu", (ev) => {
 });
 
 petEl.addEventListener("dblclick", () => window.sye.petCall());
+
+/* Рассердился всерьёз — коротко тряхнём облачко, чтобы это было заметно. */
+window.sye.petOnAngry(() => {
+  bubbleEl.classList.remove("angry");
+  void bubbleEl.offsetWidth;
+  bubbleEl.classList.add("angry");
+});
 
 /* ---------- Сквозные клики ----------
    Окно прозрачное, и большая его часть — пустое место. Если бы оно ловило клики,

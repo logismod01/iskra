@@ -10,7 +10,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const os = require("node:os");
 const crypto = require("node:crypto");
-const { exec } = require("node:child_process");
+const { exec, spawn } = require("node:child_process");
 
 const brand = require("./core/brand.js");
 const guard = require("./core/guard.js");
@@ -65,6 +65,7 @@ const DEFAULT_SETTINGS = {
   petOn: true,
   petTalk: true,
   petVoice: true,
+  petMediaKeys: true,
   petX: 0
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS, readJson(FILES.settings, {}));
@@ -178,7 +179,9 @@ function runCommand(command, opts) {
 /* ---------- Скриншот ---------- */
 async function captureScreen() {
   /* Сью прячется на время снимка: модель не должна искать баги в агенте. */
-  return petHidden(() => captureScreenRaw());
+  const shot = await petHidden(() => captureScreenRaw());
+  petReact("screenshot");
+  return shot;
 }
 
 async function captureScreenRaw() {
@@ -415,6 +418,19 @@ function petPoke() {
   petPush();
 }
 
+/* Левая кнопка по Сью — это «удар». Он терпит, потом злится, потом остывает. */
+function petHit() {
+  ensurePetCore();
+  const before = petCore.snapshot().mood;
+  petCore.hit(Date.now());
+  const after = petCore.snapshot();
+  if (before !== "angry" && after.mood === "angry") {
+    try { if (petWin && !petWin.isDestroyed()) petWin.webContents.send("pet:angry"); } catch (e) {}
+  }
+  petPush();
+  return { ok: true, mood: after.mood, anger: after.anger };
+}
+
 function petDragTo(x) {
   const area = petArea();
   const width = petCore ? petCore.state.width : PET_MASCOT_W;
@@ -454,11 +470,105 @@ function petMenu() {
       checked: settings.petVoice !== false,
       click: () => { saveSettings({ petVoice: settings.petVoice === false }); broadcastState(); petPush(); }
     },
+    {
+      label: "Замечать клавиши громкости",
+      type: "checkbox",
+      checked: settings.petMediaKeys !== false,
+      click: () => {
+        saveSettings({ petMediaKeys: settings.petMediaKeys === false });
+        unregisterVolumeKeys();
+        if (settings.petMediaKeys !== false) registerVolumeKeys();
+        broadcastState();
+      }
+    },
     { type: "separator" },
     { label: "Открыть " + brand.name, click: () => showWindow() },
     { label: "Убрать с рабочего стола", click: () => { saveSettings({ petOn: false }); stopPet(); broadcastState(); } }
   ]);
   menu.popup({});
+}
+
+/* ---------- Клавиши громкости ----------
+   Глобальная горячая клавиша забирает нажатие себе, поэтому громкость надо
+   «переслать» обратно системе. Держим для этого один тихий PowerShell:
+   если он не поднялся — клавиши даже не регистрируем, иначе человек останется
+   без звука. Лучше не реагировать, чем сломать громкость. */
+let volumeBridge = null;
+
+function startVolumeBridge() {
+  if (process.platform !== "win32") return null;
+  if (volumeBridge) return volumeBridge;
+  try {
+    const script =
+      "$w = New-Object -ComObject WScript.Shell; " +
+      "while ($true) { $l = [Console]::In.ReadLine(); if ($l -eq $null) { break } " +
+      "if ($l -eq 'up') { $w.SendKeys([char]175) } elseif ($l -eq 'down') { $w.SendKeys([char]174) } " +
+      "elseif ($l -eq 'mute') { $w.SendKeys([char]173) } elseif ($l -eq 'quit') { break } }";
+    volumeBridge = spawn("powershell.exe", ["-NoProfile", "-NoLogo", "-NonInteractive", "-Command", script], {
+      windowsHide: true,
+      stdio: ["pipe", "ignore", "ignore"]
+    });
+    volumeBridge.on("error", () => { volumeBridge = null; });
+    volumeBridge.on("exit", () => { volumeBridge = null; });
+    if (volumeBridge.stdin) volumeBridge.stdin.on("error", () => {});
+  } catch (e) {
+    volumeBridge = null;
+  }
+  return volumeBridge;
+}
+
+function volumePassthrough(kind) {
+  try {
+    if (!volumeBridge || !volumeBridge.stdin || !volumeBridge.stdin.writable) return false;
+    volumeBridge.stdin.write(kind + "\n");
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function registerVolumeKeys() {
+  if (settings.petMediaKeys === false) return false;
+  if (process.platform !== "win32") return false;
+  if (!startVolumeBridge()) return false;
+  const pairs = [["VolumeUp", "up"], ["VolumeDown", "down"], ["VolumeMute", "mute"]];
+  let ok = true;
+  for (const [accel, kind] of pairs) {
+    try {
+      const done = globalShortcut.register(accel, () => {
+        petReact("volume");
+        if (!volumePassthrough(kind)) {
+          try { globalShortcut.unregister(accel); } catch (e) {}
+        }
+      });
+      if (!done) ok = false;
+    } catch (e) {
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+function unregisterVolumeKeys() {
+  for (const accel of ["VolumeUp", "VolumeDown", "VolumeMute"]) {
+    try { globalShortcut.unregister(accel); } catch (e) {}
+  }
+}
+
+/* Экран поменялся, компьютер уснул или заблокировался — он это замечает. */
+function wirePetSystemEvents() {
+  try {
+    screen.on("display-metrics-changed", () => petReact("screen"));
+    screen.on("display-added", () => petReact("screen"));
+    screen.on("display-removed", () => petReact("screen"));
+  } catch (e) { /* на этой системе событий экрана нет */ }
+  try {
+    const pm = require("electron").powerMonitor;
+    pm.on("lock-screen", () => petReact("sleep"));
+    pm.on("unlock-screen", () => petReact("wake"));
+    pm.on("suspend", () => petReact("sleep"));
+    pm.on("resume", () => petReact("wake"));
+  } catch (e) { /* powerMonitor есть не везде */ }
 }
 
 /* Сью не должен попадать на скриншоты, которые агент делает для модели. */
@@ -711,6 +821,10 @@ function wireIpc() {
     if ("petOn" in p) { if (next.petOn) startPet(); else stopPet(); }
     if ("petTalk" in p && petCore) { petCore.setQuiet(next.petTalk === false); petPush(); }
     if ("petVoice" in p) petPush();
+    if ("petMediaKeys" in p) {
+      unregisterVolumeKeys();
+      if (next.petMediaKeys !== false && next.petOn !== false) registerVolumeKeys();
+    }
     if (win && !win.isDestroyed()) win.webContents.send("state:changed", { license: licenseView(), settings: next, brand });
     return next;
   });
@@ -745,6 +859,7 @@ function wireIpc() {
     return { ok: true };
   });
   ipcMain.handle("pet:poke", () => { petPoke(); return { ok: true }; });
+  ipcMain.handle("pet:hit", () => petHit());
   ipcMain.handle("pet:call", () => { petCall(); return { ok: true }; });
   ipcMain.handle("pet:menu", () => { petMenu(); return { ok: true }; });
   ipcMain.handle("pet:hover", (event, inside) => {
@@ -837,6 +952,8 @@ if (!gotLock) {
 
     createTray();
     startPet();
+    registerVolumeKeys();
+    wirePetSystemEvents();
 
     try {
       globalShortcut.register("CommandOrControl+Alt+S", () => takeShot(true));
@@ -866,6 +983,7 @@ if (!gotLock) {
     globalShortcut.unregisterAll();
     if (petTimer) clearInterval(petTimer);
     petTimer = null;
+    try { if (volumeBridge && volumeBridge.stdin) volumeBridge.stdin.end("quit\n"); } catch (e) {}
   });
 }
 
