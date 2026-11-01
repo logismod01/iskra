@@ -464,7 +464,6 @@ function wireUi() {
             <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
             <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
             <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
-            <ellipse class="sye-belly" cx="32" cy="45.6" rx="9.4" ry="5.8"/>
             <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
             <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
             <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>

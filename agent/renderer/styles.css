@@ -336,13 +336,13 @@ code { font-family: "JetBrains Mono", "Consolas", monospace; font-size: 12px; }
 /* ============ Маскот Сью ============ */
 .sye-mascot { display: block; width: 100%; height: 100%; }
 .sye-mascot .sye-body { fill: var(--accent); }
-.sye-mascot .sye-belly { fill: #3a2418; opacity: .22; }
 .sye-mascot .sye-tuft { fill: var(--accent); }
 .sye-mascot .sye-eye { fill: #24150f; }
 .sye-mascot .sye-cheek { fill: #fff; opacity: .32; }
 .sye-mascot .sye-mouth { fill: none; stroke: #24150f; stroke-width: 2.2; stroke-linecap: round; }
 .sye-mascot .sye-shadow { fill: #000; opacity: .2; }
 .sye-wrap { overflow: hidden; }
+.brand-mark.sye-wrap { padding: 5px; }
 .sye-mascot-pic .sye-wrap { width: 46px; height: 46px; }
 .gate-mark.sye-mascot-pic .sye-wrap { width: 56px; height: 56px; }
 .hello-mark.sye-mascot-pic .sye-wrap {
