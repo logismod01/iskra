@@ -216,6 +216,10 @@ textarea { resize: none; }
 }
 .more-item:hover { background: var(--bg-soft-2); color: var(--text); }
 .more-item .ic { flex: 0 0 auto; opacity: .9; }
+.more-item span { flex: 1; }
+.more-item .more-tag { flex: 0 0 auto; font-size: 11px; color: var(--text-dim); font-family: var(--mono); }
+.more-item.on { color: var(--accent); }
+.more-menu .more-sep { height: 1px; background: var(--line); margin: 4px 6px; }
 
 .model-chip {
   padding: 6px 12px;
@@ -1901,6 +1905,18 @@ html.compact .composer { border-radius: 14px; }
 html.compact .set-card { padding: 12px; }
 html.compact .msg .actions { margin-top: 6px; }
 
+/* Крупный текст: экран тот же, буквы крупнее. Включается из меню «⋯».
+   zoom есть во всех современных браузерах; если его вдруг нет —
+   увеличиваем сам текст ответов и поля ввода, чтобы кнопка не была пустой. */
+html.big-text { zoom: 1.16; }
+@supports not (zoom: 1) {
+  html.big-text .msg .content { font-size: 18px; line-height: 1.65; }
+  html.big-text .msg .content p { font-size: 18px; }
+  html.big-text #input { font-size: 18px; }
+  html.big-text .kb-card b { font-size: 15.5px; }
+  html.big-text .kb-card p { font-size: 14.5px; }
+}
+
 /* ============ Анимации: выключение ============ */
 html.no-anim *, html.no-anim *::before, html.no-anim *::after {
   animation: none !important;
@@ -2027,21 +2043,57 @@ html.no-anim .theme-flash { display: none; }
           </svg>
         </button>
         <div class="more-menu" id="moreMenu" hidden>
-          <button type="button" class="more-item" id="kbTop">
+          <button type="button" class="more-item" id="kbTop" data-more="knowledge">
             <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
             </svg>
-            <span>База знаний</span>
+            <span>Знания</span>
+            <i class="more-tag" id="moreKbCount"></i>
           </button>
-          <button type="button" class="more-item" id="memoryTop">
+          <button type="button" class="more-item" id="kbDocsTop" data-more="docs">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="13" y2="17"/>
+            </svg>
+            <span>Мои документы</span>
+            <i class="more-tag"></i>
+          </button>
+          <button type="button" class="more-item" id="memoryTop" data-more="memory">
             <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2z"/>
               <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/>
             </svg>
             <span>Память</span>
           </button>
-          <button type="button" class="more-item" id="themeBtn">
+          <div class="more-sep"></div>
+          <button type="button" class="more-item" id="bigTextTop" data-more="bigtext">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 7 4 4 20 4 20 7"/>
+              <line x1="12" y1="4" x2="12" y2="20"/>
+              <polyline points="9 20 15 20"/>
+            </svg>
+            <span>Крупный текст</span>
+            <i class="more-tag" id="moreBigTag"></i>
+          </button>
+          <button type="button" class="more-item" id="backupTop" data-more="backup">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Скачать копию</span>
+          </button>
+          <button type="button" class="more-item" id="freshTop" data-more="fresh">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            <span>Обновить версию</span>
+          </button>
+          <button type="button" class="more-item" id="themeBtn" data-more="theme">
             <svg class="ic fill" viewBox="0 0 24 24" width="17" height="17">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
@@ -8039,6 +8091,8 @@ let liveStream = null;
      получаем плотную вёрстку, а не раздутую. Переключатель в ⚙ → «Вид». */
   if (typeof settings.compact !== "boolean") settings.compact = true;
   if (typeof settings.animations !== "boolean") settings.animations = true;
+  /* Крупный текст — из меню «⋯». Старые настройки этого поля не знали. */
+  if (typeof settings.bigText !== "boolean") settings.bigText = false;
   saveSettings();
 })();
 
@@ -8071,6 +8125,7 @@ function loadSettings() {
     theme: "claude",
     compact: true,
     animations: true,
+    bigText: false,
     memoryOn: true,
     memory: [],
     knowledge: [],
@@ -9365,11 +9420,16 @@ function addKnowledge(title, text) {
   toast(`Добавлено: ${title}`, "ok");
 }
 function updateKnowledgeChip() {
-  const b = $("#kbTop");
-  if (!b) return;
   const n = (settings.knowledge || []).length;
-  b.classList.toggle("on", !!settings.knowledgeOn && n > 0);
-  b.title = n ? `База знаний: ${n} док.` : "База знаний пуста";
+  // «Мои документы» в меню «⋯»: видно, сколько их, и включены ли они в ответы
+  const docs = $("#kbDocsTop");
+  if (docs) {
+    docs.classList.toggle("on", !!settings.knowledgeOn && n > 0);
+    docs.title = n ? `Мои документы: ${n}` : "Своих документов пока нет";
+    const tag = docs.querySelector(".more-tag");
+    if (tag) tag.textContent = n ? String(n) : "";
+  }
+  try { updateMoreCounts(); } catch (e) {}
 }
 function renderKnowledgePanelSafe() {
   try { renderKnowledgePanel(); } catch (e) { /* панель могла не отрисоваться — не критично */ }
@@ -9384,6 +9444,110 @@ function openKnowledge() {
   $("#kbModal").classList.add("open");
 }
 function closeKnowledge() { $("#kbModal").classList.remove("open"); }
+
+/* ---------- Знания: одно окно, где видно всё ----------
+   Раньше пункт «База знаний» в меню «⋯» открывал пустое окно «Мои документы»:
+   человек нажимал и не видел ничего. Теперь «Знания» открывает браузер базы —
+   встроенные темы, общая база (то, что публикуется для всех) и свои темы;
+   «Мои документы» вынесены отдельным пунктом. */
+function openKnow() {
+  const m = $("#knowModal");
+  if (!m) return;
+  m.classList.add("open");
+  // окно обязано открыться, даже если какая-то часть панели не отрисовалась
+  try { renderKnowledgePanel(); } catch (e) {
+    try { renderKnowledgePanelSafe(); } catch (e2) {}
+    const box = $("#knowBody");
+    if (box && !box.children.length) {
+      box.innerHTML = '<div class="acct-dim">Не получилось показать темы целиком. Попробуй ещё раз или нажми «Обновить версию» в меню «⋯».</div>';
+    }
+  }
+  try { updateMoreCounts(); } catch (e) {}
+  setTimeout(() => { const s = $("#kbSearchInput"); if (s) { s.focus(); } }, 80);
+}
+function closeKnow() { const m = $("#knowModal"); if (m) m.classList.remove("open"); }
+
+/* Счётчики в меню «⋯»: сколько всего тем и включён ли крупный текст */
+function updateMoreCounts() {
+  const tag = $("#moreKbCount");
+  if (tag) {
+    let n = 0;
+    try { n = kbBuiltinPack().length + sharedKbList().length + learnedList().length; } catch (e) { n = 0; }
+    tag.textContent = n ? String(n) : "";
+    tag.title = n ? "тем в базе" : "";
+  }
+  const bt = $("#moreBigTag");
+  if (bt) bt.textContent = settings.bigText ? "вкл" : "";
+  const bb = $("#bigTextTop");
+  if (bb) bb.classList.toggle("on", !!settings.bigText);
+}
+
+/* Крупный текст: та же страница, буквы больше — глазам легче */
+function applyBigText(on) {
+  const html = document.documentElement;
+  if (!html) return;
+  html.classList.toggle("big-text", !!on);
+}
+function toggleBigText() {
+  settings.bigText = !settings.bigText;
+  saveSettings();
+  applyBigText(settings.bigText);
+  updateMoreCounts();
+  toast(settings.bigText ? "Крупный текст включён" : "Обычный размер текста", "ok");
+}
+
+/* Скачать копию: чаты, знания, настройки одним файлом на компьютер */
+function downloadBackup() {
+  try {
+    conExport();
+    toast("Копия скачана: чаты, знания, настройки", "ok");
+  } catch (e) {
+    toast("Не получилось скачать копию", "err");
+  }
+}
+
+/* Обновить версию: сбрасываем сохранённую страницу и открываем свежую.
+   Нужно, когда сайт уже обновился, а браузер показывает старое. */
+async function freshVersion() {
+  toast("Обновляю до свежей версии…");
+  try {
+    if (typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch (e) {}
+  try {
+    if (typeof caches !== "undefined" && caches.keys) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+  } catch (e) {}
+  try { location.reload(); } catch (e) {}
+}
+
+/* Все пункты меню «⋯» в одном месте: даже если что-то сломается выше,
+   клик всё равно доходит — обработчик висит на документе. */
+function runMoreAction(act, ev) {
+  try {
+    if (act === "knowledge") openKnow();
+    else if (act === "docs") openKnowledge();
+    else if (act === "memory") openMemory();
+    else if (act === "bigtext") toggleBigText();
+    else if (act === "backup") downloadBackup();
+    else if (act === "fresh") freshVersion();
+    else if (act === "theme") cycleTheme(ev);
+  } catch (e) {
+    toast("Не получилось: " + ((e && e.message) || e), "err");
+  }
+}
+function cycleTheme(ev) {
+  const i = THEME_ORDER.indexOf(settings.theme);
+  const next = THEME_ORDER[(i + 1) % THEME_ORDER.length];
+  settings.theme = next;
+  saveSettings();
+  applyTheme(next, ev);
+  toast(`Тема: ${THEMES[next].name}`, "ok");
+}
 
 /* ---------- 3. Калькулятор (точные вычисления) ---------- */
 function safeCalc(expr) {
@@ -12436,7 +12600,7 @@ function renderProfile() {
       <button data-pm="logout">${ic("logout", 16)} Выйти</button>`;
     menu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
       menu.classList.remove("open");
-      if (b.dataset.pm === "knowledge") { $("#knowModal").classList.add("open"); renderKnowledgePanel(); }
+      if (b.dataset.pm === "knowledge") { openKnow(); }
       if (b.dataset.pm === "pro") openAccessPanel();
       if (b.dataset.pm === "account") openAccountPanel();
       if (b.dataset.pm === "settings") openSettings();
@@ -12457,7 +12621,7 @@ function renderProfile() {
       menu.classList.remove("open");
       if (b.dataset.pm === "restore") openRestore();
       else if (b.dataset.pm === "pro") openAccessPanel();
-      else if (b.dataset.pm === "knowledge") { $("#knowModal").classList.add("open"); renderKnowledgePanel(); }
+      else if (b.dataset.pm === "knowledge") { openKnow(); }
       else openAuth();
     }));
   }
@@ -13979,7 +14143,7 @@ const KB_CATS = [
   ["sport", "Спорт"], ["cook", "Кулинария"], ["nature", "Природа"],
   ["eco", "Экология"], ["travel", "Путешествия"], ["tech", "Техника"],
   ["code", "Код и баги"], ["lang", "Языки мира"],
-  ["mine", "Мои темы"]
+  ["shared", "Общая база"], ["mine", "Мои темы"]
 ];
 let kbView = { cat: "all", q: "", open: "" };
 
@@ -14007,6 +14171,17 @@ function kbLearnedItems(query, cat) {
     .map(x => ({ id: x.id, title: x.topic, tags: "", text: x.text, learned: true, source: x.source || "", cat: "mine" }));
 }
 
+/* Общая база — темы, которые владелец публикует для всех.
+   Раньше их можно было только спросить, а полистать — нет: в окне знаний
+   их не было вовсе. Теперь это такая же папка, как остальные. */
+function kbSharedItems(query, cat) {
+  if (cat !== "all" && cat !== "shared") return [];
+  const q = kbNorm(query).trim();
+  return sharedKbList()
+    .filter(x => !q || kbNorm((x.topic || "") + " " + (x.tags || "") + " " + (x.text || "")).includes(q))
+    .map((x, i) => ({ id: "s-" + i, title: x.topic, tags: x.tags || "", text: x.text || "", shared: true, learned: false, cat: "shared" }));
+}
+
 function kbBrowse(query, cat, limit = 20) {
   const items = kbBuiltinPack();
   const q = kbNorm(query).trim();
@@ -14015,13 +14190,14 @@ function kbBrowse(query, cat, limit = 20) {
     if (!q) return true;
     return kbNorm(it.title + " " + it.tags + " " + it.text).includes(q);
   }).map(it => ({ ...it, learned: false, cat: kbCategoryOf(it.id) }));
-  // свои темы всегда сверху — они ближе пользователю
-  return kbLearnedItems(query, cat).concat(picked).slice(0, limit);
+  // свои темы и общая база — сверху: это то, что человек сам собирал
+  return kbLearnedItems(query, cat).concat(kbSharedItems(query, cat), picked).slice(0, limit);
 }
 function kbCountByCat(cat) {
   const built = kbBuiltinPack();
-  if (cat === "all") return built.length + learnedList().length;
+  if (cat === "all") return built.length + learnedList().length + sharedKbList().length;
   if (cat === "mine") return learnedList().length;
+  if (cat === "shared") return sharedKbList().length;
   return built.filter(it => kbCategoryOf(it.id) === cat).length;
 }
 
@@ -14037,11 +14213,11 @@ function renderKbCards() {
   }
   box.innerHTML = found.map(it => `
     <div class="kb-card ${kbView.open === it.id ? "open" : ""}" data-kb="${esc(it.id)}">
-      <span class="kb-cat-tag">${it.learned ? "моя тема" : esc(kbCategoryName(it.cat))}</span>
+      <span class="kb-cat-tag">${it.learned ? "моя тема" : it.shared ? "общая база" : esc(kbCategoryName(it.cat))}</span>
       <b>${esc(it.title)}</b>
       <p>${esc(it.text)}</p>
       <div class="kb-acts">
-        <button data-ask="${esc(it.learned ? it.title : it.id)}" data-learned="${it.learned ? "1" : ""}">${ic("chat", 14)} Спросить Искру</button>
+        <button data-ask="${esc(it.learned ? it.title : it.id)}" data-learned="${it.learned ? "1" : ""}" data-shared="${it.shared ? "1" : ""}">${ic("chat", 14)} Спросить Искру</button>
         ${it.learned
           ? `<button data-forget="${esc(it.id)}">${ic("trash", 14)} Забыть</button>`
           : `<button data-learn="${esc(it.title)}">${ic("book", 14)} Выучить глубже</button>`}
@@ -14064,7 +14240,15 @@ function renderKbCards() {
   });
   box.querySelectorAll("[data-ask]").forEach(b => b.onclick = () => {
     const isLearned = b.dataset.learned === "1";
-    const it = isLearned ? { title: b.dataset.ask } : kbBuiltinPack().find(x => x.id === b.dataset.ask);
+    const isShared = b.dataset.shared === "1";
+    let it = null;
+    if (isShared) {
+      const idx = Number(String(b.dataset.ask).slice(2));
+      const s = sharedKbList()[idx];
+      it = s ? { title: s.topic } : null;
+    } else {
+      it = isLearned ? { title: b.dataset.ask } : kbBuiltinPack().find(x => x.id === b.dataset.ask);
+    }
     if (!it) return;
     $("#knowModal").classList.remove("open");
     const input = $("#input");
@@ -14137,8 +14321,8 @@ function renderKnowledgePanel() {
         Читаю только открытые страницы: 18+, оружие, наркотики и чужие персональные данные не учу. Ссылки из локальной сети не открываю.</div>
     </div>
     <div class="acct-sec">
-      <div class="acct-h">Встроенная база знаний (${kbBuiltinPack().length} тем)</div>
-      <div class="acct-note" style="margin-bottom:10px">Готовые конспекты, по которым Искра отвечает без интернета. Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже.</div>
+      <div class="acct-h">База знаний (${kbBuiltinPack().length + sharedKbList().length} тем)</div>
+      <div class="acct-note" style="margin-bottom:10px">Готовые конспекты (${kbBuiltinPack().length}) и общая база, которую владелец публикует для всех (${sharedKbList().length}). Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже.</div>
       <div class="auth-field">
         <input id="kbSearchInput" placeholder="Поиск: пифагор, моль, стресс…" autocomplete="off">
       </div>
@@ -14183,13 +14367,24 @@ function renderKnowledgePanel() {
         <button class="auth-btn ghost" id="sharedRefresh" type="button">Обновить базу</button>
       </div>
       <div class="learn-status" id="sharedStatus"></div>
-      ${shared.length ? shared.map(x => `<div class="acct-dev">
-        <div><b>${esc(x.topic)}</b><div class="acct-dim">${esc(String(x.updated || "").slice(0, 10))} · ${x.text.length} символов</div></div>
+      ${shared.length ? shared.slice(-30).reverse().map(x => `<div class="acct-dev">
+        <div><b>${esc(x.topic)}</b><div class="acct-dim">${esc(String(x.updated || "").slice(0, 10))} · ${String(x.text || "").length} символов</div></div>
         <button data-unpublish="${esc(x.topic)}" title="Убрать из общей базы">Снять</button>
-      </div>`).join("") : "<div class='acct-dim'>Пока пусто. Выучи тему выше и нажми «Опубликовать» — её увидят все.</div>"}
+      </div>`).join("") + (shared.length > 30
+        ? `<div class="acct-dim">Показаны 30 последних из ${shared.length}. Все темы — в папке «Общая база» выше, там есть поиск.</div>`
+        : "") : "<div class='acct-dim'>Пока пусто. Выучи тему выше и нажми «Опубликовать» — её увидят все.</div>"}
+    </div>
+    <div class="acct-sec">
+      <div class="acct-h">Мои документы (${(settings.knowledge || []).length})</div>
+      <div class="acct-note">Свои конспекты, загруженные с компьютера: отдельное окно, где их можно добавить, включить и удалить. Это не темы базы, а документы, по которым Искра ищет ответ.</div>
+      <div class="pay-row" style="margin-top:10px">
+        <button class="auth-btn ghost" id="kbDocsOpen" type="button">Открыть мои документы</button>
+      </div>
     </div>`;
   // поиск и папки по встроенной базе
   renderKbCards();
+  const docsBtn = box.querySelector("#kbDocsOpen");
+  if (docsBtn) docsBtn.onclick = () => { closeKnow(); openKnowledge(); };
   const chkGo = box.querySelector("#kbCheckGo");
   const chkIn = box.querySelector("#kbCheckInput");
   if (chkGo && chkIn) {
@@ -15246,14 +15441,6 @@ function wire() {
   });
 
   // Шапка
-  $("#themeBtn").addEventListener("click", (ev) => {
-    const i = THEME_ORDER.indexOf(settings.theme);
-    const next = THEME_ORDER[(i + 1) % THEME_ORDER.length];
-    settings.theme = next;
-    saveSettings();
-    applyTheme(next, ev);
-    toast(`Тема: ${THEMES[next].name}`, "ok");
-  });
   // Быстрые действия на стартовом экране
   $$("#welcomeActions .wa-card").forEach(b => b.addEventListener("click", () => {
     const prompt = b.dataset.wa || "";
@@ -15263,28 +15450,41 @@ function wire() {
     input.focus();
     input.setSelectionRange(prompt.length, prompt.length);
   }));
-  $("#memoryTop").addEventListener("click", openMemory);
   $("#settingsIcon").addEventListener("click", openSettings);
 
-  /* Меню «Ещё»: база знаний, память и тема живут в одном месте,
-     чтобы в шапке осталось две кнопки вместо четырёх. */
+  /* Меню «⋯»: знания, документы, память, крупный текст, копия, обновление, тема.
+     В шапке по-прежнему две кнопки. Клики ловит один обработчик на документе —
+     так пункт срабатывает, даже если выше по коду что-то не подвязалось. */
   const moreBtn = $("#moreBtn"), moreMenu = $("#moreMenu");
+  function closeMoreMenu() {
+    if (moreMenu) moreMenu.hidden = true;
+    if (moreBtn) moreBtn.setAttribute("aria-expanded", "false");
+  }
+  window.closeMoreMenu = closeMoreMenu;
   if (moreBtn && moreMenu) {
-    const closeMore = () => { moreMenu.hidden = true; moreBtn.setAttribute("aria-expanded", "false"); };
     moreBtn.addEventListener("click", (ev) => {
       ev.stopPropagation();
       const willOpen = moreMenu.hidden;
       moreMenu.hidden = !willOpen;
       moreBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      if (willOpen) { try { updateMoreCounts(); } catch (e) {} }
     });
-    document.addEventListener("click", (ev) => {
-      if (moreMenu.hidden) return;
-      if (moreMenu.contains(ev.target) || moreBtn.contains(ev.target)) return;
-      closeMore();
-    });
-    moreMenu.querySelectorAll(".more-item").forEach(b => b.addEventListener("click", closeMore));
-    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeMore(); });
   }
+  document.addEventListener("click", (ev) => {
+    if (moreMenu && !moreMenu.hidden && moreBtn && !moreMenu.contains(ev.target) && !moreBtn.contains(ev.target)) closeMoreMenu();
+    const item = ev.target && ev.target.closest ? ev.target.closest("#moreMenu [data-more]") : null;
+    if (!item) return;
+    closeMoreMenu();
+    runMoreAction(item.dataset.more, ev);
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") closeMoreMenu();
+    /* Ctrl+K — сразу знания, руки на клавиатуре */
+    if ((ev.ctrlKey || ev.metaKey) && String(ev.key).toLowerCase() === "k") {
+      ev.preventDefault();
+      openKnow();
+    }
+  });
 
   // Модалка настроек: вкладки, ключ, проверка
   $$("#setTabs button").forEach(b => b.addEventListener("click", () => setSettingsTab(b.dataset.tab)));
@@ -15313,8 +15513,7 @@ function wire() {
   $("#skillsModal") && $("#skillsModal").addEventListener("click", (e) => { if (e.target.id === "skillsModal") closeSkills(); });
   $("#skillSearch") && $("#skillSearch").addEventListener("input", (e) => { skillQuery = e.target.value; renderSkills(); });
 
-  // База знаний
-  $("#kbTop") && $("#kbTop").addEventListener("click", openKnowledge);
+  // Мои документы (пункт меню «⋯» открывает их через runMoreAction)
   $("#kbClose") && $("#kbClose").addEventListener("click", closeKnowledge);
   $("#kbModal") && $("#kbModal").addEventListener("click", (e) => { if (e.target.id === "kbModal") closeKnowledge(); });
   $("#kbAdd") && $("#kbAdd").addEventListener("click", () => {
@@ -15423,7 +15622,7 @@ function wire() {
   // Lightbox
   $("#lbClose").addEventListener("click", closeLightbox);
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox") closeLightbox(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeSettings(); closeMemory(); closeRules(); closeAuth(); const om=$("#onboardModal"); if(om) om.classList.remove("open"); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeKnow(); closeSettings(); closeMemory(); closeRules(); closeAuth(); const om=$("#onboardModal"); if(om) om.classList.remove("open"); } });
 
   // Режимы работы
   renderModeCards();
@@ -15449,6 +15648,8 @@ function wire() {
   // Тема и плотность
   applyTheme(settings.theme);
   applyLook();
+  applyBigText(settings.bigText);
+  try { updateKnowledgeChip(); } catch (e) {}
   $("#webBtn").classList.toggle("on", !!settings.webSearch);
 
   // Версия в шапке
@@ -15733,8 +15934,8 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
 <div id="knowModal" class="modal-bg">
-  <div class="modal" style="max-width:540px">
-    <div class="modal-head"><h3>Мои знания</h3><button class="icon-btn" id="knowClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="modal" style="max-width:640px">
+    <div class="modal-head"><h3>Знания</h3><button class="icon-btn" id="knowClose" title="Закрыть (Esc)" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
     <div class="modal-body" id="knowBody"></div>
   </div>
 </div>
