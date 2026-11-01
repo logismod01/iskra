@@ -189,7 +189,7 @@ test("окно Сью двигается по таймеру и не дёрга�
 });
 
 test("на скриншот для модели Сью не попадает", () => {
-  assert.match(mainJs, /async function captureScreen\(\) \{\s*\/\*[^]*?\*\/\s*return petHidden/);
+  assert.match(mainJs, /async function captureScreen\(\) \{[^]*?const shot = await petHidden\(\(\) => captureScreenRaw\(\)\)/);
   assert.match(mainJs, /try \{ petWin\.hide\(\); \}/);
 });
 
@@ -197,6 +197,106 @@ test("задача управляет настроением Сью", () => {
   assert.match(mainJs, /petReact\("start"\)/);
   assert.match(mainJs, /petReact\(result && result\.ok \? "done" : "error"\)/);
   assert.match(mainJs, /petReact\("error"\)/);
+});
+
+test("удары: терпит, сердится и остывает сам", () => {
+  const { pet } = makePet();
+  const first = pet.hit(1_000_000);
+  assert.equal(pet.state.mood, "idle", "после одного удара сразу злиться рано");
+  assert.ok(first.length > 0 && first !== "", "на удар нет фразы");
+
+  pet.hit(1_000_200);
+  pet.hit(1_000_400);
+  assert.equal(pet.state.mood, "angry", "после трёх ударов подряд не рассердился");
+  assert.ok(pet.state.anger >= petModule.ANGRY_AT, "злость не накопилась");
+
+  /* Остывает минуты, а не навсегда. */
+  let clock = 1_000_400;
+  for (let i = 0; i < 200; i++) { clock += 200; pet.tick(200, clock); }
+  assert.notEqual(pet.state.mood, "angry", "злость не прошла за 40 секунд");
+  assert.equal(pet.state.anger < petModule.ANGRY_AT, true, "злость не упала");
+});
+
+test("погладили — злость падает, а не растёт", () => {
+  const { pet } = makePet();
+  pet.hit(1_000_000);
+  const before = pet.state.anger;
+  pet.poke();
+  assert.ok(pet.state.anger < before, "ласка не успокоила");
+});
+
+test("эмоции приходят редко: не чаще, чем раз в 25 минут", () => {
+  const { pet } = makePet();
+  let clock = 1_000_000;
+  const seen = [];
+  for (let i = 0; i < 6000; i++) {
+    clock += 1000;
+    pet.tick(1000, clock);
+    const s = pet.snapshot();
+    if (s.emotion && seen[seen.length - 1] !== s.emotion) seen.push(s.emotion);
+  }
+  /* 6000 секунд = 100 минут: эмоций должно быть 1–4, а не 50. */
+  assert.ok(seen.length >= 1, "за 100 минут ни одной эмоции");
+  assert.ok(seen.length <= 6, "эмоции сыплются слишком часто: " + seen.length);
+});
+
+test("эмоция гаснет сама и не залипает", () => {
+  const pet = petModule.createPet({ rand: () => 0, now: () => 0, width: 96 });
+  pet.setBounds(0, 1920);
+  pet.place(400);
+  let clock = petModule.EMOTION_MIN_MS + 10;
+  pet.tick(40, clock);
+  const moodDuringEmotion = pet.snapshot().mood;
+  assert.ok(petModule.EMOTIONS.includes(moodDuringEmotion), "эмоция не включилась: " + moodDuringEmotion);
+  clock += petModule.EMOTION_LIFE_MS + 500;
+  pet.tick(40, clock);
+  assert.equal(pet.snapshot().mood, "idle", "эмоция не погасла вовремя");
+});
+
+test("все четыре эмоции есть и у каждой своя фраза", () => {
+  assert.deepEqual(petModule.EMOTIONS.slice().sort(), ["angry", "fear", "joy", "sad"]);
+  for (const mood of petModule.EMOTIONS) {
+    assert.ok(petModule.PHRASES[mood].length > 0, "нет фразы для эмоции " + mood);
+  }
+});
+
+test("на работе эмоции не мешают", () => {
+  const { pet } = makePet();
+  pet.react("start");
+  let clock = petModule.EMOTION_MIN_MS + 10;
+  pet.tick(40, clock);
+  pet.react("start");
+  assert.equal(pet.state.mood, "work");
+});
+
+test("реагирует на скриншот, громкость, экран и пробуждение", () => {
+  const { pet } = makePet();
+  for (const kind of ["screenshot", "volume", "screen", "wake"]) {
+    const phrase = pet.react(kind);
+    assert.ok(phrase && phrase.length > 0, "нет фразы на событие " + kind);
+  }
+  assert.ok(pet.react("sleep").length > 0, "нет фразы на сон");
+});
+
+test("в главном процессе есть события системы и защита клавиш громкости", () => {
+  assert.match(mainJs, /display-metrics-changed/);
+  assert.match(mainJs, /powerMonitor/);
+  assert.match(mainJs, /lock-screen/);
+  assert.match(mainJs, /"VolumeUp", "up"/);
+  assert.match(mainJs, /if \(!startVolumeBridge\(\)\) return false;/, "регистрируем клавиши без пересылки — можно остаться без звука");
+  assert.match(mainJs, /petReact\("screenshot"\)/);
+  assert.match(mainJs, /ipcMain\.handle\("pet:hit"/);
+});
+
+test("эмоции нарисованы: лица, анимации и злость", () => {
+  for (const mood of ["joy", "sad", "fear", "angry"]) {
+    assert.ok(petCss.includes('data-mood="' + mood + '"'), "нет стиля для эмоции " + mood);
+  }
+  assert.match(petCss, /data-action="hurt"/);
+  assert.match(petHtml, /m-sad/);
+  assert.match(petHtml, /m-scared/);
+  assert.match(petHtml, /brow/);
+  assert.match(petJs, /petHit\(\)/, "щелчок не отправляет удар");
 });
 
 test("прозрачные поля окна не ловят клики по чужим программам", () => {
@@ -217,7 +317,7 @@ test("мост отдаёт окну Сью только нужное", () => {
   for (const name of ["petState", "petDragStart", "petDragMove", "petDragEnd", "petPoke", "petCall", "petMenu", "petOnState"]) {
     assert.match(preload, new RegExp("\\b" + name + ":"), "в preload нет " + name);
   }
-  for (const name of ["petState", "petDragStart", "petDragMove", "petDragEnd", "petPoke", "petCall", "petMenu"]) {
+  for (const name of ["petState", "petDragStart", "petDragMove", "petDragEnd", "petHit", "petCall", "petMenu"]) {
     assert.ok(petJs.includes("window.sye." + name), "окно Сью не зовёт " + name);
   }
 });

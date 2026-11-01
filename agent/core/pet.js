@@ -1,15 +1,16 @@
 /**
  * Сью на рабочем столе — поведение, а не картинка.
  *
- * Здесь только логика: где он стоит, что делает, что говорит. Окно, движение
- * по экрану и голос живут в главном процессе (main.js) и в renderer/pet.js.
+ * Здесь только логика: где он стоит, что делает, что чувствует и что говорит.
+ * Окно, движение по экрану и голос живут в главном процессе (main.js) и в renderer/pet.js.
  * Так поведение можно проверить тестами без запуска Electron.
  *
  * Правила характера:
  *   - Сью мужского рода: «готов», «посмотрел», «упёрся».
  *   - Фразы короткие: их читают краем глаза, а не вчитываются.
  *   - Никакой навязчивости: молчит, пока его не тронули, и напоминает о себе редко.
- *   - Ничего не обещает за человека: «сделал», а не «сейчас всё будет идеально».
+ *   - Эмоции (радость, грусть, страх, злость) — просто настроение, они ничего не значат.
+ *   - Бить можно, но он это запоминает: несколько ударов подряд — и он сердится ненадолго.
  */
 
 "use strict";
@@ -18,8 +19,22 @@ const TICK_MS = 40;                 // как часто двигаем окно
 const WALK_SPEED = 26;              // px/сек — он топает, а не бегает
 const JUMP_MS = 620;
 const WAVE_MS = 1500;
+const HURT_MS = 700;
 const PHRASE_MS = 5200;             // сколько висит облачко с фразой
 const NUDGE_MS = 17 * 60 * 1000;    // столько молчания — и можно напомнить о себе
+
+/* Эмоции: просто настроение, без причины. Приходят редко и уходят сами. */
+const EMOTIONS = ["joy", "sad", "fear", "angry"];
+const EMOTION_MIN_MS = 25 * 60 * 1000;   // не чаще, чем раз в 25 минут
+const EMOTION_MAX_MS = 55 * 60 * 1000;
+const EMOTION_LIFE_MS = 45 * 1000;       // столько эмоция держится, потом гаснет
+
+/* Удары. Каждый удар — плюс к раздражению, раздражение остывает само. */
+const HIT_ANGER = 0.34;             // сколько добавляет один удар
+const ANGER_DECAY_PER_S = 0.055;    // как быстро остывает
+const ANGRY_AT = 0.75;              // с этого порога он по-настоящему сердится
+const ANGRY_MS = 15000;             // и злится недолго
+const HIT_MEMORY_MS = 12000;        // удары в этом окне считаются «подряд»
 
 const PHRASES = {
   hello: [
@@ -70,6 +85,75 @@ const PHRASES = {
     "Куда несёшь?",
     "Я не против.",
     "Ставь, где удобно."
+  ],
+  /* Настроение — без повода */
+  joy: [
+    "Хороший день. Просто так.",
+    "Мне весело, и всё.",
+    "Ура, что ли."
+  ],
+  sad: [
+    "Что-то грустно. Пройдёт.",
+    "Взгрустнулось. Не обращай внимания.",
+    "Эх."
+  ],
+  fear: [
+    "Мне что-то страшновато.",
+    "Ой. Просто ой.",
+    "Кто там шуршит?"
+  ],
+  angry: [
+    "Я не в настроении.",
+    "Не сейчас, ладно?",
+    "Хм. Злюсь."
+  ],
+  /* Удары */
+  hurt: [
+    "Ай!",
+    "За что?",
+    "Больновато, вообще-то.",
+    "Ты чего?"
+  ],
+  annoyed: [
+    "Эй, полегче.",
+    "Ещё раз — и я обижусь.",
+    "Прекрати, я работаю."
+  ],
+  angryAtHit: [
+    "Хватит меня бить.",
+    "Я не груша.",
+    "Ещё один раз — и я уйду.",
+    "Серьёзно, прекрати."
+  ],
+  calmDown: [
+    "Всё, я остыл.",
+    "Ладно, мир.",
+    "Остываю. Больше не бей."
+  ],
+  /* Системные события */
+  screenshot: [
+    "Смотрю экран.",
+    "Снимок делаю. Секунду.",
+    "Экран прочитал."
+  ],
+  volume: [
+    "Громче? Слышу.",
+    "Тише стало.",
+    "Звук подвернул."
+  ],
+  screen: [
+    "Экран поменялся.",
+    "О, новый размер.",
+    "Привыкаю к экрану."
+  ],
+  wake: [
+    "С возвращением.",
+    "О, ты тут.",
+    "Проснулся вместе с тобой."
+  ],
+  sleep: [
+    "Ушёл в сон. Я рядом.",
+    "Пока тебя нет — постою."
   ]
 };
 
@@ -120,13 +204,19 @@ function createPet(opts) {
     x: 0,
     dir: -1,
     facing: -1,
-    mood: "idle",          // idle | work | error
-    action: "stand",       // stand | walk | jump | wave | sit
+    mood: "idle",          // idle | work | error | joy | sad | fear | angry
+    action: "stand",       // stand | walk | jump | wave | sit | hurt | tremble
     phrase: "",
     phraseUntil: 0,
     quiet,
+    anger: 0,              // 0..1 — сколько он уже натерпелся
+    hits: 0,               // удары в текущем окне
+    emotion: "",           // текущая случайная эмоция
+    emotionUntil: 0,
+    nextEmotionAt: now() + EMOTION_MIN_MS,
     _until: 0,
     _lastSay: 0,
+    _lastHit: 0,
     _lastActivity: now(),
     lastGreeting: 0
   };
@@ -154,7 +244,6 @@ function createPet(opts) {
 
   function startWalk() {
     pet.dir = rand() < 0.5 ? -1 : 1;
-    pet.facing = pet.dir;
     /* У края разворачиваемся сразу: иначе он «топчется» в стену. */
     if (pet.x <= pet.minX + 1) pet.dir = 1;
     if (pet.x + pet.width >= pet.maxX - 1) pet.dir = -1;
@@ -163,10 +252,14 @@ function createPet(opts) {
     if (!quiet && rand() < 0.5) say("walk");
   }
 
+  /* Гулять он не идёт, если ему не по себе: на работе, в страхе или в злости. */
+  function canWander() {
+    return pet.mood !== "work" && pet.mood !== "fear" && pet.mood !== "angry";
+  }
+
   function plan() {
-    /* На работе он не гуляет: стоит на месте и ждёт результата. */
-    if (pet.mood === "work") {
-      setAction("stand", between(rand, 4000, 7000));
+    if (!canWander()) {
+      setAction(pet.mood === "sad" ? "sit" : "stand", between(rand, 4000, 7000));
       return;
     }
     const r = rand();
@@ -189,12 +282,38 @@ function createPet(opts) {
     return pet;
   }
 
+  function moodIsEmotion() {
+    return EMOTIONS.includes(pet.mood);
+  }
+
+  /** Погасить случайную эмоцию, когда её время вышло. */
+  function expireEmotion(t) {
+    if (pet.mood === "angry" && pet.anger >= ANGRY_AT) return;   // это не эмоция, а обида
+    if (moodIsEmotion() && t >= pet.emotionUntil) {
+      pet.mood = "idle";
+      pet.emotion = "";
+      if (pet.action === "tremble" || pet.action === "sit") stopAndStand();
+    }
+  }
+
   /** Один шаг времени. Возвращает снимок состояния. */
   function tick(dtMs, at) {
     const t = Number.isFinite(at) ? at : now();
     const dt = Math.max(0, Math.min(400, Number(dtMs) || TICK_MS));
 
     if (pet.phrase && t >= pet.phraseUntil) pet.phrase = "";
+
+    /* Раздражение остывает само, и он об этом говорит. */
+    if (pet.anger > 0) {
+      pet.anger = Math.max(0, pet.anger - (ANGER_DECAY_PER_S * dt) / 1000);
+      if (pet.mood === "angry" && pet.anger < ANGRY_AT && t >= (pet._angryUntil || 0)) {
+        calmDown();
+      }
+    }
+    if (pet.hits > 0 && t - pet._lastHit > HIT_MEMORY_MS) pet.hits = 0;
+
+    expireEmotion(t);
+    maybeEmotion(t);
 
     if (pet.action === "walk") {
       pet.x += pet.dir * (WALK_SPEED * dt) / 1000;
@@ -208,7 +327,8 @@ function createPet(opts) {
         pet.dir = -1;
         pet.facing = -1;
       }
-      if (t >= pet._until) stopAndStand();
+      if (!canWander()) stopAndStand();
+      else if (t >= pet._until) stopAndStand();
     } else if (t >= pet._until) {
       plan();
     }
@@ -223,18 +343,81 @@ function createPet(opts) {
       mood: pet.mood,
       facing: pet.facing,
       phrase: pet.phrase,
+      anger: Math.round(pet.anger * 100) / 100,
+      emotion: pet.emotion,
       quiet: pet.quiet
     };
   }
 
   /**
-   * Событие от задачи: start | thinking | done | error | idle.
-   * Возвращает фразу, если она есть.
+   * Случайная эмоция: радость, грусть, страх или злость. Ничего не значит,
+   * приходит не чаще раза в 25 минут и живёт меньше минуты.
+   */
+  function maybeEmotion(t) {
+    const at = Number.isFinite(t) ? t : now();
+    if (at < pet.nextEmotionAt) return "";
+    pet.nextEmotionAt = at + between(rand, EMOTION_MIN_MS, EMOTION_MAX_MS);
+    if (pet.mood === "work" || pet.anger >= ANGRY_AT) return "";   // не мешаем работе
+    const mood = pick(EMOTIONS, rand);
+    pet.mood = mood;
+    pet.emotion = mood;
+    pet.emotionUntil = at + EMOTION_LIFE_MS;
+    if (mood === "fear") setAction("tremble", EMOTION_LIFE_MS);
+    else if (mood === "sad") setAction("sit", EMOTION_LIFE_MS);
+    else if (mood === "joy") setAction("jump", JUMP_MS);
+    else setAction("stand", EMOTION_LIFE_MS);
+    return say(mood);
+  }
+
+  /**
+   * Удар по Сью — левая кнопка мыши. Он терпит, злится, потом остывает.
+   * Возвращает фразу.
+   */
+  function hit(at) {
+    const t = Number.isFinite(at) ? at : now();
+    pet._lastActivity = t;
+    pet._lastHit = t;
+    pet.hits += 1;
+    pet.anger = Math.min(1, pet.anger + HIT_ANGER);
+
+    /* Совсем рассердился — злится, но недолго. */
+    if (pet.anger >= ANGRY_AT) {
+      pet.mood = "angry";
+      pet.emotion = "";
+      pet.emotionUntil = t + ANGRY_MS;
+      pet._angryUntil = t + 4000;      // минимум четыре секунды злости
+      setAction("stand", ANGRY_MS);
+      return say("angryAtHit");
+    }
+
+    if (pet.hits >= 3) {
+      setAction("hurt", HURT_MS);
+      return say("annoyed");
+    }
+
+    setAction("hurt", HURT_MS);
+    return say("hurt");
+  }
+
+  /** Остыл ли он: вызывается из tick, но можно и вручную. */
+  function calmDown() {
+    if (pet.mood !== "angry") return "";
+    pet.mood = "idle";
+    pet.anger = Math.min(pet.anger, 0.3);
+    pet.hits = 0;
+    stopAndStand();
+    return say("calmDown");
+  }
+
+  /**
+   * Событие от задачи или системы: start | thinking | done | error | idle |
+   * screenshot | volume | screen | lock | unlock | suspend | resume.
    */
   function react(kind) {
     pet._lastActivity = now();
     if (kind === "start" || kind === "thinking") {
       pet.mood = "work";
+      pet.emotion = "";
       pet.action = "stand";
       pet._until = now() + 8000;
       return say("work");
@@ -255,6 +438,20 @@ function createPet(opts) {
       pet.mood = "idle";
       return "";
     }
+    if (kind === "screenshot") {
+      setAction("wave", WAVE_MS);
+      return say("screenshot");
+    }
+    if (kind === "volume") {
+      setAction("jump", JUMP_MS);
+      return say("volume");
+    }
+    if (kind === "screen") {
+      setAction("wave", WAVE_MS);
+      return say("screen");
+    }
+    if (kind === "sleep" || kind === "suspend" || kind === "lock") return say("sleep");
+    if (kind === "wake" || kind === "resume" || kind === "unlock") return say("wake");
     return "";
   }
 
@@ -266,9 +463,11 @@ function createPet(opts) {
     return say("click");
   }
 
-  /** Потрогали мышкой — без прыжка, просто отзывается. */
+  /** Погладили мышкой — отзывается, но не прыгает. */
   function poke() {
     pet._lastActivity = now();
+    pet.hits = Math.max(0, pet.hits - 1);
+    pet.anger = Math.max(0, pet.anger - HIT_ANGER / 2);
     return say("click");
   }
 
@@ -282,7 +481,7 @@ function createPet(opts) {
    */
   function maybeNudge(at) {
     const t = Number.isFinite(at) ? at : now();
-    if (pet.quiet || pet.mood === "work") return "";
+    if (pet.quiet || pet.mood === "work" || pet.mood === "angry") return "";
     if (t - pet._lastActivity < NUDGE_MS) return "";
     if (t - pet._lastSay < NUDGE_MS) return "";
     pet._lastActivity = t;
@@ -296,7 +495,7 @@ function createPet(opts) {
   }
 
   function setMood(mood) {
-    if (["idle", "work", "error"].includes(mood)) pet.mood = mood;
+    if (["idle", "work", "error"].concat(EMOTIONS).includes(mood)) pet.mood = mood;
     return pet.mood;
   }
 
@@ -322,7 +521,10 @@ function createPet(opts) {
     react,
     call,
     poke,
+    hit,
+    calmDown,
     drag,
+    maybeEmotion,
     maybeNudge,
     greet,
     setMood,
@@ -345,10 +547,18 @@ module.exports = {
   allPhrases,
   PHRASES,
   GREETINGS,
+  EMOTIONS,
   TICK_MS,
   WALK_SPEED,
   JUMP_MS,
   WAVE_MS,
+  HURT_MS,
   PHRASE_MS,
-  NUDGE_MS
+  NUDGE_MS,
+  EMOTION_MIN_MS,
+  EMOTION_MAX_MS,
+  EMOTION_LIFE_MS,
+  HIT_ANGER,
+  ANGRY_AT,
+  ANGRY_MS
 };

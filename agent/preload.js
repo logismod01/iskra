@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld("sye", {
   petDragMove: () => ipcRenderer.invoke("pet:drag-move"),
   petDragEnd: () => ipcRenderer.invoke("pet:drag-end"),
   petPoke: () => ipcRenderer.invoke("pet:poke"),
+  petHit: () => ipcRenderer.invoke("pet:hit"),
   petCall: () => ipcRenderer.invoke("pet:call"),
   petMenu: () => ipcRenderer.invoke("pet:menu"),
   petHover: (inside) => ipcRenderer.invoke("pet:hover", !!inside),
@@ -54,5 +55,6 @@ contextBridge.exposeInMainWorld("sye", {
   onToast: (fn) => on("toast", fn),
   onHistory: (fn) => on("history:changed", fn),
   onOpenSettings: (fn) => on("ui:openSettings", fn),
-  petOnState: (fn) => on("pet:state", fn)
+  petOnState: (fn) => on("pet:state", fn),
+  petOnAngry: (fn) => on("pet:angry", fn)
 });

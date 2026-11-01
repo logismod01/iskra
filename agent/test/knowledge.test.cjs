@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const knowledge = require("../core/knowledge.js");
-const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ERRORS, TASKS, ALL } = knowledge;
+const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ERRORS, TASKS, SCRIPTS, ALL } = knowledge;
 const { systemPrompt } = require("../core/agent.js");
 const { LIMITS } = require("../core/license.js");
 const { TOOL_NAMES } = require("../core/protocol.js");
@@ -114,7 +114,7 @@ test("справка выросла: языки, баги, инструмент�
   assert.ok(RECIPES.length >= 8, "мало порядков действий: " + RECIPES.length);
   assert.ok(ERRORS.length >= 10, "мало карточек про сообщения ошибок: " + ERRORS.length);
   assert.ok(TASKS.length >= 10, "мало карточек про рабочие задачи: " + TASKS.length);
-  assert.equal(ALL.length, LANGUAGES.length + BUGS.length + TOOLS.length + RECIPES.length + ERRORS.length + TASKS.length);
+  assert.equal(ALL.length, LANGUAGES.length + BUGS.length + TOOLS.length + RECIPES.length + ERRORS.length + TASKS.length + SCRIPTS.length);
   const ids = ALL.map((x) => x.id);
   assert.equal(new Set(ids).size, ids.length, "есть повторяющиеся id");
 });
@@ -187,4 +187,29 @@ test("справка не выдаёт лишнего на пустой зада
   const block = promptBlock("", 2600);
   assert.doesNotMatch(block, /СПРАВКА ИЗ ОБЩЕЙ БАЗЫ/);
   assert.ok(block.length > 0, "порядок отладки должен остаться");
+});
+
+test("просьба написать скрипт подтягивает карточки про скрипты, а не только про язык", () => {
+  const kb = require("../core/knowledge.js");
+  assert.ok(kb.SCRIPTS.length >= 8, "карточек про скрипты мало: " + kb.SCRIPTS.length);
+  const ids = kb.pickKnowledge("напиши скрипт на python, который переименует все файлы в папке")
+    .items.map((x) => x.id);
+  assert.ok(ids.includes("script-basics"), "нет карточки «как писать скрипт»: " + ids.join(", "));
+  assert.ok(ids.includes("script-python-file"), "нет карточки про файлы: " + ids.join(", "));
+
+  const sched = kb.pickKnowledge("сделай скрипт и запускай его по расписанию каждый день").items.map((x) => x.id);
+  assert.ok(sched.includes("script-schedule"), "нет карточки про расписание: " + sched.join(", "));
+
+  const powershell = kb.pickKnowledge("напиши powershell скрипт и запусти его").items.map((x) => x.id);
+  assert.ok(powershell.includes("script-powershell"), "нет карточки про PowerShell: " + powershell.join(", "));
+});
+
+test("карточки про скрипты такие же короткие, как остальные", () => {
+  const kb = require("../core/knowledge.js");
+  for (const card of kb.SCRIPTS) {
+    assert.ok(card.text.length >= 120, "слишком короткая карточка: " + card.id);
+    assert.ok(card.text.length <= 900, "слишком длинная карточка: " + card.id + " — " + card.text.length);
+    assert.ok(card.keys.length >= 4, "мало ключей: " + card.id);
+  }
+  assert.ok(kb.ALL.length >= 81, "карточек стало меньше: " + kb.ALL.length);
 });

@@ -21,7 +21,8 @@ const METHOD = [
   "3. Сузь: прочитай функцию, проверь входные данные, залогируй значения на границе.",
   "4. Назови причину одной фразой («в список приходит null, потому что парсер не нашёл поле»).",
   "5. Правь минимально и по причине, а не по симптому.",
-  "6. Проверь: тест, сборка, повтор шага из пункта 1. В <final> напиши, чем именно проверил."
+  "6. Проверь: тест, сборка, повтор шага из пункта 1. В <final> напиши, чем именно проверил.",
+  "7. Скрипт сначала прогоняй на копии данных, а не на оригиналах."
 ].join("\n");
 
 const LANGUAGES = [
@@ -488,7 +489,60 @@ const TASKS = [
   }
 ];
 
-const ALL = LANGUAGES.concat(BUGS, TOOLS, RECIPES, ERRORS, TASKS);
+/* Скрипты и автоматизация: «напиши скрипт, который сам делает вот это».
+   Это не язык, а порядок действий — поэтому отдельной группой. */
+const SCRIPTS = [
+  {
+    id: "script-basics",
+    title: "Как писать скрипт",
+    keys: ["скрипт", "script", "автоматиз", "автоматич", "сделай программу", "утилит", "напиши прог"],
+    text: "Скрипт — это файл с командами, который делает работу за человека. Порядок: 1) что на входе (файл, папка, аргументы), 2) что на выходе (файл, папка, строчка в консоли), 3) что может пойти не так (нет файла, нет прав, пустая папка) и что тогда вывести. Пиши функцию main() и вызывай её в конце. Печатай, что делаешь, и завершай с кодом 0 или 1 — по нему видно, сработало ли. Сначала запусти на копии данных, потом на настоящих."
+  },
+  {
+    id: "script-python-file",
+    title: "Python-скрипт: обход папки и файлы",
+    keys: ["python скрипт", "os.walk", "pathlib", "переименовать файлы", "обработать файлы", "glob"],
+    text: "Современный способ — pathlib: from pathlib import Path; for p in Path(папка).rglob('*.txt'). Лучше os.walk только если нужен контроль над подпапками. Читай и пиши с encoding='utf-8'. Переименование — p.rename(новое), удаление — p.unlink() (сначала проверь, что путь внутри нужной папки). Для безопасности всегда печатай, что будет изменено, и делай резервную копию перед массовыми правками."
+  },
+  {
+    id: "script-powershell",
+    title: "PowerShell-скрипт",
+    keys: ["powershell скрипт", "ps1", "get-childitem", "foreach-object", "конвейер powershell"],
+    text: "PowerShell работает с объектами, а не текстом: Get-ChildItem | Where-Object Length -gt 1MB | Sort-Object Length. Файл .ps1 запускается из терминала: powershell -ExecutionPolicy Bypass -File скрипт.ps1 — иначе система может запретить запуск. Параметры: param([string]$Path = '.'). Запись в файл — Out-File -Encoding utf8. Для заданий по расписанию: Register-ScheduledTask или Планировщик заданий Windows."
+  },
+  {
+    id: "script-bash",
+    title: "Bash-скрипт",
+    keys: ["bash скрипт", "sh скрипт", "#!/bin/sh", "set -e", "chmod +x", "цикл for bash"],
+    text: "Начало: #!/usr/bin/env bash и set -euo pipefail (падать на первой ошибке). Переменные в кавычках: \"$file\", иначе пробелы в имени ломают вызов. Цикл: for f in *.txt; do ...; done. Права: chmod +x script.sh. Проверка синтаксиса: bash -n script.sh, подробный лог: bash -x script.sh. Временные файлы — через mktemp, и удаляй их через trap."
+  },
+  {
+    id: "script-schedule",
+    title: "Запуск по расписанию",
+    keys: ["по расписанию", "cron", "планировщик", "scheduled task", "каждый день в", "таймер"],
+    text: "Windows: Планировщик заданий — «Создать задачу», триггер по времени, действие «Запустить программу» с полным путём к python.exe или powershell.exe и аргументами. Важно: задача идёт от твоего пользователя, иначе не будет доступа к файлам и сети; галочка «Выполнять с наивысшими правами» нужна редко. Linux и macOS: crontab -e, строка вида 0 9 * * * /путь/скрипт.sh >> /путь/лог.txt 2>&1. Проверь один запуск вручную, прежде чем ставить расписание."
+  },
+  {
+    id: "script-api",
+    title: "Скрипт и чужой API",
+    keys: ["requests", "api", "api запрос", "urllib", "fetch в питоне", "токен api", "http запрос скрипт", "скачать данные", "получить данные"],
+    text: "Python: requests.get(url, headers={'Authorization': 'Bearer ' + token}, timeout=20). Проверяй r.status_code и разбирай r.json() только при 200. Токен — из переменной окружения, не из кода и не в git. Ограничение частоты (429) — пауза и повтор, а не цикл без сна. Пиши response в файл, если ответ большой. В PowerShell то же самое: Invoke-RestMethod -Headers @{Authorization='Bearer ...'}."
+  },
+  {
+    id: "script-excel",
+    title: "Скрипт и таблицы",
+    keys: ["excel", "csv", "openpyxl", "pandas", "xlsx", "таблица скрипт"],
+    text: "CSV — через модуль csv или pandas: pandas.read_csv('файл.csv', encoding='utf-8-sig'), to_csv(..., index=False). Excel .xlsx — openpyxl (правка ячеек, сохранение) или pandas с xlsxwriter. Не редактируй файл, который открыт в Excel: запись не пройдёт. Разделитель в русской локали часто «;» — читай с sep=';' и проверь первые строки. Деньги и даты храни как текст или числа, а не как «красивые» строки."
+  },
+  {
+    id: "script-debug",
+    title: "Скрипт не работает",
+    keys: ["скрипт не работает", "not recognized", "command not found", "отказано в доступе", "no such file"],
+    text: "Три самые частые беды: 1) не тот путь — печатай os.getcwd() и полный путь к файлу; 2) «command not found» / «не является внутренней командой» — программа не установлена или не в PATH, зови python.exe по полному пути; 3) «отказано в доступе» — нет прав на папку, файл открыт другой программой или сработала защита Windows. Добавь try/except с печатью ошибки целиком и запусти с флагом подробного вывода."
+  }
+];
+
+const ALL = LANGUAGES.concat(BUGS, TOOLS, RECIPES, ERRORS, TASKS, SCRIPTS);
 /** Нижний регистр и «ё» → «е», чтобы совпадения не зависели от раскладки. */
 function norm(text) {
   return String(text == null ? "" : text).toLowerCase().replace(/ё/g, "е");
@@ -530,9 +584,13 @@ function pickKnowledge(task, opts) {
   const o = opts || {};
   const hay = norm(task);
   const max = o.max || 3;
+  /* «Скрипт» — это просьба про автоматизацию, а не про конкретный язык.
+     Без надбавки карточки про скрипты проигрывали карточке «Python». */
+  const wantsScript = /(скрипт|script|автоматиз|батник|утилит|по расписанию)/.test(hay);
   const scored = [];
   for (const entry of ALL) {
-    const score = scoreOf(entry, hay);
+    let score = scoreOf(entry, hay);
+    if (wantsScript && SCRIPTS.includes(entry)) score += 3;
     if (score > 0) scored.push({ entry, score });
   }
   scored.sort((a, b) => b.score - a.score);
@@ -590,4 +648,4 @@ function promptBlock(task, maxChars) {
   return text;
 }
 
-module.exports = { METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ERRORS, TASKS, ALL, pickKnowledge, search, promptBlock, norm };
+module.exports = { METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ERRORS, TASKS, SCRIPTS, ALL, pickKnowledge, search, promptBlock, norm };
