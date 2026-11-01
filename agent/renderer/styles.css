@@ -375,3 +375,10 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after {
     transition-duration: .001ms !important;
   }
 }
+
+/* Карточка «Сью на рабочем столе» в настройках */
+.pet-card { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.pet-pic { width: 56px; height: 56px; border-radius: 17px; padding: 7px; flex: 0 0 auto; }
+.pet-text { display: grid; gap: 4px; font-size: 12.5px; line-height: 1.45; color: var(--text-soft); }
+.pet-text b { color: var(--text); font-size: 13px; }
+.pet-text i { font-style: normal; color: var(--text-soft); }

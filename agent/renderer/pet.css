@@ -1,0 +1,166 @@
+/* Окно Сью на рабочем столе.
+   Фон прозрачный — на экране видно только самого персонажа и облачко с фразой. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+body.dragging { cursor: grabbing; }
+
+.pet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 4px;
+}
+
+/* ---------- Облачко с фразой ---------- */
+.bubble {
+  position: relative;
+  max-width: 150px;
+  margin: 0 auto 6px;
+  padding: 7px 10px;
+  border-radius: 11px;
+  background: #1e1c1a;
+  border: 1px solid #3a342e;
+  color: #ece5dd;
+  font-size: 11.5px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 10px 22px -12px rgba(0, 0, 0, .8);
+  animation: bubbleIn .16s ease-out;
+  word-break: break-word;
+}
+.bubble[hidden] { display: none; }
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: #1e1c1a;
+  border-right: 1px solid #3a342e;
+  border-bottom: 1px solid #3a342e;
+  transform: rotate(45deg);
+}
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(4px) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Сам Сью ---------- */
+.stage {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.figure {
+  width: 84px;
+  height: 84px;
+  transform-origin: 50% 92%;
+  will-change: transform;
+}
+.pet[data-facing="-1"] .sye-mascot { transform: scaleX(-1); }
+
+.sye-mascot { display: block; width: 100%; height: 100%; }
+.sye-mascot .sye-body { fill: #d97757; }
+.sye-mascot .sye-tuft { fill: #d97757; }
+.sye-mascot .sye-eye { fill: #241a15; }
+.sye-mascot .sye-cheek { fill: #fff; opacity: .3; }
+.sye-mascot .sye-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
+
+.shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 54px;
+  height: 9px;
+  margin-left: -27px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .32);
+  filter: blur(2.5px);
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+/* ---------- Действия ---------- */
+.pet[data-action="walk"] .figure { animation: petWalk .5s ease-in-out infinite; }
+.pet[data-action="walk"] .shadow { animation: shadowWalk .5s ease-in-out infinite; }
+.pet[data-action="jump"] .figure { animation: petJump .62s cubic-bezier(.3, .9, .3, 1) 1; }
+.pet[data-action="jump"] .shadow { animation: shadowJump .62s ease-in-out 1; }
+.pet[data-action="wave"] .figure { animation: petWave 1.5s ease-in-out 1; }
+.pet[data-action="sit"] .figure { animation: petSit 11s ease-in-out 1 both; }
+.pet[data-action="sit"] .shadow { transform: scaleX(1.12); opacity: .9; }
+
+@keyframes petWalk {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-3px) rotate(3deg); }
+}
+@keyframes shadowWalk {
+  0%, 100% { transform: scaleX(1); opacity: .32; }
+  50% { transform: scaleX(.86); opacity: .22; }
+}
+@keyframes petJump {
+  0% { transform: translateY(0) scaleY(1); }
+  18% { transform: translateY(2px) scaleY(.9); }
+  45% { transform: translateY(-22px) scaleY(1.06); }
+  78% { transform: translateY(0) scaleY(.94); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+@keyframes shadowJump {
+  0%, 100% { transform: scaleX(1); opacity: .32; }
+  45% { transform: scaleX(.62); opacity: .16; }
+}
+@keyframes petWave {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-9deg); }
+  45% { transform: rotate(9deg); }
+  70% { transform: rotate(-5deg); }
+}
+@keyframes petSit {
+  0% { transform: translateY(0) scaleY(1); }
+  8% { transform: translateY(5px) scaleY(.9) scaleX(1.05); }
+  92% { transform: translateY(5px) scaleY(.9) scaleX(1.05); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+
+/* ---------- Настроение ---------- */
+.pet[data-mood="work"] .figure { animation: petThink 1.4s ease-in-out infinite; }
+.pet[data-mood="error"] .figure { animation: petShake .16s ease-in-out 6; }
+.pet[data-mood="work"] .shadow { opacity: .26; }
+
+@keyframes petThink {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-2px) rotate(-1.5deg); }
+}
+@keyframes petShake {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-2px); }
+}
+
+/* Системное «уменьшить движение» важнее любых наших анимаций. */
+@media (prefers-reduced-motion: reduce) {
+  .figure, .shadow, .bubble { animation: none !important; }
+}
+
+/* Скрытие персонажа без закрытия окна (например, на время скриншота). */
+body.hidden .pet { opacity: 0; }

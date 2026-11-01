@@ -37,11 +37,22 @@ contextBridge.exposeInMainWorld("sye", {
   openExternal: (url) => ipcRenderer.invoke("open:external", url),
   quit: () => ipcRenderer.invoke("app:quit"),
 
+  /* Сью на рабочем столе */
+  petState: () => ipcRenderer.invoke("pet:state"),
+  petDragStart: () => ipcRenderer.invoke("pet:drag-start"),
+  petDragMove: () => ipcRenderer.invoke("pet:drag-move"),
+  petDragEnd: () => ipcRenderer.invoke("pet:drag-end"),
+  petPoke: () => ipcRenderer.invoke("pet:poke"),
+  petCall: () => ipcRenderer.invoke("pet:call"),
+  petMenu: () => ipcRenderer.invoke("pet:menu"),
+  petHover: (inside) => ipcRenderer.invoke("pet:hover", !!inside),
+
   onState: (fn) => on("state:changed", fn),
   onEvent: (fn) => on("task:event", fn),
   onDone: (fn) => on("task:done", fn),
   onShot: (fn) => on("shot:ready", fn),
   onToast: (fn) => on("toast", fn),
   onHistory: (fn) => on("history:changed", fn),
-  onOpenSettings: (fn) => on("ui:openSettings", fn)
+  onOpenSettings: (fn) => on("ui:openSettings", fn),
+  petOnState: (fn) => on("pet:state", fn)
 });
