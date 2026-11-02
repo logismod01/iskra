@@ -207,6 +207,8 @@ textarea { resize: none; }
   background: var(--bg-soft); border: 1px solid var(--line);
   border-radius: 14px; box-shadow: 0 18px 40px -18px rgba(0,0,0,.55);
   display: grid; gap: 2px;
+  /* меню больше не обрезается: если пунктов много, оно прокручивается внутри */
+  max-height: min(70vh, 560px); overflow-y: auto; overscroll-behavior: contain;
 }
 .more-menu[hidden] { display: none; }
 .more-item {
@@ -214,6 +216,7 @@ textarea { resize: none; }
   width: 100%; padding: 9px 10px; border-radius: 9px;
   font-size: 13.5px; color: var(--text-soft); text-align: left;
 }
+.icon-btn[aria-expanded="true"] { background: var(--bg-soft-2); color: var(--accent); }
 .more-item:hover { background: var(--bg-soft-2); color: var(--text); }
 .more-item .ic { flex: 0 0 auto; opacity: .9; }
 .more-item span { flex: 1; }
@@ -804,7 +807,12 @@ textarea { resize: none; }
 .ambient svg { display: block; }
 .main { position: relative; }
 html, body { overflow-x: hidden; }  /* без горизонтального сдвига на телефоне */
-.main > .messages, .main > .composer-wrap, .main > .topbar { position: relative; z-index: 1; }
+/* Слои в главной колонке: чат (1) → поле ввода (2) → шапка (30).
+   Раньше все три были в слое 1, и выпадающее меню шапки уходило ПОД текст чата:
+   буквы просвечивали сквозь меню, а поле ввода рисовалось поверх него. */
+.main > .messages { position: relative; z-index: 1; }
+.main > .composer-wrap { position: relative; z-index: 2; }
+.main > .topbar { position: relative; z-index: 30; }
 
 .mode-one { position: relative; padding: 2px 2px 9px; }
 .mode-trigger {
@@ -1982,8 +1990,9 @@ html.no-anim .theme-flash { display: none; }
   .send-btn { width: 42px !important; height: 42px !important; border-radius: 12px; }
   .mode-trigger { padding: 6px 11px; font-size: 13px; }
   .composer-note {
-    font-size: 10.5px; line-height: 1.3; margin-top: 6px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 10.5px; line-height: 1.35; margin-top: 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   #input { font-size: 16px !important; }    /* 16px — иначе iPhone увеличивает страницу при фокусе */
 
@@ -1991,11 +2000,38 @@ html.no-anim .theme-flash { display: none; }
   .agent-card,
   .look-sye { display: none !important; }
 
+  /* --- Плашка «Установить приложение»: поднимаем над полем ввода,
+     иначе она закрывает кнопку отправки --- */
+  .install-banner {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    left: 10px; right: 10px; max-width: none;
+    transform: none; padding: 10px 12px;
+  }
+  /* ... и убираем её, пока открыто меню «⋯»: она выше меню по слою
+     и перекрывала бы последние пункты */
+  body.menu-open .install-banner { display: none !important; }
+  body.menu-open .toast { display: none; }
+
   /* --- Окна на телефоне: почти во весь экран, прокрутка внутри --- */
   .modal { width: 100% !important; max-height: 88vh; padding: 16px; border-radius: 16px; }
   .modal.modal-set { max-height: 92vh; }
   .modal-body { padding-bottom: 8px; }
-  .more-menu { min-width: 220px; }
+  /* На телефоне меню выезжает снизу, как шторка: так его не режет ни шапка,
+     ни поле ввода, и до последнего пункта легко дотянуться большим пальцем. */
+  .more-menu {
+    position: fixed;
+    left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom));
+    top: auto;
+    width: auto; min-width: 0;
+    max-height: min(72dvh, 520px);
+    border-radius: 18px;
+    padding: 8px;
+    animation: moreSheetUp .18s ease both;
+  }
+  @keyframes moreSheetUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
 
   /* Тап-цели крупнее: пальцем попадать проще */
   .more-item { padding: 11px 12px; font-size: 14px; }
@@ -8820,6 +8856,7 @@ function renderMessages() {
   if (!chat || !chat.messages.length) {
     $("#welcome").style.display = "";
     m.querySelectorAll(".msg").forEach(n => n.remove());
+    m.scrollTop = 0;            /* новый чат всегда открывается сверху, с приветствия */
     $("#chatTitle").textContent = chat?.title || "Новый чат";
     return;
   }
@@ -8858,6 +8895,12 @@ function wireAnswerActions(actions, msgId) {
 
 function scrollToBottom() {
   const m = $("#messages");
+  if (!m) return;
+  /* На пустом чате прокручивать нечего: приветствие выше экрана на телефоне,
+     и прокрутка вниз срезала логотип и верх заголовка. Пока приветствие
+     видно — держим список сверху. */
+  const w = $("#welcome");
+  if (w && w.style.display !== "none") { m.scrollTop = 0; return; }
   requestAnimationFrame(() => { m.scrollTop = m.scrollHeight; });
 }
 
@@ -13960,19 +14003,33 @@ function sharedKbSave(items) {
 async function sharedKbRefresh(force) {
   if (!supabaseConfigured()) return sharedKbList();
   if (!force && _sharedKbAt && Date.now() - _sharedKbAt < SHARED_KB_TTL) return sharedKbList();
+  /* Раньше забирали ровно 500 тем — и всё, что дальше, до человека не доезжало.
+     Теперь берём страницами, пока сервер отдаёт полные страницы. */
+  const PAGE = 500, MAX_PAGES = 12;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 8000);
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 20000);
   try {
-    const url = SB() + "/rest/v1/iskra_shared_kb?select=topic,body,source,tags,updated_at" +
-      "&active=eq.true&order=updated_at.desc&limit=500";
-    const r = await fetch(url, {
-      headers: { apikey: SUPABASE_CONFIG.anonKey, Authorization: "Bearer " + SUPABASE_CONFIG.anonKey },
-      signal: ctrl.signal
-    });
-    if (!r.ok) return sharedKbList();
-    const rows = await r.json();
-    if (!Array.isArray(rows)) return sharedKbList();
-    sharedKbSave(rows.map(x => ({
+    const all = [];
+    let complete = false;                 // дошли до конца списка, а не оборвались
+    for (let p = 0; p < MAX_PAGES; p++) {
+      const url = SB() + "/rest/v1/iskra_shared_kb?select=topic,body,source,tags,updated_at" +
+        "&active=eq.true&order=topic_norm.asc&limit=" + PAGE + "&offset=" + (p * PAGE);
+      const r = await fetch(url, {
+        headers: { apikey: SUPABASE_CONFIG.anonKey, Authorization: "Bearer " + SUPABASE_CONFIG.anonKey },
+        signal: ctrl.signal
+      });
+      if (!r.ok) break;
+      const rows = await r.json();
+      if (!Array.isArray(rows)) break;
+      if (!rows.length) { complete = true; break; }   // на сервере правда пусто
+      all.push(...rows);
+      if (rows.length < PAGE) { complete = true; break; }  // последняя страница
+    }
+    /* Обрываться на середине — не повод стирать то, что уже есть:
+       сохраняем, только если дочитали до конца или принесли больше прежнего. */
+    if (!complete && all.length <= sharedKbList().length) return sharedKbList();
+    // имя темы идёт первым: так очередь не зависит от порядка вставки
+    sharedKbSave(all.map(x => ({
       topic: String(x.topic || ""),
       text: String(x.body || ""),
       source: String(x.source || ""),
@@ -15601,6 +15658,7 @@ function wire() {
   function closeMoreMenu() {
     if (moreMenu) moreMenu.hidden = true;
     if (moreBtn) moreBtn.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("menu-open");
   }
   window.closeMoreMenu = closeMoreMenu;
   if (moreBtn && moreMenu) {
@@ -15609,6 +15667,7 @@ function wire() {
       const willOpen = moreMenu.hidden;
       moreMenu.hidden = !willOpen;
       moreBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      document.body.classList.toggle("menu-open", willOpen);
       if (willOpen) { try { updateMoreCounts(); } catch (e) {} }
     });
   }
