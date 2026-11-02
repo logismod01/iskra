@@ -131,7 +131,7 @@ await test("шапка стала плотнее", async () => {
 
 /* ---------- Версии ---------- */
 await test("версия сайта поднята", async () => {
-  assert(pkg.version === "1.19.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.20.0", "версия сайта: " + pkg.version);
 });
 
 await test("новый тест подключён к npm test", async () => {

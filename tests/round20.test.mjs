@@ -82,8 +82,8 @@ await test("учтены безопасные зоны телефона (чёл�
   assert(/env\(safe-area-inset-bottom\)/.test(mobileCss), "не учтена нижняя безопасная зона");
 });
 
-await test("подпись под полем ввода в одну строку", async () => {
-  assert(/\.composer-note \{[^}]*white-space: nowrap/.test(mobileCss), "подпись всё ещё ломается на две строки");
+await test("подпись под полем ввода не растягивает низ", async () => {
+  assert(/\.composer-note \{[\s\S]*?-webkit-line-clamp: 2/.test(mobileCss), "подпись не ограничена двумя строками");
 });
 
 /* ---------- 4. Агент ---------- */
@@ -163,8 +163,8 @@ await test("меню закрывается после выбора телефо
 
 /* ---------- 6. Версия ---------- */
 await test("версия поднята, кэш обновлён", async () => {
-  assert(pkg.version === "1.19.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.9\.0"/.test(sw), "кэш service worker не обновлён");
+  assert(pkg.version === "1.20.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.20\.0"/.test(sw), "кэш service worker не обновлён");
 });
 
 await test("новый тест подключён к npm test", async () => {
