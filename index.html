@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
 <meta name="theme-color" content="#141413" />
 <meta name="description" content="Искра — умный ИИ-ассистент для учёбы, кода, литературы и текстов. Открывается на телефоне и компьютере, ставится как приложение." />
 <title>Искра — ИИ-ассистент</title>
@@ -1924,6 +1924,104 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after {
   scroll-behavior: auto !important;
 }
 html.no-anim .theme-flash { display: none; }
+
+/* ================= Телефон: отдельный, спокойный интерфейс =================
+   Правило простое: на телефоне в шапке три вещи — меню, название, «⋯».
+   Всё остальное прячется в это меню. Приветствие короткое, чтобы поле ввода
+   и кнопка отправки были видны сразу, без прокрутки. Кнопки под полем ввода
+   встают в один ряд и не переносятся. Агент Sye — программа для Windows,
+   на телефоне его нет вовсе.
+
+   Важно: «компактный вид» включён по умолчанию и его правила сильнее обычных
+   (html.compact ...). Поэтому размеры и отступы здесь помечены !important —
+   иначе настройки компактного вида перебивали бы телефонные. */
+@media (max-width: 700px) {
+  /* --- Шапка: три элемента --- */
+  .topbar {
+    gap: 6px !important;
+    padding: 8px 10px !important;
+    padding-top: calc(8px + env(safe-area-inset-top)) !important;
+  }
+  .topbar .title { display: block !important; flex: 1 !important; font-size: 15px; text-align: center; }
+  .topbar .profile-btn,
+  .topbar .model-chip,
+  .topbar #settingsIcon { display: none !important; }
+  .topbar .menu-btn, .topbar #moreBtn { width: 36px !important; height: 36px !important; }
+
+  /* --- Приветствие: короткое, без фона --- */
+  .ambient { display: none !important; }    /* узоры по фону на телефоне только мешают */
+  .messages { padding: 10px 12px 8px !important; }
+  .welcome { padding: 14px 8px 8px !important; }
+  .welcome .big-logo {
+    width: 52px !important; height: 52px !important;
+    border-radius: 15px !important; margin-bottom: 10px !important;
+  }
+  .welcome h1 { font-size: 22px !important; margin-bottom: 4px !important; }
+  .welcome .tag { font-size: 13px !important; margin-bottom: 14px !important; }
+  .welcome-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important; margin-bottom: 10px !important;
+  }
+  .wa-card { padding: 10px !important; border-radius: 12px !important; gap: 1px !important; }
+  .wa-ico { width: 26px !important; height: 26px !important; border-radius: 8px !important; font-size: 13px; margin-bottom: 2px !important; }
+  .wa-t { font-size: 13px; }
+  .wa-d { display: none !important; }       /* подписи под карточками на телефоне лишние */
+  .welcome-foot { font-size: 11px; }
+
+  /* --- Поле ввода: кнопки в один ряд, ничего не переносится --- */
+  .composer-wrap {
+    padding: 6px 10px 8px !important;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  }
+  .composer { border-radius: 16px !important; }
+  .comp-row { gap: 6px !important; padding: 3px 2px 1px !important; }
+  .comp-tools { flex-wrap: nowrap !important; gap: 2px !important; overflow-x: auto; min-width: 0; scrollbar-width: none; }
+  .comp-tools::-webkit-scrollbar { display: none; }
+  .comp-tools .tool-btn { width: 34px !important; height: 34px !important; border-radius: 9px; flex: 0 0 auto; }
+  .comp-tools .tool-btn .ic { width: 19px; height: 19px; }
+  .send-btn { width: 42px !important; height: 42px !important; border-radius: 12px; }
+  .mode-trigger { padding: 6px 11px; font-size: 13px; }
+  .composer-note {
+    font-size: 10.5px; line-height: 1.3; margin-top: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #input { font-size: 16px !important; }    /* 16px — иначе iPhone увеличивает страницу при фокусе */
+
+  /* --- Агент Sye: это программа для Windows, на телефоне её нет --- */
+  .agent-card,
+  .look-sye { display: none !important; }
+
+  /* --- Окна на телефоне: почти во весь экран, прокрутка внутри --- */
+  .modal { width: 100% !important; max-height: 88vh; padding: 16px; border-radius: 16px; }
+  .modal.modal-set { max-height: 92vh; }
+  .modal-body { padding-bottom: 8px; }
+  .more-menu { min-width: 220px; }
+
+  /* Тап-цели крупнее: пальцем попадать проще */
+  .more-item { padding: 11px 12px; font-size: 14px; }
+}
+
+/* Совсем узкие экраны: чуть мельче кнопки, чтобы ряд не упирался в край */
+@media (max-width: 360px) {
+  .topbar .title { font-size: 14px; }
+  .comp-tools .tool-btn { width: 32px !important; height: 32px !important; }
+  .comp-tools .tool-btn .ic { width: 18px; height: 18px; }
+  .welcome h1 { font-size: 20px !important; }
+  .send-btn { width: 40px !important; height: 40px !important; }
+}
+@media (max-width: 330px) {
+  .comp-tools .tool-btn { width: 29px !important; height: 29px !important; }
+  .comp-tools .tool-btn .ic { width: 17px; height: 17px; }
+  .welcome-actions { grid-template-columns: 1fr !important; }
+}
+
+/* Пункты меню, которые нужны только на телефоне */
+.more-item.only-phone { display: none; }
+.more-sep.only-phone { display: none; }
+@media (max-width: 700px) {
+  .more-item.only-phone { display: flex; }
+  .more-sep.only-phone { display: block; }
+}
 </style>
 </head>
 <body>
@@ -2098,6 +2196,38 @@ html.no-anim .theme-flash { display: none; }
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
             <span>Сменить тему</span>
+          </button>
+          <!-- Эти пункты видны только на телефоне: там в шапке нет
+               ни аккаунта, ни плашки версии, ни шестерёнки,
+               а новый чат иначе искать в боковом меню. -->
+          <div class="more-sep only-phone"></div>
+          <button type="button" class="more-item only-phone" id="newChatTop" data-more="newchat">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Новый чат</span>
+          </button>
+          <button type="button" class="more-item only-phone" id="acctTop" data-more="account">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>Аккаунт</span>
+          </button>
+          <button type="button" class="more-item only-phone" id="proTop" data-more="pro">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2 L13.5 9.5 L21 12 L13.5 14.5 L12 22 L10.5 14.5 L3 12 L10.5 9.5 Z"/>
+            </svg>
+            <span>Искра Про и тарифы</span>
+            <i class="more-tag" id="moreProTag"></i>
+          </button>
+          <button type="button" class="more-item only-phone" id="setTop" data-more="settings">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span>Настройки</span>
           </button>
         </div>
       </div>
@@ -9480,6 +9610,13 @@ function updateMoreCounts() {
   if (bt) bt.textContent = settings.bigText ? "вкл" : "";
   const bb = $("#bigTextTop");
   if (bb) bb.classList.toggle("on", !!settings.bigText);
+  // на телефоне плашки версии в шапке нет — состояние Про видно здесь
+  const pt = $("#moreProTag");
+  if (pt) {
+    let on = false;
+    try { on = typeof proActive === "function" && proActive(); } catch (e) { on = false; }
+    pt.textContent = on ? "Про" : "";
+  }
 }
 
 /* Крупный текст: та же страница, буквы больше — глазам легче */
@@ -9536,6 +9673,11 @@ function runMoreAction(act, ev) {
     else if (act === "backup") downloadBackup();
     else if (act === "fresh") freshVersion();
     else if (act === "theme") cycleTheme(ev);
+    /* только на телефоне: новый чат, аккаунт, тарифы и настройки переехали в это меню */
+    else if (act === "newchat") { const b = $("#newChat"); if (b) b.click(); }
+    else if (act === "account") openAccountPanel();
+    else if (act === "pro") openAccessPanel();
+    else if (act === "settings") openSettings();
   } catch (e) {
     toast("Не получилось: " + ((e && e.message) || e), "err");
   }
