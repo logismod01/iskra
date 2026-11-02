@@ -2000,10 +2000,11 @@ html.no-anim .theme-flash { display: none; }
   .agent-card,
   .look-sye { display: none !important; }
 
-  /* --- Плашка «Установить приложение»: поднимаем над полем ввода,
-     иначе она закрывает кнопку отправки --- */
+  /* --- Плашка «Установить приложение»: внизу она закрывала кнопку отправки,
+     поэтому на телефоне показываем её сверху, под шапкой --- */
   .install-banner {
-    bottom: calc(88px + env(safe-area-inset-bottom));
+    top: calc(56px + env(safe-area-inset-top));
+    bottom: auto;
     left: 10px; right: 10px; max-width: none;
     transform: none; padding: 10px 12px;
   }
