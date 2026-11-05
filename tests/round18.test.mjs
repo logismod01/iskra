@@ -87,13 +87,14 @@ await test("меню работает: открывается, закрывае�
 });
 
 /* ---------- Действия под ответом ---------- */
-await test("под ответом две кнопки, остальное за «Ещё»", async () => {
+await test("под ответом главные кнопки видны сразу, остальное за «Ещё»", async () => {
   assert(/function answerActionsHtml/.test(html), "нет сборки кнопок ответа");
   const fn = html.slice(html.indexOf("function answerActionsHtml"), html.indexOf("function wireAnswerActions"));
   assert(fn.includes('data-act="copy"'), "нет «Копировать»");
   assert(fn.includes('data-act="more"'), "нет «Ещё»");
   assert(fn.includes('class="act-extra"'), "нет блока скрытых действий");
-  assert(!/data-act="regen"[^`]*<\/span>/s.test("") , "пустая проверка");
+  const visible = fn.slice(0, fn.indexOf('class="act-extra"'));
+  assert(visible.includes('data-act="shorter"'), "«Короче» спрятана за «Ещё»");
 });
 
 await test("«Короче» и «Проще» действительно отправляют запрос", async () => {
@@ -131,7 +132,7 @@ await test("шапка стала плотнее", async () => {
 
 /* ---------- Версии ---------- */
 await test("версия сайта поднята", async () => {
-  assert(pkg.version === "1.21.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.22.0", "версия сайта: " + pkg.version);
 });
 
 await test("новый тест подключён к npm test", async () => {

@@ -247,7 +247,26 @@ textarea { resize: none; }
   overflow-y: auto;
   padding: 24px 20px 20px;
   scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
+/* Пока Искра печатает, плавная прокрутка только мешает: каждый кусочек
+   текста запускал новую анимацию, и страница «сопротивлялась» листанию. */
+body.generating .messages { scroll-behavior: auto; }
+
+/* Кнопка «К ответу»: видна, только если человек сам отлистал вверх */
+.jump-latest {
+  position: absolute; left: 50%; bottom: 118px; z-index: 6;
+  transform: translate(-50%, 10px);
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 999px;
+  background: var(--bg-soft); border: 1px solid var(--line);
+  color: var(--text-soft); font-size: 13px; font-weight: 500;
+  box-shadow: 0 14px 32px -14px rgba(0,0,0,.6);
+  opacity: 0; pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease;
+}
+.jump-latest.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.jump-latest:hover { color: var(--text); border-color: var(--accent); }
 .msg {
   max-width: 820px;
   margin: 0 auto 20px;
@@ -2024,7 +2043,12 @@ html.no-anim .theme-flash { display: none; }
     left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom));
     top: auto;
     width: auto; min-width: 0;
+    /* запасной вариант: единицы dvh понимают не все браузеры (старый LibreWolf) */
+    max-height: min(78vh, 520px);
     max-height: min(72dvh, 520px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     border-radius: 18px;
     padding: 8px;
     animation: moreSheetUp .18s ease both;
@@ -2036,6 +2060,11 @@ html.no-anim .theme-flash { display: none; }
 
   /* Тап-цели крупнее: пальцем попадать проще */
   .more-item { padding: 11px 12px; font-size: 14px; }
+
+  .jump-latest {
+    bottom: calc(104px + env(safe-area-inset-bottom));
+    font-size: 12.5px; padding: 8px 14px;
+  }
 }
 
 /* Совсем узкие экраны: чуть мельче кнопки, чтобы ряд не упирался в край */
@@ -2051,6 +2080,43 @@ html.no-anim .theme-flash { display: none; }
   .comp-tools .tool-btn .ic { width: 17px; height: 17px; }
   .welcome-actions { grid-template-columns: 1fr !important; }
 }
+
+/* ============ Инструменты ============ */
+.tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tool-card {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  padding: 11px 12px; border-radius: 12px; text-align: left;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  color: var(--text); cursor: pointer;
+  transition: border-color .15s, transform .15s;
+}
+.tool-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.tool-card b { font-size: 13.5px; font-weight: 600; }
+.tool-card small { font-size: 11.5px; color: var(--text-dim); line-height: 1.35; }
+.tools-section { margin-top: 18px; }
+.tools-section > h3 {
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-dim); margin: 0 0 8px; font-weight: 600;
+}
+.tools-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.tools-row .btn { flex: 1 1 150px; }
+.tools-note { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin: 8px 0 0; }
+.bookmark-list { display: grid; gap: 8px; margin-top: 10px; max-height: 34vh; overflow-y: auto; }
+.bookmark-list[hidden] { display: none; }
+.bookmark-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; border-radius: 12px;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  font-size: 13px; color: var(--text-soft); text-align: left;
+}
+.bookmark-item span {
+  flex: 1; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bookmark-item button { color: var(--text-dim); font-size: 12px; padding: 2px 6px; border-radius: 6px; }
+.bookmark-item button:hover { color: var(--text); background: var(--bg-soft); }
+.bookmark-empty { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+@media (max-width: 700px) { .tools-grid { grid-template-columns: 1fr; } }
 
 /* Пункты меню, которые нужны только на телефоне */
 .more-item.only-phone { display: none; }
@@ -2178,6 +2244,14 @@ html.no-anim .theme-flash { display: none; }
           </svg>
         </button>
         <div class="more-menu" id="moreMenu" hidden>
+          <button type="button" class="more-item" id="toolsTop" data-more="tools">
+            <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6z"/>
+              <path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>
+            </svg>
+            <span>Инструменты</span>
+            <i class="more-tag">новое</i>
+          </button>
           <button type="button" class="more-item" id="kbTop" data-more="knowledge">
             <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
@@ -2309,6 +2383,11 @@ html.no-anim .theme-flash { display: none; }
       </div>
     </div>
 
+    <button type="button" class="jump-latest" id="jumpLatest" aria-label="К последнему ответу">
+      <svg class="ic" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      К ответу
+    </button>
+
     <!-- Composer -->
     <div class="composer-wrap">
       <form class="composer" id="composer" autocomplete="off">
@@ -2391,6 +2470,48 @@ html.no-anim .theme-flash { display: none; }
     </h2>
     <div class="modal-hint">Фигуры и модели по параметрам: смотри превью, крути мышкой, скачивай <b>.obj</b> или готовый скрипт для <b>Blender</b>. Всё считается в браузере, без ключей и регистраций.</div>
     <div id="mkBody"></div>
+  </div>
+</div>
+
+<!-- ================= Инструменты ================= -->
+<div class="modal-bg" id="toolsModal">
+  <div class="modal">
+    <h2>
+      <svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6z"/>
+        <path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>
+      </svg>
+      Инструменты
+    </h2>
+    <div class="hint">Всё работает прямо в браузере — без ключей, без регистрации, ничего никуда не отправляется.</div>
+
+    <div class="tools-section">
+      <h3>Шаблоны запросов</h3>
+      <div class="tools-grid" id="toolsTemplates"></div>
+      <p class="tools-note">Нажми — текст появится в поле ввода. Останется дописать своё и отправить.</p>
+    </div>
+
+    <div class="tools-section">
+      <h3>Говорить голосом</h3>
+      <div class="tools-row">
+        <button type="button" class="btn btn-ghost" id="toolsVoice">Говорить вместо печати</button>
+      </div>
+      <p class="tools-note" id="toolsVoiceNote"></p>
+    </div>
+
+    <div class="tools-section">
+      <h3>Разговор</h3>
+      <div class="tools-row">
+        <button type="button" class="btn btn-ghost" id="toolsExport">Скачать разговор файлом</button>
+        <button type="button" class="btn btn-ghost" id="toolsBookmarks">Закладки</button>
+      </div>
+      <div class="bookmark-list" id="toolsBookmarksList" hidden></div>
+      <p class="tools-note">Под каждым ответом есть кнопки «Короче» и «Ещё»: там проще, подробнее, закладка и повторный ответ.</p>
+    </div>
+
+    <div class="modal-row" style="margin-top:16px">
+      <button type="button" class="btn btn-ghost" id="toolsClose" style="flex:1">Закрыть</button>
+    </div>
   </div>
 </div>
 
@@ -7541,6 +7662,7 @@ const BRAND = {
 
 /* ---------- SVG иконки (inline) ---------- */
 const IC = {
+  star: '<polygon points="12 2 15.1 8.6 22 9.6 17 14.6 18.2 21.5 12 18.2 5.8 21.5 7 14.6 2 9.6 8.9 8.6 12 2"/>',
   copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   edit: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
   trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
@@ -8865,16 +8987,19 @@ function renderMessages() {
   $("#chatTitle").textContent = chat.title;
   m.querySelectorAll(".msg").forEach(n => n.remove());
   for (const msg of chat.messages) appendMessage(msg, false);
-  scrollToBottom();
+  stickBottom = true;       /* открыли чат — смотрим на последний ответ */
+  scrollToBottom(true);
 }
 /* Действия под ответом. Видно две кнопки, остальные — за «Ещё»:
    под каждым ответом не должно висеть по пять кнопок. */
 function answerActionsHtml(extra) {
   return `<button data-act="copy">${ic("copy", 14)} Копировать</button>` +
+    `<button data-act="shorter">Короче</button>` +
     `<button data-act="more" class="act-toggle" aria-label="Ещё действия">Ещё</button>` +
     `<span class="act-extra">` +
-      `<button data-act="shorter">Короче</button>` +
       `<button data-act="simpler">Проще</button>` +
+      `<button data-act="longer">Подробнее</button>` +
+      `<button data-act="bookmark">${ic("star", 14)} В закладки</button>` +
       `<button data-act="regen">${ic("regen", 14)} Перегенерить</button>` +
       (extra || "") +
     `</span>`;
@@ -8894,7 +9019,18 @@ function wireAnswerActions(actions, msgId) {
   });
 }
 
-function scrollToBottom() {
+/* ---------- Прокрутка: страница не «сопротивляется» ----------
+   Правило простое: вниз тянем, только пока человек сам внизу. Отлистал
+   вверх почитать — не трогаем, а показываем кнопку «К ответу». */
+let stickBottom = true;
+
+function nearBottom(m, slop) {
+  return (m.scrollHeight - m.scrollTop - m.clientHeight) <= (slop == null ? 90 : slop);
+}
+function showJump() { const j = $("#jumpLatest"); if (j) j.classList.add("show"); }
+function hideJump() { const j = $("#jumpLatest"); if (j) j.classList.remove("show"); }
+
+function scrollToBottom(force) {
   const m = $("#messages");
   if (!m) return;
   /* На пустом чате прокручивать нечего: приветствие выше экрана на телефоне,
@@ -8902,7 +9038,46 @@ function scrollToBottom() {
      видно — держим список сверху. */
   const w = $("#welcome");
   if (w && w.style.display !== "none") { m.scrollTop = 0; return; }
-  requestAnimationFrame(() => { m.scrollTop = m.scrollHeight; });
+  if (force !== true && !stickBottom) { showJump(); return; }
+  m.scrollTop = m.scrollHeight;
+  stickBottom = true;
+  hideJump();
+}
+
+/* Следим за рукой человека, а не только за кодом */
+function initScrollWatcher() {
+  const m = $("#messages");
+  if (!m) return;
+  const busy = () => document.body.classList.contains("generating");
+
+  m.addEventListener("scroll", () => {
+    if (nearBottom(m)) {
+      stickBottom = true;
+      hideJump();
+    } else {
+      stickBottom = false;
+      if (busy()) showJump();
+    }
+  }, { passive: true });
+
+  /* Колесо вверх отключает автопрокрутку сразу, не дожидаясь события scroll */
+  m.addEventListener("wheel", (e) => {
+    if (e.deltaY > 0) return;
+    stickBottom = false;
+    if (busy()) showJump();
+  }, { passive: true });
+
+  /* Палец вверх — то же самое на телефоне */
+  m.addEventListener("touchmove", () => {
+    if (!nearBottom(m, 24)) stickBottom = false;
+  }, { passive: true });
+
+  const j = $("#jumpLatest");
+  if (j) j.addEventListener("click", () => {
+    stickBottom = true;
+    m.scrollTop = m.scrollHeight;
+    hideJump();
+  });
 }
 
 function appendMessage(msg, animate = true) {
@@ -9008,6 +9183,10 @@ function onMsgAction(id, act) {
     sendMessage("Сократи последний ответ вдвое: только суть, без воды и повторов.");
   } else if (act === "simpler") {
     sendMessage("Объясни то же самое проще: короткими фразами, без терминов, как человеку, который видит это впервые.");
+  } else if (act === "longer") {
+    sendMessage("Раскрой этот ответ подробнее: добавь детали, примеры и пояснения к каждому шагу, но не повторяй то, что уже сказано.");
+  } else if (act === "bookmark") {
+    addBookmark(msg.content);
   } else if (act === "regen") {
     // удалить этот и все последующие и переотправить
     chat.messages = chat.messages.slice(0, i);
@@ -9710,7 +9889,8 @@ async function freshVersion() {
    клик всё равно доходит — обработчик висит на документе. */
 function runMoreAction(act, ev) {
   try {
-    if (act === "knowledge") openKnow();
+    if (act === "tools") openTools();
+    else if (act === "knowledge") openKnow();
     else if (act === "docs") openKnowledge();
     else if (act === "memory") openMemory();
     else if (act === "bigtext") toggleBigText();
@@ -9725,6 +9905,198 @@ function runMoreAction(act, ev) {
   } catch (e) {
     toast("Не получилось: " + ((e && e.message) || e), "err");
   }
+}
+
+/* ================= Инструменты =================
+   Всё считается в браузере: шаблоны, диктовка, экспорт, закладки. */
+
+const PROMPT_TEMPLATES = [
+  { t: "Письмо",            d: "деловое, вежливое",             q: "Напиши письмо.\nКому: ___\nО чём: ___\nТон: вежливый, деловой. Коротко, без канцелярита." },
+  { t: "Резюме",            d: "о себе на работу",              q: "Помоги с резюме.\nДолжность: ___\nОпыт: ___\nНавыки: ___\nСделай блоки «О себе», «Опыт», «Навыки» и короткое сопроводительное письмо." },
+  { t: "Простыми словами",  d: "сложную тему",                  q: "Объясни простыми словами: ___.\nБез терминов, с примером из жизни. В конце задай один вопрос для проверки." },
+  { t: "План дня",          d: "по делам",                      q: "Составь план на день.\nДела: ___\nСколько времени: ___\nПоставь по важности и оставь окна на отдых." },
+  { t: "Перевод",           d: "текста",                        q: "Переведи на ___: ___.\nСохрани смысл, а не слова. Если есть игра слов — поясни." },
+  { t: "Сравнение",         d: "двух вариантов",                q: "Сравни ___ и ___.\nТаблица: цена, плюсы, минусы, кому подходит. В конце — что бы выбрал ты и почему." },
+  { t: "Разбор кода",       d: "найти ошибки",                  q: "Проверь код на ошибки и подскажи, что улучшить:\n```\n\n```" },
+  { t: "Идеи",              d: "когда не знаешь, с чего начать", q: "Дай 10 идей по теме: ___.\nРазные, не похожие друг на друга, с одним предложением пояснения." }
+];
+
+function voiceSupported() {
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
+let voiceRec = null;
+function toggleVoice() {
+  const btn = $("#toolsVoice");
+  if (voiceRec) { try { voiceRec.stop(); } catch (e) {} return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast("Этот браузер не умеет слушать голос", "err"); return; }
+  const input = $("#input");
+  const base = input ? input.value.trim() : "";
+  try {
+    voiceRec = new SR();
+    voiceRec.lang = "ru-RU";
+    voiceRec.interimResults = true;
+    voiceRec.continuous = false;
+    if (btn) btn.textContent = "Слушаю… нажми, чтобы остановить";
+    voiceRec.onresult = (ev) => {
+      let text = "";
+      for (let i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
+      if (!input) return;
+      input.value = (base ? base + " " : "") + text.trim();
+      try { autoresize(); } catch (e) {}
+    };
+    voiceRec.onerror = (e) => {
+      const msg = (e && e.error === "not-allowed")
+        ? "Браузер не пустил к микрофону — разреши доступ в настройках сайта"
+        : "Не расслышал, попробуй ещё раз";
+      toast(msg, "err");
+    };
+    voiceRec.onend = () => {
+      voiceRec = null;
+      if (btn) btn.textContent = "Говорить вместо печати";
+    };
+    voiceRec.start();
+  } catch (e) {
+    voiceRec = null;
+    if (btn) btn.textContent = "Говорить вместо печати";
+    toast("Не получилось включить микрофон", "err");
+  }
+}
+
+function getBookmarks() {
+  return Array.isArray(settings.bookmarks) ? settings.bookmarks : [];
+}
+
+function addBookmark(text) {
+  const t = String(text == null ? "" : text).trim();
+  if (!t) { toast("Нечего сохранять"); return; }
+  const list = getBookmarks();
+  if (list.some(b => b && b.text === t)) { toast("Этот ответ уже в закладках"); return; }
+  const chat = getCurrentChat();
+  list.unshift({ text: t, ts: Date.now(), chat: (chat && chat.title) || "" });
+  settings.bookmarks = list.slice(0, 100);   /* больше сотни не держим: телефон не резиновый */
+  saveSettings();
+  if ($("#toolsBookmarksList") && !$("#toolsBookmarksList").hidden) renderBookmarks();
+  toast("Добавлено в закладки", "ok");
+}
+
+function removeBookmark(ts) {
+  settings.bookmarks = getBookmarks().filter(b => b && b.ts !== ts);
+  saveSettings();
+  renderBookmarks();
+  toast("Закладка убрана");
+}
+
+function renderBookmarks() {
+  const box = $("#toolsBookmarksList");
+  if (!box) return;
+  const list = getBookmarks();
+  if (!list.length) {
+    box.innerHTML = `<div class="bookmark-empty">Пока пусто. Открой ответ, нажми «Ещё» → «В закладки» — и он появится здесь.</div>`;
+    return;
+  }
+  box.innerHTML = list.map(b => `
+    <div class="bookmark-item">
+      <span>${esc(String(b.text || "").slice(0, 400))}</span>
+      <button type="button" data-bm-drop="${Number(b.ts)}" aria-label="Убрать закладку">✕</button>
+    </div>`).join("");
+  box.querySelectorAll("[data-bm-drop]").forEach(btn => {
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      removeBookmark(Number(btn.dataset.bmDrop));
+    });
+  });
+  box.querySelectorAll(".bookmark-item span").forEach((span, i) => {
+    span.style.cursor = "pointer";
+    span.addEventListener("click", () => {
+      const b = getBookmarks()[i];
+      if (!b) return;
+      const input = $("#input");
+      if (input) { input.value = b.text; try { autoresize(); } catch (e) {} input.focus(); }
+      closeTools();
+      toast("Закладка в поле ввода", "ok");
+    });
+  });
+}
+
+function exportChat() {
+  const chat = getCurrentChat();
+  if (!chat || !chat.messages || !chat.messages.length) {
+    toast("В этом чате пока нечего сохранять");
+    return;
+  }
+  const lines = [`# ${chat.title || "Разговор с Искрой"}`, ""];
+  for (const m of chat.messages) {
+    lines.push(m.role === "user" ? "**Ты:**" : "**Искра:**");
+    lines.push(String(m.content || "").trim());
+    lines.push("");
+  }
+  const name = String(chat.title || "iskra-разговор").replace(/[\\/:*?"<>|]+/g, "-").slice(0, 60) || "iskra-разговор";
+  try {
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name + ".md";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    toast("Разговор сохранён в файл", "ok");
+  } catch (e) {
+    toast("Не получилось сохранить файл", "err");
+  }
+}
+
+function openTools() {
+  const grid = $("#toolsTemplates");
+  if (grid && !grid.dataset.ready) {
+    grid.innerHTML = PROMPT_TEMPLATES.map((t, i) =>
+      `<button type="button" class="tool-card" data-tpl="${i}"><b>${esc(t.t)}</b><small>${esc(t.d)}</small></button>`
+    ).join("");
+    grid.dataset.ready = "1";
+    grid.querySelectorAll("[data-tpl]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const t = PROMPT_TEMPLATES[Number(btn.dataset.tpl)];
+        if (!t) return;
+        const input = $("#input");
+        if (input) { input.value = t.q; try { autoresize(); } catch (e) {} }
+        closeTools();
+        if (input) input.focus();
+        toast("Шаблон вставлен — допиши своё", "ok");
+      });
+    });
+  }
+  const note = $("#toolsVoiceNote");
+  if (note) {
+    note.textContent = voiceSupported()
+      ? "Скажи вслух — текст появится в поле ввода. Браузер один раз спросит доступ к микрофону."
+      : "Этот браузер не умеет слушать голос. Зайди в Chrome или в свежий LibreWolf — либо просто напечатай.";
+  }
+  const list = $("#toolsBookmarksList");
+  if (list) { list.hidden = true; }
+  const m = $("#toolsModal");
+  if (m) m.classList.add("open");
+}
+function closeTools() {
+  const m = $("#toolsModal");
+  if (m) m.classList.remove("open");
+}
+
+/* Кнопки внутри окна инструментов */
+function wireTools() {
+  const on = (id, fn) => { const el = $("#" + id); if (el) el.addEventListener("click", fn); };
+  on("toolsClose", closeTools);
+  on("toolsVoice", toggleVoice);
+  on("toolsExport", exportChat);
+  on("toolsBookmarks", () => {
+    const list = $("#toolsBookmarksList");
+    if (!list) return;
+    list.hidden = !list.hidden;
+    if (!list.hidden) renderBookmarks();
+  });
+  const modal = $("#toolsModal");
+  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeTools(); });
 }
 function cycleTheme(ev) {
   const i = THEME_ORDER.indexOf(settings.theme);
@@ -10318,6 +10690,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
      ответ переезжает в новый чат, и рисовать нужно уже туда */
   const streamEl = () => (liveStream && liveStream.aiId === aiMsg.id && liveStream.contentEl) || contentEl;
   el.classList.add("thinking");
+  document.body.classList.add("generating");
   contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
   // если ответа нет дольше 8 секунд — показываем, что происходит
   const slowTimer = setTimeout(() => {
@@ -10434,6 +10807,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     sendBtn.innerHTML = ic("arrowUp", 22);
     abortCtrl = null;
     el.classList.remove("thinking");
+    document.body.classList.remove("generating");
     if (liveStream && liveStream.aiId === aiMsg.id) liveStream = null;
   }
 }
@@ -15824,7 +16198,7 @@ function wire() {
   // Lightbox
   $("#lbClose").addEventListener("click", closeLightbox);
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox") closeLightbox(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeKnow(); closeSettings(); closeMemory(); closeRules(); closeAuth(); const om=$("#onboardModal"); if(om) om.classList.remove("open"); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closeSkills(); closeKnowledge(); closeKnow(); closeSettings(); closeMemory(); closeRules(); closeAuth(); closeTools(); const om=$("#onboardModal"); if(om) om.classList.remove("open"); } });
 
   // Режимы работы
   renderModeCards();
@@ -15968,6 +16342,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const cb = document.getElementById("checkAll");
   if (cb) cb.addEventListener("click", () => { cb.disabled = true; cb.textContent = "Проверяю…"; runSelfCheck().finally(() => { cb.disabled = false; cb.textContent = "Проверить ИИ"; }); });
   wire();
+  wireTools();
+  initScrollWatcher();
   // Ссылка …/#access открывает сразу «Доступ» — по ней из окна агента Sye идут за ключом.
   const wantAccess = () => /^#(access|tariff|pro)$/i.test(String(location.hash || ""));
   const showAccess = () => {
