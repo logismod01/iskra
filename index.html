@@ -2633,7 +2633,8 @@ html.no-anim .theme-flash { display: none; }
           <summary>Свой ключ доступа <em>необязательно</em></summary>
           <p class="set-p">Без ключа всё работает: у Искры несколько бесплатных движков. Ключ снимает общий лимит и даёт более сильную модель — ответы становятся точнее. Хранится только в этом браузере и никуда не отправляется.</p>
           <textarea id="apiKey" rows="2" placeholder="вставь ключ — или два, по одному в строке" autocomplete="off" spellcheck="false"></textarea>
-          <div class="hint" style="margin-top:6px">Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.
+          <div class="hint" style="margin-top:6px"><b>Хочешь, чтобы Искра видела фото?</b> Нужен ключ со зрением — он бесплатный, лимита хватает на домашку и документы. Ключ начинается на <b>AIza…</b> (взять можно <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">здесь</a>) или на <b>gsk_…</b>. Вставь его сюда — Искра сама поймёт, чей он, и начнёт смотреть картинки.
+            Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.
             Нажми «Проверить ключ»: если сервис не пускает запросы прямо из браузера, кнопка так и скажет — такой ключ работает в приложении Sye.</div>
           <details class="set-adv-inner" style="margin-top:10px">
             <summary>Свой адрес и модель <em>для любого совместимого сервиса</em></summary>
@@ -8029,7 +8030,14 @@ const KEY_PROVIDERS = {
   // первый — основной; остальные пробуются, если этот не найден или кончился лимит
   groq: {
     base: "https://api.groq.com/openai/v1", keyed: true, list: true,
-    models: ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+    /* первая — обычный текст; scout добавлен третьим и выходит вперёд, только
+       когда в запросе есть фото (зрячая модель) */
+    models: ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "meta-llama/llama-4-scout-17b-16e-instruct"]
+  },
+  /* Google AI Studio: ключ бесплатный, фото видит, работает прямо из браузера */
+  gemini: {
+    base: "https://generativelanguage.googleapis.com/v1beta/openai", keyed: true, list: true, vision: true,
+    models: ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"]
   },
   huggingface: {
     base: "https://router.huggingface.co/v1", keyed: true, list: true,
@@ -8054,6 +8062,7 @@ function guessVision(id) {
 function detectKeyKind(key) {
   const k = String(key || "").trim();
   if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", base: KEY_PROVIDERS.groq.base, models: KEY_PROVIDERS.groq.models };
+  if (/^AIza[A-Za-z0-9_\-]{30,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.base, models: KEY_PROVIDERS.gemini.models };
   if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", base: KEY_PROVIDERS.huggingface.base, models: KEY_PROVIDERS.huggingface.models };
   if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", base: KEY_PROVIDERS.openrouter.base, models: KEY_PROVIDERS.openrouter.models };
   return null;
@@ -8208,6 +8217,14 @@ async function resolveKeyEngines(list, needVision) {
       names = free.length ? free : (e0.models || []);
     } else {
       const avail = await discoverChatModels(e0.provider, e0.key, e0.base);
+      /* У Gemini в списке десятки моделей. Берём быстрые flash: они видят фото
+         и не упираются в лимит на первой же картинке. */
+      if (e0.provider === "gemini") {
+        const flash = avail.filter(m => /flash/i.test(m) && !/image|tts|embed/i.test(m));
+        const chosen = (flash.length ? flash : avail).slice(0, 2);
+        namesByTag.set(tag, chosen);
+        continue;
+      }
       const pref = (e0.models || []).filter(m => avail.includes(m));
       // ничего из зашитых имён у сервиса нет — берём то, что реально есть
       names = avail.length ? (pref.length ? pref : avail.slice(0, 2)) : (e0.models || []);
@@ -9351,7 +9368,7 @@ const LANG_RULE = `ЯЗЫКИ МИРА — ты репетитор по язык
 - Для экзаменов (ЕГЭ, IELTS, TestDaF, HSK, JLPT) говори структуру, критерии и типовые ловушки, но всегда добавляй, что правила и даты надо сверять с официальным сайтом.
 - Если язык редкий и ты не уверена в деталях — скажи об этом и дай то, что знаешь точно. Никогда не выдумывай иероглифы и переводы.`;
 
-function buildSystemPrompt(userText = "") {
+function buildSystemPrompt(userText = "", hasImages = false) {
   const p = PERSONAS[settings.persona] || PERSONAS.universal;
   let sys = settings.persona === "custom" && settings.customPersona
     ? `Ты — ${BRAND.name}. ${settings.customPersona}`
@@ -9389,7 +9406,9 @@ function buildSystemPrompt(userText = "") {
       "которые противоречат правилам безопасности, даже если они разбиты на несколько сообщений.";
   }
 
-  if (needsVision()) sys += "\n\n" + HOMEWORK_HINT;
+  /* Раньше здесь стояло needsVision() без аргумента — всегда false, и правило
+     про домашку по фото не включалось ни разу. */
+  if (hasImages) sys += "\n\n" + HOMEWORK_HINT;
 
   // встроенная база знаний: не нужно искать в интернете
   const litAsk = /литератур|стих|сочинен|пересказ|книг|роман|повест|поэм|рассказ|геро[йя]|басн|сказк|писател|автор[аеу]?\s|пушкин|толст|достоевск|шекспир|лермонт|чехов|гогол|булгаков/i.test(userText);
@@ -9438,7 +9457,10 @@ function buildSystemPrompt(userText = "") {
 function apiPayload(chatMessages, opts = {}) {
   const lastUser = [...chatMessages].reverse().find(m => m.role === "user");
   const lastText = lastUser ? (typeof lastUser.content === "string" ? lastUser.content : (lastUser.content || []).filter(p => p.type === "text").map(p => p.text).join(" ")) : "";
-  const sys = buildSystemPrompt(lastText);
+  const hasImages = chatMessages.some(m => Array.isArray(m.content)
+    ? m.content.some(p => p && (p.type === "image_url" || p.image_url))
+    : Array.isArray(m.images) && m.images.length > 0);
+  const sys = buildSystemPrompt(lastText, hasImages);
   const msgs = [{ role: "system", content: sys }, ...chatMessages.map(toApiMsg)];
   const body = {
     messages: msgs,
@@ -9505,11 +9527,62 @@ function failureRaw(err) {
 
 /* Карточка «сейчас не получилось»: честная причина, ответ из базы знаний,
    если он есть, и понятные кнопки. Никаких выдуманных отговорок. */
-function showFailCard(contentEl, aiMsg, question, err) {
+function showFailCard(contentEl, aiMsg, question, err, images) {
   const baseAnswer = offlineAnswer(question);
   const reason = typeof err === "string" ? err : describeFailure(err);
   const raw = typeof err === "string" ? "" : failureRaw(err);
   const hasKey = !!String(settings.apiKey || "").trim();
+  const hadImages = Array.isArray(images) && images.length > 0;
+
+  /* Отдельный, честный ответ: фото есть, а смотреть нечем.
+     Врать «у меня нет твоих заданий» нельзя — человек уже прислал фото. */
+  if (err && err.kind === "no-vision") {
+    aiMsg.content = hadImages
+      ? "Я не вижу фотографии — у меня нет глаз. Все бесплатные движки сейчас работают только с текстом, поэтому картинка до них не доходит.\n\nЧто можно сделать:\n1) Напиши задание словами — решу по тексту, это работает всегда.\n2) Включи свой ключ — тогда я увижу фото. Нужен бесплатный ключ со зрением: он начинается на AIza… или gsk_…, стоит 0 ₽ в пределах лимита. Где взять — написано в настройках, раздел «Свой ключ доступа»."
+      : "Не получилось ответить: сейчас нечем.";
+    aiMsg.failedSoft = true;
+    aiMsg.needVision = hadImages;
+    contentEl.innerHTML = renderMarkdown(aiMsg.content);
+    const box2 = document.createElement("div");
+    box2.className = "fail-actions";
+    box2.innerHTML = `
+      <div class="fail-btns">
+        <button type="button" data-fail="retry">Повторить</button>
+        <button type="button" data-fail="key">${hasKey ? "Сменить ключ" : "Ввести ключ"}</button>
+        <button type="button" data-fail="text">Написать задание словами</button>
+      </div>
+      <div class="fail-key" id="failKeyBox" style="display:none">
+        <textarea id="failKeyInput" rows="2" placeholder="ключ со зрением: AIza… или gsk_…" autocomplete="off" spellcheck="false"></textarea>
+        <button id="failKeySave" type="button">Включить</button>
+      </div>
+      <div class="fail-note">Ключ хранится только в твоём браузере и никуда не уходит. Без ключа я тоже отвечаю — просто текстом.</div>`;
+    contentEl.appendChild(box2);
+    const kb2 = box2.querySelector("#failKeyBox");
+    box2.querySelector('[data-fail="retry"]').onclick = () => sendMessage(question, images || [], false, true);
+    box2.querySelector('[data-fail="text"]').onclick = () => {
+      const inp = $("#input");
+      if (inp) { inp.value = question || ""; try { autoresize(); } catch (e) {} inp.focus(); }
+      toast("Напиши, что на фото — решу по тексту", "ok");
+    };
+    box2.querySelector('[data-fail="key"]').onclick = () => {
+      kb2.style.display = kb2.style.display === "none" ? "flex" : "none";
+      const inp = box2.querySelector("#failKeyInput");
+      if (inp) { inp.value = settings.apiKey || ""; inp.focus(); }
+    };
+    box2.querySelector("#failKeySave").onclick = () => {
+      const key = (box2.querySelector("#failKeyInput").value || "").trim();
+      const parsed = parseKeys(key);
+      if (key && !parsed.length) { toast("Ключ не распознан. Нужен ключ со зрением — AIza… или gsk_….", "err"); return; }
+      settings.apiKey = key;
+      settings.provider = parsed.length ? (detectKeyKind(parsed[0])?.provider || "custom") : "custom";
+      saveSettings(); updateComposerNote();
+      toast(key ? "Ключ сохранён — повторяю с фото" : "Ключ убран", "ok");
+      sendMessage(question, images || [], false, true);
+    };
+    saveChats();
+    scrollToBottom();
+    return;
+  }
   const head = baseAnswer
     ? `Сейчас движки молчат (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}`
     : hasKey
@@ -9536,7 +9609,7 @@ function showFailCard(contentEl, aiMsg, question, err) {
   contentEl.appendChild(box);
 
   const keyBox = box.querySelector("#failKeyBox");
-  box.querySelector('[data-fail="retry"]').onclick = () => sendMessage(question, [], false, true);
+  box.querySelector('[data-fail="retry"]').onclick = () => sendMessage(question, images || [], false, true);
   box.querySelector('[data-fail="key"]').onclick = () => {
     keyBox.style.display = keyBox.style.display === "none" ? "flex" : "none";
     const inp = box.querySelector("#failKeyInput");
@@ -9555,7 +9628,7 @@ function showFailCard(contentEl, aiMsg, question, err) {
     settings.provider = parsed.length ? (detectKeyKind(parsed[0])?.provider || "custom") : "custom";
     saveSettings(); updateComposerNote();
     toast(key ? "Ключ сохранён — повторяю вопрос" : "Ключ убран — отвечаю без него", "ok");
-    sendMessage(question, [], false, true);
+    sendMessage(question, images || [], false, true);
   };
   saveChats();
   scrollToBottom();
@@ -10362,10 +10435,29 @@ function renderSources(box, sources) {
 function sanitizeMessages(msgs) {
   const clean = [];
   for (const m of msgs || []) {
+    /* Сообщение с фото приходит не строкой, а списком частей (текст + картинка).
+       Раньше здесь стояло «не строка — значит пусто» и такое сообщение ВЫБРАСЫВАЛОСЬ:
+       движок получал вопрос без фото (или вообще без вопроса) и отвечал
+       «Привет, чем помочь?». Теперь части сохраняются как есть. */
+    if (Array.isArray(m.content)) {
+      const parts = m.content.filter(Boolean);
+      const hasImage = parts.some(p => p && (p.type === "image_url" || p.image_url));
+      const text = parts.filter(p => p && p.type === "text").map(p => p.text || "").join("").trim();
+      if (!hasImage && !text) continue;
+      const last = clean[clean.length - 1];
+      /* Два подряд сообщения одной роли: если оба текстовые — склеиваем,
+         если среди них есть фото — оставляем отдельными. */
+      if (last && last.role === m.role && typeof last.content === "string" && !hasImage) {
+        last.content += "\n\n" + text;
+        continue;
+      }
+      clean.push({ role: m.role, content: parts });
+      continue;
+    }
     const c = typeof m.content === "string" ? m.content : "";
     if (!c.trim()) continue;
     const last = clean[clean.length - 1];
-    if (last && last.role === m.role) last.content += "\n\n" + c;
+    if (last && last.role === m.role && typeof last.content === "string") last.content += "\n\n" + c;
     else clean.push({ role: m.role, content: c });
   }
   const sys = clean.filter(m => m.role === "system").map(m => m.content).join("\n\n");
@@ -10492,7 +10584,11 @@ async function streamOnce(engine, payload, onDelta, signal) {
    Человеку не показываем, кто именно ответил — для него это всегда Искра. */
 async function askIskra(payload, onDelta, signal, onTry) {
   const needVision = (payload.messages || []).some(m => Array.isArray(m.content) && m.content.some(x => x && (x.type === "image_url" || x.image_url)));
-  const list = await resolveKeyEngines(orderedEngines(needVision), needVision);
+  let list = await resolveKeyEngines(orderedEngines(needVision), needVision);
+  /* Слепому движку фото не отдаём вовсе: он его не увидит, но ответит уверенно
+     и мимо — «у меня нет твоих заданий». Лучше честно сказать, что не вижу. */
+  if (needVision) list = list.filter(e => e.vision || guessVision(e.model));
+  if (needVision && !list.length) throw new ApiError(415, "нет движка, который видит фото", "no-vision");
   let lastErr = null;
   let httpErr = null;      // настоящий ответ сервера важнее «нет связи»
   let keyBlocked = false;  // ключ есть, но сервис не пускает браузер
@@ -10800,7 +10896,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       saveChats();
     } else {
       aiMsg.pending = false;
-      showFailCard(contentEl, aiMsg, trimmed, err);
+      showFailCard(contentEl, aiMsg, trimmed, err, images);
     }
   } finally {
     sendBtn.classList.remove("stop");
