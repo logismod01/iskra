@@ -149,17 +149,17 @@ await test("страну спрашивают у нескольких серви
 });
 
 await test("ответ про страну запоминается на 12 часов", async () => {
-  window.eval(`regionToCache("KZ")`);
-  assert(window.eval(`regionFromCache()`) === "KZ", "страна не запомнилась");
-  window.localStorage.setItem(window.eval(`REGION_CACHE_KEY`), JSON.stringify({ code: "KZ", at: Date.now() - 13 * 3600e3 }));
+  window.eval(`regionToCache({ country: "KZ", ipTz: "" })`);
+  assert(window.eval(`regionFromCache().country`) === "KZ", "страна не запомнилась");
+  window.localStorage.setItem(window.eval(`REGION_CACHE_KEY`), JSON.stringify({ country: "KZ", ipTz: "", at: Date.now() - 13 * 3600e3 }));
   assert(window.eval(`regionFromCache()`) === null, "старая запись не протухла");
   window.localStorage.removeItem(window.eval(`REGION_CACHE_KEY`));
 });
 
 /* ---------- 6. Версия ---------- */
-await test("версия сайта и кэша — 1.26.0", async () => {
-  assert(pkg.version === "1.26.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.26\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.27.0", async () => {
+  assert(pkg.version === "1.27.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.27\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round25: " + passed + " проверок пройдено");
