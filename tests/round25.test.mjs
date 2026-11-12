@@ -157,9 +157,9 @@ await test("ответ про страну запоминается на 12 ча
 });
 
 /* ---------- 6. Версия ---------- */
-await test("версия сайта и кэша — 1.28.0", async () => {
-  assert(pkg.version === "1.28.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.28\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.29.0", async () => {
+  assert(pkg.version === "1.29.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.29\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round25: " + passed + " проверок пройдено");

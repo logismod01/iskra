@@ -1466,6 +1466,63 @@ button:active:not(:disabled) { transform: scale(.975); }
 .auth-region[hidden] { display: none; }
 .auth-region .ar-flag { font-size: 20px; line-height: 1.15; }
 .auth-region b { color: var(--text); }
+
+/* Заявка на смену страны */
+.region-news {
+  position: fixed; left: 50%; top: 58px; transform: translateX(-50%);
+  z-index: 3200; max-width: min(560px, calc(100vw - 20px));
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 11px;
+  background: var(--bg-soft); border: 1px solid var(--accent-soft);
+  font-size: 12.5px; line-height: 1.45; color: var(--text-soft);
+  box-shadow: 0 16px 34px -18px rgba(0,0,0,.6);
+}
+.region-news[hidden] { display: none; }
+#regionChangeModal { z-index: 3100; }
+.region-news button {
+  flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%;
+  color: var(--text-dim); font-size: 12px;
+}
+.region-news button:hover { color: var(--text); background: var(--bg-soft-2); }
+@media (max-width: 700px) { .region-news { top: auto; bottom: calc(150px + env(safe-area-inset-bottom)); } }
+
+.rc-intro { font-size: 12.5px; color: var(--text-soft); line-height: 1.5; margin: 0 0 14px; }
+.rc-block { display: flex; gap: 10px; margin-bottom: 14px; }
+.rc-num {
+  flex: 0 0 22px; height: 22px; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent); font-size: 12px; font-weight: 700;
+  display: grid; place-items: center;
+}
+.rc-body { flex: 1; min-width: 0; }
+.rc-h { font-size: 13.5px; font-weight: 620; margin-bottom: 8px; }
+.rc-dim { font-size: 11.5px; color: var(--text-dim); line-height: 1.45; margin-top: 4px; }
+.rc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 520px) { .rc-row { grid-template-columns: 1fr; } }
+.rc-pay {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; border-radius: 11px;
+  border: 1px dashed var(--line); background: var(--bg-soft-2);
+}
+.rc-receipt {
+  font-family: ui-monospace, monospace; font-size: 26px; letter-spacing: 8px;
+  font-weight: 700; color: var(--accent); text-align: center;
+  padding: 10px 6px; margin: 10px 0 6px; border-radius: 11px;
+  background: var(--bg); border: 1px solid var(--accent-soft);
+}
+.rc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.rc-actions .auth-btn { flex: 0 0 auto; }
+.rc-check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); margin-top: 10px; cursor: pointer; }
+.rc-count { font-size: 11.5px; color: var(--text-dim); margin-top: 4px; }
+.rc-count.ok { color: var(--ok); }
+.rc-status { border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; background: var(--bg-soft-2); }
+.rc-status-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rc-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 20px; white-space: nowrap; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.rc-status.st-approved { border-color: var(--accent-soft); }
+.rc-status.st-broken .rc-badge, .rc-status.st-rejected .rc-badge { background: rgba(255,107,90,.16); color: #ff9c8f; }
+.rc-status.st-done .rc-badge { background: rgba(84,180,120,.16); color: #7ed6a1; }
+.rc-reply { margin-top: 10px; font-size: 12px; color: var(--text-dim); }
+.rc-reply summary { cursor: pointer; }
 .auth-limit { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; }
 .auth-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; margin-left: 8px; letter-spacing: .03em; }
 .auth-badge.on { background: rgba(84,180,120,.16); color: #7ed6a1; }
@@ -2202,6 +2259,7 @@ html.no-anim .theme-flash { display: none; }
     <p id="regionText">К сожалению, мы не можем открыть доступ из вашего региона. Это ограничение со стороны сервиса, а не блокировка вашего устройства.</p>
     <p class="region-foot">Если вы считаете, что это ошибка, напишите владельцу — контакты в репозитории проекта.</p>
     <button type="button" class="region-retry" id="regionRetry">Проверить снова</button>
+    <button type="button" class="region-retry" id="regionChangeAsk" hidden>Запросить смену страны</button>
     <button type="button" class="region-retry" id="regionLogout" hidden>Выйти из аккаунта</button>
   </div>
 </div>
@@ -2210,6 +2268,12 @@ html.no-anim .theme-flash { display: none; }
 <div class="region-banner" id="regionBanner" hidden>
   <span id="regionBannerText"></span>
   <button type="button" id="regionBannerClose" aria-label="Скрыть">✕</button>
+</div>
+
+<!-- Сообщение о заявке на смену страны: появляется, когда приходит ответ владельца -->
+<div class="region-news" id="regionNews" hidden>
+  <span id="regionNewsText"></span>
+  <button type="button" id="regionNewsClose" aria-label="Понятно">✕</button>
 </div>
 
 <!-- Если приложение не смогло запуститься (старый браузер, обрыв загрузки),
@@ -8380,6 +8444,576 @@ function regionApplyProfile() {
   return true;
 }
 
+/* ================= Смена страны: заявка =================
+   Страна в профиле меняется не по щелчку. Владелец поставил пять условий,
+   и все пять проверяются здесь, до отправки:
+
+   1) новый адрес: страна, город, улица и дом;
+   2) обещание два месяца заходить именно из этой локации — и если человек
+      ходит через VPN, то и выход у VPN должен быть из новой страны;
+   3) 10 ₽ и чек из четырёх знаков, прикреплённый к заявке;
+   4) объяснение не короче 20 слов: почему страну надо поменять;
+   5) ник или примета, по которой владелец узнает человека.
+
+   Дальше решает владелец: поменять сразу, поставить испытательный срок
+   или отклонить. Нарушил срок — страна остаётся прежней.
+
+   Заявка живёт в аккаунте и переносится между устройствами одной строкой
+   ISKRA-R1:… (её можно послать в Telegram). Ответ владельца — строка
+   ISKRA-R2:… — вставляется в «Мой аккаунт» и сразу меняет статус. */
+
+const REGION_ISO =
+  "AF AX AL DZ AS AD AO AI AQ AG AR AM AW AU AT AZ BS BH BD BB BY BE BZ BJ BM BT BO BQ BA BW BV BR IO BN BG BF BI CV KH CM CA KY CF TD CL CN CX CC CO KM CG CD CK CR CI HR CU CW CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FK FO FJ FI FR GF PF GA GM GE DE GH GI GR GL GD GP GU GT GG GN GW GY HT HM VA HN HK HU IS IN ID IR IQ IE IM IL IT JM JP JE JO KZ KE KI KP KR KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MQ MR MU YT MX FM MD MC MN ME MS MA MZ MM NA NR NP NL NC NZ NI NE NG NU NF MK MP NO OM PK PW PS PA PG PY PE PH PN PL PT PR QA RE RO RU RW BL SH KN LC MF PM VC WS SM ST SA SN RS SC SL SG SX SK SI SB SO ZA GS SS ES LK SD SR SJ SE CH SY TW TJ TZ TH TL TG TK TO TT TN TR TM TC TV UG UA AE GB US UM UY UZ VU VE VN VG VI WF EH YE ZM ZW";
+
+const REGION_CHANGE_PRICE = 10;          // рублей за смену страны
+const REGION_MIN_WORDS = 20;             // короче — не принимаем
+const REGION_PROBATION_DAYS = 60;        // два месяца испытательного срока
+const REGION_RECEIPT_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // без похожих 0/O/1/I
+
+/* Короткие ключи заявки (чтобы строка для Telegram была короче):
+   t — тикет, n — имя, m — почта/телефон, k — метка, f — было, to — станет,
+   c — город, a — адрес, rc — чек, pr — цена, w — почему, at — когда. */
+const REGION_REQ_TEXT = {
+  pending: "ждёт решения",
+  approved: "испытательный срок",
+  broken: "условие нарушено",
+  done: "страна изменена",
+  rejected: "отклонена",
+  cancelled: "отменена"
+};
+
+function regionIsoList() {
+  return REGION_ISO.split(" ").filter(Boolean).map(c => ({ code: c, name: regionCountryName(c) }));
+}
+
+function regionRandCode(n, alphabet) {
+  const abc = alphabet || REGION_RECEIPT_ALPHABET;
+  let out = "";
+  const bytes = (typeof crypto !== "undefined" && crypto.getRandomValues)
+    ? crypto.getRandomValues(new Uint8Array(n)) : null;
+  for (let i = 0; i < n; i++) {
+    out += abc[(bytes ? bytes[i] : Math.floor(Math.random() * 256)) % abc.length];
+  }
+  return out;
+}
+function regionReceiptCode() { return regionRandCode(4); }
+function regionTicketCode() { return "RR-" + regionRandCode(4); }
+
+/* Сколько слов в объяснении. Цифры и слова через дефис считаем: людям так понятнее */
+function regionWordCount(text) {
+  const m = String(text || "").toLowerCase().match(/[a-zа-яё0-9]+(?:[-'’][a-zа-яё0-9]+)*/g);
+  return m ? m.length : 0;
+}
+
+/* «1 слово», «2 слова», «5 слов» — по-русски, а не «5 слова» */
+function regionWordForm(n) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return n + " слов";
+  if (b === 1) return n + " слово";
+  if (b >= 2 && b <= 4) return n + " слова";
+  return n + " слов";
+}
+
+function regionSaveAccount(acc) {
+  if (!acc) return;
+  authSaveAccounts(authAccounts().map(a => (a.id === acc.id ? acc : a)));
+}
+
+/* ---------- Сообщения человеку ---------- */
+function regionNewsPush(acc, text) {
+  if (!acc) return;
+  acc.regionNews = acc.regionNews || [];
+  acc.regionNews.push({ at: Date.now(), text: String(text), read: false });
+  if (acc.regionNews.length > 20) acc.regionNews = acc.regionNews.slice(-20);
+}
+function regionNewsUnread(acc) {
+  return ((acc && acc.regionNews) || []).filter(n => !n.read);
+}
+function regionNewsShow() {
+  const box = $("#regionNews"), text = $("#regionNewsText");
+  if (!box || !text) return;
+  let acc = null;
+  try { acc = currentAccount(); } catch (e) {}
+  const unread = regionNewsUnread(acc);
+  if (!unread.length) { box.hidden = true; return; }
+  text.textContent = unread[unread.length - 1].text;
+  box.hidden = false;
+  const btn = $("#regionNewsClose");
+  if (btn) btn.onclick = () => { regionNewsRead(); toast("Понятно", "ok"); };
+}
+function regionNewsRead() {
+  let acc = null;
+  try { acc = currentAccount(); } catch (e) {}
+  if (!acc) return;
+  (acc.regionNews || []).forEach(n => { n.read = true; });
+  regionSaveAccount(acc);
+  regionNewsShow();
+  renderProfile();
+}
+
+/* ---------- Строки для переноса между устройствами ---------- */
+function regionB64Encode(str) {
+  const bytes = new TextEncoder().encode(String(str));
+  let bin = "";
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function regionB64Decode(str) {
+  const p = String(str).replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(p + "=".repeat((4 - p.length % 4) % 4));
+  const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+/* Заявка одной строкой: человек копирует её и посылает владельцу */
+function regionTicketLine(req) {
+  const payload = {
+    t: req.t, n: req.n || "", m: req.m || "", k: req.k || "",
+    f: req.f || "", to: req.to, c: req.c, a: req.a,
+    vpn: req.vpn ? 1 : 0, rc: req.rc, pr: req.pr, w: req.w, at: req.at
+  };
+  return "ISKRA-R1:" + regionB64Encode(JSON.stringify(payload));
+}
+
+/* Заявка словами: чтобы владелец прочитал её ещё до разбора */
+function regionReqHuman(req) {
+  return [
+    "Заявка на смену страны " + req.t,
+    "Кто: " + (req.n || "—") + (req.m ? " · " + req.m : "") + (req.k ? " · метка «" + req.k + "»" : ""),
+    "Страна: " + (req.f ? regionCountryName(req.f) : "—") + " → " + regionCountryName(req.to),
+    "Адрес: " + regionCountryName(req.to) + ", " + req.c + ", " + req.a,
+    "VPN: " + (req.vpn ? "да, выход из новой страны" : "нет"),
+    "Чек: " + req.rc + " на " + (req.pr || REGION_CHANGE_PRICE) + " ₽",
+    "Почему: " + req.w
+  ].join("\n");
+}
+
+/* Ответ владельца одной строкой */
+function regionReplyLine(ticket, decision, until, note) {
+  return "ISKRA-R2:" + regionB64Encode(JSON.stringify({
+    v: 1, t: ticket, d: decision, u: until || 0, n: note || "", at: Date.now()
+  }));
+}
+
+/* ---------- Заявка ---------- */
+function regionRequestCreate(f) {
+  const acc = currentAccount();
+  if (!acc) return null;
+  const req = {
+    t: regionTicketCode(),
+    n: acc.name || "", m: acc.email || acc.phone || "", k: f.mark,
+    f: acc.country || "", to: f.to, c: f.city, a: f.address,
+    vpn: !!f.vpn, rc: f.receipt, pr: REGION_CHANGE_PRICE, w: f.why,
+    at: Date.now(), status: "pending",
+    checks: 0, violations: [], lastDay: "", note: "", until: 0, approvedAt: 0
+  };
+  acc.regionReq = req;
+  regionNewsPush(acc, "Заявка " + req.t + " отправлена: " +
+    (req.f ? regionCountryName(req.f) + " → " : "") + regionCountryName(req.to) +
+    ". Ждём решения владельца.");
+  regionSaveAccount(acc);
+  try { regionNewsShow(); } catch (e) {}
+  return req;
+}
+
+function regionRequestCancel() {
+  const acc = currentAccount();
+  if (!acc || !acc.regionReq || acc.regionReq.status !== "pending") return;
+  acc.regionReq.status = "cancelled";
+  acc.regionReq.decidedAt = Date.now();
+  regionNewsPush(acc, "Заявка " + acc.regionReq.t + " отменена вами.");
+  regionSaveAccount(acc);
+}
+
+function regionProbationDays() {
+  let d = 0;
+  try { d = Number(adminData().regionDays); } catch (e) {}
+  return Number.isFinite(d) && d > 0 ? d : REGION_PROBATION_DAYS;
+}
+
+/* Одобрение: начинается испытательный срок, страна пока прежняя */
+function regionApprove(acc, until, by) {
+  if (!acc || !acc.regionReq) return false;
+  const req = acc.regionReq;
+  req.status = "approved";
+  req.approvedAt = Date.now();
+  req.until = until || Date.now() + regionProbationDays() * 864e5;
+  req.checks = req.checks || 0;
+  req.violations = req.violations || [];
+  req.by = by || "владелец";
+  regionNewsPush(acc, "Владелец одобрил смену страны: " + regionCountryName(req.to) +
+    ". Испытательный срок до " + new Date(req.until).toLocaleDateString("ru-RU") +
+    ". Всё это время заходите из новой страны — тогда страна поменяется сама.");
+  regionSaveAccount(acc);
+  try { regionNewsShow(); } catch (e) {}
+  return true;
+}
+
+function regionReject(acc, note) {
+  if (!acc || !acc.regionReq) return false;
+  const req = acc.regionReq;
+  req.status = "rejected";
+  req.decidedAt = Date.now();
+  req.note = String(note || "").trim();
+  regionNewsPush(acc, "Заявка " + req.t + " отклонена" +
+    (req.note ? ": " + req.note : ".") + " Страна осталась прежней.");
+  regionSaveAccount(acc);
+  try { regionNewsShow(); } catch (e) {}
+  return true;
+}
+
+/* Менять страну сразу — только владелец из консоли */
+function regionForceCountry(acc, code, note) {
+  if (!acc || !/^[A-Z]{2}$/.test(String(code || "").toUpperCase())) return false;
+  const to = String(code).toUpperCase();
+  const from = acc.country || "";
+  acc.country = to;
+  acc.countrySrc = "владелец";
+  acc.countryAt = Date.now();
+  acc.countryTz = browserTimezone();
+  acc.regionLog = acc.regionLog || [];
+  acc.regionLog.push({ at: Date.now(), from, to, by: "владелец", note: note || "" });
+  if (acc.regionReq) {
+    acc.regionReq.status = "done";
+    acc.regionReq.doneAt = Date.now();
+    acc.regionReq.by = "владелец";
+  }
+  regionNewsPush(acc, "Страна изменена вручную владельцем: " + regionCountryName(to) + ".");
+  regionSaveAccount(acc);
+  try { regionNewsShow(); } catch (e) {}
+  return true;
+}
+
+/* ---------- Испытательный срок ---------- */
+function regionProbationActive() {
+  let acc = null;
+  try { acc = currentAccount(); } catch (e) { return false; }
+  return !!(acc && acc.regionReq && acc.regionReq.status === "approved");
+}
+
+/* Проверяем каждый вход: страна по адресу, пояс устройства и VPN.
+   Нет данных — не наказываем: молчащий сервис не вина человека. */
+function regionProbationTick() {
+  let acc = null;
+  try { acc = currentAccount(); } catch (e) { return; }
+  const req = acc && acc.regionReq;
+  if (!req || req.status !== "approved") return;
+
+  const ip = String(state.regionIp || "").toUpperCase();
+  const tzSet = tzCountries(browserTimezone());
+  const vpnSeen = !!state.regionVpn;
+  if (!ip) return;                                  // сеть промолчала — пропускаем день
+
+  /* Главное условие — адрес выхода. Именно его проверяем строго:
+     зашли не из новой страны — условие нарушено, страна остаётся прежней. */
+  if (ip !== req.to) {
+    req.status = "broken";
+    req.decidedAt = Date.now();
+    req.violations = req.violations || [];
+    req.violations.push({ at: Date.now(), ip, tz: browserTimezone(), vpn: vpnSeen });
+    req.note = "заход из другой страны: " + regionCountryName(ip);
+    regionNewsPush(acc, "Заявка " + req.t + ": условие нарушено (" + req.note +
+      "). Страна осталась прежней — " + regionCountryName(acc.country || "") + ".");
+    regionSaveAccount(acc);
+    regionNewsShow();
+    return;
+  }
+
+  /* Обещал без VPN, а VPN включался. Один-два раза прощаем (бывает роуминг
+     и рабочий туннель), с третьего дня — условие нарушено. */
+  const vpnLike = vpnSeen && (!tzSet.length || !tzSet.includes(req.to));
+  if (!req.vpn && vpnLike) {
+    const day0 = new Date().toISOString().slice(0, 10);
+    req.vpnDays = req.vpnDays || [];
+    if (!req.vpnDays.includes(day0)) req.vpnDays.push(day0);
+    if (req.vpnDays.length >= 3) {
+      req.status = "broken";
+      req.decidedAt = Date.now();
+      req.note = "обещал без VPN, а VPN включался " + req.vpnDays.length + " дня";
+      regionNewsPush(acc, "Заявка " + req.t + ": условие нарушено — " + req.note +
+        ". Страна осталась прежней.");
+      regionSaveAccount(acc);
+      regionNewsShow();
+      return;
+    }
+  }
+
+  /* Успешный заход: считаем дни, а не заходы */
+  const today = new Date().toISOString().slice(0, 10);
+  if (req.lastDay !== today) { req.lastDay = today; req.checks = (req.checks || 0) + 1; }
+
+  if (Date.now() >= Number(req.until || 0)) {
+    const from = acc.country || "";
+    acc.country = req.to;
+    acc.countrySrc = "заявка";
+    acc.countryAt = Date.now();
+    acc.countryTz = browserTimezone();
+    acc.regionLog = acc.regionLog || [];
+    acc.regionLog.push({ at: Date.now(), from, to: req.to, by: "испытательный срок" });
+    req.status = "done";
+    req.doneAt = Date.now();
+    regionNewsPush(acc, "Испытательный срок пройден: страна изменена на " + regionCountryName(req.to) + ".");
+  }
+  regionSaveAccount(acc);
+  try { regionNewsShow(); } catch (e) {}
+}
+
+/* ---------- Ответ владельца ---------- */
+function regionApplyReply(raw) {
+  const acc = (() => { try { return currentAccount(); } catch (e) { return null; } })();
+  if (!acc) return { ok: false, msg: "Сначала войдите в аккаунт." };
+  const m = String(raw || "").match(/ISKRA-R2:([A-Za-z0-9_-]+)/);
+  if (!m) return { ok: false, msg: "Нужна строка ответа — она начинается с ISKRA-R2:" };
+  let d = null;
+  try { d = JSON.parse(regionB64Decode(m[1])); } catch (e) { return { ok: false, msg: "Строка повреждена: похоже, скопирована не полностью." }; }
+  const req = acc.regionReq;
+  if (!req || req.t !== d.t) return { ok: false, msg: "Это ответ на другую заявку." };
+  if (req.status !== "pending") return { ok: false, msg: "Решение по этой заявке уже применено." };
+  if (d.d === "ok") {
+    regionApprove(acc, Number(d.u) || 0, "владелец");
+    return { ok: true, msg: "Одобрено: испытательный срок до " + new Date(acc.regionReq.until).toLocaleDateString("ru-RU") + "." };
+  }
+  regionReject(acc, d.n || "");
+  return { ok: true, msg: "Владелец отклонил заявку" + (d.n ? ": " + d.n : ".") + " Страна осталась прежней." };
+}
+
+/* ---------- Окно заявки ---------- */
+function regionChangeRender() {
+  const body = $("#rcBody");
+  if (!body) return;
+  const acc = currentAccount();
+  if (!acc) { body.innerHTML = "<p>Сначала войдите в аккаунт.</p>"; return; }
+  const list = regionIsoList().sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  body.innerHTML = `
+    <p class="rc-intro">Страну меняет владелец, и только если выполнены пять условий сразу. Ниже — все пять. Ответ придёт сюда и всплывёт сообщением.</p>
+
+    <div class="rc-block">
+      <div class="rc-num">1</div>
+      <div class="rc-body">
+        <div class="rc-h">Новый адрес</div>
+        <div class="field"><label for="rcCountry">Страна</label>
+          <select id="rcCountry">${list.map(x => `<option value="${x.code}"${x.code === (acc.country || "") ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</select></div>
+        <div class="field"><label for="rcCity">Город</label><input id="rcCity" placeholder="например: Берлин"></div>
+        <div class="field"><label for="rcAddress">Улица, дом, квартира</label><input id="rcAddress" placeholder="например: Берлинер-штрассе 12, кв. 4"></div>
+        <div class="rc-dim">Адрес нужен, чтобы было видно: человек правда переехал, а не ищет лазейку.</div>
+      </div>
+    </div>
+
+    <div class="rc-block">
+      <div class="rc-num">2</div>
+      <div class="rc-body">
+        <div class="rc-h">Два месяца из новой локации</div>
+        <div class="field"><label for="rcVpn">Как вы заходите</label>
+          <select id="rcVpn">
+            <option value="0">Без VPN</option>
+            <option value="1">Через VPN с выходом из новой страны</option>
+          </select></div>
+        <div class="rc-dim">После одобрения начинается испытательный срок — ${REGION_PROBATION_DAYS} дней. Каждый заход из новой страны засчитывается. Один заход из другой страны — и страна не поменяется: заявка закрывается, всё остаётся как было.</div>
+      </div>
+    </div>
+
+    <div class="rc-block">
+      <div class="rc-num">3</div>
+      <div class="rc-body">
+        <div class="rc-h">Смена стоит ${REGION_CHANGE_PRICE} ₽</div>
+        <div class="rc-pay">
+          <div>
+            <b>Чек из четырёх знаков</b>
+            <div class="rc-dim">Получите чек, переведите ${REGION_CHANGE_PRICE} ₽ с этим чеком в комментарии и отметьте оплату. Владелец сверит перевод по чеку.</div>
+          </div>
+          <button type="button" class="auth-btn ghost" id="rcPayBtn">Получить чек</button>
+        </div>
+        <div id="rcReceiptBox" hidden>
+          <div class="rc-receipt" id="rcReceiptCode">—</div>
+          <div class="rc-dim">Перевод: <b>${REGION_CHANGE_PRICE} ₽</b> на тот же кошелёк, что в разделе «Доступ по ключу» (TON), или в Telegram ${PAY_TG} — чек обязательно в сообщении.</div>
+          <div class="rc-actions">
+            <button type="button" class="auth-btn ghost" id="rcReceiptCopy">Скопировать чек</button>
+            <button type="button" class="auth-btn ghost" id="rcReceiptTg">Написать в Telegram</button>
+            <button type="button" class="auth-btn ghost" id="rcReceiptNew">Новый чек</button>
+          </div>
+          <label class="rc-check"><input type="checkbox" id="rcPaid"> Я оплатил(а) ${REGION_CHANGE_PRICE} ₽ и указал(а) этот чек в переводе</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="rc-block">
+      <div class="rc-num">4</div>
+      <div class="rc-body">
+        <div class="rc-h">Почему именно вам надо поменять страну</div>
+        <div class="field"><textarea id="rcWhy" rows="4" placeholder="Например: я переехала в Германию на учёбу, здесь живу и работаю больше года, VPN не использую…"></textarea></div>
+        <div class="rc-count" id="rcWhyCount">0 слов — нужно не меньше ${REGION_MIN_WORDS}</div>
+      </div>
+    </div>
+
+    <div class="rc-block">
+      <div class="rc-num">5</div>
+      <div class="rc-body">
+        <div class="rc-h">Ник или примета</div>
+        <div class="field"><input id="rcMark" value="${esc(acc.name || "")}" placeholder="например: синий кит-42"></div>
+        <div class="rc-dim">По этой примете владелец узнает вас в консоли и не перепутает с другим аккаунтом.</div>
+      </div>
+    </div>
+
+    <button type="button" class="auth-btn" id="rcSubmit">Отправить заявку владельцу</button>
+    <p class="auth-err" id="rcErr"></p>
+    <div class="rc-dim" style="margin-top:8px">Заявка хранится в вашем аккаунте. Если владелец смотрит с другого устройства — пришлите ему заявку в Telegram (кнопка в «Моём аккаунте»).</div>`;
+
+  const paidBox = $("#rcReceiptBox");
+  let receipt = "";
+
+  const showReceipt = () => {
+    receipt = regionReceiptCode();
+    $("#rcReceiptCode").textContent = receipt;
+    paidBox.hidden = false;
+    $("#rcPaid").checked = false;
+  };
+  $("#rcPayBtn").onclick = showReceipt;
+  $("#rcReceiptNew").onclick = () => { showReceipt(); toast("Новый чек: " + receipt, "ok"); };
+  $("#rcReceiptCopy").onclick = () => {
+    navigator.clipboard.writeText(receipt)
+      .then(() => toast("Чек скопирован: " + receipt, "ok"))
+      .catch(() => toast("Не получилось скопировать — чек " + receipt, "err"));
+  };
+  $("#rcReceiptTg").onclick = () => {
+    if (!receipt) { toast("Сначала получите чек", "err"); return; }
+    const text = encodeURIComponent("Оплата смены страны Искры — " + REGION_CHANGE_PRICE + " ₽\nЧек: " + receipt +
+      "\nАккаунт: " + (acc.name || "") + (acc.email ? " · " + acc.email : ""));
+    window.open(PAY_TG_URL + "?text=" + text, "_blank", "noopener");
+  };
+
+  const why = $("#rcWhy"), count = $("#rcWhyCount");
+  why.oninput = () => {
+    const n = regionWordCount(why.value);
+    count.textContent = regionWordForm(n) + " — нужно не меньше " + REGION_MIN_WORDS;
+    count.classList.toggle("ok", n >= REGION_MIN_WORDS);
+  };
+
+  $("#rcSubmit").onclick = () => {
+    const err = $("#rcErr");
+    err.textContent = "";
+    const to = $("#rcCountry").value;
+    const city = ($("#rcCity").value || "").trim();
+    const address = ($("#rcAddress").value || "").trim();
+    const vpn = $("#rcVpn").value === "1";
+    const words = regionWordCount(why.value);
+    const mark = ($("#rcMark").value || "").trim();
+    const paid = $("#rcPaid") && $("#rcPaid").checked;
+
+    if (!to) { err.textContent = "Выберите страну."; return; }
+    if (to === (acc.country || "")) { err.textContent = "Это и есть ваша страна — менять нечего."; return; }
+    if (city.length < 2) { err.textContent = "Напишите город."; return; }
+    if (address.length < 3) { err.textContent = "Напишите улицу и дом — без адреса заявку не примут."; return; }
+    if (!receipt || !paid) { err.textContent = "Смена стоит " + REGION_CHANGE_PRICE + " ₽: получите чек и отметьте, что оплатили."; return; }
+    if (words < REGION_MIN_WORDS) { err.textContent = "Про причину нужно не меньше " + REGION_MIN_WORDS + " слов — сейчас " + regionWordForm(words) + "."; return; }
+    if (mark.length < 2) { err.textContent = "Укажите ник или примету, по которой вас узнают."; return; }
+
+    const req = regionRequestCreate({ to, city, address, vpn, receipt, why: why.value.trim(), mark });
+    if (!req) { err.textContent = "Не получилось сохранить заявку."; return; }
+    closeRegionChange();
+    renderProfile();
+    try { openAccountPanel(); } catch (e) {}
+    /* Если человек сидит на экране блокировки — обновляем его, чтобы он увидел свой тикет */
+    const gate = $("#regionGate");
+    if (gate && !gate.hidden) { try { showRegionGate(acc.country || "", false, true); } catch (e) {} }
+    toast("Заявка " + req.t + " отправлена владельцу", "ok");
+  };
+}
+
+function openRegionChange() {
+  const acc = currentAccount();
+  if (!acc) { openAuth(); return; }
+  if (acc.regionReq && acc.regionReq.status === "pending") {
+    toast("Заявка уже отправлена — ждём решения владельца", "");
+    return;
+  }
+  regionChangeRender();
+  const m = $("#regionChangeModal");
+  if (m) { m.classList.add("open"); m.setAttribute("aria-hidden", "false"); }
+}
+function closeRegionChange() {
+  const m = $("#regionChangeModal");
+  if (m) { m.classList.remove("open"); m.setAttribute("aria-hidden", "true"); }
+}
+
+/* ---------- Карточка заявки в «Моём аккаунте» ---------- */
+function regionReqPanelHTML(acc) {
+  const req = acc && acc.regionReq;
+  const offer = `<div class="acct-note">Смена страны — только по заявке: новый адрес, два месяца из новой локации, ${REGION_CHANGE_PRICE} ₽ с чеком, объяснение от ${REGION_MIN_WORDS} слов и ваша примета.</div>
+    <button class="auth-btn ghost" id="acctRegionChange">Запросить смену страны</button>`;
+  if (!req) return offer;
+
+  const date = (t) => new Date(t).toLocaleDateString("ru-RU");
+  let inner = `<div class="rc-status st-${esc(req.status)}">
+      <div class="rc-status-head"><b>Заявка ${esc(req.t)}</b><span class="rc-badge">${esc(REGION_REQ_TEXT[req.status] || req.status)}</span></div>
+      <div class="acct-dim">${esc(regionCountryName(req.f))} → ${esc(regionCountryName(req.to))} · ${esc(req.c)} · ${esc(req.a)}</div>`;
+
+  if (req.status === "pending") {
+    inner += `<div class="acct-note">Отправлена ${date(req.at)}. Владелец получил заявку — ответ появится здесь и всплывёт сообщением.</div>
+      <div class="rc-actions">
+        <button class="auth-btn ghost" id="acctRegionCopy">Скопировать заявку</button>
+        <button class="auth-btn ghost" id="acctRegionTg">Отправить в Telegram</button>
+        <button class="auth-btn ghost" id="acctRegionCancel">Отменить</button>
+      </div>`;
+  } else if (req.status === "approved") {
+    const left = Math.max(0, Math.ceil((req.until - Date.now()) / 864e5));
+    inner += `<div class="acct-note">Одобрено ${date(req.approvedAt)}. Испытательный срок до <b>${date(req.until)}</b> — осталось ${left} дн. Засчитано дней: ${req.checks || 0}.</div>
+      <div class="acct-note">Условие: ${req.vpn ? "через VPN, но с выходом" : "без VPN"} из ${esc(regionCountryName(req.to))}. Один заход из другой страны — и страна останется прежней.</div>
+      ${(req.vpnDays && req.vpnDays.length) ? `<div class="acct-note">Замечен VPN ${req.vpnDays.length} из 3 разрешённых дней — вы обещали без него.</div>` : ""}`;
+  } else if (req.status === "broken") {
+    inner += `<div class="acct-note">Условие нарушено: ${esc(req.note || "заход из другой локации")}. Страна осталась прежней — ${esc(regionCountryName(acc.country || ""))}.</div>
+      <div class="rc-actions"><button class="auth-btn ghost" id="acctRegionChange">Подать заново</button></div>`;
+  } else if (req.status === "rejected") {
+    inner += `<div class="acct-note">Владелец отклонил заявку${req.note ? ": " + esc(req.note) : "."} Страна осталась прежней.</div>
+      <div class="rc-actions"><button class="auth-btn ghost" id="acctRegionChange">Подать заново</button></div>`;
+  } else if (req.status === "done") {
+    inner += `<div class="acct-note">Готово: страна изменена на ${esc(regionCountryName(req.to))} ${date(req.doneAt || req.decidedAt || Date.now())}.</div>`;
+  } else if (req.status === "cancelled") {
+    inner += `<div class="acct-note">Заявка отменена.</div>
+      <div class="rc-actions"><button class="auth-btn ghost" id="acctRegionChange">Подать заново</button></div>`;
+  }
+  inner += `</div>`;
+
+  return inner + `<details class="rc-reply"><summary>Вставить ответ владельца</summary>
+      <div class="auth-field"><label>Строка ответа, начинается с ISKRA-R2:</label>
+        <input id="acctRegionReplyInput" placeholder="ISKRA-R2:..."></div>
+      <button class="auth-btn ghost" id="acctRegionReplyGo">Применить ответ</button>
+    </details>`;
+}
+
+/* Кнопки карточки заявки */
+function regionWireReqPanel(box) {
+  if (!box) return;
+  const acc = currentAccount();
+  const req = acc && acc.regionReq;
+  const change = box.querySelector("#acctRegionChange");
+  if (change) change.onclick = () => openRegionChange();
+  const copy = box.querySelector("#acctRegionCopy");
+  if (copy) copy.onclick = () => {
+    const line = regionReqHuman(req) + "\n\n" + regionTicketLine(req);
+    navigator.clipboard.writeText(line)
+      .then(() => toast("Заявка скопирована — отправьте её владельцу", "ok"))
+      .catch(() => toast("Не получилось скопировать", "err"));
+  };
+  const tg = box.querySelector("#acctRegionTg");
+  if (tg) tg.onclick = () => {
+    const text = encodeURIComponent(regionReqHuman(req) + "\n\n" + regionTicketLine(req));
+    window.open(PAY_TG_URL + "?text=" + text, "_blank", "noopener");
+  };
+  const cancel = box.querySelector("#acctRegionCancel");
+  if (cancel) cancel.onclick = () => {
+    regionRequestCancel();
+    openAccountPanel();
+    toast("Заявка отменена", "ok");
+  };
+  const reply = box.querySelector("#acctRegionReplyGo");
+  if (reply) reply.onclick = () => {
+    const input = box.querySelector("#acctRegionReplyInput");
+    const res = regionApplyReply(input ? input.value : "");
+    toast(res.msg, res.ok ? "ok" : "err");
+    if (res.ok) { openAccountPanel(); regionApplyProfile(); regionNewsShow(); }
+  };
+}
+
 /* Экран-заглушка: сайт не работает, чат не запускается */
 function showRegionGate(code, viaVpn, viaProfile) {
   const gate = $("#regionGate");
@@ -8393,8 +9027,8 @@ function showRegionGate(code, viaVpn, viaProfile) {
   if (text) {
     if (viaProfile) {
       text.textContent = "Страна в вашем профиле — " + (name || code) + ". Она записана при создании " +
-        "аккаунта и не меняется никогда, поэтому доступ из неё закрыт, даже если сейчас вы " +
-        "зашли через VPN. Так обход не работает.";
+        "аккаунта, а меняется только по заявке — её вручную одобряет владелец. Поэтому доступ из неё " +
+        "закрыт, даже если сейчас вы зашли через VPN: так обход не работает.";
     } else if (viaVpn) {
       text.textContent = "Похоже, вы заходите через VPN, но страна всё равно определилась: " +
         "по часовому поясу вашего устройства. К сожалению, из вашего региона доступ закрыт. " +
@@ -8403,6 +9037,27 @@ function showRegionGate(code, viaVpn, viaProfile) {
       text.textContent = "К сожалению, мы не можем открыть доступ из вашего региона. Это ограничение со стороны сервиса, а не блокировка вашего устройства.";
     }
   }
+  /* Идёт испытательный срок по заявке — говорим об этом прямо на экране,
+     иначе человек не поймёт, что происходит, и решит, что заявку потеряли */
+  try {
+    const accG = currentAccount();
+    const reqG = accG && accG.regionReq;
+    if (text && reqG && reqG.status === "approved") {
+      text.textContent += " Ваша заявка " + reqG.t + " на смену страны на " +
+        (REGION_NAMES[reqG.to] || regionCountryName(reqG.to)) + " идёт: испытательный срок до " +
+        new Date(reqG.until).toLocaleDateString("ru-RU") + ". Заходите из новой страны — тогда страна поменяется.";
+    }
+    if (text && reqG && reqG.status === "pending") {
+      text.textContent += " Заявка " + reqG.t + " на смену страны ждёт решения владельца — ответ появится здесь сообщением.";
+    }
+    /* Вошёл и хочет попросить смену страны — пусть попросит прямо с этого экрана */
+    const ask = $("#regionChangeAsk");
+    if (ask) {
+      const busy = !!(reqG && (reqG.status === "pending" || reqG.status === "approved"));
+      ask.hidden = !(accG && accG.country && !busy);
+      ask.onclick = () => { try { openRegionChange(); } catch (e) {} };
+    }
+  } catch (e) {}
   /* Из закрытой по профилю страны должен быть выход: иначе человек заперт навсегда */
   const out = $("#regionLogout");
   if (out) out.hidden = !viaProfile;
@@ -8463,8 +9118,11 @@ function regionFinish(info, vpn) {
 /* Главная проверка. Возвращает код страны ("" — не узнали). */
 async function regionCheck(force) {
   /* У аккаунта страна записана навсегда — сеть для неё не нужна вообще.
-     Поэтому ни VPN, ни смена интернета её уже не перепишут. */
-  if (regionApplyProfile()) return state.region;
+     Поэтому ни VPN, ни смена интернета её уже не перепишут.
+     Исключение — испытательный срок по заявке: там как раз надо
+     проверить, откуда человек заходит сегодня. */
+  const probation = regionProbationActive();
+  if (!probation && regionApplyProfile()) return state.region;
 
   const cached = force ? null : regionFromCache();
   let info = cached;
@@ -8483,7 +9141,13 @@ async function regionCheck(force) {
        человек мог переключить VPN, не дожидаясь истечения 12 часов. */
     vpn = regionVpnCheck(info, false);
   }
-  return regionFinish(info, vpn);
+  const real = regionFinish(info, vpn);
+  if (probation) {
+    regionProbationTick();     // дни засчитываются, нарушения ловятся
+    regionApplyProfile();      // ограничения — по стране из профиля
+    regionNewsShow();
+  }
+  return real;
 }
 
 /* Строчка про страну в окне входа: человек видит её ДО создания аккаунта */
@@ -8516,8 +9180,8 @@ function regionFillDone(acc) {
   if (flag) flag.textContent = regionFlag(acc.country);
   if (name) name.textContent = "Страна в профиле: " + regionCountryName(acc.country);
   if (hint) {
-    hint.textContent = "Записана навсегда — " + regionStatusText(acc.country) +
-      ". Менять её нельзя: именно поэтому обход через VPN не работает.";
+    hint.textContent = "Страна в профиле — " + regionStatusText(acc.country) +
+      ". Меняется только по заявке с одобрения владельца: поэтому обход через VPN не работает.";
   }
   box.hidden = false;
 }
@@ -14478,7 +15142,8 @@ function openAccountPanel() {
       <div class="acct-row"><span>Записана</span><b>${acc2.countryAt ? new Date(acc2.countryAt).toLocaleDateString("ru-RU") : "—"}</b></div>
       <div class="acct-row"><span>Как определили</span><b>${esc(REGION_SRC_TEXT[acc2.countrySrc] || "—")}</b></div>
       ${regionLevel(acc2.country) > 0 ? `<div class="acct-row"><span>Не работает</span><b>${esc((REGION_BLOCKED[regionLevel(acc2.country)] || []).join(", "))}</b></div>` : ""}
-      <div class="acct-note">Страна записывается один раз, при создании аккаунта, и не меняется — ни переездом, ни VPN. Поэтому вход определяется, даже если включён VPN. Если страна определилась неверно, напиши владельцу: он поправит её вручную.</div>
+      <div class="acct-note">Страна записывается один раз, при создании аккаунта. Поменять её можно только заявкой — с адресом, двумя месяцами испытательного срока, оплатой и объяснением. Владелец может и поменять сразу, и отказать.</div>
+      <div id="acctRegionReq">${regionReqPanelHTML(acc2)}</div>
     </div>
 
     <div class="acct-sec">
@@ -14589,6 +15254,7 @@ function openAccountPanel() {
     toast("Аккаунт удалён. Вернуть можно кодом: " + a.recovery, "ok");
   });
 
+  try { regionWireReqPanel(box); } catch (e) {}
   $("#accountModal").classList.add("open");
 }
 
@@ -16436,6 +17102,12 @@ const CONSOLE_HELP = [
   ["kb <запрос>", "поиск по встроенной базе знаний"],
   ["kb-stats", "сколько тем в базе и по разделам"],
   ["accounts", "аккаунты на этом устройстве"],
+  ["regions", "заявки на смену страны"],
+  ["regionimport <строка ISKRA-R1:…>", "принять заявку от человека"],
+  ["regionok <тикет>", "одобрить: начнётся испытательный срок"],
+  ["regionno <тикет> <причина>", "отклонить заявку"],
+  ["regionforce <ник|почта> <Страна>", "поменять страну сразу, без срока"],
+  ["regiondays 60", "сколько дней длится испытательный срок"],
   ["ban <ник> | unban <ник> | bans", "блокировка ников"],
   ["export", "скачать резервную копию"],
   ["wipe chats | wipe learned", "очистить чаты или знания"],
@@ -16474,6 +17146,102 @@ function conExport() {
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   return "Резервная копия скачана: чаты, настройки, знания, аккаунты.";
+}
+
+/* ---------- Заявки на смену страны в консоли владельца ---------- */
+function conRegions() {
+  const local = authAccounts().filter(a => a.regionReq);
+  const admin = adminData();
+  const imported = (admin.regionReqs || []);
+  if (!local.length && !imported.length) return "Заявок на смену страны нет.";
+  const order = { pending: 0, approved: 1, broken: 2, done: 3, rejected: 4, cancelled: 5 };
+  const rows = [];
+  local.forEach(a => {
+    const r = a.regionReq;
+    rows.push({ ...r, who: a.name, req: a.email || a.phone || "", local: true });
+  });
+  imported.forEach(r => {
+    if (local.some(a => a.regionReq && a.regionReq.t === r.t)) return;   // уже разобрана здесь
+    rows.push({ ...r, who: r.n, req: r.m, local: false });
+  });
+  rows.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+  return "ЗАЯВКИ НА СМЕНУ СТРАНЫ (" + rows.length + ")\n" +
+    rows.map(r => "  " + r.t + " · " + (REGION_REQ_TEXT[r.status] || r.status) + " · " +
+      (r.who || "—") + (r.req ? " · " + r.req : "") + (r.k ? " · метка «" + r.k + "»" : "") +
+      "\n      " + (r.f || "—") + " → " + r.to + " · " + (r.c || "") + ", " + (r.a || "") +
+      " · VPN: " + (r.vpn ? "да" : "нет") + " · чек " + (r.rc || "—") +
+      (r.status === "approved" ? " · до " + new Date(r.until).toLocaleDateString("ru-RU") + " · дней " + (r.checks || 0) : "") +
+      ((r.vpnDays && r.vpnDays.length) ? " · VPN-дней " + r.vpnDays.length + "/3" : "") +
+      (r.note ? "\n      причина: " + r.note : "") +
+      "\n      почему: " + String(r.w || "").slice(0, 180)).join("\n");
+}
+
+function conRegionImport(line) {
+  const m = String(line || "").match(/ISKRA-R1:([A-Za-z0-9_-]+)/);
+  if (!m) return "Нужна строка заявки — она начинается с ISKRA-R1:. Человек копирует её в «Моём аккаунте».";
+  let d = null;
+  try { d = JSON.parse(regionB64Decode(m[1])); } catch (e) { return "Строку не разобрала: похоже, скопирована не полностью."; }
+  if (!d || !d.t || !d.to) return "В строке нет тикета или страны.";
+  const admin = adminData();
+  admin.regionReqs = admin.regionReqs || [];
+  if (admin.regionReqs.some(r => r.t === d.t)) return "Такая заявка уже есть: " + d.t;
+  const local = authAccounts().find(a => a.regionReq && a.regionReq.t === d.t);
+  if (local) return "Заявка " + d.t + " уже есть в аккаунте " + local.name + " — её видно командой regions.";
+  admin.regionReqs.push({ ...d, status: "pending", imported: Date.now() });
+  adminSave(admin);
+  return "Заявка принята.\n" + regionReqHuman(d) +
+    "\n\nОдобрить: regionok " + d.t + "\nОтклонить: regionno " + d.t + " причина";
+}
+
+function conRegionDecide(arg, decision) {
+  const parts = String(arg || "").split(/\s+/).filter(Boolean);
+  const ticket = (parts.shift() || "").toUpperCase();
+  const note = parts.join(" ").trim();
+  if (!ticket) return "Формат: " + (decision === "ok" ? "regionok RR-XXXX" : "regionno RR-XXXX причина");
+
+  const local = authAccounts().find(a => a.regionReq && a.regionReq.t.toUpperCase() === ticket);
+  if (local) {
+    if (decision === "ok") {
+      regionApprove(local, 0, "владелец");
+      return "Одобрено: " + local.name + ", страна " + local.regionReq.to +
+        ". Испытательный срок до " + new Date(local.regionReq.until).toLocaleDateString("ru-RU") +
+        ". Страна поменяется сама, если человек не нарушит условие.";
+    }
+    regionReject(local, note || "без объяснения");
+    return "Отклонено: " + local.name + ". Страна осталась прежней.";
+  }
+
+  const admin = adminData();
+  const req = (admin.regionReqs || []).find(r => String(r.t).toUpperCase() === ticket);
+  if (!req) return "Нет заявки с тикетом " + ticket + ". Посмотреть все: regions";
+  req.status = decision === "ok" ? "approved" : "rejected";
+  req.decidedAt = Date.now();
+  req.note = note || "";
+  const until = decision === "ok" ? Date.now() + regionProbationDays() * 864e5 : 0;
+  req.until = until;
+  adminSave(admin);
+  const reply = regionReplyLine(req.t, decision, until, note);
+  return (decision === "ok"
+      ? "Одобрено. Испытательный срок до " + new Date(until).toLocaleDateString("ru-RU") + "."
+      : "Отклонено" + (note ? ": " + note : "") + ".") +
+    "\nПередайте человеку эту строку — он вставит её в «Мой аккаунт» → «Вставить ответ владельца»:\n" + reply;
+}
+
+function conRegionForce(arg) {
+  const parts = String(arg || "").split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return "Формат: regionforce <ник или почта> <Страна, код из двух букв>\nНапример: regionforce Иван DE";
+  const code = parts.pop().toUpperCase();
+  const who = parts.join(" ").trim();
+  if (!/^[A-Z]{2}$/.test(code)) return "Страна — код из двух букв: DE, PL, RU…";
+  const acc = authAccounts().find(a =>
+    String(a.email || "").toLowerCase() === who.toLowerCase() ||
+    String(a.name || "").toLowerCase() === who.toLowerCase() ||
+    (a.regionReq && a.regionReq.t.toUpperCase() === who.toUpperCase()));
+  if (!acc) return "Аккаунт не найден в этом браузере: " + who + "\nСписок: accounts";
+  const from = acc.country || "";
+  regionForceCountry(acc, code, "консоль");
+  return "Страна изменена: " + (from ? from + " → " : "") + code + " (" + regionCountryName(code) +
+    "). Человек получит сообщение об этом.";
 }
 
 /* Выполнение команды. Возвращает текст для вывода */
@@ -16705,6 +17473,29 @@ async function consoleRun(raw) {
     addAssistantNote("Учу " + topics.length + " тем: " + topics.join(", "));
     topics.forEach((t, i) => setTimeout(() => learnTopicFlow(t), i * 2500));
     return "В очереди: " + topics.length + " тем. Идут одна за другой, прогресс — в чате.";
+  }
+  if (c === "regions" || c === "заявки") {
+    return conRegions();
+  }
+  if (c === "regionimport" || c === "заявка") {
+    return conRegionImport(arg);
+  }
+  if (c === "regionok" || c === "одобрить") {
+    return conRegionDecide(arg, "ok");
+  }
+  if (c === "regionno" || c === "отклонить") {
+    const parts = arg.split(/\s+/).filter(Boolean);
+    const ticket = (parts.shift() || "").toUpperCase();
+    return conRegionDecide(ticket + " " + parts.join(" "), "no");
+  }
+  if (c === "regionforce" || c === "страна") {
+    return conRegionForce(arg);
+  }
+  if (c === "regiondays") {
+    const n = parseInt(arg, 10);
+    if (!(n > 0)) return "Формат: regiondays 60 — сколько дней длится испытательный срок";
+    const d = adminData(); d.regionDays = n; adminSave(d);
+    return "Испытательный срок: " + n + " дней.";
   }
   if (c === "accounts") {
     const list = authAccounts();
@@ -17181,6 +17972,7 @@ function wire() {
   $("#proClose") && $("#proClose").addEventListener("click", () => $("#proModal").classList.remove("open"));
   $("#proModal") && $("#proModal").addEventListener("click", (e) => { if (e.target.id === "proModal") $("#proModal").classList.remove("open"); });
   $("#accountClose") && $("#accountClose").addEventListener("click", () => $("#accountModal").classList.remove("open"));
+  $("#rcClose") && $("#rcClose").addEventListener("click", () => closeRegionChange());
   $("#accountModal") && $("#accountModal").addEventListener("click", (e) => { if (e.target.id === "accountModal") $("#accountModal").classList.remove("open"); });
 
   // ---- аккаунт ----
@@ -17627,6 +18419,19 @@ document.addEventListener("DOMContentLoaded", () => {
   wire();
   wireTools();
   initScrollWatcher();
+  /* Сообщения о заявке на смену страны: показываем, как только они появились.
+     Если владелец решает в другой вкладке этого же браузера — ловим сразу. */
+  regionNewsShow();
+  window.addEventListener("storage", (e) => {
+    if (!e.key || !/^iskra\./.test(e.key)) return;
+    try { renderProfile(); } catch (err) {}
+    try { regionNewsShow(); } catch (err) {}
+    try { regionApplyProfile(); } catch (err) {}
+    try {
+      const am = $("#accountModal");
+      if (am && am.classList.contains("open")) openAccountPanel();
+    } catch (err) {}
+  });
   /* Регион проверяем сразу: не вышло узнать страну — сайт работает как обычно */
   regionCheck().catch(() => {});
   const rgRetry = $("#regionRetry");
@@ -17828,6 +18633,12 @@ document.addEventListener("DOMContentLoaded", () => {
   <div class="modal" style="max-width:520px">
     <div class="modal-head"><h3>Мой аккаунт</h3><button class="icon-btn" id="accountClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
     <div class="modal-body" id="acctBody"></div>
+  </div>
+</div>
+<div id="regionChangeModal" class="modal-bg" aria-hidden="true">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><h3>Смена страны</h3><button class="icon-btn" id="rcClose" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body" id="rcBody"></div>
   </div>
 </div>
 <div id="authModal" aria-hidden="true">
