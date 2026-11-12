@@ -621,6 +621,17 @@ body.generating .messages { scroll-behavior: auto; }
   color: var(--text-soft); margin-bottom: 6px;
   text-transform: uppercase; letter-spacing: .3px;
 }
+/* Внутри модалок есть строки настроек и галочки: это тоже label,
+   и общее правило выше ломало их — текст капсом, переключатель уезжал влево. */
+.modal label.set-row,
+.modal label.rc-check {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin: 0; text-transform: none; letter-spacing: normal;
+  font-size: 13.5px; font-weight: 400; color: var(--text);
+}
+.modal label.rc-check { justify-content: flex-start; gap: 8px; font-size: 12.5px; color: var(--text-soft); }
+.modal label.set-row + label.set-row { border-top: 1px solid var(--line); }
+.modal input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),
 .modal input[type=text], .modal input[type=password], .modal select, .modal textarea {
   width: 100%;
   background: var(--bg);
@@ -1504,6 +1515,9 @@ button:active:not(:disabled) { transform: scale(.975); }
   padding: 10px 12px; border-radius: 11px;
   border: 1px dashed var(--line); background: var(--bg-soft-2);
 }
+.rc-steps { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.55; color: var(--text-soft); }
+.rc-steps li { margin-bottom: 4px; }
+.rc-steps b { color: var(--text); }
 .rc-receipt {
   font-family: ui-monospace, monospace; font-size: 26px; letter-spacing: 8px;
   font-weight: 700; color: var(--accent); text-align: center;
@@ -1862,6 +1876,10 @@ input.switch::after {
 }
 input.switch:checked { background: var(--accent); border-color: var(--accent); }
 input.switch:checked::after { transform: translateX(18px); background: #fff; }
+/* Переключатель всегда у правого края строки — независимо от длины подписи */
+.set-row input.switch { margin-left: auto; flex: 0 0 44px; }
+.set-row > span { min-width: 0; }
+.set-row > span b { text-transform: none; letter-spacing: normal; }
 
 /* Кнопки карточки «Не получилось» */
 .fail-actions { margin-top: 12px; display: grid; gap: 8px; }
@@ -8570,7 +8588,8 @@ function regionTicketLine(req) {
   const payload = {
     t: req.t, n: req.n || "", m: req.m || "", k: req.k || "",
     f: req.f || "", to: req.to, c: req.c, a: req.a,
-    vpn: req.vpn ? 1 : 0, rc: req.rc, pr: req.pr, w: req.w, at: req.at
+    vpn: req.vpn ? 1 : 0, pn: req.payNote || "", tx: req.txid || "",
+    ch: req.check || "", pd: req.paid ? 1 : 0, pr: req.pr, w: req.w, at: req.at
   };
   return "ISKRA-R1:" + regionB64Encode(JSON.stringify(payload));
 }
@@ -8583,15 +8602,18 @@ function regionReqHuman(req) {
     "Страна: " + (req.f ? regionCountryName(req.f) : "—") + " → " + regionCountryName(req.to),
     "Адрес: " + regionCountryName(req.to) + ", " + req.c + ", " + req.a,
     "VPN: " + (req.vpn ? "да, выход из новой страны" : "нет"),
-    "Чек: " + req.rc + " на " + (req.pr || REGION_CHANGE_PRICE) + " ₽",
+    "Оплата: " + (req.pr || REGION_CHANGE_PRICE) + " ₽ · ник в переводе «" + (req.payNote || "—") + "»" +
+      (req.txid ? " · " + req.txid : ""),
+    "Чек от владельца: " + (req.check || "ещё не выдан") + (req.paid ? " (оплата подтверждена)" : ""),
     "Почему: " + req.w
   ].join("\n");
 }
 
 /* Ответ владельца одной строкой */
-function regionReplyLine(ticket, decision, until, note) {
+function regionReplyLine(ticket, decision, until, note, check) {
   return "ISKRA-R2:" + regionB64Encode(JSON.stringify({
-    v: 1, t: ticket, d: decision, u: until || 0, n: note || "", at: Date.now()
+    v: 1, t: ticket, d: decision, u: until || 0, n: note || "",
+    rc: check || "", at: Date.now()
   }));
 }
 
@@ -8603,7 +8625,10 @@ function regionRequestCreate(f) {
     t: regionTicketCode(),
     n: acc.name || "", m: acc.email || acc.phone || "", k: f.mark,
     f: acc.country || "", to: f.to, c: f.city, a: f.address,
-    vpn: !!f.vpn, rc: f.receipt, pr: REGION_CHANGE_PRICE, w: f.why,
+    vpn: !!f.vpn, pr: REGION_CHANGE_PRICE, w: f.why,
+    /* Оплата: ник в комментарии и, если дали, хеш перевода.
+       Чек из четырёх знаков выдаёт владелец, когда увидит перевод. */
+    payNote: f.payNote || "", txid: f.txid || "", paid: false, check: "",
     at: Date.now(), status: "pending",
     checks: 0, violations: [], lastDay: "", note: "", until: 0, approvedAt: 0
   };
@@ -8614,6 +8639,34 @@ function regionRequestCreate(f) {
   regionSaveAccount(acc);
   try { regionNewsShow(); } catch (e) {}
   return req;
+}
+
+/* Владелец выдал чек из четырёх знаков — человек вписывает его сюда,
+   и заявку уже можно одобрять. */
+function regionSetCheck(code) {
+  const acc = currentAccount();
+  const req = acc && acc.regionReq;
+  if (!req) return { ok: false, msg: "Заявки нет." };
+  const c = String(code || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+  if (!/^[2-9A-HJ-NP-Z]{4}$/.test(c)) return { ok: false, msg: "Чек — четыре знака, например 4K7M." };
+  req.check = c;
+  req.paid = true;
+  req.paidAt = Date.now();
+  regionNewsPush(acc, "Оплата подтверждена: чек " + c + ". Заявка " + req.t + " уходит владельцу на одобрение.");
+  regionSaveAccount(acc);
+  return { ok: true, msg: "Чек " + c + " принят. Ждём одобрения владельца." };
+}
+
+/* Владелец из консоли: отметил оплату и выдал чек */
+function regionMarkPaid(acc) {
+  if (!acc || !acc.regionReq) return "";
+  const req = acc.regionReq;
+  req.check = regionReceiptCode();
+  req.paid = true;
+  req.paidAt = Date.now();
+  regionNewsPush(acc, "Оплата получена, чек " + req.check + ". Заявка ждёт одобрения.");
+  regionSaveAccount(acc);
+  return req.check;
 }
 
 function regionRequestCancel() {
@@ -8635,6 +8688,7 @@ function regionProbationDays() {
 function regionApprove(acc, until, by) {
   if (!acc || !acc.regionReq) return false;
   const req = acc.regionReq;
+  if (!req.paid) return false;              // без подтверждённой оплаты смены нет
   req.status = "approved";
   req.approvedAt = Date.now();
   req.until = until || Date.now() + regionProbationDays() * 864e5;
@@ -8769,7 +8823,18 @@ function regionApplyReply(raw) {
   const req = acc.regionReq;
   if (!req || req.t !== d.t) return { ok: false, msg: "Это ответ на другую заявку." };
   if (req.status !== "pending") return { ok: false, msg: "Решение по этой заявке уже применено." };
+  if (d.d === "pay") {
+    const c = String(d.rc || "").toUpperCase();
+    if (!/^[2-9A-HJ-NP-Z]{4}$/.test(c)) return { ok: false, msg: "В строке нет чека." };
+    req.check = c;
+    req.paid = true;
+    req.paidAt = Date.now();
+    regionNewsPush(acc, "Оплата подтверждена, чек " + c + ". Заявка " + req.t + " ждёт одобрения.");
+    regionSaveAccount(acc);
+    return { ok: true, msg: "Чек " + c + " принят — ждём одобрения." };
+  }
   if (d.d === "ok") {
+    if (!req.paid) return { ok: false, msg: "Сначала нужен чек об оплате — его выдаёт владелец." };
     regionApprove(acc, Number(d.u) || 0, "владелец");
     return { ok: true, msg: "Одобрено: испытательный срок до " + new Date(acc.regionReq.until).toLocaleDateString("ru-RU") + "." };
   }
@@ -8816,23 +8881,20 @@ function regionChangeRender() {
       <div class="rc-num">3</div>
       <div class="rc-body">
         <div class="rc-h">Смена стоит ${REGION_CHANGE_PRICE} ₽</div>
-        <div class="rc-pay">
-          <div>
-            <b>Чек из четырёх знаков</b>
-            <div class="rc-dim">Получите чек, переведите ${REGION_CHANGE_PRICE} ₽ с этим чеком в комментарии и отметьте оплату. Владелец сверит перевод по чеку.</div>
-          </div>
-          <button type="button" class="auth-btn ghost" id="rcPayBtn">Получить чек</button>
+        <ol class="rc-steps">
+          <li>Переведите ${REGION_CHANGE_PRICE} ₽ — на кошелёк TON из раздела «Доступ по ключу» или в Telegram ${PAY_TG}. Любой перевод: TON, USDT, звёзды — что удобно.</li>
+          <li>В <b>комментарии к переводу</b> напишите свой ник или примету. Больше ничего не нужно.</li>
+          <li>Владелец увидит перевод и выдаст <b>чек из четырёх знаков</b>. Чек впишете в «Мой аккаунт» — после этого заявку можно одобрить.</li>
+        </ol>
+        <div class="rc-actions" style="margin-top:8px">
+          <button type="button" class="auth-btn ghost" id="rcCopyWallet">Скопировать адрес кошелька</button>
+          <button type="button" class="auth-btn ghost" id="rcPayTg">Написать в Telegram</button>
         </div>
-        <div id="rcReceiptBox" hidden>
-          <div class="rc-receipt" id="rcReceiptCode">—</div>
-          <div class="rc-dim">Перевод: <b>${REGION_CHANGE_PRICE} ₽</b> на тот же кошелёк, что в разделе «Доступ по ключу» (TON), или в Telegram ${PAY_TG} — чек обязательно в сообщении.</div>
-          <div class="rc-actions">
-            <button type="button" class="auth-btn ghost" id="rcReceiptCopy">Скопировать чек</button>
-            <button type="button" class="auth-btn ghost" id="rcReceiptTg">Написать в Telegram</button>
-            <button type="button" class="auth-btn ghost" id="rcReceiptNew">Новый чек</button>
-          </div>
-          <label class="rc-check"><input type="checkbox" id="rcPaid"> Я оплатил(а) ${REGION_CHANGE_PRICE} ₽ и указал(а) этот чек в переводе</label>
-        </div>
+        <div class="field" style="margin-top:12px"><label for="rcPayNote">Ник в комментарии к переводу</label>
+          <input type="text" id="rcPayNote" value="${esc(acc.name || "")}" placeholder="например: синий кит-42"></div>
+        <div class="field"><label for="rcTxid">Ссылка или хеш перевода — необязательно, но так быстрее</label>
+          <input type="text" id="rcTxid" placeholder="например: 0x8f2… или tonviewer.com/…"></div>
+        <label class="rc-check"><input type="checkbox" id="rcPaid"> Я перевёл(а) ${REGION_CHANGE_PRICE} ₽ и указал(а) этот ник в комментарии</label>
       </div>
     </div>
 
@@ -8858,25 +8920,18 @@ function regionChangeRender() {
     <p class="auth-err" id="rcErr"></p>
     <div class="rc-dim" style="margin-top:8px">Заявка хранится в вашем аккаунте. Если владелец смотрит с другого устройства — пришлите ему заявку в Telegram (кнопка в «Моём аккаунте»).</div>`;
 
-  const paidBox = $("#rcReceiptBox");
-  let receipt = "";
-
-  const showReceipt = () => {
-    receipt = regionReceiptCode();
-    $("#rcReceiptCode").textContent = receipt;
-    paidBox.hidden = false;
-    $("#rcPaid").checked = false;
+  const copyWallet = () => {
+    navigator.clipboard.writeText(PAY_TON_ADDRESS)
+      .then(() => toast("Адрес кошелька скопирован", "ok"))
+      .catch(() => toast("Не получилось скопировать — адрес в разделе «Доступ по ключу»", "err"));
   };
-  $("#rcPayBtn").onclick = showReceipt;
-  $("#rcReceiptNew").onclick = () => { showReceipt(); toast("Новый чек: " + receipt, "ok"); };
-  $("#rcReceiptCopy").onclick = () => {
-    navigator.clipboard.writeText(receipt)
-      .then(() => toast("Чек скопирован: " + receipt, "ok"))
-      .catch(() => toast("Не получилось скопировать — чек " + receipt, "err"));
-  };
-  $("#rcReceiptTg").onclick = () => {
-    if (!receipt) { toast("Сначала получите чек", "err"); return; }
-    const text = encodeURIComponent("Оплата смены страны Искры — " + REGION_CHANGE_PRICE + " ₽\nЧек: " + receipt +
+  const cw = $("#rcCopyWallet");
+  if (cw) cw.onclick = copyWallet;
+  const ptg = $("#rcPayTg");
+  if (ptg) ptg.onclick = () => {
+    const note = ($("#rcPayNote").value || "").trim();
+    const text = encodeURIComponent("Оплата смены страны Искры — " + REGION_CHANGE_PRICE + " ₽\n" +
+      "Ник в переводе: " + (note || acc.name || "") +
       "\nАккаунт: " + (acc.name || "") + (acc.email ? " · " + acc.email : ""));
     window.open(PAY_TG_URL + "?text=" + text, "_blank", "noopener");
   };
@@ -8898,16 +8953,19 @@ function regionChangeRender() {
     const words = regionWordCount(why.value);
     const mark = ($("#rcMark").value || "").trim();
     const paid = $("#rcPaid") && $("#rcPaid").checked;
+    const payNote = ($("#rcPayNote").value || "").trim();
+    const txid = ($("#rcTxid").value || "").trim();
 
     if (!to) { err.textContent = "Выберите страну."; return; }
     if (to === (acc.country || "")) { err.textContent = "Это и есть ваша страна — менять нечего."; return; }
     if (city.length < 2) { err.textContent = "Напишите город."; return; }
     if (address.length < 3) { err.textContent = "Напишите улицу и дом — без адреса заявку не примут."; return; }
-    if (!receipt || !paid) { err.textContent = "Смена стоит " + REGION_CHANGE_PRICE + " ₽: получите чек и отметьте, что оплатили."; return; }
+    if (payNote.length < 2) { err.textContent = "Впишите ник, который указали в комментарии к переводу."; return; }
+    if (!paid) { err.textContent = "Смена стоит " + REGION_CHANGE_PRICE + " ₽: отметьте, что перевод сделан."; return; }
     if (words < REGION_MIN_WORDS) { err.textContent = "Про причину нужно не меньше " + REGION_MIN_WORDS + " слов — сейчас " + regionWordForm(words) + "."; return; }
     if (mark.length < 2) { err.textContent = "Укажите ник или примету, по которой вас узнают."; return; }
 
-    const req = regionRequestCreate({ to, city, address, vpn, receipt, why: why.value.trim(), mark });
+    const req = regionRequestCreate({ to, city, address, vpn, payNote, txid, why: why.value.trim(), mark });
     if (!req) { err.textContent = "Не получилось сохранить заявку."; return; }
     closeRegionChange();
     renderProfile();
@@ -8938,7 +8996,7 @@ function closeRegionChange() {
 /* ---------- Карточка заявки в «Моём аккаунте» ---------- */
 function regionReqPanelHTML(acc) {
   const req = acc && acc.regionReq;
-  const offer = `<div class="acct-note">Смена страны — только по заявке: новый адрес, два месяца из новой локации, ${REGION_CHANGE_PRICE} ₽ с чеком, объяснение от ${REGION_MIN_WORDS} слов и ваша примета.</div>
+  const offer = `<div class="acct-note">Смена страны — только по заявке: новый адрес, два месяца из новой локации, ${REGION_CHANGE_PRICE} ₽ переводом с ником в комментарии, объяснение от ${REGION_MIN_WORDS} слов и ваша примета.</div>
     <button class="auth-btn ghost" id="acctRegionChange">Запросить смену страны</button>`;
   if (!req) return offer;
 
@@ -8949,6 +9007,12 @@ function regionReqPanelHTML(acc) {
 
   if (req.status === "pending") {
     inner += `<div class="acct-note">Отправлена ${date(req.at)}. Владелец получил заявку — ответ появится здесь и всплывёт сообщением.</div>
+      <div class="acct-row"><span>Оплата</span><b>${req.pr || REGION_CHANGE_PRICE} ₽ · ник «${esc(req.payNote || "—")}»</b></div>
+      ${req.txid ? `<div class="acct-row"><span>Перевод</span><b>${esc(req.txid)}</b></div>` : ""}
+      <div class="acct-row"><span>Чек от владельца</span><b>${req.paid && req.check ? esc(req.check) : "ещё не выдан"}</b></div>
+      ${req.paid ? "" : `<div class="auth-field" style="margin-top:8px"><label>Чек из четырёх знаков</label>
+        <input id="acctRegionCheck" placeholder="например: 4K7M" maxlength="4" style="text-transform:uppercase"></div>
+      <button class="auth-btn ghost" id="acctRegionCheckGo">Ввести чек</button>`}
       <div class="rc-actions">
         <button class="auth-btn ghost" id="acctRegionCopy">Скопировать заявку</button>
         <button class="auth-btn ghost" id="acctRegionTg">Отправить в Telegram</button>
@@ -8998,6 +9062,13 @@ function regionWireReqPanel(box) {
   if (tg) tg.onclick = () => {
     const text = encodeURIComponent(regionReqHuman(req) + "\n\n" + regionTicketLine(req));
     window.open(PAY_TG_URL + "?text=" + text, "_blank", "noopener");
+  };
+  const checkGo = box.querySelector("#acctRegionCheckGo");
+  if (checkGo) checkGo.onclick = () => {
+    const input = box.querySelector("#acctRegionCheck");
+    const res = regionSetCheck(input ? input.value : "");
+    toast(res.msg, res.ok ? "ok" : "err");
+    if (res.ok) { openAccountPanel(); regionNewsShow(); }
   };
   const cancel = box.querySelector("#acctRegionCancel");
   if (cancel) cancel.onclick = () => {
@@ -17104,6 +17175,7 @@ const CONSOLE_HELP = [
   ["accounts", "аккаунты на этом устройстве"],
   ["regions", "заявки на смену страны"],
   ["regionimport <строка ISKRA-R1:…>", "принять заявку от человека"],
+  ["regionpay <тикет>", "оплата пришла: выдать чек из 4 знаков"],
   ["regionok <тикет>", "одобрить: начнётся испытательный срок"],
   ["regionno <тикет> <причина>", "отклонить заявку"],
   ["regionforce <ник|почта> <Страна>", "поменять страну сразу, без срока"],
@@ -17169,7 +17241,8 @@ function conRegions() {
     rows.map(r => "  " + r.t + " · " + (REGION_REQ_TEXT[r.status] || r.status) + " · " +
       (r.who || "—") + (r.req ? " · " + r.req : "") + (r.k ? " · метка «" + r.k + "»" : "") +
       "\n      " + (r.f || "—") + " → " + r.to + " · " + (r.c || "") + ", " + (r.a || "") +
-      " · VPN: " + (r.vpn ? "да" : "нет") + " · чек " + (r.rc || "—") +
+      " · VPN: " + (r.vpn ? "да" : "нет") + " · " + (r.pr || REGION_CHANGE_PRICE) + " ₽" +
+      " · чек " + (r.check || "не выдан") + (r.paid ? " (оплачено)" : " (не оплачено)") +
       (r.status === "approved" ? " · до " + new Date(r.until).toLocaleDateString("ru-RU") + " · дней " + (r.checks || 0) : "") +
       ((r.vpnDays && r.vpnDays.length) ? " · VPN-дней " + r.vpnDays.length + "/3" : "") +
       (r.note ? "\n      причина: " + r.note : "") +
@@ -17193,6 +17266,32 @@ function conRegionImport(line) {
     "\n\nОдобрить: regionok " + d.t + "\nОтклонить: regionno " + d.t + " причина";
 }
 
+/* Оплата пришла: владелец отмечает это и получает чек из четырёх знаков.
+   Чек он отправляет человеку — тот вписывает его в «Мой аккаунт». */
+function conRegionPay(arg) {
+  const ticket = String(arg || "").split(/\s+/)[0].toUpperCase();
+  if (!ticket) return "Формат: regionpay RR-XXXX\nОплата проверена — выдаётся чек из четырёх знаков.";
+  const local = authAccounts().find(a => a.regionReq && a.regionReq.t.toUpperCase() === ticket);
+  if (local) {
+    if (local.regionReq.paid) return "Оплата уже отмечена. Чек: " + local.regionReq.check;
+    const check = regionMarkPaid(local);
+    return "Оплата отмечена. Чек для " + local.name + ": " + check +
+      "\nПередайте его человеку — он впишет чек в «Мой аккаунт» → «Ввести чек».\nОдобрить: regionok " + ticket;
+  }
+  const admin = adminData();
+  const req = (admin.regionReqs || []).find(r => String(r.t).toUpperCase() === ticket);
+  if (!req) return "Нет заявки с тикетом " + ticket + ". Посмотреть все: regions";
+  if (!req.check) req.check = regionReceiptCode();
+  req.paid = true;
+  req.paidAt = Date.now();
+  adminSave(admin);
+  const reply = "ISKRA-R2:" + regionB64Encode(JSON.stringify({
+    v: 1, t: req.t, d: "pay", u: 0, n: "", rc: req.check, at: Date.now()
+  }));
+  return "Оплата отмечена. Чек: " + req.check +
+    "\nПередайте чек человеку — или строку ниже (он вставит её в «Мой аккаунт»):\n" + reply;
+}
+
 function conRegionDecide(arg, decision) {
   const parts = String(arg || "").split(/\s+/).filter(Boolean);
   const ticket = (parts.shift() || "").toUpperCase();
@@ -17202,6 +17301,7 @@ function conRegionDecide(arg, decision) {
   const local = authAccounts().find(a => a.regionReq && a.regionReq.t.toUpperCase() === ticket);
   if (local) {
     if (decision === "ok") {
+      if (!local.regionReq.paid) return "Оплата по заявке " + ticket + " не отмечена. Сначала: regionpay " + ticket;
       regionApprove(local, 0, "владелец");
       return "Одобрено: " + local.name + ", страна " + local.regionReq.to +
         ". Испытательный срок до " + new Date(local.regionReq.until).toLocaleDateString("ru-RU") +
@@ -17214,6 +17314,7 @@ function conRegionDecide(arg, decision) {
   const admin = adminData();
   const req = (admin.regionReqs || []).find(r => String(r.t).toUpperCase() === ticket);
   if (!req) return "Нет заявки с тикетом " + ticket + ". Посмотреть все: regions";
+  if (decision === "ok" && !req.paid) return "Оплата по заявке " + ticket + " не отмечена. Сначала: regionpay " + ticket;
   req.status = decision === "ok" ? "approved" : "rejected";
   req.decidedAt = Date.now();
   req.note = note || "";
@@ -17479,6 +17580,9 @@ async function consoleRun(raw) {
   }
   if (c === "regionimport" || c === "заявка") {
     return conRegionImport(arg);
+  }
+  if (c === "regionpay" || c === "оплата") {
+    return conRegionPay(arg);
   }
   if (c === "regionok" || c === "одобрить") {
     return conRegionDecide(arg, "ok");

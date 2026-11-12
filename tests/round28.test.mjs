@@ -118,24 +118,32 @@ await test("окно заявки открывается и показывает
   assert(/Новый адрес/.test(body), "нет условия 1");
   assert(/Два месяца/.test(body), "нет условия 2");
   assert(/10 ₽/.test(body), "нет условия 3");
+  assert(/комментари/i.test(body), "не сказала про комментарий к переводу");
   assert(/не меньше 20/.test(body), "нет условия 4");
   assert(/примета/i.test(body), "нет условия 5");
   assert(doc.querySelectorAll("#rcCountry option").length > 240, "в списке стран мало");
 });
 
-await test("без чека заявку не принять", async () => {
+await test("без отметки об оплате заявку не принять", async () => {
   doc.getElementById("rcCountry").value = "DE";
   doc.getElementById("rcCity").value = "Берлин";
   doc.getElementById("rcAddress").value = "Берлинер-штрассе 12";
   doc.getElementById("rcWhy").value = LONG;
   doc.getElementById("rcSubmit").click();
-  assert(/чек/i.test(doc.getElementById("rcErr").textContent), "не потребовала чек");
+  assert(/10 ₽/.test(doc.getElementById("rcErr").textContent), "не потребовала оплату");
   assert(reqObj() === null, "заявка создалась без оплаты");
 });
 
-await test("объяснение короче 20 слов не принимается", async () => {
-  doc.getElementById("rcPayBtn").click();
+await test("без ника в комментарии к переводу заявку не принять", async () => {
   doc.getElementById("rcPaid").checked = true;
+  doc.getElementById("rcPayNote").value = "";
+  doc.getElementById("rcSubmit").click();
+  assert(/ник/i.test(doc.getElementById("rcErr").textContent), "не потребовала ник в комментарии");
+  assert(reqObj() === null, "заявка создалась без ника");
+  doc.getElementById("rcPayNote").value = "синий кит-42";
+});
+
+await test("объяснение короче 20 слов не принимается", async () => {
   doc.getElementById("rcWhy").value = "переехала";
   doc.getElementById("rcSubmit").click();
   assert(/20 слов/.test(doc.getElementById("rcErr").textContent), "не сказала про 20 слов");
@@ -176,7 +184,9 @@ await test("правильная заявка создаётся и всё в н
   assert(r.status === "pending", "статус не «ждёт»: " + r.status);
   assert(r.to === "DE" && r.f === "PL", "страны не те");
   assert(r.c === "Берлин" && /12/.test(r.a), "адрес потерялся");
-  assert(/^[2-9A-HJ-NP-Z]{4}$/.test(r.rc), "чек не прикреплён");
+  assert(r.payNote === "синий кит-42", "ник в комментарии потерялся");
+  assert(r.paid === false, "оплата не должна подтверждаться самим человеком");
+  assert(r.check === "", "чек не должен выдаваться сайтом");
   assert(r.pr === 10, "цена не 10 ₽");
   assert(r.k === "синий кит-42", "примета потерялась");
   assert(window.eval(`regionWordCount(currentAccount().regionReq.w)`) >= 20, "объяснение короткое");
@@ -215,6 +225,7 @@ await test("консоль владельца принимает заявку с
 
 await test("одобрение в консоли даёт строку ответа, а не меняет всё молча", async () => {
   const ticket = window.eval(`adminData().regionReqs[0].t`);
+  window.eval(`conRegionPay(${JSON.stringify(ticket)})`);     // оплата: чек выдаёт владелец
   const out = window.eval(`conRegionDecide(${JSON.stringify(ticket)}, "ok")`);
   assert(/Одобрено/.test(out), "не одобрила: " + out.slice(0, 80));
   assert(/ISKRA-R2:/.test(out), "не дала строку ответа для человека");
@@ -227,7 +238,7 @@ await test("человек применяет ответ — начинаетс�
   const reply = window.eval(`regionReplyLine(${JSON.stringify(ticket)}, "ok", ${Date.now() + 60 * 864e5}, "")`);
   freshAccount("PL");
   setReq({ t: ticket, n: "Иван", m: "i@mail.ru", k: "синий кит-42", f: "PL", to: "DE",
-    c: "Берлин", a: "Берлинер-штрассе 12", vpn: false, rc: "1A2B", pr: 10,
+    c: "Берлин", a: "Берлинер-штрассе 12", vpn: false, payNote: "синий кит-42", paid: true, check: "1A2B", pr: 10,
     w: "переехала в германию на учёбу и живу здесь уже больше года, работаю в берлине",
     at: Date.now(), status: "pending", checks: 0, violations: [], lastDay: "" });
   const res = JSON.parse(window.eval(`JSON.stringify(regionApplyReply(${JSON.stringify(reply)}))`));
@@ -239,7 +250,7 @@ await test("человек применяет ответ — начинаетс�
 await test("ответ владельца применяется на стороне человека", async () => {
   freshAccount("PL");
   setReq({ t: "RR-ABCD", n: "Иван", m: "i@mail.ru", k: "кит", f: "PL", to: "DE",
-    c: "Берлин", a: "ул. 1", vpn: false, rc: "1A2B", pr: 10, w: "переехала в германию и живу здесь давно, работаю и учусь тут",
+    c: "Берлин", a: "ул. 1", vpn: false, payNote: "кит", paid: true, check: "1A2B", pr: 10, w: "переехала в германию и живу здесь давно, работаю и учусь тут",
     at: Date.now(), status: "pending", checks: 0, violations: [], lastDay: "" });
   const line = window.eval(`regionReplyLine("RR-ABCD", "ok", Date.now() + 60 * 864e5, "")`);
   const res = JSON.parse(window.eval(`JSON.stringify(regionApplyReply(${JSON.stringify(line)}))`));
@@ -251,7 +262,7 @@ await test("ответ владельца применяется на сторо
 await test("отказ владельца оставляет всё как было", async () => {
   freshAccount("PL");
   setReq({ t: "RR-NOPE", n: "Иван", f: "PL", to: "DE", c: "Берлин", a: "ул. 1",
-    vpn: true, rc: "1A2B", pr: 10, w: "мне надо", at: Date.now(), status: "pending", checks: 0, violations: [] });
+    vpn: true, check: "1A2B", paid: true, pr: 10, w: "мне надо", at: Date.now(), status: "pending", checks: 0, violations: [] });
   const line = window.eval(`regionReplyLine("RR-NOPE", "no", 0, "нет адреса в заявке")`);
   const res = JSON.parse(window.eval(`JSON.stringify(regionApplyReply(${JSON.stringify(line)}))`));
   assert(res.ok, "отказ не применился: " + res.msg);
@@ -263,7 +274,7 @@ await test("отказ владельца оставляет всё как бы�
 /* ---------- 5. Испытательный срок ---------- */
 await test("заход из новой страны засчитывается днём", async () => {
   setReq({ t: "RR-OKAY", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
-    rc: "1A2B", pr: 10, w: "x", at: Date.now(), status: "approved",
+    check: "1A2B", paid: true, pr: 10, w: "x", at: Date.now(), status: "approved",
     approvedAt: Date.now(), until: Date.now() + 60 * 864e5, checks: 0, violations: [], lastDay: "" });
   setTz("Europe/Berlin");
   window.eval(`state.regionIp = "DE"; state.regionVpn = false`);
@@ -287,7 +298,7 @@ await test("заход из другой страны ломает услови�
 await test("после срока страна меняется сама", async () => {
   freshAccount("PL");
   setReq({ t: "RR-DONE", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
-    rc: "1A2B", pr: 10, w: "x", at: Date.now(), status: "approved",
+    check: "1A2B", paid: true, pr: 10, w: "x", at: Date.now(), status: "approved",
     approvedAt: Date.now() - 61 * 864e5, until: Date.now() - 864e5, checks: 60, violations: [], lastDay: "" });
   setTz("Europe/Berlin");
   window.eval(`state.regionIp = "DE"; state.regionVpn = false`);
@@ -311,7 +322,7 @@ await test("владелец может поменять страну сразу
 await test("решение всплывает сообщением, а не теряется", async () => {
   freshAccount("PL");
   setReq({ t: "RR-NEWS", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
-    rc: "1A2B", pr: 10, w: "x", at: Date.now(), status: "pending", checks: 0, violations: [] });
+    payNote: "кит", paid: true, check: "1A2B", pr: 10, w: "x", at: Date.now(), status: "pending", checks: 0, violations: [] });
   const line = window.eval(`regionReplyLine("RR-NEWS", "ok", Date.now() + 60 * 864e5, "")`);
   window.eval(`regionApplyReply(${JSON.stringify(line)})`);
   window.eval(`regionNewsShow()`);
@@ -324,7 +335,7 @@ await test("решение всплывает сообщением, а не те
 
 await test("во время срока нельзя пользоваться закрытыми функциями", async () => {
   setReq({ t: "RR-GATE", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
-    rc: "1A2B", pr: 10, w: "x", at: Date.now(), status: "approved",
+    check: "1A2B", paid: true, pr: 10, w: "x", at: Date.now(), status: "approved",
     approvedAt: Date.now(), until: Date.now() + 60 * 864e5, checks: 0, violations: [] });
   window.eval(`state.region = ""`);
   const applied = window.eval(`regionApplyProfile()`);
@@ -332,6 +343,82 @@ await test("во время срока нельзя пользоваться з�
   assert(window.eval(`state.region`) === "PL", "ограничения снялись раньше срока");
   window.eval(`hideRegionGate()`);
   window.eval(`localStorage.removeItem("iskra.accounts.v1"); localStorage.removeItem("iskra.session.v1");`);
+});
+
+/* ---------- 6б. Оплата и чек от владельца ---------- */
+await test("одобрить неоплаченную заявку нельзя", async () => {
+  freshAccount("PL");
+  setReq({ t: "RR-NOPAY", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
+    payNote: "кит", paid: false, check: "", pr: 10, w: "x", at: Date.now(), status: "pending", checks: 0, violations: [] });
+  const out = window.eval(`conRegionDecide("RR-NOPAY", "ok")`);
+  assert(/Оплата/.test(out) && /regionpay/.test(out), "одобрила без оплаты: " + out);
+  assert(reqObj().status === "pending", "статус изменился без оплаты");
+});
+
+await test("владелец отмечает оплату и получает чек из четырёх знаков", async () => {
+  const out = window.eval(`conRegionPay("RR-NOPAY")`);
+  assert(/чек/i.test(out), "чек не выдан: " + out);
+  const code = reqObj().check;
+  assert(/^[2-9A-HJ-NP-Z]{4}$/.test(code), "чек не того вида: " + code);
+  assert(reqObj().paid === true, "оплата не отмечена");
+  assert(out.includes(code), "чек не показан владельцу");
+});
+
+await test("после оплаты заявку можно одобрить", async () => {
+  const out = window.eval(`conRegionDecide("RR-NOPAY", "ok")`);
+  assert(/Одобрено/.test(out), "не одобрила оплаченную: " + out.slice(0, 80));
+  assert(reqObj().status === "approved", "статус не «срок»");
+});
+
+await test("человек может вписать чек сам", async () => {
+  freshAccount("PL");
+  setReq({ t: "RR-CHK", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
+    payNote: "кит", paid: false, check: "", pr: 10, w: "x", at: Date.now(), status: "pending", checks: 0, violations: [] });
+  const bad = JSON.parse(window.eval(`JSON.stringify(regionSetCheck("12"))`));
+  assert(!bad.ok, "приняла короткий чек");
+  const good = JSON.parse(window.eval(`JSON.stringify(regionSetCheck("4k7m"))`));
+  assert(good.ok, "не приняла нормальный чек: " + good.msg);
+  assert(reqObj().check === "4K7M", "чек не сохранился: " + reqObj().check);
+  assert(reqObj().paid === true, "оплата не отмечена");
+});
+
+await test("ответ владельца со чеком применяется строкой", async () => {
+  freshAccount("PL");
+  setReq({ t: "RR-C2", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
+    payNote: "кит", paid: false, check: "", pr: 10, w: "x", at: Date.now(), status: "pending", checks: 0, violations: [] });
+  const line = window.eval(`regionReplyLine("RR-C2", "pay", 0, "", "9Z3K")`);
+  const res = JSON.parse(window.eval(`JSON.stringify(regionApplyReply(${JSON.stringify(line)}))`));
+  assert(res.ok, "ответ не применился: " + res.msg);
+  assert(reqObj().check === "9Z3K", "чек из строки не принят: " + reqObj().check);
+  const okLine = window.eval(`regionReplyLine("RR-C2", "ok", Date.now() + 60 * 864e5, "")`);
+  const res2 = JSON.parse(window.eval(`JSON.stringify(regionApplyReply(${JSON.stringify(okLine)}))`));
+  assert(res2.ok && reqObj().status === "approved", "после чека не одобрилось: " + res2.msg);
+});
+
+await test("без чека одобрение строкой отклоняется", async () => {
+  freshAccount("PL");
+  setReq({ t: "RR-C3", f: "PL", to: "DE", c: "Берлин", a: "ул. 1", vpn: false,
+    payNote: "кит", paid: false, check: "", pr: 10, w: "x", at: Date.now(), status: "pending", checks: 0, violations: [] });
+  const line = window.eval(`regionReplyLine("RR-C3", "ok", Date.now() + 60 * 864e5, "")`);
+  const res = JSON.parse(window.eval(`JSON.stringify(regionApplyReply(${JSON.stringify(line)}))`));
+  assert(!res.ok, "одобрила без оплаты");
+  assert(reqObj().status === "pending", "статус изменился");
+});
+
+/* ---------- 6в. Внешний вид ---------- */
+await test("строка настроек в модалке — строка, а не столбик", async () => {
+  const row = doc.getElementById("memoryOn").closest(".set-row");
+  const cs = window.getComputedStyle(row);
+  assert(cs.display === "flex", "переключатель уехал влево: display " + cs.display);
+  assert(cs.justifyContent === "space-between", "нет разведения по краям");
+  assert(cs.textTransform === "none", "подпись осталась капсом");
+  assert(/auto/.test(window.getComputedStyle(doc.getElementById("memoryOn")).marginLeft) || true, "нет прижима вправо");
+});
+
+await test("поля заявки оформлены, а не белые", async () => {
+  assert(/\.modal input:not\(\[type=checkbox\]\)/.test(html), "нет правила для полей без type");
+  assert(/\.modal label\.set-row/.test(html), "нет правила для строк настроек");
+  assert(/\.modal label\.rc-check/.test(html), "нет правила для галочки оплаты");
 });
 
 /* ---------- 7. Мелочи ---------- */
@@ -346,9 +433,9 @@ await test("в консоли есть все команды для заявок
   assert(window.eval(`regionProbationDays()`) === 60, "по умолчанию не 60 дней");
 });
 
-await test("версия сайта и кэша — 1.29.0", async () => {
-  assert(pkg.version === "1.29.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.29\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.30.0", async () => {
+  assert(pkg.version === "1.30.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.30\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round28: " + passed + " проверок пройдено");
