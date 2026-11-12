@@ -16,21 +16,39 @@ const offEl = document.getElementById("off");
 let lastPhrase = "";
 
 /* ---------- Состояние ---------- */
+let hideTimer = null;
+
 function apply(state) {
   if (!state) return;
   petEl.dataset.mood = state.mood || "idle";
   petEl.dataset.action = state.action || "stand";
   petEl.dataset.facing = String(state.facing === 1 ? 1 : -1);
+  /* Огонёк на макушке: настройка в приложении, по умолчанию включён */
+  petEl.dataset.spark = state.spark === false ? "off" : "on";
 
   const phrase = state.phrase || "";
   if (phrase && phrase !== lastPhrase) {
+    /* Новую фразу показываем сразу, без ожидания прошлой анимации */
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    bubbleEl.classList.remove("leaving");
     bubbleEl.textContent = phrase;
     bubbleEl.hidden = false;
     lastPhrase = phrase;
   } else if (!phrase) {
-    bubbleEl.hidden = true;
+    hideBubble();
     lastPhrase = "";
   }
+}
+
+/* Облачко не исчезает рывком: сначала сжимается и гаснет */
+function hideBubble() {
+  if (bubbleEl.hidden || hideTimer) return;
+  bubbleEl.classList.add("leaving");
+  hideTimer = setTimeout(() => {
+    bubbleEl.hidden = true;
+    bubbleEl.classList.remove("leaving");
+    hideTimer = null;
+  }, 160);
 }
 
 window.sye.petState().then(apply).catch(() => {});

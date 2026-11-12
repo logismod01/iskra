@@ -80,6 +80,9 @@ body.dragging { cursor: grabbing; }
   height: 84px;
   transform-origin: 50% 92%;
   will-change: transform;
+  /* Переход между позами: поза меняется не рывком, а за 0.22 с */
+  transition: transform .22s cubic-bezier(.25, .8, .35, 1);
+  backface-visibility: hidden;
 }
 
 /* Крестик: появляется при наведении и выключает Сью совсем. */
@@ -152,22 +155,48 @@ body.dragging { cursor: grabbing; }
   transition: transform .18s ease, opacity .18s ease;
 }
 
+/* ---------- Стойка: он дышит ----------
+   Раньше в покое фигура была полностью неподвижной и казалась картинкой.
+   Дыхание медленное (3.6 с) и совсем небольшое — не мешает работе. */
+.pet[data-action="stand"] .figure {
+  animation: petBreathe 3.6s ease-in-out infinite;
+}
+.pet[data-action="stand"] .shadow {
+  animation: shadowBreathe 3.6s ease-in-out infinite;
+}
+
+@keyframes petBreathe {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-1px) scaleY(1.012); }
+}
+@keyframes shadowBreathe {
+  0%, 100% { transform: scaleX(1); opacity: .32; }
+  50% { transform: scaleX(1.03); opacity: .28; }
+}
+
 /* ---------- Действия ---------- */
-.pet[data-action="walk"] .figure { animation: petWalk .5s ease-in-out infinite; }
-.pet[data-action="walk"] .shadow { animation: shadowWalk .5s ease-in-out infinite; }
-.pet[data-action="jump"] .figure { animation: petJump .62s cubic-bezier(.3, .9, .3, 1) 1; }
-.pet[data-action="jump"] .shadow { animation: shadowJump .62s ease-in-out 1; }
-.pet[data-action="wave"] .figure { animation: petWave 1.5s ease-in-out 1; }
+/* Ходьба: четыре фазы вместо двух — перенос веса, подъём, опускание.
+   Две фазы выглядели как рывок туда-обратно. */
+.pet[data-action="walk"] .figure { animation: petWalk .78s cubic-bezier(.45, .05, .55, .95) infinite; }
+.pet[data-action="walk"] .shadow { animation: shadowWalk .78s ease-in-out infinite; }
+.pet[data-action="jump"] .figure { animation: petJump .7s cubic-bezier(.22, .9, .32, 1) 1; }
+.pet[data-action="jump"] .shadow { animation: shadowJump .7s ease-in-out 1; }
+.pet[data-action="wave"] .figure { animation: petWave 1.7s cubic-bezier(.32, .7, .3, 1) 1; }
 .pet[data-action="sit"] .figure { animation: petSit 11s ease-in-out 1 both; }
-.pet[data-action="sit"] .shadow { transform: scaleX(1.12); opacity: .9; }
+.pet[data-action="sit"] .shadow { transform: scaleX(1.12); opacity: .9; animation: none; }
 
 @keyframes petWalk {
-  0%, 100% { transform: translateY(0) rotate(-3deg); }
-  50% { transform: translateY(-3px) rotate(3deg); }
+  0%   { transform: translateY(0) rotate(-2.2deg) scaleY(1); }
+  25%  { transform: translateY(-2.6px) rotate(-1deg) scaleY(1.018); }
+  50%  { transform: translateY(0) rotate(2.2deg) scaleY(.996); }
+  75%  { transform: translateY(-2.6px) rotate(1deg) scaleY(1.018); }
+  100% { transform: translateY(0) rotate(-2.2deg) scaleY(1); }
 }
 @keyframes shadowWalk {
   0%, 100% { transform: scaleX(1); opacity: .32; }
-  50% { transform: scaleX(.86); opacity: .22; }
+  25% { transform: scaleX(.94); opacity: .26; }
+  50% { transform: scaleX(1.04); opacity: .34; }
+  75% { transform: scaleX(.94); opacity: .26; }
 }
 @keyframes petJump {
   0% { transform: translateY(0) scaleY(1); }
@@ -194,8 +223,10 @@ body.dragging { cursor: grabbing; }
 }
 
 /* ---------- Удар ---------- */
-.pet[data-action="hurt"] .figure { animation: petHurt .34s ease-out 2; }
-.pet[data-action="tremble"] .figure { animation: petTremble .12s linear 10; }
+.pet[data-action="hurt"] .figure { animation: petHurt .42s cubic-bezier(.3, .8, .4, 1) 2; }
+/* Дрожь была из десяти резких шагов по 0.12 с — выглядела как глюк.
+   Теперь это короткая затухающая волна. */
+.pet[data-action="tremble"] .figure { animation: petTremble .9s ease-in-out 1; }
 .pet[data-action="hurt"] .shadow { transform: scaleX(1.15); opacity: .4; }
 
 @keyframes petHurt {
@@ -205,8 +236,13 @@ body.dragging { cursor: grabbing; }
   100% { transform: translateX(0) scaleY(1); }
 }
 @keyframes petTremble {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(-1.6px); }
+  0% { transform: translateX(0); }
+  12% { transform: translateX(-1.5px); }
+  28% { transform: translateX(1.3px); }
+  44% { transform: translateX(-1px); }
+  60% { transform: translateX(.8px); }
+  76% { transform: translateX(-.5px); }
+  100% { transform: translateX(0); }
 }
 
 /* ---------- Эмоции ---------- */
@@ -242,6 +278,34 @@ body.dragging { cursor: grabbing; }
 @keyframes petShake {
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(-2px); }
+}
+
+/* ---------- Моргание ----------
+   Каждые несколько секунд глаза закрываются на миг. Мелочь, но без неё
+   персонаж выглядит нарисованным. */
+.pet[data-mood="idle"] .eye-normal,
+.pet[data-mood="work"] .eye-normal {
+  animation: eyeBlink 5.4s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+@keyframes eyeBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(.12); }
+  98% { transform: scaleY(1); }
+}
+
+/* ---------- Огонёк на макушке ----------
+   Чубчик можно выключить в настройках: кому-то он мешает, кто-то хочет
+   «просто человечка». По умолчанию включён. */
+.pet[data-spark="off"] .sye-tuft { display: none; }
+.pet:not([data-spark="off"]) .sye-tuft {
+  transform-origin: 32px 12px;
+  animation: tuftGlow 2.8s ease-in-out infinite;
+}
+@keyframes tuftGlow {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: .78; transform: scaleY(.9); }
 }
 
 /* Системное «уменьшить движение» важнее любых наших анимаций. */
