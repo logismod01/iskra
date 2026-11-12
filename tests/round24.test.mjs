@@ -165,6 +165,20 @@ await test("карточка отказа больше не отправляет
   assert(!/^2\) Включи свой ключ/.test(block), "ключ по-прежнему первый совет");
 });
 
+await test("ответ «фото не пришло» не считается ответом", async () => {
+  assert(window.eval(`ocrSaysNoImage("Привет! Я не вижу фото, пришли его ещё раз")`) === true, "пропустила отказ");
+  assert(window.eval(`ocrSaysNoImage("Изображение не загрузилось, попробуй снова")`) === true, "пропустила отказ");
+  assert(window.eval(`ocrSaysNoImage("Упражнение 12. 3x = 9, значит x = 3")`) === false, "съела нормальный ответ");
+  assert(window.eval(`ocrSaysNoImage("На фото плохо видно условие, пересними")`) === false, "съела честный разбор фото");
+});
+
+await test("после такого ответа сайт читает фото и спрашивает заново", async () => {
+  assert(/if \(images\.length && !signal\.aborted && ocrSaysNoImage\(acc\)\)/.test(html),
+    "нет проверки ответа на «фото не пришло»");
+  assert(/if \(!\(await retryWithOcr\(\)\)\) throw visionErr/.test(html), "нет повтора после отказа зрения");
+  assert(/let ocrRetried = false/.test(html), "повтор может зациклиться");
+});
+
 /* ---------- 5. Картинка готовится правильно ---------- */
 await test("снимок увеличивается и становится чёрно-белым", async () => {
   const fn = html.slice(html.indexOf("function ocrPrepare"), html.indexOf("function ocrClean"));
@@ -180,9 +194,9 @@ await test("ядро выбирается по поддержке SIMD", async (
 });
 
 /* ---------- 6. Версия ---------- */
-await test("версия сайта и кэша — 1.24.0", async () => {
-  assert(pkg.version === "1.24.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.24\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.25.0", async () => {
+  assert(pkg.version === "1.25.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.25\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round24: " + passed + " проверок пройдено");
