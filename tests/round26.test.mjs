@@ -15,7 +15,7 @@
  * 5) таблица поясов полная и без опечаток;
  * 6) экран объясняет, что страна определена по поясу;
  * 7) кэш v2 хранит и страну, и пояс;
- * 8) версия 1.27.0.
+ * 8) версия 1.28.0.
  *
  * Запуск: node tests/round26.test.mjs
  */
@@ -169,13 +169,13 @@ await test("кэш хранит и страну, и пояс адреса", asyn
 });
 
 await test("проверка VPN идёт и для данных из кэша", async () => {
-  assert(/const vpn = regionVpnCheck\(info, false\)/.test(html), "из кэша VPN не проверяется");
+  assert(/vpn = regionVpnCheck\(info, false\)/.test(html), "из кэша VPN не проверяется");
 });
 
 /* ---------- 7. Версия ---------- */
-await test("версия сайта и кэша — 1.27.0", async () => {
-  assert(pkg.version === "1.27.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.27\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.28.0", async () => {
+  assert(pkg.version === "1.28.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.28\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round26: " + passed + " проверок пройдено");

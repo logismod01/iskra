@@ -1455,6 +1455,17 @@ button:active:not(:disabled) { transform: scale(.975); }
 .acct-dev b { font-size: 13.5px; }
 .acct-dev button { background: var(--bg); border: 1px solid var(--line); color: var(--err); border-radius: 8px; padding: 6px 10px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
 .acct-dim { font-size: 11.5px; color: var(--text-dim); margin-top: 3px; }
+
+/* Страна в профиле: флажок и «паспорт» региона */
+.region-passport { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 13px; border: 1px solid var(--accent-soft); background: color-mix(in srgb, var(--accent) 7%, var(--bg-soft-2)); }
+.region-passport .rp-flag { font-size: 26px; line-height: 1; }
+.region-passport b { font-size: 14px; }
+.region-passport .acct-dim { margin-top: 2px; }
+#profileMenu .pm-region { font-size: 12px; color: var(--text-soft); margin-top: 4px; display: flex; align-items: center; gap: 5px; }
+.auth-region { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 12px; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--accent-soft); background: color-mix(in srgb, var(--accent) 9%, var(--bg)); font-size: 12px; line-height: 1.45; color: var(--text-soft); }
+.auth-region[hidden] { display: none; }
+.auth-region .ar-flag { font-size: 20px; line-height: 1.15; }
+.auth-region b { color: var(--text); }
 .auth-limit { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; }
 .auth-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; margin-left: 8px; letter-spacing: .03em; }
 .auth-badge.on { background: rgba(84,180,120,.16); color: #7ed6a1; }
@@ -2191,6 +2202,7 @@ html.no-anim .theme-flash { display: none; }
     <p id="regionText">К сожалению, мы не можем открыть доступ из вашего региона. Это ограничение со стороны сервиса, а не блокировка вашего устройства.</p>
     <p class="region-foot">Если вы считаете, что это ошибка, напишите владельцу — контакты в репозитории проекта.</p>
     <button type="button" class="region-retry" id="regionRetry">Проверить снова</button>
+    <button type="button" class="region-retry" id="regionLogout" hidden>Выйти из аккаунта</button>
   </div>
 </div>
 
@@ -8275,8 +8287,101 @@ function regionVpnCheck(info, probeVpn) {
   return { vpn: reasons.length > 0, reasons, real, tz, tzSet };
 }
 
+/* ---------- Страна в профиле ----------
+   Регион записывается один раз — когда человек создаёт аккаунт, — и дальше
+   не меняется: ни переезд, ни VPN его не переписывают. Гость (без аккаунта)
+   проверяется при каждом входе, как раньше. */
+
+function regionFlag(code) {
+  const c = String(code || "").toUpperCase();
+  if (!/^[A-Z]{2}$/.test(c)) return "🌍";
+  return String.fromCodePoint(
+    0x1F1E6 + c.charCodeAt(0) - 65,
+    0x1F1E6 + c.charCodeAt(1) - 65
+  );
+}
+
+/* Название страны по-русски: свой короткий словарь, дальше — встроенный в браузер */
+function regionCountryName(code) {
+  const c = String(code || "").toUpperCase();
+  if (!c) return "страна не определилась";
+  if (REGION_NAMES[c]) return REGION_NAMES[c];
+  try {
+    const n = new Intl.DisplayNames(["ru"], { type: "region" }).of(c);
+    if (n && n !== c) return n;
+  } catch (e) {}
+  return c;
+}
+
+/* Что доступно в этой стране — короткой фразой */
+function regionStatusText(code) {
+  const c = String(code || "").toUpperCase();
+  if (!c) return "доступно всё";
+  const lvl = regionLevel(c);
+  if (lvl === 100) return "доступ закрыт";
+  if (lvl === 75) return "доступна четверть функций";
+  if (lvl === 50) return "доступна половина функций";
+  return "доступно всё";
+}
+
+/* Откуда взялась страна — для «паспорта» в профиле */
+const REGION_SRC_TEXT = {
+  tz: "по часовому поясу устройства",
+  ip: "по адресу в интернете",
+  unknown: "определить не удалось"
+};
+
+/* Какую страну записывать в профиль.
+   Пояс устройства важнее адреса: адрес подделывает VPN, пояс — почти никто.
+   Пояс на несколько стран ответа не даёт — тогда берём то, что решила проверка. */
+function regionCountryNow() {
+  const tz = browserTimezone();
+  const tzSet = tzCountries(tz);
+  if (tzSet.length === 1) return { code: tzSet[0], src: "tz", tz };
+  if (state.region) return { code: state.region, src: state.regionVpn ? "tz" : "ip", tz };
+  if (state.regionIp) return { code: state.regionIp, src: "ip", tz };
+  return { code: "", src: "unknown", tz };
+}
+
+/* Записать страну в аккаунт. Только один раз: потом не трогаем никогда. */
+function regionRecordProfile(acc) {
+  if (!acc || acc.country) return acc;
+  const now = regionCountryNow();
+  acc.country = now.code || "";
+  acc.countrySrc = now.code ? now.src : "unknown";
+  acc.countryTz = now.tz || "";
+  acc.countryAt = Date.now();
+  authSaveAccounts(authAccounts().map(a => (a.id === acc.id ? acc : a)));
+  return acc;
+}
+
+/* Аккаунты, созданные до этой версии, страны не имеют — дописываем при первом входе */
+function regionAdoptProfile() {
+  let acc = null;
+  try { acc = currentAccount(); } catch (e) { return; }
+  if (!acc || acc.country) return;
+  /* Пояса устройства достаточно: сеть могла и не ответить */
+  if (!regionCountryNow().code) return;
+  regionRecordProfile(acc);
+}
+
+/* Действуют ли ограничения по стране из профиля */
+function regionApplyProfile() {
+  let acc = null;
+  try { acc = currentAccount(); } catch (e) { return false; }
+  if (!acc || !acc.country) return false;
+  state.region = acc.country;
+  state.regionVpn = false;
+  state.regionVpnReasons = [];
+  const lvl = regionLevel(acc.country);
+  if (lvl === 100) { showRegionGate(acc.country, false, true); return true; }
+  hideRegionGate();
+  if (lvl > 0) showRegionBanner(acc.country, lvl, true);
+  return true;
+}
+
 /* Экран-заглушка: сайт не работает, чат не запускается */
-function showRegionGate(code, viaVpn) {
+function showRegionGate(code, viaVpn, viaProfile) {
   const gate = $("#regionGate");
   if (!gate) return;
   const name = REGION_NAMES[code] || "";
@@ -8286,7 +8391,11 @@ function showRegionGate(code, viaVpn) {
     : "Искра не работает в этой стране";
   const text = $("#regionText");
   if (text) {
-    if (viaVpn) {
+    if (viaProfile) {
+      text.textContent = "Страна в вашем профиле — " + (name || code) + ". Она записана при создании " +
+        "аккаунта и не меняется никогда, поэтому доступ из неё закрыт, даже если сейчас вы " +
+        "зашли через VPN. Так обход не работает.";
+    } else if (viaVpn) {
       text.textContent = "Похоже, вы заходите через VPN, но страна всё равно определилась: " +
         "по часовому поясу вашего устройства. К сожалению, из вашего региона доступ закрыт. " +
         "Если вы включили VPN просто так — выключите его и нажмите «Проверить снова».";
@@ -8294,6 +8403,11 @@ function showRegionGate(code, viaVpn) {
       text.textContent = "К сожалению, мы не можем открыть доступ из вашего региона. Это ограничение со стороны сервиса, а не блокировка вашего устройства.";
     }
   }
+  /* Из закрытой по профилю страны должен быть выход: иначе человек заперт навсегда */
+  const out = $("#regionLogout");
+  if (out) out.hidden = !viaProfile;
+  const retry = $("#regionRetry");
+  if (retry) retry.hidden = !!viaProfile;
   gate.hidden = false;
   document.documentElement.classList.add("region-blocked");
 }
@@ -8301,27 +8415,60 @@ function showRegionGate(code, viaVpn) {
 function hideRegionGate() {
   const gate = $("#regionGate");
   if (gate) gate.hidden = true;
+  /* Кнопки экрана возвращаем в исходное состояние: «Проверить снова» — да,
+     «Выйти из аккаунта» — нет (она нужна только при закрытой по профилю стране) */
+  const out = $("#regionLogout");
+  if (out) out.hidden = true;
+  const retry = $("#regionRetry");
+  if (retry) retry.hidden = false;
   document.documentElement.classList.remove("region-blocked");
 }
 
 /* Плашка: работает, но не всё */
-function showRegionBanner(code, level) {
+function showRegionBanner(code, level, fromProfile) {
   const box = $("#regionBanner");
   const text = $("#regionBannerText");
   if (!box || !text) return;
-  const name = REGION_NAMES[code] || code;
+  const name = REGION_NAMES[code] || regionCountryName(code) || code;
   const lost = level === 75 ? "75%" : "50%";
   const what = (REGION_BLOCKED[level] || []).join(", ");
-  text.textContent = `Регион ${name}: доступна часть функций (${lost} отключено). Не работает: ${what}.`;
+  text.textContent = (fromProfile ? `Ваша страна по профилю — ${name}: ` : `Регион ${name}: `) +
+    `доступна часть функций (${lost} отключено). Не работает: ${what}.`;
   box.hidden = false;
   const close = $("#regionBannerClose");
   if (close) close.addEventListener("click", () => { box.hidden = true; }, { once: true });
 }
 
+/* Общий финал проверки: записать состояние, показать экран или плашку */
+function regionFinish(info, vpn) {
+  const real = vpn.real || info.country;
+  state.region = real;
+  state.regionIp = info.country;
+  state.regionVpn = vpn.vpn;
+  state.regionVpnReasons = vpn.reasons;
+  const lvl = regionLevel(real);
+  if (lvl === 100) {
+    showRegionGate(real, vpn.vpn && real !== info.country);
+  } else {
+    hideRegionGate();
+    if (lvl > 0) showRegionBanner(real, lvl);
+  }
+  /* У аккаунта, созданного до этой версии, страны ещё нет — записываем сейчас */
+  regionAdoptProfile();
+  /* Если окно входа открыто — обновляем строчку про страну */
+  try { regionFillAuthNote(); } catch (e) {}
+  return real;
+}
+
 /* Главная проверка. Возвращает код страны ("" — не узнали). */
 async function regionCheck(force) {
+  /* У аккаунта страна записана навсегда — сеть для неё не нужна вообще.
+     Поэтому ни VPN, ни смена интернета её уже не перепишут. */
+  if (regionApplyProfile()) return state.region;
+
   const cached = force ? null : regionFromCache();
   let info = cached;
+  let vpn = null;
 
   if (!info) {
     /* Определение страны и проверка «это VPN?» идут одновременно:
@@ -8330,32 +8477,49 @@ async function regionCheck(force) {
     info = await regionDetect(4000);
     const probeVpn = await probeP;
     if (info.country) regionToCache(info);
-    const vpn = regionVpnCheck(info, probeVpn);
-    const real = vpn.real || info.country;
-    state.region = real;
-    state.regionIp = info.country;
-    state.regionVpn = vpn.vpn;
-    state.regionVpnReasons = vpn.reasons;
-    const lvl = regionLevel(real);
-    if (lvl === 100) { showRegionGate(real, vpn.vpn && real !== info.country); return real; }
-    hideRegionGate();
-    if (lvl > 0) showRegionBanner(real, lvl);
-    return real;
+    vpn = regionVpnCheck(info, probeVpn);
+  } else {
+    /* Из кэша: страна уже известна, но пояс проверяем заново —
+       человек мог переключить VPN, не дожидаясь истечения 12 часов. */
+    vpn = regionVpnCheck(info, false);
   }
+  return regionFinish(info, vpn);
+}
 
-  /* Из кэша: страна уже известна, но пояс проверяем заново —
-     человек мог переключить VPN, не дожидаясь истечения 12 часов. */
-  const vpn = regionVpnCheck(info, false);
-  const real = vpn.real || info.country;
-  state.region = real;
-  state.regionIp = info.country;
-  state.regionVpn = vpn.vpn;
-  state.regionVpnReasons = vpn.reasons;
-  const lvl = regionLevel(real);
-  if (lvl === 100) { showRegionGate(real, vpn.vpn && real !== info.country); return real; }
-  hideRegionGate();
-  if (lvl > 0) showRegionBanner(real, lvl);
-  return real;
+/* Строчка про страну в окне входа: человек видит её ДО создания аккаунта */
+function regionFillAuthNote() {
+  const box = $("#authRegion");
+  if (!box) return;
+  const acc = (() => { try { return currentAccount(); } catch (e) { return null; } })();
+  const now = acc && acc.country
+    ? { code: acc.country }
+    : regionCountryNow();
+  if (!now.code) { box.hidden = true; return; }
+  const flag = $("#authRegionFlag"), name = $("#authRegionName"), hint = $("#authRegionHint");
+  if (flag) flag.textContent = regionFlag(now.code);
+  if (name) name.textContent = "Ваша страна — " + regionCountryName(now.code);
+  if (hint) {
+    hint.textContent = acc && acc.country
+      ? "Она записана в профиле навсегда: " + regionStatusText(now.code) + "."
+      : "Определили по часовому поясу устройства, а не только по адресу — VPN его не меняет. " +
+        "Запишется в профиль навсегда: " + regionStatusText(now.code) + ".";
+  }
+  box.hidden = false;
+}
+
+/* Строчка про страну на экране «Готово» */
+function regionFillDone(acc) {
+  const box = $("#authDoneRegion");
+  if (!box) return;
+  if (!acc || !acc.country) { box.hidden = true; return; }
+  const flag = $("#authDoneRegionFlag"), name = $("#authDoneRegionName"), hint = $("#authDoneRegionHint");
+  if (flag) flag.textContent = regionFlag(acc.country);
+  if (name) name.textContent = "Страна в профиле: " + regionCountryName(acc.country);
+  if (hint) {
+    hint.textContent = "Записана навсегда — " + regionStatusText(acc.country) +
+      ". Менять её нельзя: именно поэтому обход через VPN не работает.";
+  }
+  box.hidden = false;
 }
 
 /* Страж для действий: если функция в регионе закрыта — говорим и не делаем */
@@ -13599,6 +13763,14 @@ function authSetSession(id) {
   else localStorage.removeItem(SESSION_KEY);
   registerDevice(currentAccount());
   renderProfile();
+  /* Страна из профиля важнее любой сетевой проверки. Вошли — работаем по ней;
+     вышли — снова определяемся по адресу и поясу, как гость. */
+  try {
+    if (!regionApplyProfile()) {
+      if (!id) { hideRegionGate(); state.region = ""; state.regionIp = ""; regionCheck(true).catch(() => {}); }
+      else regionCheck(false).catch(() => {});
+    }
+  } catch (e) {}
   if (supabaseConfigured()) handleAuthRedirect();
 }
 function currentAccount() {
@@ -13626,6 +13798,24 @@ async function sbFetch(path, body, method = "POST") {
   try { j = JSON.parse(txt); } catch (e) {}
   if (!r.ok) throw new Error(j.error_description || j.msg || j.message || txt.slice(0, 140));
   return j;
+}
+
+/* Страна в профиле Supabase: чтобы её видел и сервер, а не только браузер.
+   Ничего не ломает, если сервер не ответил — страна уже лежит локально. */
+async function sbSetUserCountry(token, country) {
+  if (!supabaseConfigured() || !token || !country) return false;
+  try {
+    const r = await fetch(SB() + "/auth/v1/user", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_CONFIG.anonKey,
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({ data: { country } })
+    });
+    return r.ok;
+  } catch (e) { return false; }
 }
 
 /* Возврат после входа через Google/GitHub: токены приходят в адресе */
@@ -13665,9 +13855,11 @@ async function handleAuthRedirect() {
     localStorage.removeItem("iskra.oauth.pending");
     acc.sbId = u.id;
     acc.email = email || acc.email;
+    regionRecordProfile(acc);
     const list = authAccounts().map(a => (a.id === acc.id ? acc : a));
     authSaveAccounts(list);
     authSetSession(acc.id);
+    sbSetUserCountry(token, acc.country).catch(() => {});
     history.replaceState(null, "", location.pathname + location.search);
     toast("Вход выполнен: " + acc.name, "ok");
     if (!settings.model || settings.onboarded !== true) setTimeout(openOnboarding, 600);
@@ -13832,10 +14024,13 @@ function authCreate({ method, name, email, phone, passwordHash }) {
     created: Date.now(),
     recovery: makeRecoveryCode(),
     devices: [],
+    /* Страна — один раз и навсегда: дальше её не переписывает ни VPN, ни переезд */
+    country: "", countrySrc: "", countryTz: "", countryAt: 0,
     color: ["#ff7a45", "#7d3cff", "#22a6b3", "#e84393", "#00b894"][Math.floor(Math.random() * 5)]
   };
   list.push(acc);
   authSaveAccounts(list);
+  regionRecordProfile(acc);
   registerDevice(acc);
   authSetSession(acc.id);
   return acc;
@@ -13869,6 +14064,7 @@ function openAuth() {
   m.classList.add("open");
   m.setAttribute("aria-hidden", "false");
   authShow("authHome");
+  try { regionFillAuthNote(); } catch (e) {}
   const note = $("#authModeNote");
   if (note) note.innerHTML = supabaseConfigured()
     ? "Аккаунт защищён: код приходит на почту, вход через Google и GitHub работает по-настоящему."
@@ -13898,7 +14094,7 @@ async function sendEmailCode() {
   if (supabaseConfigured()) {
     if (!(await canCreateAccount(email))) return;
     try {
-      await sbFetch("/auth/v1/otp", { email, create_user: true });
+      await sbFetch("/auth/v1/otp", { email, create_user: true, data: { country: regionCountryNow().code } });
       note.innerHTML = "Код отправлен на <b>" + esc(email) + "</b>. Проверь почту и папку «Спам». Письмо идёт до минуты." + localCodeNote;
     } catch (e) {
       const m = String(e.message || "");
@@ -13929,6 +14125,7 @@ async function checkEmailCode() {
       if (!acc) acc = authCreate({ method: "email", email: authPending.email, name: j.user?.email?.split("@")[0] });
       if (!acc) return;
       acc.supabaseUser = j.user?.id || "";
+      sbSetUserCountry(j.access_token, acc.country).catch(() => {});
       await rememberSignup(authPending.email);
       authAfterSignup(acc);
       return;
@@ -14024,7 +14221,7 @@ async function passSubmit() {
         if (!acc) return;
         await rememberSignup(login);
         authAfterSignup(acc);
-        sbFetch("/auth/v1/signup", { email: login, password: pass })
+        sbFetch("/auth/v1/signup", { email: login, password: pass, data: { country: acc.country || "" } })
           .then(j => {
             if (j && j.user && j.user.id) {
               acc.supabaseUser = j.user.id;
@@ -14163,6 +14360,7 @@ function authAfterSignup(acc, isLogin) {
   $("#authDone .auth-sub").textContent = (isLogin ? "С возвращением, " : "Привет, ") + acc.name + "! " + (isLogin ? "" : "Осталось выбрать версию.");
   $("#authDoneGo").textContent = isLogin ? "Продолжить" : "Выбрать версию";
   authPending.doneAccount = acc;
+  regionFillDone(acc);
 }
 
 /* --- онбординг с выбором модели --- */
@@ -14210,7 +14408,8 @@ function renderProfile() {
     name.textContent = acc.name;
     if (menu) menu.innerHTML = `
       <div class="pm-head"><div class="pm-name">${esc(acc.name)}</div>
-      <div class="pm-mail">${esc(acc.email || acc.phone || "локальный аккаунт")}</div></div>
+      <div class="pm-mail">${esc(acc.email || acc.phone || "локальный аккаунт")}</div>
+      ${acc.country ? `<div class="pm-region"><span>${regionFlag(acc.country)}</span> ${esc(regionCountryName(acc.country))} · ${esc(regionStatusText(acc.country))}</div>` : ""}</div>
       <button data-pm="knowledge">${ic("book", 16)} Мои знания (${learnedCount()})</button>
       <button data-pm="pro">${ic("spark", 16)} Доступ по ключу${accessActive() ? " · Pro" : ""}</button>
       <button data-pm="account">${ic("user", 16)} Мой аккаунт и устройства</button>
@@ -14265,6 +14464,21 @@ function openAccountPanel() {
       <div class="acct-row"><span>Способ входа</span><b>${esc({google:"Google",github:"GitHub",email:"почта и код",phone:"телефон",pass:"пароль"}[acc2.method] || acc2.method || "—")}</b></div>
       <div class="acct-row"><span>Код восстановления</span><b class="acct-code">${esc(acc2.recovery || "—")}</b></div>
       <div class="acct-note">Сохрани код восстановления: по нему можно вернуть аккаунт после удаления или смены устройства.</div>
+    </div>
+
+    <div class="acct-sec">
+      <div class="acct-h">Страна</div>
+      <div class="region-passport">
+        <div class="rp-flag">${regionFlag(acc2.country)}</div>
+        <div>
+          <b>${esc(regionCountryName(acc2.country))}</b>
+          <div class="acct-dim">${acc2.country ? esc(regionStatusText(acc2.country)) : "доступно всё"}</div>
+        </div>
+      </div>
+      <div class="acct-row"><span>Записана</span><b>${acc2.countryAt ? new Date(acc2.countryAt).toLocaleDateString("ru-RU") : "—"}</b></div>
+      <div class="acct-row"><span>Как определили</span><b>${esc(REGION_SRC_TEXT[acc2.countrySrc] || "—")}</b></div>
+      ${regionLevel(acc2.country) > 0 ? `<div class="acct-row"><span>Не работает</span><b>${esc((REGION_BLOCKED[regionLevel(acc2.country)] || []).join(", "))}</b></div>` : ""}
+      <div class="acct-note">Страна записывается один раз, при создании аккаунта, и не меняется — ни переездом, ни VPN. Поэтому вход определяется, даже если включён VPN. Если страна определилась неверно, напиши владельцу: он поправит её вручную.</div>
     </div>
 
     <div class="acct-sec">
@@ -16495,7 +16709,10 @@ async function consoleRun(raw) {
   if (c === "accounts") {
     const list = authAccounts();
     if (!list.length) return "Аккаунтов на этом устройстве нет.";
-    return "АККАУНТЫ (" + list.length + ")\n" + list.map(a => `  ${a.name} · ${a.method} · ${a.email || a.phone || "—"}${a.deleted ? " · УДАЛЁН" : ""}`).join("\n");
+    return "АККАУНТЫ (" + list.length + ")\n" + list.map(a =>
+      `  ${a.name} · ${a.method} · ${a.email || a.phone || "—"}` +
+      `${a.country ? " · " + regionFlag(a.country) + " " + regionCountryName(a.country) + " (" + regionStatusText(a.country) + ")" : " · страна не записана"}` +
+      `${a.deleted ? " · УДАЛЁН" : ""}`).join("\n");
   }
   if (c === "ban" || c === "unban" || c === "bans") {
     const d = adminData(); d.bans = d.bans || [];
@@ -17414,7 +17631,18 @@ document.addEventListener("DOMContentLoaded", () => {
   regionCheck().catch(() => {});
   const rgRetry = $("#regionRetry");
   if (rgRetry) rgRetry.addEventListener("click", () => {
+    const acc = currentAccount();
+    if (acc && acc.country) {
+      toast("Страна записана в профиле при создании аккаунта — проверка её не меняет.", "err");
+      return;
+    }
     try { localStorage.removeItem(REGION_CACHE_KEY); } catch (e) {}
+    regionCheck(true).catch(() => {});
+  });
+  const rgOut = $("#regionLogout");
+  if (rgOut) rgOut.addEventListener("click", () => {
+    authSetSession(null);
+    toast("Вы вышли из аккаунта");
     regionCheck(true).catch(() => {});
   });
   // Ссылка …/#access открывает сразу «Доступ» — по ней из окна агента Sye идут за ключом.
@@ -17616,6 +17844,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- 1. выбор способа -->
       <div class="auth-step on" id="authHome">
         <p class="auth-limit" id="authLimitNote"></p>
+        <div class="auth-region" id="authRegion" hidden>
+          <span class="ar-flag" id="authRegionFlag">🌍</span>
+          <span><b id="authRegionName"></b><br><span id="authRegionHint"></span></span>
+        </div>
         <h3 class="auth-title">Вход или регистрация</h3>
         <p class="auth-sub">Один аккаунт для чатов, настроек и моделей.</p>
         <button class="auth-method g" data-method="google">
@@ -17703,6 +17935,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="auth-step" id="authDone">
         <h3 class="auth-title">Готово</h3>
         <p class="auth-sub">Аккаунт создан. Сейчас выберешь версию — и начнём.</p>
+        <div class="auth-region" id="authDoneRegion" hidden>
+          <span class="ar-flag" id="authDoneRegionFlag">🌍</span>
+          <span><b id="authDoneRegionName"></b><br><span id="authDoneRegionHint"></span></span>
+        </div>
         <button class="auth-btn" id="authDoneGo">Выбрать версию</button>
       </div>
     </div>
