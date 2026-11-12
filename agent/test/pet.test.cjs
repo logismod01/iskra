@@ -359,11 +359,12 @@ test("окно Сью: маскот, облачко и три действия",
 });
 
 test("в настройках есть переключатели Сью и кнопка «Позвать»", () => {
-  for (const id of ["petOn", "petTalk", "petCallBtn"]) {
+  for (const id of ["petOn", "petSpark", "petTalk", "petTalkRare", "petCallBtn"]) {
     assert.ok(html.includes('id="' + id + '"'), "в настройках нет " + id);
   }
   assert.match(appJs, /saveSettings\(\{ petOn: !!pOn\.checked \}\)/);
-  assert.match(appJs, /saveSettings\(\{ petTalk: !!pTalk\.checked \}\)/);
+  assert.match(appJs, /saveSettings\(\{ petTalkMode: mode \}\)/);
+  assert.match(appJs, /saveSettings\(\{ petSpark: !!pSpark\.checked \}\)/);
   assert.match(appJs, /window\.sye\.petCall\(\)/);
 });
 
@@ -412,4 +413,70 @@ test("Сью включён по умолчанию, но его можно вы
   assert.match(mainJs, /petOn: true/);
   assert.match(mainJs, /if \(!petEnabled\(\)\) return;/);
   assert.match(mainJs, /saveSettings\(\{ petOn: false \}\);\s*stopPet\(\)/);
+});
+
+/* ---------- Новое: плавность, огонёк и редкие фразы ---------- */
+test("позы меняются плавно, а не рывком", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../renderer/pet.css"), "utf8");
+  assert.match(css, /\.figure\s*\{[^}]*transition: transform \.22s/, "нет перехода между позами");
+  assert.match(css, /@keyframes petBreathe/, "в покое не дышит");
+  assert.match(css, /@keyframes eyeBlink/, "не моргает");
+});
+
+test("ходьба из четырёх фаз, а не из двух", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../renderer/pet.css"), "utf8");
+  const walk = css.slice(css.indexOf("@keyframes petWalk"), css.indexOf("@keyframes shadowWalk"));
+  const percents = walk.match(/\d+%/g) || [];
+  assert.ok(percents.length >= 5, "в ходьбе мало фаз: " + percents.length);
+  assert.match(walk, /scaleY/, "нет переноса веса");
+});
+
+test("дрожь затухает, а не дёргается 10 раз", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../renderer/pet.css"), "utf8");
+  assert.doesNotMatch(css, /petTremble \.12s linear 10/, "осталась старая резкая дрожь");
+  assert.match(css, /petTremble \.9s ease-in-out 1/, "нет мягкой дрожи");
+});
+
+test("огонёк можно убрать, и он гаснет плавно", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../renderer/pet.css"), "utf8");
+  assert.match(css, /data-spark="off"\]\s*\.sye-tuft\s*\{\s*display: none/, "огонёк нельзя убрать");
+  assert.match(css, /@keyframes tuftGlow/, "огонёк не живой");
+  assert.match(petJs, /dataset\.spark/, "окно не получает настройку огонька");
+});
+
+test("режим «редко»: только результат, ошибка и напоминание", () => {
+  const petMod = petModule;
+  assert.deepEqual(petMod.RARE_SCENES.slice().sort(), ["done", "error", "nudge", "sleep", "wake"]);
+  let t = 1000;
+  const p = petMod.createPet({ talkMode: "rare", now: () => t, rand: () => 0.1 });
+  assert.equal(p.poke(), "", "в режиме «редко» он болтает на клик");
+  t += 1000;
+  assert.ok(p.react("done").length > 0, "не сказал про готовый результат");
+});
+
+test("одна и та же фраза не повторяется дважды подряд", () => {
+  let t = 1000;
+  const p = petModule.createPet({ talkMode: "normal", now: () => t, rand: () => 0 });
+  const first = p.react("done");
+  t += 1000;
+  const second = p.react("done");
+  assert.ok(first && second, "фраз нет");
+  assert.notEqual(first, second, "сказал одно и то же два раза: " + first);
+});
+
+test("молчание и частота переключаются на лету", () => {
+  const p = petModule.createPet({ talkMode: "normal", rand: () => 0.2 });
+  assert.equal(p.setTalkMode("manual"), "manual");
+  assert.equal(p.poke(), "", "в режиме молчания всё равно сказал");
+  p.setTalkMode("rare");
+  assert.equal(p.snapshot().talkMode, "rare");
+});
+
+test("огонёк по умолчанию включён, выключается настройкой", () => {
+  const on = petModule.createPet({});
+  assert.equal(on.snapshot().spark, true, "огонёк выключен по умолчанию");
+  assert.equal(on.setSpark(false), false);
+  assert.equal(on.snapshot().spark, false);
+  const off = petModule.createPet({ spark: false });
+  assert.equal(off.snapshot().spark, false, "настройка не применяется при создании");
 });

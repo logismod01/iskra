@@ -42,6 +42,10 @@ const ANGRY_AT = 0.75;              // с этого порога он по-на
 const ANGRY_MS = 15000;             // и злится недолго
 const HIT_MEMORY_MS = 12000;        // удары в этом окне считаются «подряд»
 
+/* Фразы, которые остаются, когда человек выбрал «говорить редко»:
+   только по делу — результат, ошибка, забота о человеке. */
+const RARE_SCENES = ["done", "error", "nudge", "sleep", "wake"];
+
 const PHRASES = {
   hello: [
     "Я на месте. Что делаем?",
@@ -202,6 +206,10 @@ function createPet(opts) {
   const rand = o.rand || Math.random;
   const now = o.now || (() => Date.now());
   const quiet = o.quiet === true;
+  /* «rare» — говорить только по делу, «normal» — как обычно, «manual» — молчать */
+  let talkMode = ["rare", "normal", "manual"].includes(o.talkMode) ? o.talkMode : (quiet ? "manual" : "normal");
+  /* Огонёк на макушке: false — убрать совсем */
+  let spark = o.spark !== false;
   const width = Math.max(40, Number(o.width) || 96);
   const height = Math.max(40, Number(o.height) || 96);
 
@@ -233,11 +241,21 @@ function createPet(opts) {
     lastGreeting: 0
   };
 
+  let lastPhrase = "";
+
   function say(scene, opts2) {
-    if (pet.quiet) return "";
+    if (pet.quiet || talkMode === "manual") return "";
+    /* Режим «редко»: болтовни нет, только результат, ошибка и забота */
+    if (talkMode === "rare" && !RARE_SCENES.includes(scene)) return "";
     const list = PHRASES[scene] || [];
-    const text = (opts2 && opts2.text) || pick(list, rand);
+    let text = (opts2 && opts2.text) || pick(list, rand);
     if (!text) return "";
+    /* Одна и та же фраза два раза подряд — это выглядит как сломанный робот */
+    if (text === lastPhrase && list.length > 1) {
+      const other = list.filter((p) => p !== text);
+      text = pick(other, rand) || text;
+    }
+    lastPhrase = text;
     pet.phrase = text;
     pet.phraseUntil = now() + PHRASE_MS;
     pet._lastSay = now();
@@ -267,7 +285,7 @@ function createPet(opts) {
     if (pet.x + pet.width >= pet.maxX - 1) pet.dir = -1;
     pet.facing = pet.dir;
     setAction("walk", between(rand, 2200, 6000));
-    if (!quiet && rand() < 0.4) say("walk");
+    if (!quiet && talkMode !== "rare" && talkMode !== "manual" && rand() < 0.4) say("walk");
   }
 
   /* Гулять он не идёт, если ему не по себе: на работе, в страхе или в злости. */
@@ -372,7 +390,9 @@ function createPet(opts) {
       phrase: pet.phrase,
       anger: Math.round(pet.anger * 100) / 100,
       emotion: pet.emotion,
-      quiet: pet.quiet
+      quiet: pet.quiet,
+      talkMode,
+      spark
     };
   }
 
@@ -535,6 +555,21 @@ function createPet(opts) {
     return pet.quiet;
   }
 
+  /* Как часто он говорит. «manual» — молчит, пока не позовут. */
+  function setTalkMode(mode) {
+    if (!["rare", "normal", "manual"].includes(mode)) return talkMode;
+    talkMode = mode;
+    pet.quiet = mode === "manual";
+    if (pet.quiet) { pet.phrase = ""; pet.phraseUntil = 0; }
+    return talkMode;
+  }
+
+  /* Огонёк на макушке: включить или убрать совсем */
+  function setSpark(on) {
+    spark = on !== false;
+    return spark;
+  }
+
   return {
     state: pet,
     snapshot,
@@ -556,6 +591,8 @@ function createPet(opts) {
     greet,
     setMood,
     setQuiet,
+    setTalkMode,
+    setSpark,
     get quiet() { return pet.quiet; }
   };
 }
@@ -573,6 +610,7 @@ module.exports = {
   greetingFor,
   allPhrases,
   PHRASES,
+  RARE_SCENES,
   GREETINGS,
   EMOTIONS,
   TICK_MS,

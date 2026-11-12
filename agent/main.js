@@ -63,7 +63,11 @@ const DEFAULT_SETTINGS = {
   animations: true,
   /* Сью на рабочем столе: стоит, изредка гуляет, прыгает и говорит облачком. */
   petOn: true,
-  petTalk: true,
+  /* Как часто Сью говорит: "normal" — как раньше, "rare" — только по делу,
+     "manual" — молчит, пока не позовут. */
+  petTalkMode: "rare",
+  /* Огонёк (чубчик) на макушке: false — убрать совсем */
+  petSpark: true,
   petMediaKeys: true,
   petX: 0,
   petY: 0,
@@ -318,7 +322,9 @@ function ensurePetCore() {
   petCore = petModule.createPet({
     width: PET_MASCOT_W,
     height: PET_H,
-    quiet: settings.petTalk === false
+    quiet: settings.petTalkMode === "manual",
+    talkMode: settings.petTalkMode,
+    spark: settings.petSpark !== false
   });
   const area = petDesktop();
   petCore.setBounds(
@@ -507,18 +513,41 @@ function petDragTo(x, y) {
   petPush();
 }
 
+/* Смена режима разговора из меню и из настроек приложения */
+function setPetTalkMode(mode) {
+  if (!["rare", "normal", "manual"].includes(mode)) return;
+  saveSettings({ petTalkMode: mode });
+  if (petCore) petCore.setTalkMode(mode);
+  broadcastState();
+  petPush();
+}
+
 function petMenu() {
   const menu = Menu.buildFromTemplate([
     { label: "Позвать", click: () => { petCall(); } },
     { label: "Сказать что-нибудь", click: () => { if (!petCore) ensurePetCore(); petCore.say("idle"); petPush(); } },
     { type: "separator" },
     {
-      label: "Разговаривать",
+      label: "Как часто говорить",
+      submenu: [
+        { label: "Только по делу (готово, ошибка, напоминание)", type: "radio",
+          checked: (settings.petTalkMode || "rare") === "rare",
+          click: () => setPetTalkMode("rare") },
+        { label: "Обычно", type: "radio",
+          checked: settings.petTalkMode === "normal",
+          click: () => setPetTalkMode("normal") },
+        { label: "Молчать, пока не позову", type: "radio",
+          checked: settings.petTalkMode === "manual",
+          click: () => setPetTalkMode("manual") }
+      ]
+    },
+    {
+      label: "Огонёк на макушке",
       type: "checkbox",
-      checked: settings.petTalk !== false,
+      checked: settings.petSpark !== false,
       click: () => {
-        saveSettings({ petTalk: settings.petTalk === false });
-        if (petCore) petCore.setQuiet(settings.petTalk === false);
+        saveSettings({ petSpark: settings.petSpark === false });
+        if (petCore) petCore.setSpark(settings.petSpark !== false);
         broadcastState();
         petPush();
       }

@@ -182,7 +182,9 @@ function renderSettings() {
   const cp = $("#compactToggle"); if (cp) cp.checked = s.compact === true;
   const an = $("#animToggle"); if (an) an.checked = s.animations !== false;
   const pOn = $("#petOn"); if (pOn) pOn.checked = s.petOn !== false;
-  const pTalk = $("#petTalk"); if (pTalk) pTalk.checked = s.petTalk !== false;
+  const pSpark = $("#petSpark"); if (pSpark) pSpark.checked = s.petSpark !== false;
+  const pTalk = $("#petTalk"); if (pTalk) pTalk.checked = s.petTalkMode !== "manual";
+  const pRare = $("#petTalkRare"); if (pRare) pRare.checked = (s.petTalkMode || "rare") === "rare";
   const pMedia = $("#petMediaKeys"); if (pMedia) pMedia.checked = s.petMediaKeys !== false;
   applyLook();
 }
@@ -548,8 +550,23 @@ function wireUi() {
   });
   const pTalk = $("#petTalk");
   if (pTalk) pTalk.addEventListener("change", async () => {
-    state.settings = await window.sye.saveSettings({ petTalk: !!pTalk.checked });
+    /* Галочка «разговаривать» гасит режим молчания, но не забывает «редко» */
+    const mode = pTalk.checked ? ((state.settings.petTalkMode === "manual") ? "rare" : (state.settings.petTalkMode || "rare")) : "manual";
+    state.settings = await window.sye.saveSettings({ petTalkMode: mode });
+    const rare = $("#petTalkRare"); if (rare) rare.checked = mode === "rare";
     toast(pTalk.checked ? "Сью разговаривает" : "Сью молчит");
+  });
+  const pRare = $("#petTalkRare");
+  if (pRare) pRare.addEventListener("change", async () => {
+    const mode = pRare.checked ? "rare" : "normal";
+    state.settings = await window.sye.saveSettings({ petTalkMode: mode });
+    const talk = $("#petTalk"); if (talk) talk.checked = true;
+    toast(pRare.checked ? "Сью говорит только по делу" : "Сью снова болтает как обычно");
+  });
+  const pSpark = $("#petSpark");
+  if (pSpark) pSpark.addEventListener("change", async () => {
+    state.settings = await window.sye.saveSettings({ petSpark: !!pSpark.checked });
+    toast(pSpark.checked ? "Огонёк на месте" : "Огонёк убран");
   });
   const pMedia = $("#petMediaKeys");
   if (pMedia) pMedia.addEventListener("change", async () => {

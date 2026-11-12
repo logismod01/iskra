@@ -265,6 +265,52 @@ body.generating .messages { scroll-behavior: auto; }
   opacity: 0; pointer-events: none;
   transition: opacity .16s ease, transform .16s ease;
 }
+/* ============ Регион ============ */
+.region-gate {
+  position: fixed; inset: 0; z-index: 3000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: var(--bg);
+}
+.region-gate[hidden] { display: none; }
+.region-card {
+  max-width: 460px; width: 100%; text-align: center;
+  padding: 34px 26px; border-radius: 20px;
+  background: var(--bg-soft); border: 1px solid var(--line);
+}
+.region-logo {
+  width: 56px; height: 56px; margin: 0 auto 16px;
+  display: grid; place-items: center; border-radius: 16px;
+  background: var(--accent); color: #fff; font-size: 26px; font-weight: 700;
+}
+.region-card h1 { margin: 0 0 12px; font-size: 20px; line-height: 1.3; }
+.region-card p { margin: 0 0 10px; font-size: 14px; line-height: 1.55; color: var(--text-soft); }
+.region-card .region-foot { font-size: 12px; color: var(--text-dim); }
+.region-retry {
+  margin-top: 8px; padding: 10px 18px; border-radius: 10px;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  color: var(--text-soft); font-size: 13.5px;
+}
+.region-retry:hover { color: var(--text); border-color: var(--accent); }
+
+.region-banner {
+  position: fixed; left: 50%; top: 10px; transform: translateX(-50%);
+  z-index: 2500; max-width: min(560px, calc(100vw - 20px));
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 11px;
+  background: var(--bg-soft); border: 1px solid var(--accent-soft);
+  font-size: 12.5px; line-height: 1.4; color: var(--text-soft);
+  box-shadow: 0 16px 34px -18px rgba(0,0,0,.6);
+}
+.region-banner[hidden] { display: none; }
+.region-banner button {
+  flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%;
+  color: var(--text-dim); font-size: 12px;
+}
+.region-banner button:hover { color: var(--text); background: var(--bg-soft-2); }
+@media (max-width: 700px) {
+  .region-banner { top: auto; bottom: calc(96px + env(safe-area-inset-bottom)); font-size: 12px; }
+}
+
 .ocr-note {
   margin-top: 8px; padding: 7px 10px;
   border-left: 2px solid var(--accent);
@@ -2134,6 +2180,25 @@ html.no-anim .theme-flash { display: none; }
 </style>
 </head>
 <body>
+
+<!-- ================= Регион ================= -->
+<!-- Показывается вместо всего остального, если страна закрыта целиком.
+     Решение принимает regionCheck() при загрузке — до запуска чата. -->
+<div class="region-gate" id="regionGate" hidden>
+  <div class="region-card">
+    <div class="region-logo">И</div>
+    <h1 id="regionTitle">Искра не работает в этой стране</h1>
+    <p id="regionText">К сожалению, мы не можем открыть доступ из вашего региона. Это ограничение со стороны сервиса, а не блокировка вашего устройства.</p>
+    <p class="region-foot">Если вы считаете, что это ошибка, напишите владельцу — контакты в репозитории проекта.</p>
+    <button type="button" class="region-retry" id="regionRetry">Проверить снова</button>
+  </div>
+</div>
+
+<!-- Плашка о частичных ограничениях: часть функций недоступна -->
+<div class="region-banner" id="regionBanner" hidden>
+  <span id="regionBannerText"></span>
+  <button type="button" id="regionBannerClose" aria-label="Скрыть">✕</button>
+</div>
 
 <!-- Если приложение не смогло запуститься (старый браузер, обрыв загрузки),
      человек увидит понятное сообщение вместо пустого экрана -->
@@ -7667,6 +7732,178 @@ const BRAND = {
   tagline: "Твой ИИ-ассистент для учёбы, кода и текстов"
 };
 
+/* ============================================================
+   Регионы: где Искра работает, где нет и где частично
+   ============================================================
+   Уровни:
+     0   — работает полностью;
+     50  — нет генерации картинок и видео, нет поиска в интернете;
+     75  — только текстовый чат: дополнительно нет документов и базы знаний;
+     100 — не работает вовсе (показываем экран вместо сайта).
+
+   Россия работает. Список правится здесь и больше нигде. */
+
+const REGION_BAN = [
+  "CL", // Чили
+  "HN", // Гондурас
+  "MN", // Монголия
+  "AE", // ОАЭ
+  "PL", // Польша
+  "EE", // Эстония
+  "AL", // Албания
+  "LU", // Люксембург
+  "NZ", // Новая Зеландия
+  "AU", // Австралия
+  "IE", // Ирландия
+  "IS", // Исландия
+  "AF", // Афганистан
+  "SA", // Саудовская Аравия
+  "VA"  // Ватикан
+];
+
+/* Африка целиком — половина функций */
+const REGION_HALF_AFRICA = [
+  "DZ","AO","BJ","BW","BF","BI","CM","CV","CF","TD","KM","CG","CD","CI","DJ","EG",
+  "GQ","ER","SZ","ET","GA","GM","GH","GN","GW","KE","LS","LR","LY","MG","MW","ML",
+  "MR","MU","MA","MZ","NA","NE","NG","RW","ST","SN","SC","SL","SO","ZA","SS","SD",
+  "TZ","TG","TN","UG","ZM","ZW","EH","RE","YT","SH","IO"
+];
+
+const REGION_HALF = REGION_HALF_AFRICA.concat(["IN"]);   // Африка + Индия
+const REGION_QUARTER_LOST = ["GR"];                       // Греция — минус 75%
+
+const REGION_NAMES = {
+  CL: "Чили", HN: "Гондурас", MN: "Монголия", AE: "ОАЭ", PL: "Польша",
+  EE: "Эстония", AL: "Албания", LU: "Люксембург", NZ: "Новая Зеландия",
+  AU: "Австралия", IE: "Ирландия", IS: "Исландия", AF: "Афганистан",
+  SA: "Саудовская Аравия", VA: "Ватикан", IN: "Индия", GR: "Греция", RU: "Россия"
+};
+
+const REGION_CACHE_KEY = "iskra.region.v1";
+const REGION_CACHE_MS = 12 * 3600e3;
+
+/* Насколько ограничен регион: 0, 50, 75 или 100 */
+function regionLevel(code) {
+  const c = String(code || "").toUpperCase();
+  if (!c) return 0;                       // страну не узнали — не мешаем человеку
+  if (REGION_BAN.includes(c)) return 100;
+  if (REGION_QUARTER_LOST.includes(c)) return 75;
+  if (REGION_HALF.includes(c)) return 50;
+  return 0;
+}
+
+/* Что именно недоступно на каждом уровне — словами, для плашки и тестов */
+const REGION_BLOCKED = {
+  50: ["картинки", "видео", "поиск в интернете"],
+  75: ["картинки", "видео", "поиск в интернете", "документы", "база знаний"],
+  100: ["всё"]
+};
+
+function regionAllowedFeature(feature) {
+  const lvl = regionLevel(state.region);
+  if (lvl === 0) return true;
+  const blocked = REGION_BLOCKED[lvl] || [];
+  if (lvl === 100) return false;
+  return !blocked.includes(feature);
+}
+
+/* ---------- Определение страны ----------
+   Несколько бесплатных сервисов по очереди: если один молчит, берём другой.
+   Если не ответил никто — считаем, что страна неизвестна, и НЕ блокируем:
+   иначе из-за сбоя чужого сервиса человек останется без Искры. */
+const REGION_SOURCES = [
+  { url: "https://get.geojs.io/v1/ip/country.json", pick: (j) => j && j.country_code },
+  { url: "https://ipwho.is/", pick: (j) => j && j.success !== false && j.country_code },
+  { url: "https://ipapi.co/json/", pick: (j) => j && j.country_code }
+];
+
+async function regionDetect(timeoutMs) {
+  for (const src of REGION_SOURCES) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeoutMs || 4000);
+      const res = await fetch(src.url, { signal: ctrl.signal, cache: "no-store" });
+      clearTimeout(t);
+      if (!res || !res.ok) continue;
+      const json = await res.json();
+      const code = String((src.pick(json) || "")).toUpperCase();
+      if (/^[A-Z]{2}$/.test(code)) return code;
+    } catch (e) { /* пробуем следующий сервис */ }
+  }
+  return "";
+}
+
+function regionFromCache() {
+  try {
+    const raw = localStorage.getItem(REGION_CACHE_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (!d || !d.at || Date.now() - d.at > REGION_CACHE_MS) return null;
+    return String(d.code || "");
+  } catch (e) { return null; }
+}
+
+function regionToCache(code) {
+  try {
+    localStorage.setItem(REGION_CACHE_KEY, JSON.stringify({ code, at: Date.now() }));
+  } catch (e) {}
+}
+
+/* Экран-заглушка: сайт не работает, чат не запускается */
+function showRegionGate(code) {
+  const gate = $("#regionGate");
+  if (!gate) return;
+  const name = REGION_NAMES[code] || "";
+  const title = $("#regionTitle");
+  if (title) title.textContent = name
+    ? `Искра не работает в этой стране — ${name}`
+    : "Искра не работает в этой стране";
+  gate.hidden = false;
+  document.documentElement.classList.add("region-blocked");
+}
+
+function hideRegionGate() {
+  const gate = $("#regionGate");
+  if (gate) gate.hidden = true;
+  document.documentElement.classList.remove("region-blocked");
+}
+
+/* Плашка: работает, но не всё */
+function showRegionBanner(code, level) {
+  const box = $("#regionBanner");
+  const text = $("#regionBannerText");
+  if (!box || !text) return;
+  const name = REGION_NAMES[code] || code;
+  const lost = level === 75 ? "75%" : "50%";
+  const what = (REGION_BLOCKED[level] || []).join(", ");
+  text.textContent = `Регион ${name}: доступна часть функций (${lost} отключено). Не работает: ${what}.`;
+  box.hidden = false;
+  const close = $("#regionBannerClose");
+  if (close) close.addEventListener("click", () => { box.hidden = true; }, { once: true });
+}
+
+/* Главная проверка. Возвращает код страны ("" — не узнали). */
+async function regionCheck(force) {
+  const cached = force ? null : regionFromCache();
+  const code = cached !== null ? cached : await regionDetect(4000);
+  if (code && cached === null) regionToCache(code);
+  state.region = code;
+  const lvl = regionLevel(code);
+  if (lvl === 100) { showRegionGate(code); return code; }
+  hideRegionGate();
+  if (lvl > 0) showRegionBanner(code, lvl);
+  return code;
+}
+
+/* Страж для действий: если функция в регионе закрыта — говорим и не делаем */
+function regionBlocked(feature) {
+  if (regionAllowedFeature(feature)) return false;
+  const lvl = regionLevel(state.region);
+  const name = REGION_NAMES[state.region] || "вашем регионе";
+  toast(`В ${name} эта функция недоступна. Часть возможностей Искры ограничена для этой страны.`, "err");
+  return true;
+}
+
 /* ---------- SVG иконки (inline) ---------- */
 const IC = {
   star: '<polygon points="12 2 15.1 8.6 22 9.6 17 14.6 18.2 21.5 12 18.2 5.8 21.5 7 14.6 2 9.6 8.9 8.6 12 2"/>',
@@ -8345,6 +8582,8 @@ let chats = loadChats();
 let currentChatId = null;
 let pendingImages = [];
 let pendingWeb = false;
+/* Страна, определённая при загрузке. Нужна, чтобы закрывать часть функций. */
+const state = { region: "" };
 let abortCtrl = null;
 /* Что сейчас генерируется: нужно, чтобы удаление чата не обрывало ответ */
 let liveStream = null;
@@ -10060,6 +10299,7 @@ function renderKnowledgePanelSafe() {
 }
 
 function openKnowledge() {
+  if (regionBlocked("документы")) return;
   renderKnowledge();
   updateKnowledgeChip();
   const t = $("#kbToggle");
@@ -10074,6 +10314,7 @@ function closeKnowledge() { $("#kbModal").classList.remove("open"); }
    встроенные темы, общая база (то, что публикуется для всех) и свои темы;
    «Мои документы» вынесены отдельным пунктом. */
 function openKnow() {
+  if (regionBlocked("база знаний")) return;
   const m = $("#knowModal");
   if (!m) return;
   m.classList.add("open");
@@ -10872,6 +11113,8 @@ class ApiError extends Error {
 async function sendMessage(text, images = [], addChat = true, isResend = false) {
   const trimmed = text.trim();
   if (!trimmed && !images.length) return;
+  /* Страна закрыта целиком — не отправляем ничего */
+  if (regionLevel(state.region) === 100) { showRegionGate(state.region); return; }
 
   // Консоль владельца
   if (/^\/console\b/i.test(trimmed)) {
@@ -11877,6 +12120,7 @@ function downloadVideo(src, prompt) {
 }
 
 async function generateVideo(prompt, attempt = 0) {
+  if (regionBlocked("видео")) return;
   if (!videoAllowed()) return;
   const chk = safetyCheck("видео " + prompt);
   if (chk.blocked) { toast(chk.reason, "err"); return; }
@@ -12269,6 +12513,7 @@ function sanitizeImgPrompt(en, source) {
 }
 
 async function generateImage(prompt, attempt = 0) {
+  if (regionBlocked("картинки")) return;
   if (!imageAllowed()) return;
   const chk = safetyCheck("нарисуй " + prompt);
   if (chk.blocked) { toast(chk.reason, "err"); return; }
@@ -16057,6 +16302,9 @@ function modeLockText(m) {
 }
 function setMode(key) {
   const m = MODES[key];
+  /* Режимы, которых в регионе нет: картинка, видео */
+  if (key === "art" && regionBlocked("картинки")) return;
+  if (key === "video" && regionBlocked("видео")) return;
   if (m && modeNeedsPro(m) && !proActive()) {
     toast(modeLockText(m), "err");
     openAccessPanel();
@@ -16207,10 +16455,14 @@ function wire() {
 
   // Art
   if ($("#artBtn")) {
-    $("#artBtn").addEventListener("click", () => setMode("art"));
+    $("#artBtn").addEventListener("click", () => {
+      if (regionBlocked("картинки")) return;
+      setMode("art");
+    });
   }
   input.addEventListener("input", () => { saveDraft(input.value); });
   $("#webBtn").addEventListener("click", () => {
+    if (regionBlocked("поиск в интернете")) return;
     const on = !$("#webBtn").classList.contains("on");
     $("#webBtn").classList.toggle("on", on);
     settings.webSearch = on;
@@ -16690,6 +16942,13 @@ document.addEventListener("DOMContentLoaded", () => {
   wire();
   wireTools();
   initScrollWatcher();
+  /* Регион проверяем сразу: не вышло узнать страну — сайт работает как обычно */
+  regionCheck().catch(() => {});
+  const rgRetry = $("#regionRetry");
+  if (rgRetry) rgRetry.addEventListener("click", () => {
+    try { localStorage.removeItem(REGION_CACHE_KEY); } catch (e) {}
+    regionCheck(true).catch(() => {});
+  });
   // Ссылка …/#access открывает сразу «Доступ» — по ней из окна агента Sye идут за ключом.
   const wantAccess = () => /^#(access|tariff|pro)$/i.test(String(location.hash || ""));
   const showAccess = () => {
