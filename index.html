@@ -9824,6 +9824,13 @@ async function ocrImages(images, onProgress, signal) {
   return parts.join("\n\n— — —\n\n").trim();
 }
 
+/* Ответ, из которого видно: движок картинку не получил или не увидел */
+function ocrSaysNoImage(reply) {
+  const t = String(reply || "").slice(0, 600).toLowerCase();
+  if (!t) return false;
+  return /(нет (доступа к )?(изображени|фото|картинк)|не вижу (изображени|фото|картинк)|не могу (увидеть|разглядеть|прочитать) (фото|изображени|картинк)|фото не (пришло|загрузилось|открылось|видно)|изображени[ея] не (пришло|загрузилось)|пришли(те)? (фото|изображени|картинк)|загрузи(те)? (фото|изображени|картинк))/i.test(t);
+}
+
 function ocrBlock(text) {
   return "ТЕКСТ, РАСПОЗНАННЫЙ С ФОТОГРАФИИ (читала программа распознавания на телефоне; " +
     "возможны ошибки в буквах, цифрах и знаках):\n\"\"\"\n" + text + "\n\"\"\"";
@@ -11054,27 +11061,41 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       }
     }
 
-    let done;
-    try {
-      done = await askIskra(payload, onDelta, signal, onTry);
-      if (ocrTimer) clearTimeout(ocrTimer);
-    } catch (visionErr) {
-      if (ocrTimer) clearTimeout(ocrTimer);
-      /* Зрячего движка нет или он не ответил — читаем текст с фото сами.
-         Ключ для этого не нужен: распознавание работает прямо в браузере. */
-      if (!images.length || acc.trim() || signal.aborted) throw visionErr;
+    /* Один и тот же повтор: прочитать текст с фото и спросить заново текстом */
+    let ocrRetried = false;
+    const retryWithOcr = async () => {
+      if (ocrRetried || !images.length || signal.aborted) return false;
+      ocrRetried = true;
       const ocrText = pendingOcr
         ? await pendingOcr
         : await ocrWithProgress(images, streamEl, signal);
-      if (!ocrText) throw visionErr;
+      if (!ocrText) return false;
       userMsg.ocrText = ocrText;
       saveChats();
       addOcrNote(el);
       acc = "";
       el.classList.add("thinking");
-      payload = apiPayload(chat.messages.slice(-20), { preferText: true });
       clearTimeout(slowTimer);
+      payload = apiPayload(chat.messages.slice(-20), { preferText: true });
       done = await askIskra(payload, onDelta, signal, onTry);
+      return true;
+    };
+
+    let done;
+    try {
+      done = await askIskra(payload, onDelta, signal, onTry);
+      if (ocrTimer) clearTimeout(ocrTimer);
+      /* Бывает, что движок формально ответил, но фото не увидел и честно об этом
+         сказал. Такой ответ человеку бесполезен — читаем текст с фото сами. */
+      if (images.length && !signal.aborted && ocrSaysNoImage(acc)) {
+        await retryWithOcr();
+      }
+    } catch (visionErr) {
+      if (ocrTimer) clearTimeout(ocrTimer);
+      /* Зрячего движка нет или он не ответил — читаем текст с фото сами.
+         Ключ для этого не нужен: распознавание работает прямо в браузере. */
+      if (!images.length || acc.trim() || signal.aborted) throw visionErr;
+      if (!(await retryWithOcr())) throw visionErr;
     }
 
     clearTimeout(slowTimer);
