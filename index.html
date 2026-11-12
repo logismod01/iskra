@@ -265,6 +265,12 @@ body.generating .messages { scroll-behavior: auto; }
   opacity: 0; pointer-events: none;
   transition: opacity .16s ease, transform .16s ease;
 }
+.ocr-note {
+  margin-top: 8px; padding: 7px 10px;
+  border-left: 2px solid var(--accent);
+  background: var(--bg-soft-2); border-radius: 0 8px 8px 0;
+  font-size: 11.5px; line-height: 1.45; color: var(--text-dim);
+}
 .jump-latest.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
 .jump-latest:hover { color: var(--text); border-color: var(--accent); }
 .msg {
@@ -9045,6 +9051,34 @@ function nearBottom(m, slop) {
   return (m.scrollHeight - m.scrollTop - m.clientHeight) <= (slop == null ? 90 : slop);
 }
 function showJump() { const j = $("#jumpLatest"); if (j) j.classList.add("show"); }
+
+/* Распознавание с показом прогресса в самом сообщении */
+async function ocrWithProgress(images, streamEl, signal) {
+  const t = () => (typeof streamEl === "function" ? streamEl() : null);
+  const paint = (html) => { const box = t(); if (box && box.isConnected) box.innerHTML = html; };
+  paint(`<div class="typing"></div><div class="searching">Читаю текст с фотографии…</div>`);
+  let text = "";
+  try {
+    text = await ocrImages(images, (p, i, n) => {
+      const pct = Math.round((p || 0) * 100);
+      paint(`<div class="typing"></div><div class="searching">Читаю текст с фотографии` +
+        (n > 1 ? ` (${i} из ${n})` : "") + (pct > 3 ? ` — ${pct}%` : "…") + `</div>`);
+    }, signal);
+  } catch (e) {
+    return "";
+  }
+  return text || "";
+}
+
+/* Пометка под ответом: текст с фото прочитан без ключей и может быть с ошибками */
+function addOcrNote(el) {
+  if (!el || el.querySelector(".ocr-note")) return;
+  const note = document.createElement("div");
+  note.className = "ocr-note";
+  note.textContent = "Текст с фото прочитан на телефоне, без ключей. Если условие распозналось криво — пересними крупнее или напечатай задание.";
+  const content = el.querySelector(".content");
+  if (content) content.insertAdjacentElement("afterend", note);
+}
 function hideJump() { const j = $("#jumpLatest"); if (j) j.classList.remove("show"); }
 
 function scrollToBottom(force) {
@@ -9368,7 +9402,7 @@ const LANG_RULE = `ЯЗЫКИ МИРА — ты репетитор по язык
 - Для экзаменов (ЕГЭ, IELTS, TestDaF, HSK, JLPT) говори структуру, критерии и типовые ловушки, но всегда добавляй, что правила и даты надо сверять с официальным сайтом.
 - Если язык редкий и ты не уверена в деталях — скажи об этом и дай то, что знаешь точно. Никогда не выдумывай иероглифы и переводы.`;
 
-function buildSystemPrompt(userText = "", hasImages = false) {
+function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false) {
   const p = PERSONAS[settings.persona] || PERSONAS.universal;
   let sys = settings.persona === "custom" && settings.customPersona
     ? `Ты — ${BRAND.name}. ${settings.customPersona}`
@@ -9409,6 +9443,7 @@ function buildSystemPrompt(userText = "", hasImages = false) {
   /* Раньше здесь стояло needsVision() без аргумента — всегда false, и правило
      про домашку по фото не включалось ни разу. */
   if (hasImages) sys += "\n\n" + HOMEWORK_HINT;
+  else if (fromPhoto) sys += "\n\n" + OCR_HINT;
 
   // встроенная база знаний: не нужно искать в интернете
   const litAsk = /литератур|стих|сочинен|пересказ|книг|роман|повест|поэм|рассказ|геро[йя]|басн|сказк|писател|автор[аеу]?\s|пушкин|толст|достоевск|шекспир|лермонт|чехов|гогол|булгаков/i.test(userText);
@@ -9457,11 +9492,13 @@ function buildSystemPrompt(userText = "", hasImages = false) {
 function apiPayload(chatMessages, opts = {}) {
   const lastUser = [...chatMessages].reverse().find(m => m.role === "user");
   const lastText = lastUser ? (typeof lastUser.content === "string" ? lastUser.content : (lastUser.content || []).filter(p => p.type === "text").map(p => p.text).join(" ")) : "";
+  /* Если фото отправляем текстом (распознанным), зрение не нужно */
+  const preferText = !!opts.preferText;
   const hasImages = chatMessages.some(m => Array.isArray(m.content)
     ? m.content.some(p => p && (p.type === "image_url" || p.image_url))
-    : Array.isArray(m.images) && m.images.length > 0);
-  const sys = buildSystemPrompt(lastText, hasImages);
-  const msgs = [{ role: "system", content: sys }, ...chatMessages.map(toApiMsg)];
+    : Array.isArray(m.images) && m.images.length > 0 && !(preferText && m.ocrText));
+  const sys = buildSystemPrompt(lastText, hasImages, preferText);
+  const msgs = [{ role: "system", content: sys }, ...chatMessages.map(m => toApiMsg(m, preferText))];
   const body = {
     messages: msgs,
     stream: true,
@@ -9538,7 +9575,7 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
      Врать «у меня нет твоих заданий» нельзя — человек уже прислал фото. */
   if (err && err.kind === "no-vision") {
     aiMsg.content = hadImages
-      ? "Я не вижу фотографии — у меня нет глаз. Все бесплатные движки сейчас работают только с текстом, поэтому картинка до них не доходит.\n\nЧто можно сделать:\n1) Напиши задание словами — решу по тексту, это работает всегда.\n2) Включи свой ключ — тогда я увижу фото. Нужен бесплатный ключ со зрением: он начинается на AIza… или gsk_…, стоит 0 ₽ в пределах лимита. Где взять — написано в настройках, раздел «Свой ключ доступа»."
+      ? "Фотографию я разобрать не смогла: движки её не видят, а распознавание текста на телефоне не справилось — снимок, скорее всего, мелкий, смазанный или под углом.\n\nЧто можно сделать (по порядку, всё без ключей):\n1) Пересними ближе и ровно, чтобы страница занимала весь кадр, и отправь снова — я попробую прочитать ещё раз.\n2) Напиши задание словами или продиктуй голосом («Инструменты» → «Говорить вместо печати») — решу по тексту, это работает всегда.\n3) Если хочется, чтобы я видела любые фото с первого раза, — впиши свой ключ со зрением (AIza… или gsk_…), он бесплатный. Но для домашки хватает и первых двух пунктов."
       : "Не получилось ответить: сейчас нечем.";
     aiMsg.failedSoft = true;
     aiMsg.needVision = hadImages;
@@ -9639,14 +9676,167 @@ const HOMEWORK_HINT = "ДОМАШКА ПО ФОТО: пользователь п
 
 function needsVision(images) { return Array.isArray(images) && images.length > 0; }
 
+/* Правило для случая «фото прочитано программой распознавания, а не глазами» */
+const OCR_HINT = `ФОТО, ПРОЧИТАННОЕ ПРОГРАММОЙ РАСПОЗНАВАНИЯ. Пользователь прислал фотографию задания, но у тебя нет глаз: текст с картинки распознала программа прямо на его телефоне, и он приложен ниже в кавычках. Работай с ним так: 1) начни с одной короткой строки «Прочитала с фото так: …» и перескажи условие — чтобы человек сразу увидел, верно ли распознано; 2) если в тексте явная бессмыслица (набор букв, обрывки, ошибки в числах) — скажи прямо, что именно распозналось плохо, и попроси переснять этот кусок крупнее или напечатать условие; 3) если всё понятно — реши по шагам, каждое действие коротко поясни, ответ отдельной строкой; 4) не выдумывай условие, которого нет в тексте.`;
+
 /* Фото видят не все движки. Искра сама отправит такой запрос туда,
    где картинки понимают, — человеку ничего переключать не нужно. */
 function ensureVisionModel() { return true; }
 
-function toApiMsg(m) {
+/* ---------- Распознавание текста с фото — прямо в браузере ----------
+   Бесплатные движки не видят картинок. Чтобы человеку не нужен был ключ,
+   текст со снимка читает сам телефон: библиотека распознавания лежит рядом
+   с сайтом (vendor/tesseract), никуда ничего не отправляется. */
+
+const OCR_ROOT = "vendor/tesseract";
+let _ocrLib = null;        // загруженная библиотека
+let _ocrLibPromise = null;
+let _ocrWorker = null;     // живой воркер: повторное фото распознаётся быстрее
+let _ocrWorkerPromise = null;
+
+/* Есть ли у браузера поддержка SIMD — от этого зависит, какое ядро грузить */
+function ocrHasSimd() {
+  try {
+    return WebAssembly.validate(new Uint8Array([
+      0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0,
+      10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11
+    ]));
+  } catch (e) { return false; }
+}
+
+function ocrLoadLib() {
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (_ocrLibPromise) return _ocrLibPromise;
+  _ocrLibPromise = new Promise((resolve, reject) => {
+    const sc = document.createElement("script");
+    sc.src = OCR_ROOT + "/tesseract.min.js";
+    sc.async = true;
+    sc.onload = () => (window.Tesseract ? resolve(window.Tesseract) : reject(new Error("библиотека не загрузилась")));
+    sc.onerror = () => { _ocrLibPromise = null; reject(new Error("не удалось загрузить распознавание")); };
+    document.head.appendChild(sc);
+  });
+  return _ocrLibPromise;
+}
+
+async function ocrWorker(onProgress) {
+  if (_ocrWorker) return _ocrWorker;
+  if (_ocrWorkerPromise) return _ocrWorkerPromise;
+  _ocrWorkerPromise = (async () => {
+    const T = await ocrLoadLib();
+    const core = OCR_ROOT + "/" + (ocrHasSimd() ? "tesseract-core-simd-lstm.wasm.js" : "tesseract-core-lstm.wasm.js");
+    const w = await T.createWorker("rus", 1, {
+      workerPath: OCR_ROOT + "/worker.min.js",
+      corePath: core,
+      langPath: OCR_ROOT + "/lang",
+      logger: (m) => {
+        if (!m) return;
+        if (m.status === "recognizing text" && typeof onProgress === "function") onProgress(m.progress || 0, "text");
+        else if (typeof onProgress === "function") onProgress(0, m.status || "");
+      }
+    });
+    _ocrWorker = w;
+    return w;
+  })();
+  try { return await _ocrWorkerPromise; }
+  catch (e) { _ocrWorkerPromise = null; throw e; }
+}
+
+/* Снимок → чёрно-белая картинка покрупнее: так даже с телефона текст читается */
+function ocrPrepare(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxSide = 2400;
+        let scale = Math.min(2, maxSide / Math.max(img.width || 1, img.height || 1));
+        if (!isFinite(scale) || scale < 1) scale = 1;
+        const w = Math.max(1, Math.round((img.width || 1) * scale));
+        const h = Math.max(1, Math.round((img.height || 1) * scale));
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          const d = ctx.getImageData(0, 0, w, h);
+          const px = d.data;
+          /* Распознавание лучше всего читает тёмный текст на светлом фоне.
+             Сначала считаем среднюю яркость: тёмный снимок (ночной режим,
+             экран) переворачиваем, чтобы буквы стали тёмными на белом. */
+          let sum = 0, n = 0;
+          for (let i = 0; i < px.length; i += 4 * 97) {
+            sum += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+            n++;
+          }
+          const dark = n > 0 && (sum / n) < 110;
+          for (let i = 0; i < px.length; i += 4) {
+            let g = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+            if (dark) g = 255 - g;
+            g = (g - 128) * 1.25 + 128;
+            px[i] = px[i + 1] = px[i + 2] = g < 0 ? 0 : g > 255 ? 255 : g;
+          }
+          ctx.putImageData(d, 0, 0);
+        } catch (e) { /* без обработки тоже попробуем */ }
+        resolve(c.toDataURL("image/jpeg", 0.92));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error("снимок не открылся"));
+    img.src = dataUrl;
+  });
+}
+
+/* Мусор от распознавания: чистим, но текст не переписываем */
+function ocrClean(text) {
+  let t = String(text || "").replace(/\r/g, "");
+  t = t.replace(/([А-Яа-яЁёA-Za-z])-\n([а-яёa-z])/g, "$1$2");  // переносы через дефис
+  t = t.replace(/\n{3,}/g, "\n\n");
+  t = t.replace(/[ \t]{2,}/g, " ");
+  t = t.split("\n").map(l => l.trim()).join("\n").trim();
+  return t.slice(0, 8000);
+}
+
+/* Похоже ли это на настоящий текст, а не на кашу из символов */
+function ocrReadable(text) {
+  const t = String(text || "").replace(/\s+/g, " ").trim();
+  if (t.length < 40) return false;
+  const good = (t.match(/[A-Za-zА-Яа-яЁё0-9]/g) || []).length;
+  return good / t.length >= 0.55;
+}
+
+/* Главная функция: снимки → текст. Возвращает "" если прочитать не удалось. */
+async function ocrImages(images, onProgress, signal) {
+  const list = Array.isArray(images) ? images.filter(Boolean) : [];
+  if (!list.length) return "";
+  const parts = [];
+  for (let i = 0; i < list.length; i++) {
+    if (signal && signal.aborted) break;
+    try {
+      const w = await ocrWorker((p) => {
+        if (typeof onProgress === "function") onProgress(p, i + 1, list.length);
+      });
+      const prepared = await ocrPrepare(list[i]);
+      const { data } = await w.recognize(prepared);
+      const text = ocrClean(data && data.text);
+      if (ocrReadable(text)) parts.push(text);
+    } catch (e) {
+      /* одно фото не прочиталось — пробуем следующее */
+    }
+  }
+  return parts.join("\n\n— — —\n\n").trim();
+}
+
+function ocrBlock(text) {
+  return "ТЕКСТ, РАСПОЗНАННЫЙ С ФОТОГРАФИИ (читала программа распознавания на телефоне; " +
+    "возможны ошибки в буквах, цифрах и знаках):\n\"\"\"\n" + text + "\n\"\"\"";
+}
+
+function toApiMsg(m, preferText) {
   if (!m.images?.length) return { role: m.role, content: m.content };
   /* Фото Искра всегда отдаёт тому движку, который умеет их видеть, —
-     человеку ничего переключать не нужно. */
+     человеку ничего переключать не нужно. Но если зрячего движка нет,
+     отправляем текст, распознанный с этого же снимка. */
+  if (preferText && m.ocrText) {
+    return { role: m.role, content: (m.content ? m.content + "\n\n" : "") + ocrBlock(m.ocrText) };
+  }
   const parts = [];
   if (m.content) parts.push({ type: "text", text: m.content });
   for (const src of m.images) parts.push({ type: "image_url", image_url: { url: src } });
@@ -10829,7 +11019,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
         `<p class="gen-note">Секунду — подбираю, кто ответит…</p>`;
     };
-    const done = await askIskra(payload, (delta) => {
+    const onDelta = (delta) => {
       acc += delta;
       el.classList.remove("thinking");
       const t = streamEl();
@@ -10846,7 +11036,46 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
         };
       });
       scrollToBottom();
-    }, signal, onTry);
+    };
+
+    /* Пока движок думает над фото, Искра заранее читает текст с него:
+       если зрячего движка нет, человек не ждёт лишних полминуты.
+       Начинаем не сразу, а через 6 секунд тишины — чтобы не качать
+       16 МБ распознавания тем, у кого зрение и так работает. */
+    let pendingOcr = null;
+    let ocrTimer = null;
+    if (images.length) {
+      const hasKeyedVision = keyEngines().some(e => e.vision || guessVision(e.model));
+      if (!hasKeyedVision) {
+        ocrTimer = setTimeout(() => {
+          if (acc.trim() || signal.aborted) return;
+          pendingOcr = ocrImages(images, null, signal).catch(() => "");
+        }, 6000);
+      }
+    }
+
+    let done;
+    try {
+      done = await askIskra(payload, onDelta, signal, onTry);
+      if (ocrTimer) clearTimeout(ocrTimer);
+    } catch (visionErr) {
+      if (ocrTimer) clearTimeout(ocrTimer);
+      /* Зрячего движка нет или он не ответил — читаем текст с фото сами.
+         Ключ для этого не нужен: распознавание работает прямо в браузере. */
+      if (!images.length || acc.trim() || signal.aborted) throw visionErr;
+      const ocrText = pendingOcr
+        ? await pendingOcr
+        : await ocrWithProgress(images, streamEl, signal);
+      if (!ocrText) throw visionErr;
+      userMsg.ocrText = ocrText;
+      saveChats();
+      addOcrNote(el);
+      acc = "";
+      el.classList.add("thinking");
+      payload = apiPayload(chat.messages.slice(-20), { preferText: true });
+      clearTimeout(slowTimer);
+      done = await askIskra(payload, onDelta, signal, onTry);
+    }
 
     clearTimeout(slowTimer);
     if (!acc.trim()) {

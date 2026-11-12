@@ -148,7 +148,7 @@ await test("вместо «нет твоих заданий» — «я не ви
   const content = doc.createElement("div");
   const aiMsg = { id: "x", role: "assistant", content: "" };
   window.showFailCard(content, aiMsg, "реши задания", err, [PHOTO]);
-  assert(/не вижу фотографии/.test(aiMsg.content), "не сказала честно: " + aiMsg.content.slice(0, 80));
+  assert(/Фотографию я разобрать не смогла/.test(aiMsg.content), "не сказала честно: " + aiMsg.content.slice(0, 80));
   assert(/AIza/.test(aiMsg.content), "не подсказала, какой ключ включает зрение");
   const buttons = [...content.querySelectorAll("button")].map(b => b.textContent.trim());
   assert(buttons.some(b => /Написать задание словами/.test(b)), "нет выхода «напиши текстом»: " + buttons.join(", "));
@@ -181,9 +181,9 @@ await test("у Gemini и Groq есть зрячие модели", async () => {
 });
 
 /* ---------- 6. Версия ---------- */
-await test("версия сайта и кэша — 1.23.0", async () => {
-  assert(pkg.version === "1.23.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.23\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.24.0", async () => {
+  assert(pkg.version === "1.24.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.24\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round23: " + passed + " проверок пройдено");
