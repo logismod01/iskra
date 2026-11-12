@@ -11008,7 +11008,7 @@ const LANG_RULE = `ЯЗЫКИ МИРА — ты репетитор по язык
 - Для экзаменов (ЕГЭ, IELTS, TestDaF, HSK, JLPT) говори структуру, критерии и типовые ловушки, но всегда добавляй, что правила и даты надо сверять с официальным сайтом.
 - Если язык редкий и ты не уверена в деталях — скажи об этом и дай то, что знаешь точно. Никогда не выдумывай иероглифы и переводы.`;
 
-function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false) {
+function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, extraText = "") {
   const p = PERSONAS[settings.persona] || PERSONAS.universal;
   let sys = settings.persona === "custom" && settings.customPersona
     ? `Ты — ${BRAND.name}. ${settings.customPersona}`
@@ -11081,6 +11081,11 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false) 
       calcs.map(c => `- ${c.expr} = ${c.value}`).join("\n");
   }
 
+  // химия — точные коэффициенты, чтобы не путалась в уравнениях
+  const chemText = [userText, extraText].filter(Boolean).join("\n");
+  const chem = findChemBalances(chemText);
+  if (chem.length) sys += `\n\n${chemPromptBlock(chem)}`;
+
   // свежие данные из Википедии
   if (_lastSearch && _lastSearch.snippets && _lastSearch.snippets.length) {
     sys += `\n\nДанные из Википедии по вопросу пользователя (используй как факты, можешь пересказать своими словами):\n` +
@@ -11098,12 +11103,14 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false) 
 function apiPayload(chatMessages, opts = {}) {
   const lastUser = [...chatMessages].reverse().find(m => m.role === "user");
   const lastText = lastUser ? (typeof lastUser.content === "string" ? lastUser.content : (lastUser.content || []).filter(p => p.type === "text").map(p => p.text).join(" ")) : "";
+  /* Распознанный с фото текст — вторая половина вопроса: в нём чаще всего и лежат задания */
+  const lastOcr = lastUser && lastUser.ocrText ? lastUser.ocrText : "";
   /* Если фото отправляем текстом (распознанным), зрение не нужно */
   const preferText = !!opts.preferText;
   const hasImages = chatMessages.some(m => Array.isArray(m.content)
     ? m.content.some(p => p && (p.type === "image_url" || p.image_url))
     : Array.isArray(m.images) && m.images.length > 0 && !(preferText && m.ocrText));
-  const sys = buildSystemPrompt(lastText, hasImages, preferText);
+  const sys = buildSystemPrompt(lastText, hasImages, preferText, lastOcr);
   const msgs = [{ role: "system", content: sys }, ...chatMessages.map(m => toApiMsg(m, preferText))];
   const body = {
     messages: msgs,
@@ -11278,12 +11285,12 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
 }
 
 /* ---------- Домашка по фото ---------- */
-const HOMEWORK_HINT = "ДОМАШКА ПО ФОТО: пользователь прислал снимок. Сначала прочитай, что на нём написано (условие задачи, номер упражнения), потом: 1) кратко перескажи условие своими словами — чтобы было видно, что прочитано верно; 2) реши по шагам с пояснениями; 3) в конце дай ответ отдельной строкой. Если почерк неразборчив или фото смазано — скажи прямо, что именно не видно, и попроси переснять крупнее, а не выдумывай условие.";
+const HOMEWORK_HINT = "ДОМАШКА ПО ФОТО: пользователь прислал снимок. Сначала прочитай, что на нём написано (условие задачи, номер упражнения), потом: 1) кратко перескажи условие своими словами — чтобы было видно, что прочитано верно; 2) реши по шагам с пояснениями; 3) в конце дай ответ отдельной строкой. Если почерк неразборчив или фото смазано — скажи прямо, что именно не видно, и попроси переснять крупнее, а не выдумывай условие. Химические уравнения уравнивай по атомам: сначала металлы и неметаллы, потом кислород и водород, и перепроверь каждый элемент с обеих сторон.";
 
 function needsVision(images) { return Array.isArray(images) && images.length > 0; }
 
 /* Правило для случая «фото прочитано программой распознавания, а не глазами» */
-const OCR_HINT = `ФОТО, ПРОЧИТАННОЕ ПРОГРАММОЙ РАСПОЗНАВАНИЯ. Пользователь прислал фотографию задания, но у тебя нет глаз: текст с картинки распознала программа прямо на его телефоне, и он приложен ниже в кавычках. Работай с ним так: 1) начни с одной короткой строки «Прочитала с фото так: …» и перескажи условие — чтобы человек сразу увидел, верно ли распознано; 2) если в тексте явная бессмыслица (набор букв, обрывки, ошибки в числах) — скажи прямо, что именно распозналось плохо, и попроси переснять этот кусок крупнее или напечатать условие; 3) если всё понятно — реши по шагам, каждое действие коротко поясни, ответ отдельной строкой; 4) не выдумывай условие, которого нет в тексте.`;
+const OCR_HINT = `ФОТО, ПРОЧИТАННОЕ ПРОГРАММОЙ РАСПОЗНАВАНИЯ. Пользователь прислал фотографию задания, но у тебя нет глаз: текст с картинки распознала программа прямо на его телефоне, и он приложен ниже в кавычках. Работай с ним так: 1) начни с одной короткой строки «Прочитала с фото так: …» и перескажи условие — чтобы человек сразу увидел, верно ли распознано; 2) если в тексте явная бессмыслица (набор букв, обрывки, ошибки в числах) — скажи прямо, что именно распозналось плохо, и попроси переснять этот кусок крупнее или напечатать условие; 3) если всё понятно — реши по шагам, каждое действие коротко поясни, ответ отдельной строкой; 4) не выдумывай условие, которого нет в тексте; 5) в химических уравнениях расставляй коэффициенты по атомам и перепроверяй каждый элемент с обеих сторон.`;
 
 /* Фото видят не все движки. Искра сама отправит такой запрос туда,
    где картинки понимают, — человеку ничего переключать не нужно. */
@@ -12013,6 +12020,278 @@ function findCalcs(text) {
 }
 
 
+/* ---------- Химия: точная расстановка коэффициентов ---------- */
+function chemGCD(a, b) { a = Math.abs(Math.round(a)); b = Math.abs(Math.round(b)); while (b) { const t = a % b; a = b; b = t; } return a || 1; }
+const chemF = {
+  norm(a, b) { if (!b) b = 1; if (b < 0) { a = -a; b = -b; } const g = chemGCD(a, b); return [a / g, b / g]; },
+  sub(x, y) { return chemF.norm(x[0] * y[1] - y[0] * x[1], x[1] * y[1]); },
+  mul(x, y) { return chemF.norm(x[0] * y[0], x[1] * y[1]); },
+  div(x, y) { return chemF.norm(x[0] * y[1], x[1] * y[0]); }
+};
+
+/* Разбор формулы в счётчик атомов: Ca(OH)2, Fe2(SO4)3, H2O, C6H12O6 */
+function chemCount(formula) {
+  const s = String(formula || "");
+  if (!/^[A-Z(]/.test(s)) return null;
+  let i = 0;
+  function readNum() {
+    let d = "";
+    while (i < s.length && s[i] >= "0" && s[i] <= "9") { d += s[i]; i++; }
+    return d ? parseInt(d, 10) : 1;
+  }
+  function group() {
+    const out = {};
+    while (i < s.length) {
+      const c = s[i];
+      if (c === ")") { i++; return out; }
+      if (c === "(") { i++; const inner = group(); if (!inner) return null; const mult = readNum(); for (const k in inner) out[k] = (out[k] || 0) + inner[k] * mult; continue; }
+      if (c >= "A" && c <= "Z") {
+        let el = c; i++;
+        while (i < s.length && s[i] >= "a" && s[i] <= "z") { el += s[i]; i++; }
+        out[el] = (out[el] || 0) + readNum();
+        continue;
+      }
+      return null;
+    }
+    return out;
+  }
+  const res = group();
+  if (!res || i !== s.length || !Object.keys(res).length) return null;
+  return res;
+}
+
+/* Один вид: формула и коэффициент перед ней (если уже стоит) */
+function chemSpecies(token) {
+  const t = String(token || "").replace(/\s+/g, "");
+  const m = t.match(/^(\d*)([A-Z(][A-Za-z0-9()]*)$/);
+  if (!m) return null;
+  const atoms = chemCount(m[2]);
+  if (!atoms) return null;
+  return { formula: m[2], atoms, coef: m[1] ? parseInt(m[1], 10) : 1 };
+}
+
+/* Формула в самом конце куска: «H2O и Fe(OH)3» → Fe(OH)3.
+   Идём слева направо и берём самый длинный хвост, который целиком формула. */
+function chemSpeciesTail(token) {
+  const t = String(token || "").replace(/\s+/g, "");
+  for (let i = 0; i < t.length; i++) {
+    if (!/[A-Z(]/.test(t[i])) continue;
+    const sp = chemSpecies(t.slice(i));
+    if (sp) return sp;
+  }
+  return null;
+}
+
+/* Тот же разбор, но с обрезкой мусора по краям:
+   «а) Al(OH)3» → Al(OH)3, «H2O.» → H2O. Внутри вида мусор не допускаем. */
+function chemSpeciesLoose(token, allowPrefix, allowSuffix) {
+  const t = String(token || "").replace(/\s+/g, "");
+  if (chemSpecies(t)) return chemSpecies(t);
+  if (allowPrefix) {
+    for (let i = 1; i < t.length; i++) {
+      if (!/[A-Z(]/.test(t[i])) continue;
+      const sp = chemSpecies(t.slice(i));
+      if (sp) return sp;
+    }
+  }
+  if (allowSuffix) {
+    for (let j = t.length - 1; j > 0; j--) {
+      const sp = chemSpecies(t.slice(0, j));
+      if (sp) return sp;
+    }
+  }
+  return null;
+}
+
+function chemSide(str) {
+  const tokens = String(str).split("+").map((p) => p.trim()).filter(Boolean);
+  if (!tokens.length) return null;
+  const out = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const sp = chemSpeciesLoose(tokens[i], i === 0, i === tokens.length - 1);
+    if (!sp) return null;   // на этой стороне не только формулы — не рискуем
+    out.push(sp);
+  }
+  return out.length ? out : null;
+}
+
+/* Наименьшее целое решение системы «слева = справа» */
+function chemBalance(left, right) {
+  const all = left.concat(right);
+  const elements = [];
+  for (const sp of all) for (const el in sp.atoms) if (!elements.includes(el)) elements.push(el);
+  const n = all.length;
+  if (!elements.length || n < 2) return null;
+
+  const mat = elements.map((el) => {
+    const row = [];
+    for (const sp of left) row.push(chemF.norm(sp.atoms[el] || 0, 1));
+    for (const sp of right) row.push(chemF.norm(-(sp.atoms[el] || 0), 1));
+    return row;
+  });
+  const m = mat.length;
+
+  let row = 0;
+  const pivots = [];
+  for (let col = 0; col < n && row < m; col++) {
+    let pick = -1;
+    for (let r = row; r < m; r++) if (mat[r][col][0] !== 0) { pick = r; break; }
+    if (pick === -1) continue;
+    const tmp = mat[row]; mat[row] = mat[pick]; mat[pick] = tmp;
+    const pv = mat[row][col];
+    for (let c = 0; c < n; c++) mat[row][c] = chemF.div(mat[row][c], pv);
+    for (let r = 0; r < m; r++) {
+      if (r === row || mat[r][col][0] === 0) continue;
+      const k = mat[r][col];
+      for (let c = 0; c < n; c++) mat[r][c] = chemF.sub(mat[r][c], chemF.mul(mat[row][c], k));
+    }
+    pivots.push(col);
+    row++;
+  }
+
+  const free = [];
+  for (let c = 0; c < n; c++) if (!pivots.includes(c)) free.push(c);
+  if (free.length !== 1) return null;   // нестандартная реакция — не берёмся
+
+  const f = free[0];
+  const vec = new Array(n).fill([0, 1]);
+  vec[f] = [1, 1];
+  for (let r = 0; r < pivots.length; r++) vec[pivots[r]] = chemF.norm(-mat[r][f][0], mat[r][f][1]);
+
+  let lcm = 1;
+  for (const v of vec) lcm = (lcm * v[1]) / chemGCD(lcm, v[1]);
+  let ints = vec.map((v) => (v[0] * lcm) / v[1]);
+  let g = 0;
+  for (const v of ints) g = chemGCD(g, v);
+  ints = ints.map((v) => v / g);
+  if (ints.every((v) => v < 0)) ints = ints.map((v) => -v);
+  if (ints.some((v) => v <= 0)) return null;
+  return ints;
+}
+
+const CHEM_ARROW = /(→|->|⟶|=>|⇄|=|⟵)/;
+/* Сколько уравнений максимум разбираем: на страницу учебника хватает с запасом. */
+const CHEM_MAX = 12;
+
+/* Разбиение стороны на куски по плюсу с их местом в строке:
+   нужно, чтобы понимать, до какого места текст уже разобран. */
+function chemTokensWithPos(str) {
+  const chunks = String(str).split("+");
+  const out = [];
+  let start = 0;
+  for (const raw of chunks) {
+    out.push({ raw, start, end: start + raw.length });
+    start += raw.length + 1;
+  }
+  return out;
+}
+
+/* Левая сторона: берём самый длинный хвост, который состоит только из формул.
+   Так «8. Выберите: Al + HCl» превращается в Al + HCl, а метка задания отпадает. */
+function chemSideEnd(str) {
+  const toks = chemTokensWithPos(str);
+  let from = toks.length;
+  for (let i = toks.length - 1; i >= 0; i--) {
+    let sp = null;
+    /* В последнем куске слева мусор стоит в начале («H2O и Fe(OH)3»),
+       поэтому сначала пробуем самое правое, а уже потом обычную обрезку. */
+    if (i === toks.length - 1) sp = chemSpeciesTail(toks[i].raw) || chemSpeciesLoose(toks[i].raw, i === 0, true);
+    else sp = chemSpeciesLoose(toks[i].raw, i === 0, false);
+    if (!sp) break;
+    from = i;
+    toks[i].sp = sp;
+  }
+  if (from >= toks.length) return null;
+  const out = [];
+  for (let i = from; i < toks.length; i++) out.push(toks[i].sp);
+  return out;
+}
+
+/* Правая сторона: берём самое длинное начало из формул и запоминаем,
+   где оно кончилось (дальше может идти следующее задание). */
+function chemSideStart(str) {
+  const toks = chemTokensWithPos(str);
+  const out = [];
+  let end = 0;
+  for (let i = 0; i < toks.length; i++) {
+    const sp = chemSpeciesLoose(toks[i].raw, i === 0, i === toks.length - 1);
+    if (sp) {
+      out.push(sp);
+      end = toks[i].end;
+      continue;
+    }
+    /* Следом идёт мусор, но в начале куска может стоять формула:
+       «H2O  и  следующее задание» → берём H2O и на этом заканчиваем сторону. */
+    if (out.length) {
+      const cut = chemSpeciesLoose(toks[i].raw, false, true);
+      if (cut) {
+        out.push(cut);
+        const at = toks[i].raw.indexOf(cut.formula);
+        end = toks[i].start + (at >= 0 ? at + cut.formula.length : toks[i].raw.length);
+      }
+    }
+    break;
+  }
+  if (!out.length) return null;
+  return { species: out, end };
+}
+
+/* Все уравнения в тексте, с точными коэффициентами.
+   В одной строке может быть несколько заданий — разбираем каждое. */
+function findChemBalances(text) {
+  const out = [];
+  const seen = new Set();
+  const lines = String(text || "").split(/\n+/);
+  for (const rawLine of lines) {
+    if (out.length >= CHEM_MAX) break;
+    const line = rawLine
+      .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, (ch) => String("₀₁₂₃₄₅₆₇₈₉".indexOf(ch)))
+      .replace(/[↑↓⇑⇓]/g, "")
+      .replace(/\((aq|s|l|g|тв|ж|г|р-р)\)/gi, "")
+      .replace(/[–—]/g, "-")
+      /* распознавание с фото часто путает строчную l с заглавной I */
+      .replace(/([A-Za-z)])CI(?=\d|\)|\s|$|\+)/g, "$1Cl");
+    let from = 0;
+    while (from < line.length && out.length < CHEM_MAX) {
+      const rest = line.slice(from);
+      const m = rest.match(CHEM_ARROW);
+      if (!m) break;
+      const arrowAt = from + rest.indexOf(m[1]);
+      const left = chemSideEnd(line.slice(0, arrowAt));
+      const right = chemSideStart(line.slice(arrowAt + m[1].length));
+      const step = arrowAt + m[1].length + (right ? right.end : 0);
+      from = step > from ? step : from + 1;
+      if (!left || !right) continue;
+      const key = left.map((s) => s.formula).join("+") + "=" + right.species.map((s) => s.formula).join("+");
+      if (seen.has(key)) continue;
+      const ks = chemBalance(left, right.species);
+      if (!ks) continue;
+      seen.add(key);
+      let idx = 0;
+      const L = left.map((s) => { const k = ks[idx++]; return (k === 1 ? "" : k) + s.formula; });
+      const R = right.species.map((s) => { const k = ks[idx++]; return (k === 1 ? "" : k) + s.formula; });
+      const sumL = ks.slice(0, left.length).reduce((a, b) => a + b, 0);
+      const sumR = ks.slice(left.length).reduce((a, b) => a + b, 0);
+      out.push({
+        equation: L.join(" + ") + " → " + R.join(" + "),
+        coefs: ks.join(", "),
+        sumLeft: sumL, sumRight: sumR, sumAll: sumL + sumR,
+        already: ks.every((k) => k === 1)
+      });
+    }
+  }
+  return out;
+}
+
+/* Готовая справка для промпта: точные коэффициенты и суммы */
+function chemPromptBlock(list) {
+  return "ХИМИЯ: точная расстановка коэффициентов (посчитано по атомам — бери эти числа и не пересчитывай):\n" +
+    list.map((c) => `- ${c.equation} — коэффициенты ${c.coefs}; сумма всех ${c.sumAll} (слева ${c.sumLeft}, справа ${c.sumRight})` +
+      (c.already ? "; уравнение уже было уравнено" : "")).join("\n") +
+    "\nЕсли в задании спрашивают сумму коэффициентов у исходных веществ — бери сумму слева, у продуктов — справа.";
+}
+
+
 /* ---------- Бесплатный поиск фактов (Википедия, без ключа) ---------- */
 const _searchCache = new Map();
 let _lastSearch = null;
@@ -12449,6 +12728,8 @@ function buildSystemPromptLite(userText = "") {
   }
   const calcs = findCalcs(userText);
   if (calcs.length) sys += `\n\nТочный расчёт: ${calcs.map(c => c.expr + " = " + c.value).join("; ")}.`;
+  const chemLite = findChemBalances(userText);
+  if (chemLite.length) sys += `\n\n${chemPromptBlock(chemLite)}`;
   sys += `\n\nСегодня: ${new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}.`;
   return sys;
 }
@@ -12458,8 +12739,9 @@ function liteMessages(messages) {
   if (!Array.isArray(messages) || !messages.length) return messages;
   const lastUser = [...messages].reverse().find(m => m && m.role === "user");
   const text = lastUser ? (typeof lastUser.content === "string" ? lastUser.content : "") : "";
+  const ocr = lastUser && lastUser.ocrText ? "\n" + lastUser.ocrText : "";
   const out = messages.slice();
-  out[0] = { role: "system", content: buildSystemPromptLite(text) };
+  out[0] = { role: "system", content: buildSystemPromptLite(text + ocr) };
   return out;
 }
 
