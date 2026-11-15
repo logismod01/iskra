@@ -12534,10 +12534,40 @@ function apiPayload(chatMessages, opts = {}) {
 
 
 /* ---------- Когда модель недоступна: отвечаем из базы знаний ---------- */
+/* Ответ из базы, когда движки молчат.
+   Раньше просто вставлялись две темы целиком — читать было тяжело, а связи
+   между ними человек искал сам. Теперь: главная тема целиком, рядом короткие,
+   и честная приписка, если спросили задачу, а не факт. */
+function offlineAnswerCut(text, n) {
+  const t = String(text || "").replace(/\s+/g, " ").trim();
+  if (t.length <= n) return t;
+  const cut = t.slice(0, n);
+  const dot = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
+  return (dot > n * 0.5 ? cut.slice(0, dot + 1) : cut.trim() + "…");
+}
+function offlineAnswerKind(q) {
+  const t = String(q || "").toLowerCase();
+  if (/^(реши|посчитай|вычисли|найди|сколько будет|докажи|упрости)/.test(t) || /\d\s*[+\-*/=]\s*\d/.test(t)) return "task";
+  if (/^(как|каким образом|что делать|инструкция)/.test(t)) return "how";
+  if (/^(почему|зачем|отчего|в чём причина)/.test(t)) return "why";
+  return "what";
+}
 function offlineAnswer(question) {
-  const hits = kbSearch(question, 2);
+  const hits = kbSearch(question, 3);
   if (!hits.length) return "";
-  const parts = hits.map(h => `**${h.title}**\n${h.text}`);
+  const kind = offlineAnswerKind(question);
+  const main = hits[0];
+  const rest = hits.slice(1);
+  const parts = [];
+  parts.push(`**${main.title}**\n${main.text}`);
+  if (rest.length) {
+    parts.push("**Рядом по теме**\n" + rest.map(h => `• **${h.title}** — ${offlineAnswerCut(h.text, 180)}`).join("\n"));
+  }
+  if (kind === "task") {
+    parts.push("_Это задача, а не готовый факт: правило выше объясняет, как её решать, но числа из твоего условия я не видела. Пришли задание целиком — посчитаю по шагам._");
+  } else if (kind === "how" || kind === "why") {
+    parts.push("_Если нужно подробнее — спроси уточнение: разберу по шагам на твоём примере._");
+  }
   return parts.join("\n\n");
 }
 
@@ -14587,17 +14617,21 @@ function kbSearch(text, limit = 2) {
   }
   const usable = stems.filter(s => df.get(s) > 0);
   if (!usable.length) return [];
-  const idf = new Map(usable.map(s => [s, Math.log(1 + docs.length / (1 + df.get(s)))]));
-  const totalWeight = usable.reduce((n, s) => n + idf.get(s), 0) || 1;
+  /* Слова вопроса, которых нет в базе, тоже считаются: иначе вопрос
+     «щупальца марсианского осьминога на Венере» покрывался на 100 % одной
+     Венерой и человек получал Солнечную систему вместо честного «не знаю». */
+  const idf = new Map(stems.map(s => [s, Math.log(1 + docs.length / (1 + df.get(s)))]));
+  const totalWeight = stems.reduce((n, s) => n + idf.get(s), 0) || 1;
 
   // Имена ошибок пишут латиницей: IndentationError, ENOENT, NullPointerException
   const latinRare = (s) => /^[a-z][a-z0-9]{4,}$/.test(s);
   const cands = [];
   for (const d of docs) {
-    let score = 0, weightedHits = 0, strong = 0, rare = 0, latin = 0;
+    let score = 0, weightedHits = 0, strong = 0, rare = 0, latin = 0, hits = 0;
     for (const s of usable) {
       const where = d.title.has(s) ? 6 : d.tags.has(s) ? 5 : d.body.has(s) ? 2 : 0;
       if (!where) continue;
+      hits++;                                    // сколько разных слов вопроса совпало
       score += where * idf.get(s);
       weightedHits += idf.get(s);
       if (where >= 5) strong++;
@@ -14615,7 +14649,7 @@ function kbSearch(text, limit = 2) {
     if (d.it.learned) score += 3;                 // своё выученное — в приоритете
     if (d.it.shared) score += 4;                  // общая база — то, что владелец проверил руками
 
-    cands.push({ it: d.it, score, coverage: weightedHits / totalWeight, strong, rare, latin });
+    cands.push({ it: d.it, score, coverage: weightedHits / totalWeight, strong, rare, latin, hits });
   }
 
   // Хорошая тема покрывает больше половины «веса» вопроса и совпала по тегам/названию.
@@ -14623,7 +14657,11 @@ function kbSearch(text, limit = 2) {
   let pool = cands.filter(c => c.coverage >= 0.5 && c.strong);
   // Два слова из вопроса совпали с названием или тегами («null» и «pointer») — тема та.
   if (!pool.length) pool = cands.filter(c => c.strong >= 2);
-  if (!pool.length) pool = cands.filter(c => c.strong && c.rare);
+  /* Одно редкое слово из длинного вопроса — ещё не ответ. Раньше на
+     «щупальца марсианского осьминога на Венере» выходила Солнечная система:
+     совпало только «Венера». Отвечаем, если совпало хотя бы два слова,
+     или если вопрос короткий — тогда одно слово и есть весь вопрос. */
+  if (!pool.length) pool = cands.filter(c => c.strong && c.rare && (c.hits >= 2 || stems.length <= 3));
   // Текст ошибки: редкое латинское слово (IndentationError, ENOENT, segfault) почти всегда
   // указывает ровно на свою тему, даже если остальные слова вопроса (как, почему, файл) общие.
   if (!pool.length) pool = cands.filter(c => c.latin >= 1);
@@ -19199,7 +19237,9 @@ function learnedCount() { return learnedList().length; }
    Живёт на сервере (Supabase). Читают все, пишет только владелец по паролю.
    В браузере держим копию: без сети Искра отвечает по ней. */
 const SHARED_KB_KEY = "iskra.sharedkb.v1";
-const SHARED_KB_TTL = 6 * 3600e3;
+/* Раньше копию не трогали шесть часов — и человек видел старое число тем
+   (1302 вместо 2139), хотя база уже выросла. Теперь проверяем чаще. */
+const SHARED_KB_TTL = 30 * 60e3;
 let _sharedKb = null;
 let _sharedKbAt = 0;
 
@@ -19265,7 +19305,23 @@ async function sharedKbRefresh(force) {
   } finally {
     clearTimeout(timer);
   }
+  /* База приехала уже после того, как панель нарисовалась: без перерисовки
+     человек видел старое число и думал, что тем не прибавилось. */
+  try { if (typeof renderKnowledgePanel === "function") renderKnowledgePanel(); } catch (e) {}
+  try { if (typeof updateMoreCounts === "function") updateMoreCounts(); } catch (e) {}
   return sharedKbList();
+}
+
+/* Сколько назад обновляли копию — простыми словами, без времени в формате UTC. */
+function sharedKbAgeText() {
+  if (!_sharedKbAt) return "ещё не загружалась";
+  const min = Math.floor((Date.now() - _sharedKbAt) / 60000);
+  if (min < 1) return "обновлено только что";
+  if (min < 60) return "обновлено " + min + " " + (typeof plural === "function" ? plural(min, "минуту", "минуты", "минут") : "мин.") + " назад";
+  const h = Math.floor(min / 60);
+  if (h < 24) return "обновлено " + h + " " + (typeof plural === "function" ? plural(h, "час", "часа", "часов") : "ч") + " назад";
+  const d = Math.floor(h / 24);
+  return "обновлено " + d + " " + (typeof plural === "function" ? plural(d, "день", "дня", "дней") : "дн") + " назад";
 }
 
 /* ---------- Публикация для всех (только владелец) ----------
@@ -19857,7 +19913,8 @@ function renderKnowledgePanel() {
       <div class="acct-row"><span>Внутри Искры — работает без интернета</span><b data-kbcount="built">${kbBuilt}</b></div>
       <div class="acct-row"><span>Из общей базы — с сервера</span><b data-kbcount="shared">${kbShared}${kbShared ? "" : " (ещё не загружена)"}</b></div>
       <div class="acct-row"><span>Выучено самой</span><b data-kbcount="learned">${list.length}</b></div>
-      <div class="acct-note" style="margin:8px 0 10px">Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже. Если число у общей базы не то, что ждёшь, нажми «Обновить базу» ниже.</div>
+      <div class="acct-note" style="margin:8px 0 10px">Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже.</div>
+      <div class="acct-note" id="kbFreshNote" style="margin:0 0 10px">Общая база: ${sharedKbAgeText()}. Если число меньше, чем ждёшь, — нажми «Обновить базу» ниже.</div>
       <div class="auth-field">
         <input id="kbSearchInput" placeholder="Поиск: пифагор, моль, стресс…" autocomplete="off">
       </div>
