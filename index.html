@@ -1285,21 +1285,34 @@ html, body { overflow-x: hidden; }  /* без горизонтального с�
 @keyframes slideUpBounce { 0% { transform: translateX(-50%) translateY(24px); opacity: 0; } 70% { transform: translateX(-50%) translateY(-3px); } 100% { transform: translateX(-50%) translateY(0); opacity: 1; } }
 @keyframes dotBounce { 0%,80%,100% { transform: translateY(0); opacity: .4; } 40% { transform: translateY(-5px); opacity: 1; } }
 
-/* Логотип и главные кнопки — живой градиент */
+/* Логотип и главные кнопки — градиент. Без вечной анимации: раньше фон
+   перекрашивался 7 раз в секунду постоянно, и браузер перерисовывал кнопку
+   даже когда на неё никто не смотрит. Теперь градиент стоит, а «перелив»
+   включается только при наведении на кнопку. */
 .brand-logo, .welcome .big-logo, .btn-new, .send-btn, .msg .content .ai-logo {
   background-image: linear-gradient(135deg, var(--accent), var(--accent-soft), var(--accent));
   background-size: 220% 220%;
-  animation: gradShift 7s ease infinite;
+  background-position: 50% 50%;
+}
+.btn-new:hover, .btn-new:focus-visible, .send-btn:hover, .send-btn:focus-visible {
+  animation: gradShift 4s ease infinite;
 }
 .btn-new { transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .25s; }
 .btn-new:hover { transform: translateY(-2px); box-shadow: 0 10px 26px -8px var(--accent); }
 .btn-new:active { transform: translateY(0) scale(.98); }
 
-/* Обстановка дышит */
+/* Обстановка дышит — но не всегда. Класс quiet ставится, когда вкладка
+   скрыта или человек давно ничего не делал: двадцать минут «дыхания»
+   фонового узора на слабом ноуте слышны кулером. */
 .ambient { animation: breathe 18s ease-in-out infinite; transform-origin: 50% 40%; }
+html.quiet .ambient,
+html.quiet .btn-new:hover,
+html.quiet .send-btn:hover,
+html.quiet .dots i,
+html.quiet .generating .dots i { animation: none !important; }
 
-/* Логотип на главной: светящиеся пятна + парение */
-.welcome .big-logo { position: relative; animation: gradShift 7s ease infinite, floatUp .5s ease both; }
+/* Логотип на главной: светящиеся пятна + парение при появлении */
+.welcome .big-logo { position: relative; animation: floatUp .5s ease both; }
 .welcome .big-logo::before, .welcome .big-logo::after {
   content: ""; position: absolute; inset: -26px; border-radius: 50%;
   background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
@@ -3304,9 +3317,7 @@ html.no-anim .theme-flash { display: none; }
   </button>
 </div>
 
-<script>
-/* Встроенная база знаний Искры — работает без интернета */
-const KNOWLEDGE_PACK =   {
+<script type="application/json" id="kbPack">{
     "version": 6,
     "updated": "2026-10-31",
     "items": [
@@ -8177,8 +8188,28 @@ const KNOWLEDGE_PACK =   {
         "text": "1) Учить слова списком без контекста — забывается за неделю.\n2) Ждать «готовности» говорить — говорить надо с первых 100 слов.\n3) Переводить в голове с русского дословно — учи целые фразы.\n4) Учить грамматику без примеров и практики.\n5) Смотреть только видео с русскими субтитрами — мозг читает русский и не учит язык.\n6) Заниматься раз в неделю по три часа вместо 20 минут в день.\n7) Бояться ошибок: ошибка — это данные, а не приговор.\n8) Менять метод каждую неделю — выбери один план и держи 90 дней.\n9) Сравнивать себя с теми, кто учит год — сравнивай с собой месяц назад.\n10) Не повторять: без повторения через день-неделю-месяц материал уходит."
       }
     ]
-  };
-
+  }</script>
+<script>
+/* Встроенная база знаний Искры — работает без интернета.
+   Раньше эти 445 КБ разбирались как JavaScript при каждом запуске: на слабом
+   ноуте это заметная пауза до первого кадра. Теперь браузер держит их просто
+   текстом (type="application/json" он не исполняет), а разбор идёт при первом
+   обращении — один раз за сессию и заметно быстрее JS. */
+let _kbPackCache = null;
+function kbPack() {
+  if (_kbPackCache) return _kbPackCache;
+  const el = document.getElementById("kbPack");
+  try {
+    _kbPackCache = el ? JSON.parse(el.textContent) : { version: 0, items: [] };
+  } catch (e) {
+    _kbPackCache = { version: 0, items: [] };
+  }
+  return _kbPackCache;
+}
+Object.defineProperty(window, "KNOWLEDGE_PACK", {
+  configurable: true,
+  get: kbPack
+});
 </script>
 <script>
 /* ============================================================
@@ -10703,6 +10734,52 @@ function applyLook() {
   html.classList.toggle("compact", settings.compact === true);
   html.classList.toggle("no-anim", settings.animations === false);
   html.classList.toggle("perf", liteModeOn());
+  quietWatch(html);
+}
+
+/* ---------- Тихий режим ----------
+   Вечные анимации (дыхание фона, перелив кнопок, точки «думаю») крутятся
+   и тогда, когда никто не смотрит. На слабом ноуте это постоянная работа
+   видеокарты. Ставим класс quiet, если вкладка скрыта или человек
+   не трогал страницу две минуты; любое движение мыши или клавиша
+   возвращают украшения. */
+let _quietTimer = null;
+let _quietWired = false;
+let _quietAt = 0;
+/* Мышь двигается десятки раз в секунду — таймер переставляем не чаще,
+   чем раз в полсекунды, иначе сама оптимизация начнёт грузить процессор. */
+const QUIET_IDLE = 120000;      // две минуты без действий
+const QUIET_STEP = 500;
+function quietWake(html) {
+  const root = html || document.documentElement;
+  if (!root) return;
+  if (root.classList.contains("quiet")) root.classList.remove("quiet");
+  const now = Date.now();
+  if (_quietTimer && now - _quietAt < QUIET_STEP) return;
+  _quietAt = now;
+  if (_quietTimer) clearTimeout(_quietTimer);
+  _quietTimer = setTimeout(() => {
+    _quietTimer = null;
+    if (document.hidden) return;          // скрытую вкладку не трогаем
+    root.classList.add("quiet");
+  }, QUIET_IDLE);
+}
+function quietWatch(html) {
+  const root = html || document.documentElement;
+  if (!root) return;
+  if (!_quietWired) {
+    _quietWired = true;
+    const wake = () => quietWake(root);
+    for (const ev of ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"]) {
+      document.addEventListener(ev, wake, { passive: true });
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) root.classList.add("quiet");
+      else quietWake(root);
+    });
+  }
+  if (settings.animations === false || liteModeOn()) root.classList.add("quiet");
+  else quietWake(root);
 }
 
 /* ---------- Лёгкий режим ----------

@@ -1,5 +1,5 @@
 /**
- * Раунд 33: скорость, шесть маскотов и вся база у агента (1.34.0 / Sye 0.8.0).
+ * Раунд 33: скорость, шесть маскотов и вся база у агента (1.35.0 / Sye 0.8.0).
  *
  * Что было не так:
  *   1) окно тормозило: в потоке ответа каждый кусочек текста перерисовывал
@@ -155,9 +155,34 @@ await test("тема из общей базы попадает в промпт �
   shared.reset();
 });
 
+
+/* ---------- 6. Старт страницы ---------- */
+await test("база знаний не разбирается при загрузке", async () => {
+  assert(/<script type="application\/json" id="kbPack">/.test(html), "база снова лежит обычным скриптом");
+  assert(/function kbPack\(/.test(html), "нет ленивого разбора базы");
+  assert(/Object\.defineProperty\(window, "KNOWLEDGE_PACK"/.test(html), "KNOWLEDGE_PACK больше не подменяется лениво");
+  /* сам JSON должен быть валидным — иначе разбор молча вернёт пустоту */
+  const m = html.match(/<script type="application\/json" id="kbPack">([\s\S]*?)<\/script>/);
+  assert(m, "JSON-блок базы не найден");
+  const pack = JSON.parse(m[1]);
+  assert(pack.items.length > 700, "в базе меньше 700 тем: " + pack.items.length);
+});
+
+await test("вечные анимации не крутятся постоянно", async () => {
+  assert(!/\.brand-logo[^{]*\{[^}]*animation:\s*gradShift 7s ease infinite/.test(html), "логотип снова переливается вечно");
+  assert(/html\.quiet \.ambient/.test(html), "нет тихого режима для фона");
+  assert(/function quietWake\(/.test(html), "нет пробуждения из тихого режима");
+  assert(/visibilitychange/.test(html), "скрытая вкладка не переводит сайт в тихий режим");
+  assert(/QUIET_IDLE/.test(html), "нет времени до тихого режима");
+});
+
+await test("тихий режим не срабатывает на каждое движение мыши", async () => {
+  assert(/QUIET_STEP/.test(html), "движение мыши переставляет таймер без ограничения");
+});
+
 /* ---------- 5. Версии ---------- */
 await test("версии подняты", async () => {
-  assert(pkg.version === "1.34.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.35.0", "версия сайта: " + pkg.version);
   assert(agentPkg.version === "0.8.0", "версия агента: " + agentPkg.version);
 });
 
