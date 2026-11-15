@@ -2071,16 +2071,41 @@ html.compact .set-card { padding: 12px; }
 html.compact .msg .actions { margin-top: 6px; }
 
 /* Крупный текст: экран тот же, буквы крупнее. Включается из меню «⋯».
-   zoom есть во всех современных браузерах; если его вдруг нет —
-   увеличиваем сам текст ответов и поля ввода, чтобы кнопка не была пустой. */
-html.big-text { zoom: 1.16; }
-@supports not (zoom: 1) {
-  html.big-text .msg .content { font-size: 18px; line-height: 1.65; }
-  html.big-text .msg .content p { font-size: 18px; }
-  html.big-text #input { font-size: 18px; }
-  html.big-text .kb-card b { font-size: 15.5px; }
-  html.big-text .kb-card p { font-size: 14.5px; }
+
+   Раньше здесь стоял zoom на всей странице. Из-за него вся раскладка становилась
+   шире окна на 16 %, правый край шапки уезжал за экран — вместе с кнопкой «⋯».
+   Получалась ловушка: включил крупный текст и выключить уже нечем.
+   Теперь увеличиваем только сам текст. Раскладка та же, ничего не обрезается. */
+html.big-text .msg .content { font-size: 18.5px; line-height: 1.7; }
+html.big-text .msg .content p,
+html.big-text .msg .content li { font-size: 18.5px; }
+html.big-text .msg .content h1 { font-size: 1.45em; }
+html.big-text .msg .content h2 { font-size: 1.25em; }
+html.big-text .msg .content h3 { font-size: 1.1em; }
+html.big-text .composer textarea,
+html.big-text #input { font-size: 18px; }
+html.big-text .kb-card b { font-size: 16px; }
+html.big-text .kb-card p { font-size: 15px; }
+html.big-text .chat-row { font-size: 15.5px; }
+html.big-text .more-item { font-size: 15.5px; }
+html.big-text .composer-note,
+html.big-text .welcome p { font-size: 14.5px; }
+
+/* Кнопка «вернуть обычный текст»: видна только пока крупный текст включён.
+   Стоит в шапке, рядом с «⋯», чтобы выход был на виду всегда. */
+/* Не .icon-btn специально: это не постоянная кнопка шапки, а выход из режима.
+   Появляется только пока крупный текст включён. */
+#bigTextOff {
+  flex: 0 0 auto;
+  height: 38px; min-width: 46px; padding: 0 12px;
+  display: grid; place-items: center;
+  border-radius: 10px; border: 1px solid var(--line);
+  font-size: 14px; font-weight: 700; letter-spacing: .5px;
+  color: var(--accent);
+  transition: background .15s, color .15s;
 }
+#bigTextOff[hidden] { display: none; }
+#bigTextOff:hover { background: var(--bg-soft-2); }
 
 /* ============ Анимации: выключение ============ */
 html.no-anim *, html.no-anim *::before, html.no-anim *::after {
@@ -2400,6 +2425,7 @@ html.no-anim .theme-flash { display: none; }
         <span class="mn" id="modelChipName">—</span>
         <svg class="ic mc-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
+      <button class="bigtext-off" id="bigTextOff" hidden title="Вернуть обычный текст" aria-label="Вернуть обычный текст" aria-pressed="true">Аа</button>
       <div class="more-wrap">
         <button class="icon-btn" id="moreBtn" title="Ещё" aria-haspopup="true" aria-expanded="false" aria-label="Ещё">
           <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -11732,6 +11758,13 @@ function applyBigText(on) {
   const html = document.documentElement;
   if (!html) return;
   html.classList.toggle("big-text", !!on);
+  /* Пока крупный текст включён, в шапке висит «Аа» — чтобы выход был на виду.
+     Выход не должен зависеть от того, дотянулась ли рука до «⋯». */
+  const off = $("#bigTextOff");
+  if (off) {
+    off.hidden = !on;
+    off.setAttribute("aria-pressed", on ? "true" : "false");
+  }
 }
 function toggleBigText() {
   settings.bigText = !settings.bigText;
@@ -18454,6 +18487,8 @@ function wire() {
 
   // Сайдбар
   $("#menuBtn").addEventListener("click", openSidebar);
+  const bigOffBtn = $("#bigTextOff");
+  if (bigOffBtn) bigOffBtn.addEventListener("click", toggleBigText);
   $("#sbBackdrop").addEventListener("click", closeSidebar);
   $("#newChat").addEventListener("click", () => {
     resetModeChat(settings.mode);
