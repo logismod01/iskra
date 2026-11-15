@@ -69,6 +69,8 @@ function systemPrompt(opts) {
     shared.promptBlock(task || "", 1200),
     // что уже делали именно в этой папке: чтобы не переспрашивать и не искать заново
     memory.promptBlock(workspace, 900),
+    // о чём спрашивали, а темы не нашлось: честно сказать «не знаю», а не выдумать
+    memory.gapBlock(workspace, 400),
     "",
     "ФОРМАТ ОТВЕТА — строго один из двух вариантов, без лишнего текста:",
     '  1) действие: <action>{"tool":"имя","args":{...},"why":"зачем это делаю"}</action>',
@@ -106,6 +108,7 @@ function liteSystemPrompt(opts) {
     knowledge.promptBlock(task || "", 900),
     shared.promptBlock(task || "", 500),
     memory.promptBlock(workspace, 500),
+    memory.gapBlock(workspace, 300),
     "ОТВЕЧАЙ РОВНО ОДНИМ ИЗ ДВУХ, без другого текста:",
     '  <action>{"tool":"имя","args":{...},"why":"зачем"}</action>',
     "  <final>что сделано и что проверить</final>",

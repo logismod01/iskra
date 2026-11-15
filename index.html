@@ -1912,6 +1912,16 @@ button:active:not(:disabled) { transform: scale(.975); }
 .kb-card.open p { display: block; -webkit-line-clamp: unset; }
 .kb-acts { display: none; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
 .kb-card.open .kb-acts { display: flex; }
+.kb-rel { margin: 10px 0 2px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.kb-rel-h { font-size: 11.5px; letter-spacing: .3px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+.kb-rel-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.kb-rel-btn {
+  font: inherit; font-size: 12.5px; line-height: 1.25; text-align: left;
+  padding: 6px 10px; border-radius: 999px; cursor: pointer;
+  color: var(--text-soft); background: var(--bg-soft); border: 1px solid var(--line);
+  transition: border-color .15s, color .15s;
+}
+.kb-rel-btn:hover { border-color: var(--accent); color: var(--text); }
 .kb-acts button { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-family: inherit; cursor: pointer; }
 .kb-acts button:first-child { background: var(--accent); border-color: var(--accent); color: #fff; }
 .kb-count { font-size: 12px; color: var(--text-dim); margin: 8px 0 0; }
@@ -2215,12 +2225,12 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
 
 /* ============ Сью: маскот ============ */
 .sye-mascot { display: block; width: 100%; height: 100%; }
-.sye-mascot .sye-body { fill: var(--accent); }
-.sye-mascot .sye-body-2 { fill: var(--accent-soft); }
+.sye-mascot .sye-body { fill: var(--msk, var(--accent)); }
+.sye-mascot .sye-body-2 { fill: var(--msk-soft, var(--accent-soft)); }
 .sye-mascot .sye-eye { fill: #241a15; }
 .sye-mascot .sye-cheek { fill: #fff; opacity: .35; }
 .sye-mascot .sye-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
-.sye-mascot .sye-tuft { fill: var(--accent); }
+.sye-mascot .sye-tuft { fill: var(--msk, var(--accent)); }
 .sye-mascot .sye-shadow { fill: #000; opacity: .18; }
 .sye-wrap { position: relative; overflow: hidden; }
 .sye-wrap[data-mood="work"] .sye-mascot { animation: syeBob 1.6s ease-in-out infinite; }
@@ -2262,17 +2272,20 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
 
 /* ============ Маскоты ============ */
 .msk { display: block; width: 100%; height: 100%; }
-.msk .msk-body { fill: var(--accent); }
-.msk .msk-2 { fill: var(--accent-soft); }
+/* Цвет маскота: по умолчанию акцент темы, но в настройках его можно
+   перекрасить отдельно (--msk). Тогда маскот не перекрашивается вместе
+   с темой, а живёт своим цветом. */
+.msk .msk-body { fill: var(--msk, var(--accent)); }
+.msk .msk-2 { fill: var(--msk-soft, var(--accent-soft)); }
 .msk .msk-face { fill: var(--bg); opacity: .92; }
-.msk .msk-tuft { fill: var(--accent); }
-.msk .msk-ray { fill: var(--accent); opacity: .85; }
+.msk .msk-tuft { fill: var(--msk, var(--accent)); }
+.msk .msk-ray { fill: var(--msk, var(--accent)); opacity: .85; }
 .msk .msk-eye { fill: #241a15; }
 .msk .msk-eye-sq { fill: var(--bg); }
 .msk .msk-cheek { fill: #fff; opacity: .35; }
 .msk .msk-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
 .msk .msk-shadow { fill: #000; opacity: .18; }
-.msk .msk-line { stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; }
+.msk .msk-line { stroke: var(--msk, var(--accent)); stroke-width: 2.6; stroke-linecap: round; }
 .msk .msk-beak { fill: #e0a15a; }
 .msk-brand { width: 26px; height: 26px; }
 /* В тёмных темах лицо робота и совы должно быть светлее фона карточки */
@@ -2307,6 +2320,31 @@ html[data-theme="claude"] .msk .msk-face { fill: #221e1a; }
 .mascot-pic { width: 40px; height: 40px; display: block; }
 .mascot-nm { font-size: 11.5px; color: var(--text-soft); text-align: center; line-height: 1.2; }
 .mascot-card.on .mascot-nm { color: var(--text); font-weight: 600; }
+
+/* Цвет маскота: кружки-образцы. Выбранный обведён акцентом, «как в теме» —
+   отдельная клетка с диагональю, чтобы было видно, что это не оттенок. */
+.msk-color-h { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 6px; }
+.msk-color-h b { font-size: 12.5px; }
+.msk-color-note { font-size: 11.5px; color: var(--text-dim); }
+.msk-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.msk-sw {
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; padding: 0; flex: 0 0 auto;
+  background-clip: padding-box; transition: transform .12s, border-color .12s;
+}
+.msk-sw:hover { transform: scale(1.08); }
+.msk-sw.on { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg-soft); }
+.msk-sw.theme { position: relative; overflow: hidden; background: var(--accent); }
+.msk-sw.theme::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(45deg, transparent 44%, rgba(0,0,0,.55) 44%, rgba(0,0,0,.55) 56%, transparent 56%);
+}
+.msk-custom-row { margin-top: 10px; }
+.msk-color-own {
+  width: 46px; height: 30px; padding: 0; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--bg-soft-2); cursor: pointer;
+}
+.msk-reset { margin-top: 8px; }
 
 /* ============ Лёгкий режим ============
    Слабый ноут или старый телефон: убираем размытие, узоры по фону, тени
@@ -2569,6 +2607,37 @@ html.no-anim .theme-flash { display: none; }
 }
 
 /* Совсем узкие экраны: чуть мельче кнопки, чтобы ряд не упирался в край */
+/* ===== Телефон: крупные пальцевые цели и понятный ввод =====
+   Здесь только то, что мешало на маленьком экране: мелкие кнопки,
+   прыжок страницы при фокусе в поле (iOS увеличивает шрифт меньше 16px)
+   и клавиатура, которая закрывала строку ввода. */
+@media (max-width: 700px) {
+  /* Поле ввода не меньше 16px — иначе iPhone сам масштабирует страницу */
+  .composer textarea, #input, .sb-search, #kbSearchInput {
+    font-size: 16px !important;
+  }
+  /* Кнопки в меню и настройках — минимум 44px по высоте */
+  .sb-folder, .chat-row, .set-row, .theme-btn, .tool-card, .mcard, .kb-card {
+    min-height: 44px;
+  }
+  .theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .theme-btn .sw { height: 38px; }
+  .mascot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .mascot-card { padding: 10px 6px; }
+  .msk-sw { width: 34px; height: 34px; }
+  /* Строка ввода не уезжает под клавиатуру */
+  .composer-wrap {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  }
+  /* Карточки базы знаний: кнопки не в тесноте */
+  .kb-card .kb-acts { flex-wrap: wrap; gap: 6px; }
+  .kb-card .kb-acts button { min-height: 38px; }
+  /* Настройки на весь экран, без двойной прокрутки */
+  .modal-wide { max-width: 100vw; }
+  .set-card { border-radius: 14px; }
+  /* Длинные строки не вылезают за экран */
+  .msg .content, .kb-card p { overflow-wrap: anywhere; }
+}
 @media (max-width: 360px) {
   .topbar .title { font-size: 14px; }
   .comp-tools .tool-btn { width: 32px !important; height: 32px !important; }
@@ -3226,6 +3295,16 @@ html.no-anim .theme-flash { display: none; }
           <div class="set-h"><span class="set-ico">✦</span> Маскот</div>
           <div class="mascot-grid" id="mascotGrid"></div>
           <div class="hint" id="mascotAbout">Маскот — это лицо Искры: на приветствии и в меню.</div>
+          <div class="msk-color-h">
+            <b>Цвет маскота</b>
+            <span class="msk-color-note" id="mskColorNote">Как в теме</span>
+          </div>
+          <div class="msk-colors" id="mskColors"></div>
+          <label class="set-row msk-custom-row">
+            <span><b>Свой цвет</b><em>Любой оттенок, не только из списка</em></span>
+            <input type="color" id="mskColorOwn" class="msk-color-own" value="#d97757" aria-label="Свой цвет маскота" />
+          </label>
+          <button class="btn btn-ghost msk-reset" id="mskColorReset" type="button">Вернуть цвет темы</button>
         </section>
 
         <section class="set-card">
@@ -8242,12 +8321,6 @@ html.no-anim .theme-flash { display: none; }
         "text": "Сумма углов 180°. В равнобедренном углы при основании равны, медиана к основанию — ещё высота и биссектриса. Любая сторона меньше суммы двух других. Внешний угол равен сумме двух внутренних, не смежных с ним. Ошибка: считать медиану высотой в любом треугольнике."
       },
       {
-        "id": "kb-pifagor",
-        "title": "Теорема Пифагора",
-        "tags": "геометрия пифагор гипотенуза катет прямоугольный",
-        "text": "c²=a²+b² только в прямоугольном треугольнике. Обратная теорема проверяет прямой угол. Тройки: 3-4-5, 5-12-13, 8-15-17. Диагональ квадрата a√2. Ошибка: применять к непрямоугольному треугольнику или путать катет с гипотенузой."
-      },
-      {
         "id": "kb-ploshadi",
         "title": "Площади фигур",
         "tags": "геометрия площадь треугольник трапеция круг",
@@ -8306,12 +8379,6 @@ html.no-anim .theme-flash { display: none; }
         "title": "Сложное предложение: виды связи",
         "tags": "русский синтаксис сложное сочинительная подчинительная связь",
         "text": "Сложносочинённое — части равноправны, союзы и, но, или. Сложноподчинённое — есть главная и придаточная, союзы что, чтобы, когда. Бессоюзное — знаки по смыслу. Ошибка: путать «и» между однородными с «и» между частями. Придаточное отделяется запятой всегда."
-      },
-      {
-        "id": "kb-stili-rechi",
-        "title": "Стили речи",
-        "tags": "русский стиль речи научный разговорный публицистический",
-        "text": "Разговорный — быт и эмоции. Научный — точность и термины. Официально-деловой — штампы и точность. Публицистический — воздействие и эмоция. Художественный — образность. Ошибка: смешивать стили в одном тексте без цели. Стиль определяют по речи и цели, а не по теме."
       },
       {
         "id": "kb-frazeologizmy",
@@ -8398,12 +8465,6 @@ html.no-anim .theme-flash { display: none; }
         "text": "I=U/R. Последовательно: R складывается, ток одинаков. Параллельно: 1/R=1/R₁+1/R₂, напряжение одинаково, R меньше меньшего. P=UI. Ошибка: складывать сопротивления при параллельном соединении как числа. Амперметр — последовательно, вольтметр — параллельно."
       },
       {
-        "id": "kb-kolebaniya",
-        "title": "Колебания и волны",
-        "tags": "физика колебания маятник частота волна",
-        "text": "Пружинный маятник: T=2π√(m/k), нитяной: T=2π√(l/g). Частота ν=1/T. Волна: v=λν. Ошибка: считать, что период зависит от амплитуды (для малых колебаний не зависит). Резонанс — совпадение частот, амплитуда резко растёт."
-      },
-      {
         "id": "kb-optika",
         "title": "Свет: отражение и линзы",
         "tags": "физика свет оптика линза фокус преломление",
@@ -8414,30 +8475,6 @@ html.no-anim .theme-flash { display: none; }
         "title": "Теплота и агрегатные состояния",
         "tags": "физика теплота теплоёмкость плавление кипение",
         "text": "Q=cmΔt, плавление Q=λm, парообразование Q=Lm. При плавлении и кипении температура постоянна. Ошибка: применять теплоёмкость к фазовому переходу. Вода: 4200 Дж/(кг·°C), кипит при 100 °C у моря, в горах раньше."
-      },
-      {
-        "id": "kb-him-svyaz",
-        "title": "Химическая связь",
-        "tags": "химия связь ковалентная ионная металлическая водородная",
-        "text": "Ковалентная — общие электронные пары (полярная при разных атомах). Ионная — между металлом и неметаллом при большой разнице электроотрицательностей. Металлическая — обобществлённые электроны. Водородная — между молекулами с H у О или N. Ошибка: называть любую связь разных атомов ионной."
-      },
-      {
-        "id": "kb-him-reakcii",
-        "title": "Типы химических реакций",
-        "tags": "химия реакция соединение разложение замещение обмен",
-        "text": "Соединение, разложение, замещение, обмен. По теплу — экзо- и эндотермические, по обратимости — обратимые. ОВР — с изменением степеней окисления. Ошибка: не уравнивать реакцию: число атомов должно совпадать. Признаки: осадок, газ, цвет, тепло."
-      },
-      {
-        "id": "kb-him-mol",
-        "title": "Моль и молярная масса",
-        "tags": "химия моль молярная масса авогадро газ",
-        "text": "n=m/M, N=n·Nₐ, Nₐ≈6·10²³. Для газов при н.у. V=n·22,4 л. Ошибка: применять 22,4 к жидкостям и твёрдым. Молярная масса численно равна относительной молекулярной. Выход реакции — отношение практического к теоретическому."
-      },
-      {
-        "id": "kb-him-ovr",
-        "title": "Окислительно-восстановительные реакции",
-        "tags": "химия овр окисление восстановление баланс",
-        "text": "Окисление — отдача электронов, восстановление — принятие. Окислитель принимает и восстанавливается. Метод электронного баланса: полуреакции и уравнивание электронов. Ошибка: путать окислитель с окисляемым веществом. Число отданных равно числу принятых."
       },
       {
         "id": "kb-him-rastvory",
@@ -10077,10 +10114,10 @@ const MASCOTS = {
   spark: {
     name: "Искра",
     about: "Четырёхлучевая звезда. Родной знак, спокойный и нейтральный.",
+    /* Лица нет специально: это логотип, а не персонаж. Так было до 1.34,
+       пока звезду не наделили глазами — вернули как было. */
     svg: `<path class="msk-body" d="M32 5 L37.2 26.8 L59 32 L37.2 37.2 L32 59 L26.8 37.2 L5 32 L26.8 26.8 Z"/>
-          <circle class="msk-eye" cx="27.4" cy="30.4" r="1.9"/>
-          <circle class="msk-eye" cx="36.6" cy="30.4" r="1.9"/>
-          <path class="msk-mouth" d="M29.6 36.2c1.4 1.5 3.4 1.5 4.8 0"/>`
+          <path class="msk-body" d="M44.5 10.2 L45.8 14.2 L49.8 15.5 L45.8 16.8 L44.5 20.8 L43.2 16.8 L39.2 15.5 L43.2 14.2 Z" opacity=".55"/>`
   },
   sye: {
     name: "Сью",
@@ -10165,12 +10202,20 @@ function mascotSvg(id, size, cls) {
     `role="img" aria-label="${esc(m.name)}">${m.svg}</svg>`;
 }
 /* Куда ставить маскота: приветствие, логотип в меню, превью в настройках */
+/* Прежний знак Искры — та самая четырёхлучевая звезда из иконки.
+   Стоит в углу меню всегда, независимо от выбранного маскота:
+   логотип — это логотип, его не перекрашивают персонажем. */
+function logoStar(size, cls) {
+  const s = size || 20;
+  return `<svg class="ic fill ${cls || ""}" viewBox="0 0 24 24" width="${s}" height="${s}" aria-label="Искра">` +
+    `<path d="M12 2 L13.5 9.5 L21 12 L13.5 14.5 L12 22 L10.5 14.5 L3 12 L10.5 9.5 Z"/></svg>`;
+}
 function paintMascots() {
   const id = mascotId();
   const welcome = $("#welcomeIcon");
   if (welcome) welcome.innerHTML = mascotSvg(id, 40);
   const brand = document.querySelector(".brand-logo");
-  if (brand) brand.innerHTML = mascotSvg(id, 26, "msk-brand");
+  if (brand) brand.innerHTML = logoStar(20);
   const grid = $("#mascotGrid");
   if (grid) {
     grid.querySelectorAll("[data-mascot]").forEach(b => {
@@ -10188,6 +10233,101 @@ function setMascot(id) {
   try { applyMode(); } catch (e) {}
   toast(`Маскот: ${mascotName(id)}`, "ok");
 }
+/* ---------- Цвет маскота ----------
+   Палитра подобрана так, чтобы и на тёмной, и на светлой теме маскот читался.
+   Пустая строка = «как в теме»: цвет берётся из акцента, и маскот
+   перекрашивается вместе с оформлением. Свой цвет фиксирует оттенок. */
+const MSK_COLORS = [
+  { v: "",     n: "Как в теме" },
+  { v: "#d97757", n: "Тёплый рыжий" },
+  { v: "#e8a04c", n: "Медовый" },
+  { v: "#d9b23c", n: "Золотой" },
+  { v: "#7fb069", n: "Шалфей" },
+  { v: "#4fa3a5", n: "Морская волна" },
+  { v: "#5b8dd6", n: "Небесный" },
+  { v: "#8a7fd6", n: "Лавандовый" },
+  { v: "#c96bb0", n: "Розовый" },
+  { v: "#d9534f", n: "Красный" },
+  { v: "#8c8c8c", n: "Графит" },
+  { v: "#f2e4d0", n: "Кремовый" }
+];
+
+/* Затемнить/осветлить hex на долю: нужно для второго тона (msk-soft),
+   чтобы брюшко и лучи были не тем же цветом, а оттенком. */
+function shadeHex(hex, k) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+  if (!m) return "";
+  const n = parseInt(m[1], 16);
+  const clamp = (x) => Math.max(0, Math.min(255, Math.round(x)));
+  const r = clamp(((n >> 16) & 255) + k);
+  const g = clamp(((n >> 8) & 255) + k);
+  const b = clamp((n & 255) + k);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+/* Куда применить: корень документа — тогда цвет виден везде (приветствие,
+   карточка агента, настройки), а не только в одном месте. */
+function applyMascotColor() {
+  const root = document.documentElement;
+  const v = String(settings.mascotColor || "").trim();
+  if (!/^#[0-9a-f]{6}$/i.test(v)) {
+    root.style.removeProperty("--msk");
+    root.style.removeProperty("--msk-soft");
+  } else {
+    root.style.setProperty("--msk", v);
+    root.style.setProperty("--msk-soft", shadeHex(v, -46) || v);
+  }
+  paintMascotColorPicker();
+}
+
+function paintMascotColorPicker() {
+  const box = $("#mskColors");
+  if (!box) return;
+  const cur = String(settings.mascotColor || "").toLowerCase();
+  box.innerHTML = MSK_COLORS.map(c => {
+    const val = c.v.toLowerCase();
+    const on = val === cur ? " on" : "";
+    if (!c.v) return `<button type="button" class="msk-sw theme${on}" data-mskcolor="" title="${esc(c.n)}" aria-label="${esc(c.n)}"></button>`;
+    return `<button type="button" class="msk-sw${on}" data-mskcolor="${c.v}" style="background:${c.v}" title="${esc(c.n)}" aria-label="${esc(c.n)}"></button>`;
+  }).join("");
+  box.querySelectorAll("[data-mskcolor]").forEach(b => {
+    b.onclick = () => setMascotColor(b.dataset.mskcolor);
+  });
+  const own = $("#mskColorOwn");
+  if (own) own.value = /^#[0-9a-f]{6}$/i.test(cur) ? cur : (THEMES[settings.theme] || THEMES.claude).accent;
+  const note = $("#mskColorNote");
+  if (note) {
+    const found = MSK_COLORS.find(c => c.v.toLowerCase() === cur);
+    note.textContent = cur ? (found ? found.n : "свой оттенок " + cur) : "Как в теме";
+  }
+}
+
+function setMascotColor(v) {
+  const val = String(v || "").trim();
+  settings.mascotColor = /^#[0-9a-f]{6}$/i.test(val) ? val.toLowerCase() : "";
+  saveSettings();
+  applyMascotColor();
+  toast(settings.mascotColor ? "Цвет маскота: " + settings.mascotColor : "Маскот снова как в теме", "ok");
+}
+
+function wireMascotColor() {
+  const box = $("#mskColors");
+  if (box && !box.dataset.wired) {
+    box.dataset.wired = "1";
+    paintMascotColorPicker();
+  }
+  const own = $("#mskColorOwn");
+  if (own && !own.dataset.wired) {
+    own.dataset.wired = "1";
+    own.addEventListener("input", () => setMascotColor(own.value));
+  }
+  const reset = $("#mskColorReset");
+  if (reset && !reset.dataset.wired) {
+    reset.dataset.wired = "1";
+    reset.addEventListener("click", () => setMascotColor(""));
+  }
+}
+
 function mascotPickerHtml() {
   return MASCOT_ORDER.map(id => {
     const m = MASCOTS[id];
@@ -10989,6 +11129,7 @@ function loadSettings() {
     theme: "ivory",
     compact: true,
     mascot: "spark",
+    mascotColor: "",
     lite: "auto",
     animations: true,
     bigText: false,
@@ -16779,6 +16920,7 @@ function renderPersonaGrid() {
 /* Вид: два переключателя. Классы на <html> применяет applyLook(). */
 function renderLookControls() {
   wireMascots();
+  wireMascotColor();
   const cp = $("#compactToggle");
   const an = $("#animToggle");
   if (cp) cp.checked = settings.compact === true;
@@ -19428,10 +19570,27 @@ const KB_CATS = [
 ];
 let kbView = { cat: "all", q: "", open: "" };
 
-function kbCategoryOf(id) {
-  const key = String(id || "").split("-")[0];
-  if (key === "l" || String(id || "").startsWith("l_")) return "mine";
-  return KB_CAT_OF[key] || "other";
+/* Новые короткие темы получили id вида «kb-…», и по префиксу их папку
+   не угадать — они все падали в «Прочее». Берём предмет из первого тега. */
+const KB_TAG_CAT = {
+  "русский": "ru", "математика": "math", "алгебра": "math", "геометрия": "math",
+  "физика": "phys", "химия": "chem", "биология": "bio", "история": "hist",
+  "география": "geo", "английский": "en", "информатика": "inf", "литература": "lit",
+  "обществознание": "obsh", "астрономия": "astro", "музыка": "art", "искусство": "art",
+  "психология": "psy", "финансы": "fin", "кулинария": "cook", "спорт": "sport",
+  "экология": "eco", "природа": "nature", "путешествия": "travel", "техника": "tech",
+  "код": "code", "языки": "lang", "быт": "life", "учёба": "skill", "3d": "b3d",
+  "шахматы": "chess", "черчение": "draw", "немецкий": "de", "китайский": "zh"
+};
+function kbCategoryOf(itemOrId) {
+  const id = typeof itemOrId === "string" ? itemOrId : String((itemOrId && itemOrId.id) || "");
+  const key = id.split("-")[0];
+  if (key === "l" || id.startsWith("l_")) return "mine";
+  if (KB_CAT_OF[key]) return KB_CAT_OF[key];
+  /* папки по id нет — смотрим теги: «математика проценты …» → math */
+  const tags = typeof itemOrId === "object" && itemOrId ? String(itemOrId.tags || "") : "";
+  const first = tags.toLowerCase().split(/[,;]+/)[0].trim().split(/\s+/)[0];
+  return KB_TAG_CAT[first] || "other";
 }
 function kbCategoryName(cat) {
   const f = KB_CATS.find(c => c[0] === cat);
@@ -19467,19 +19626,90 @@ function kbBrowse(query, cat, limit = 20) {
   const items = kbBuiltinPack();
   const q = kbNorm(query).trim();
   const picked = items.filter(it => {
-    if (cat !== "all" && kbCategoryOf(it.id) !== cat) return false;
+    if (cat !== "all" && kbCategoryOf(it) !== cat) return false;
     if (!q) return true;
     return kbNorm(it.title + " " + it.tags + " " + it.text).includes(q);
-  }).map(it => ({ ...it, learned: false, cat: kbCategoryOf(it.id) }));
+  }).map(it => ({ ...it, learned: false, cat: kbCategoryOf(it) }));
   // свои темы и общая база — сверху: это то, что человек сам собирал
   return kbLearnedItems(query, cat).concat(kbSharedItems(query, cat), picked).slice(0, limit);
 }
+/* ---------- Связанные темы ----------
+   Раньше каждая карточка жила сама по себе: прочитал — и всё. Теперь под
+   открытой темой видно, что рядом: соседние темы по словам в названии
+   и тегах. Это родство по смыслу, а не ссылки, которые кто-то забыл
+   обновить: считается на месте, из тех же данных.
+
+   Правила простые, чтобы не выдавать случайное:
+   1) ищем в той же папке (предмете) — там чаще всего полезное рядом;
+   2) сравниваем только значимые слова (3+ буквы, без «как» и «что»);
+   3) если совпало меньше одного слова, тема не считается связанной;
+   4) сама тема и «мои темы» в список не попадают. */
+const KB_LINK_STOP = new Set(["как","что","или","для","про","это","при","без","над","под","чем","кто","где","когда","почему","зачем","все","весь","его","она","они","оно","себя","свой","своя","свои","если","тоже","очень","также","более","менее","может","можно","нужно","надо","есть","быть","было","будет"]);
+
+function kbLinkWords(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .split(/[^a-zа-я0-9]+/i)
+    .filter(w => w.length >= 3 && !KB_LINK_STOP.has(w) && !/^\d+$/.test(w));
+}
+
+/* Похожесть двух тем: общие значимые слова в названии+тегах.
+   Вес: слово в названии дороже, чем в тегах, — название точнее. */
+function kbTopicAffinity(a, b) {
+  if (!a || !b || a.id === b.id) return 0;
+  const ta = new Set(kbLinkWords(a.title));
+  const tb = new Set(kbLinkWords(b.title));
+  const ga = new Set(kbLinkWords(a.tags));
+  const gb = new Set(kbLinkWords(b.tags));
+  let score = 0;
+  for (const w of ta) {
+    if (tb.has(w)) score += 3;
+    else if (gb.has(w)) score += 2;
+  }
+  for (const w of ga) {
+    if (tb.has(w)) score += 2;
+    else if (gb.has(w)) score += 1;
+  }
+  return score;
+}
+
+function kbRelated(item, limit = 4) {
+  const items = kbBuiltinPack();
+  const cat = kbCategoryOf(item);
+  const scored = [];
+  for (const it of items) {
+    if (it.id === item.id) continue;
+    const same = kbCategoryOf(it) === cat;
+    /* В другой папке тема должна совпасть сильнее — иначе тянет мусор:
+       «проценты» из математики не должны вести в «бюджет» из быта. */
+    const raw = kbTopicAffinity(item, it);
+    const score = raw + (same ? 2 : 0) - (same ? 0 : 2);
+    if (raw < 2 || score <= 0) continue;
+    scored.push({ it, score });
+  }
+  scored.sort((x, y) => y.score - x.score || x.it.title.localeCompare(y.it.title, "ru"));
+  return scored.slice(0, limit).map(x => x.it);
+}
+
+/* HTML блока «Связанные темы» под открытой карточкой */
+function kbRelatedHtml(item) {
+  let list = [];
+  try { list = kbRelated(item, 4); } catch (e) { list = []; }
+  if (!list.length) return "";
+  return `<div class="kb-rel">
+      <div class="kb-rel-h">Связанные темы</div>
+      <div class="kb-rel-list">${list.map(x =>
+        `<button type="button" class="kb-rel-btn" data-kbrel="${esc(x.id)}">${esc(x.title)}</button>`).join("")}</div>
+    </div>`;
+}
+
 function kbCountByCat(cat) {
   const built = kbBuiltinPack();
   if (cat === "all") return built.length + learnedList().length + sharedKbList().length;
   if (cat === "mine") return learnedList().length;
   if (cat === "shared") return sharedKbList().length;
-  return built.filter(it => kbCategoryOf(it.id) === cat).length;
+  return built.filter(it => kbCategoryOf(it) === cat).length;
 }
 
 function renderKbCards() {
@@ -19497,6 +19727,7 @@ function renderKbCards() {
       <span class="kb-cat-tag">${it.learned ? "моя тема" : it.shared ? "общая база" : esc(kbCategoryName(it.cat))}</span>
       <b>${esc(it.title)}</b>
       <p>${esc(it.text)}</p>
+      ${kbView.open === it.id ? kbRelatedHtml(it) : ""}
       <div class="kb-acts">
         <button data-ask="${esc(it.learned ? it.title : it.id)}" data-learned="${it.learned ? "1" : ""}" data-shared="${it.shared ? "1" : ""}">${ic("chat", 14)} Спросить Искру</button>
         <button data-train="${esc(it.title)}">${ic("check", 14)} Проверить себя</button>
@@ -19507,6 +19738,15 @@ function renderKbCards() {
     </div>`).join("") +
     `<div class="kb-count">${kbView.q ? "Найдено: " + found.length : "Показано " + found.length + " из " + kbCountByCat(kbView.cat)}</div>`;
 
+  box.querySelectorAll("[data-kbrel]").forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      kbView.open = b.dataset.kbrel;
+      renderKbCards();
+      const card = box.querySelector(`[data-kb="${b.dataset.kbrel}"]`);
+      if (card && card.scrollIntoView) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    };
+  });
   box.querySelectorAll("[data-kb]").forEach(card => {
     card.onclick = (e) => {
       if (e.target.closest("button")) return;
@@ -20254,7 +20494,7 @@ async function consoleRun(raw) {
   if (c === "kb-stats" || c === "база") {
     const byCat = {};
     for (const it of kbBuiltinPack()) {
-      const k = kbCategoryName(kbCategoryOf(it.id));
+      const k = kbCategoryName(kbCategoryOf(it));
       byCat[k] = (byCat[k] || 0) + 1;
     }
     const rows = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
@@ -21139,6 +21379,7 @@ function wire() {
   applyTheme(settings.theme);
   applyLook();
   try { paintMascots(); } catch (e) {}
+  try { applyMascotColor(); } catch (e) {}
   applyBigText(settings.bigText);
   try { updateKnowledgeChip(); } catch (e) {}
   $("#webBtn").classList.toggle("on", !!settings.webSearch);

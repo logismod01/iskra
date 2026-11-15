@@ -831,6 +831,12 @@ async function startTask(payload) {
         at: entry.at
       });
     } catch (e) { /* память не должна ронять задачу */ }
+    /* Спросили, а темы в базе нет — запоминаем. Агент в следующий раз
+       честно скажет «такого у меня нет», а владелец увидит, что добавить. */
+    try {
+      const missing = shared.miss(task);
+      if (missing) memory.noteGap(ctx.workspace, missing);
+    } catch (e) { /* подсказка не должна ронять задачу */ }
     petReact(result && result.ok ? "done" : "error");
     if (win && !win.isDestroyed()) win.webContents.send("task:done", { taskId, result: { ok: result.ok, final: result.final, steps: result.steps, exhausted: !!result.exhausted, stopped: !!result.stopped } });
     if (win && !win.isDestroyed()) {
@@ -1155,7 +1161,7 @@ if (!gotLock) {
     } catch (e) { /* другие приложения могли занять эти клавиши */ }
 
     // общая база Искры: сначала копия с диска, потом тихое обновление с сайта
-    shared.boot(USER_DIR).catch(() => {});
+    shared.boot(USER_DIR, { packPath: path.join(__dirname, "data", shared.PACK_FILE) }).catch(() => {});
 
     license.sync(false).then(() => {
       broadcastState();

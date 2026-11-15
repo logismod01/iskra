@@ -5,7 +5,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 
 const shared = require("../core/shared.js");
-const { search, promptBlock, parseRows, setItems, reset, CONFIG } = shared;
+const { search, miss, promptBlock, parseRows, setItems, reset, CONFIG, boot, list, loadPack } = shared;
 
 const ROWS = [
   { topic: "Фотосинтез", body: "Растения на свету превращают воду и углекислый газ в глюкозу и кислород. Идёт в хлоропластах, нужен хлорофилл.", tags: "биология", source: "owner" },
@@ -126,7 +126,8 @@ test("в настройках видно, что агент знает и отк
   assert.match(html, /id="kbRefreshBtn"/);
   assert.match(appJs, /renderKb\(s\.kb\)/);
   assert.match(appJs, /kbRefresh\(\)/);
-  assert.match(mainJs, /shared\.boot\(USER_DIR\)/);
+  assert.match(mainJs, /shared\.boot\(USER_DIR, \{ packPath/);
+  assert.match(mainJs, /data", shared\.PACK_FILE|"data", shared\.PACK_FILE/);
   assert.match(preload, /kbRefresh:/);
 });
 
@@ -135,4 +136,55 @@ test("в справке настройки не называются чужие 
   const html = fsSync.readFileSync(path.join(__dirname, "..", "renderer/index.html"), "utf8");
   assert.doesNotMatch(html, /Supabase|supabase/i);
   assert.doesNotMatch(html, /OpenAI|Anthropic|Google|Groq/i);
+});
+
+test("офлайн-пакет даёт темы без сети", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "iskra-pack-"));
+  const file = path.join(dir, "kb-pack.json");
+  await fs.writeFile(file, JSON.stringify({
+    version: 7,
+    items: [
+      { topic: "Фотосинтез", text: "Растения на свету делают глюкозу и кислород. Нужен хлорофилл и вода.", tags: "биология" },
+      { topic: "Теорема Пифагора", text: "Квадрат гипотенузы равен сумме квадратов катетов. Работает только в прямоугольном треугольнике.", tags: "геометрия" }
+    ]
+  }), "utf8");
+  reset();
+  /* сети нет: fetch, который всегда падает */
+  const dead = async () => { throw new Error("нет сети"); };
+  const got = await boot(dir, { packPath: file, fetchImpl: dead, force: true });
+  assert.equal(list().length, 2, "темы взялись из пакета");
+  assert.ok(got.length === 0 || got.length === 2);
+  assert.equal(search("пифагор", 1)[0].topic, "Теорема Пифагора");
+  reset();
+});
+
+test("битый офлайн-пакет не ломает запуск", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "iskra-pack-bad-"));
+  const file = path.join(dir, "kb-pack.json");
+  await fs.writeFile(file, "{ это не json", "utf8");
+  reset();
+  await loadPack(file);
+  assert.equal(list().length, 0);
+  await loadPack(path.join(dir, "нет-такого-файла.json"));
+  assert.equal(list().length, 0);
+});
+
+test("пакет агента — те же 863 темы, что у сайта", () => {
+  const pack = require("../data/kb-pack.json");
+  assert.ok(Array.isArray(pack.items));
+  assert.ok(pack.items.length >= 863, "пакет меньше офлайн-базы сайта");
+  const titles = new Set(pack.items.map((x) => x.topic));
+  assert.equal(titles.size, pack.items.length, "в пакете есть повторы по названию");
+  for (const it of pack.items) {
+    assert.ok(it.topic && it.text && it.tags, "у темы нет названия, текста или тегов");
+  }
+});
+
+test("пробел: вопрос без темы в базе виден, вопрос с темой — нет", async () => {
+  reset();
+  setItems(ROWS);
+  assert.equal(miss("объясни, как устроен фотосинтез у растений"), "");
+  const m = miss("расскажи про квантовую запутанность и телепортацию");
+  assert.ok(m.length > 0, "вопроса нет в базе — это пробел");
+  assert.equal(miss("привет"), "", "короткая реплика — не пробел");
 });
