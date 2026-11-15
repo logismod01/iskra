@@ -19,6 +19,7 @@ const path = require("node:path");
 const guard = require("./guard.js");
 const knowledge = require("./knowledge.js");
 const shared = require("./shared.js");
+const math = require("./math.js");
 
 const SKIP_DIRS = new Set([".git", "node_modules", ".next", "dist", "build", "out", "target", "__pycache__", ".venv", "venv", ".idea", ".vscode", "coverage"]);
 const MAX_READ = 300 * 1024;
@@ -316,6 +317,22 @@ async function runTool(action, ctx) {
         const body = all.map((x) => "• " + x.title + ": " + x.text).join("\n\n");
         const packed = tooBig(limits, body);
         return { ok: true, summary: "Справка: " + all.map((x) => x.title).join(", "), output: packed.text };
+      }
+
+      case "math.solve": {
+        /* Числа считает код, а не модель: модель путает знаки и теряет корни. */
+        const task = String(args.task || args.expression || "").trim();
+        if (!task) return { ok: false, summary: "Пустая задача", output: "Что решать? Например: 2x+5=13, x^2-5x+6=0, 15% от 240." };
+        const res = math.solve(task);
+        if (!res) {
+          return {
+            ok: false,
+            summary: "Это не уравнение и не проценты",
+            output: "Точно решаю линейные и квадратные уравнения и проценты. «" + task.slice(0, 80) + "» — не из них. Объясни словами или посчитай через shell (node, python)."
+          };
+        }
+        const body = res.steps.map((x) => x.label + ": " + x.text).join("\n") + "\n\nОтвет: " + res.answer;
+        return { ok: true, summary: "Решено точно: " + res.answer, output: body };
       }
 
       case "task.done": {

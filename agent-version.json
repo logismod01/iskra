@@ -1,7 +1,7 @@
 {
-  "version": "0.10.0",
+  "version": "0.11.0",
   "released": "2026-10-29",
-  "what": "Офлайн-пакет тем в комплекте, память о пробелах в знаниях, шесть маскотов",
+  "what": "Точный решатель уравнений и процентов (инструмент math.solve), офлайн-пакет тем, память о пробелах",
   "page": "https://logismod01.github.io/iskra/agent.html",
   "download": "https://github.com/logismod01/iskra/releases/latest"
 }
