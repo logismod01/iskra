@@ -2107,6 +2107,58 @@ html.big-text .welcome p { font-size: 14.5px; }
 #bigTextOff[hidden] { display: none; }
 #bigTextOff:hover { background: var(--bg-soft-2); }
 
+/* ============================================================
+   ВИД «СЛОНОВАЯ КОСТЬ» (1.32)
+   Ответ Искры лежит на отдельной «странице» — как в учебнике,
+   а не в переписке мессенджера. Заголовки с засечками, поле ввода
+   мягкое, тени почти не видны. Цвета даёт тема, здесь — форма.
+   ============================================================ */
+.msg.ai .body {
+  background: var(--ai);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px 16px 10px;
+}
+.msg.ai .content h1,
+.msg.ai .content h2,
+.msg.ai .content h3 {
+  font-family: Georgia, "Times New Roman", "PT Serif", serif;
+  font-weight: 600;
+  letter-spacing: -.2px;
+}
+.msg.ai .content h1 { font-size: 1.45em; }
+.msg.ai .content h2 { font-size: 1.24em; }
+.msg.ai .content h3 { font-size: 1.08em; }
+
+/* Сообщение человека — мягкий пузырь, а не голая строка */
+.msg.user .content {
+  display: inline-block;
+  max-width: 100%;
+  background: var(--user);
+  border-radius: 16px 16px 5px 16px;
+  padding: 10px 14px;
+}
+
+/* Поле ввода: крупнее скругление и мягкая тень вместо рамки-коробки */
+.composer {
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(90, 66, 38, .07);
+}
+.composer:focus-within { box-shadow: 0 4px 18px rgba(90, 66, 38, .12); }
+
+/* Формулы и код — «страница внутри страницы» с полосой акцента */
+.msg .content pre {
+  border-radius: 10px;
+  border-left: 2px solid var(--accent);
+}
+
+/* Кнопки-подсказки под полем ввода */
+.chip, .sugg-chip { border-radius: 999px; }
+
+/* В светлой теме тени должны быть мягче, иначе выглядит грязно */
+html[data-theme="ivory"] .msg.ai .body { box-shadow: 0 1px 3px rgba(90, 66, 38, .05); }
+html[data-theme="ivory"] .modal { box-shadow: 0 24px 60px -24px rgba(60, 42, 20, .35); }
+
 /* ============ Анимации: выключение ============ */
 html.no-anim *, html.no-anim *::before, html.no-anim *::after {
   animation: none !important;
@@ -9909,6 +9961,32 @@ function orderedEngines(needVision) {
   return list.filter(e => !isDeadBase(e)).concat(list.filter(isDeadBase));
 }
 
+/* Насколько задача тяжёлая: от этого зависит, кого звать первым.
+   Сложное (задачи, доказательства, код, длинный текст) отдаём крупным моделям,
+   болтовню — любой: там мелкая справляется быстрее. */
+function requestComplexity(payload) {
+  const msgs = (payload && payload.messages) || [];
+  const lastUser = [...msgs].reverse().find(m => m && m.role === "user");
+  if (!lastUser) return "easy";
+  const text = typeof lastUser.content === "string"
+    ? lastUser.content
+    : (lastUser.content || []).filter(p => p && p.type === "text").map(p => p.text).join(" ");
+  const t = String(text || "");
+  const hard = /(докажи|доказать|обоснуй|по шагам|пошагово|реши|вычисли|найди|упрости|уравнени|неравенств|производн|интеграл|логарифм|тригонометр|вероятност|систем[аы]\s+уравнени|задач[аиу]|код|функци[яю]|класс\b|sql|регекс|regex|алгоритм|сложност|оптимизир|отрефактор|напиши программу|объясни подробно|сравни|проанализируй)/i.test(t);
+  if (hard) return "hard";
+  if (t.length > 420) return "hard";           // длинный текст — тоже не для мелкой
+  if ((payload && payload.messages || []).length > 6) return "hard"; // длинный контекст
+  return "easy";
+}
+
+/* Порядок движков с учётом сложности запроса */
+function orderedEnginesFor(payload, needVision) {
+  const base = orderedEngines(needVision);
+  if (requestComplexity(payload) !== "hard") return base;
+  /* Крупные вперёд, мелкие — только страховкой в конце */
+  return base.filter(e => !e.small).concat(base.filter(e => e.small));
+}
+
 /* ---------- Характеры ---------- */
 const PERSONAS = {
   universal: {
@@ -9945,6 +10023,9 @@ const PERSONAS = {
 
 /* ---------- 15 тем ---------- */
 const THEMES = {
+  /* Новый основной вид — «Слоновая кость». Тёплый светлый фон вместо белого,
+     заголовки с засечками, ответы лежат на отдельной «странице». */
+  ivory:     { name: "Слоновая кость", bg: "#f4eee3", soft: "#fffcf6", soft2: "#f0e7d9", line: "#e6dccb", text: "#2b2620", softT: "#7a7264", dim: "#9c9385", accent: "#c96a45", accentSoft: "#f3e3d8", user: "#ede3d3", ai: "#fff9ee" },
   claude:    { name: "Тёплая",    bg: "#141413", soft: "#1c1b19", soft2: "#25231f", line: "#2e2a26", text: "#f4eee4", softT: "#a89f92", dim: "#6e675c", accent: "#d97757", accentSoft: "#8a4a33", user: "#2d2820", ai: "#1a1815" },
   midnight:  { name: "Полночь",   bg: "#0b1020", soft: "#111933", soft2: "#1a2447", line: "#253162", text: "#e8ecff", softT: "#99a4d4", dim: "#5a6799", accent: "#7aa2ff", accentSoft: "#3d5a99", user: "#1a2447", ai: "#0f1730" },
   ocean:     { name: "Океан",     bg: "#0a1618", soft: "#0f2024", soft2: "#152d32", line: "#1f3e45", text: "#e6f3f5", softT: "#8fb8be", dim: "#577d84", accent: "#3db9c9", accentSoft: "#1e6570", user: "#152d32", ai: "#0c1c1f" },
@@ -9961,7 +10042,7 @@ const THEMES = {
   ice:       { name: "Лёд",       bg: "#0c1418", soft: "#121c22", soft2: "#1a2832", line: "#253844", text: "#e8f2ff", softT: "#a0b8d0", dim: "#5f7a90", accent: "#50a8ff", accentSoft: "#2860a0", user: "#1a2832", ai: "#0e1820" },
   cherry:    { name: "Вишня",     bg: "#18080c", soft: "#200e12", soft2: "#2c1418", line: "#44181f", text: "#ffe8ea", softT: "#d0909a", dim: "#884850", accent: "#e83848", accentSoft: "#881828", user: "#2c1418", ai: "#1a0a0e" }
 };
-const THEME_ORDER = ["claude","midnight","ocean","forest","neon","rose","coffee","lavender","graphite","light","paper","sunset","matrix","ice","cherry"];
+const THEME_ORDER = ["ivory","claude","midnight","ocean","forest","neon","rose","coffee","lavender","graphite","light","paper","sunset","matrix","ice","cherry"];
 
 /* ---------- Состояние ---------- */
 const STORAGE = { settings: "iskra.settings.v1", chats: "iskra.chats.v1" };
@@ -10018,6 +10099,13 @@ let liveStream = null;
   if (typeof settings.proImageStyle !== "string") settings.proImageStyle = "photo";
   if (typeof settings.proImageAspect !== "string") settings.proImageAspect = "1:1";
   if (typeof settings.proVideoQuality !== "string") settings.proVideoQuality = "hd";
+  /* Новый основной вид — «Слоновая кость». У кого остался старый вид по умолчанию
+     («Тёплая»), переводим один раз: иначе человек не увидит обновление вообще. */
+  if (!settings.ivorySeen) {
+    if (settings.theme === "claude") settings.theme = "ivory";
+    settings.ivorySeen = true;
+    saveSettings();
+  }
   /* «Задача» и «Текст» слились в «Учёбу» — старый выбор переносим, чтобы не сломать интерфейс */
   if (settings.mode === "math" || settings.mode === "text" || settings.mode === "homework") {
     settings.mode = "study"; saveSettings();
@@ -10066,7 +10154,7 @@ function loadSettings() {
     mode: "chat",
     persona: "universal",
     customPersona: "",
-    theme: "claude",
+    theme: "ivory",
     compact: true,
     animations: true,
     bigText: false,
@@ -10140,6 +10228,7 @@ function applyTheme(name, ev) {
     setTimeout(() => f.remove(), 700);
   }
   const t = THEMES[name] || THEMES.claude;
+  html.setAttribute("data-theme", THEMES[name] ? name : "claude");
   const root = document.documentElement.style;
   root.setProperty("--bg", t.bg);
   root.setProperty("--bg-soft", t.soft);
@@ -11080,7 +11169,11 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
   // встроенная база знаний: не нужно искать в интернете
   const litAsk = /литератур|стих|сочинен|пересказ|книг|роман|повест|поэм|рассказ|геро[йя]|басн|сказк|писател|автор[аеу]?\s|пушкин|толст|достоевск|шекспир|лермонт|чехов|гогол|булгаков/i.test(userText);
   const codeAsk = /\bкод\b|баг|ошибк|стек|трейс|отладк|debug|python|javascript|typescript|\bjs\b|java|\bc\+\+|\bc#\b|golang|\brust\b|php|ruby|swift|kotlin|\bsql\b|regex|git|терминал|функци|программ|скрипт|верстк|вёрстк|api|json|тест/i.test(userText);
-  const kb = (isTaskRequest(userText) && !litAsk && !codeAsk) ? { hits: [], block: "" } : kbContext(userText);
+  /* Раньше на любой задаче («реши», «составь», «проверь») справка из базы
+     отключалась целиком — и 1300 выученных тем не помогали в домашке.
+     Теперь база участвует всегда: на задачах она как раз и нужна.
+     Для кода берём меньше тем, чтобы не мешать правилам кода. */
+  const kb = kbContext(userText, codeAsk ? 2 : 4);
   if (kb.block) {
     sys += "\n\nСПРАВКА ИЗ ВСТРОЕННОЙ БАЗЫ ИСКРЫ (пользуйся ею как главным источником, если она подходит):\n" + kb.block;
   }
@@ -12461,11 +12554,13 @@ function kbSearch(text, limit = 2) {
 }
 
 /* Используется в промпте: модель получает готовую справку и не идёт в интернет */
-function kbContext(text) {
-  const hits = kbSearch(text, 2);
+function kbContext(text, limit = 3) {
+  const hits = kbSearch(text, Math.max(1, Math.min(6, limit)));
   if (!hits.length) return { hits: [], block: "" };
+  /* Раньше в промпт шло две темы и обрезалось до 900 знаков.
+     На базе в 1300 тем это капля: поднимаем и число тем, и длину. */
   const block = hits.map(h => `• ${h.title}: ${h.text}`).join("\n");
-  return { hits, block };
+  return { hits, block: block.slice(0, 2600) };
 }
 
 function shouldSearch(text) {
@@ -12542,6 +12637,74 @@ function renderSources(box, sources) {
     wrap.appendChild(a);
   });
   box.appendChild(wrap);
+}
+
+/* ---------- Память повторных вопросов ----------
+   Один и тот же вопрос часто задают второй раз (переспросил, вернулся к чату,
+   открыл с другого входа). Раньше каждый раз ждали чужие лимиты заново.
+   Теперь свежий ответ живёт в памяти браузера полчаса и отдаётся сразу.
+   Кэшируем только обычные вопросы без фото и без поиска в интернете. */
+const ANS_CACHE_TTL = 30 * 60 * 1000;
+const _ansCache = new Map();
+
+function answerCacheKey(text, images, web) {
+  if (images && images.length) return "";
+  if (web) return "";
+  const q = String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
+  if (q.length < 12 || q.length > 400) return "";
+  return q;
+}
+function answerCacheGet(key) {
+  if (!key) return "";
+  const got = _ansCache.get(key);
+  if (!got) return "";
+  if (Date.now() - got.at > ANS_CACHE_TTL) { _ansCache.delete(key); return ""; }
+  return got.text;
+}
+function answerCachePut(key, text) {
+  if (!key || !text || text.length < 40) return;
+  if (_ansCache.size > 60) _ansCache.delete(_ansCache.keys().next().value);
+  _ansCache.set(key, { text, at: Date.now() });
+}
+
+/* ---------- Самопроверка арифметики в ответе ----------
+   Модель иногда пишет «2Al + 6HCl = 2AlCl3 + 3H2» правильно, а рядом
+   в тексте ошибается в простом счёте. Пересчитываем сами и, если нашли
+   расхождение, честно дописываем верное число в конце ответа.
+   Точность: считаем только явные равенства вида «число знак число = число». */
+function auditAnswerMath(text) {
+  const src = String(text || "");
+  if (!src || src.length > 12000) return [];
+  const re = /(\d+(?:[.,]\d+)?)\s*([+\-*/×÷·:])\s*(\d+(?:[.,]\d+)?)\s*=\s*(\d+(?:[.,]\d+)?)/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(src)) && out.length < 3) {
+    const a = parseFloat(m[1].replace(",", "."));
+    const b = parseFloat(m[3].replace(",", "."));
+    const shown = parseFloat(m[4].replace(",", "."));
+    const op = m[2];
+    let real = null;
+    if (op === "+") real = a + b;
+    else if (op === "-") real = a - b;
+    else if (op === "*" || op === "×" || op === "·") real = a * b;
+    else if ((op === "/" || op === "÷" || op === ":") && b !== 0) real = a / b;
+    if (real === null || !isFinite(real)) continue;
+    /* Допуск: человек и модель могут округлять. Полторы десятых процента
+       и полсотых абсолютно — этого хватает, чтобы не придираться к округлению,
+       но поймать реальную ошибку. */
+    const tolerance = Math.max(0.05, Math.abs(real) * 0.015);
+    if (Math.abs(real - shown) <= tolerance) continue;
+    const nice = Math.abs(real - Math.round(real)) < 1e-9
+      ? String(Math.round(real))
+      : String(Math.round(real * 1000) / 1000).replace(".", ",");
+    out.push({ expr: `${m[1]} ${op} ${m[3]}`, shown: m[4], real: nice });
+  }
+  return out;
+}
+function mathCorrectionNote(found) {
+  if (!found.length) return "";
+  const lines = found.map(f => `• ${f.expr} = ${f.real}, а не ${f.shown}`);
+  return "\n\n_Пересчитала сама: " + lines.join("; ") + "._";
 }
 
 /* ---------- Стриминг ---------- */
@@ -12701,7 +12864,7 @@ async function streamOnce(engine, payload, onDelta, signal) {
    Человеку не показываем, кто именно ответил — для него это всегда Искра. */
 async function askIskra(payload, onDelta, signal, onTry) {
   const needVision = (payload.messages || []).some(m => Array.isArray(m.content) && m.content.some(x => x && (x.type === "image_url" || x.image_url)));
-  let list = await resolveKeyEngines(orderedEngines(needVision), needVision);
+  let list = await resolveKeyEngines(orderedEnginesFor(payload, needVision), needVision);
   /* Слепому движку фото не отдаём вовсе: он его не увидит, но ответит уверенно
      и мимо — «у меня нет твоих заданий». Лучше честно сказать, что не вижу. */
   if (needVision) list = list.filter(e => e.vision || guessVision(e.model));
@@ -12755,9 +12918,11 @@ function buildSystemPromptLite(userText = "") {
   if (settings.memoryOn && settings.memory.length) {
     sys += `\n\nЧто ты знаешь о пользователе:\n${settings.memory.slice(0, 8).map(m => `- ${m}`).join("\n")}`;
   }
-  const kb = kbContext(userText);
+  /* Мелкой модели справка нужнее, чем большой: она сама мало что знает.
+     Но промпт у неё короткий, поэтому — две темы и обрезка посильнее. */
+  const kb = kbContext(userText, 2);
   if (kb.block) {
-    sys += "\n\nСправка из встроенной базы (используй как факты):\n" + kb.block.slice(0, 900);
+    sys += "\n\nСправка из встроенной базы (используй как факты):\n" + kb.block.slice(0, 1200);
   }
   const calcs = findCalcs(userText);
   if (calcs.length) sys += `\n\nТочный расчёт: ${calcs.map(c => c.expr + " = " + c.value).join("; ")}.`;
@@ -12907,6 +13072,23 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   /* Куда рисовать: обычно contentEl, но если чат удалили посреди ответа —
      ответ переезжает в новый чат, и рисовать нужно уже туда */
   const streamEl = () => (liveStream && liveStream.aiId === aiMsg.id && liveStream.contentEl) || contentEl;
+
+  /* Тот же вопрос уже был недавно — отвечаем сразу, не дожидаясь чужих лимитов */
+  const cacheKey = answerCacheKey(trimmed, images, settings.webSearch);
+  const cachedText = answerCacheGet(cacheKey);
+  if (cachedText) {
+    aiMsg.content = cachedText;
+    aiMsg.pending = false;
+    aiMsg.fromCache = true;
+    contentEl.innerHTML = renderMarkdown(cachedText);
+    const actBox = el.querySelector(".actions");
+    if (actBox) { actBox.innerHTML = answerActionsHtml(""); wireAnswerActions(actBox, aiMsg.id); }
+    saveChats();
+    scrollToBottom();
+    toast("Этот вопрос был недавно — отвечаю из памяти", "ok");
+    return;
+  }
+
   el.classList.add("thinking");
   document.body.classList.add("generating");
   contentEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
@@ -13034,6 +13216,13 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       aiMsg.masked = true;
       toast("Убрала крепкие слова: они доступны только в Pro", "err");
     }
+    /* Самопроверка арифметики: поймали ошибку в счёте — дописали верное число */
+    const mathFixes = auditAnswerMath(acc);
+    if (mathFixes.length) {
+      acc += mathCorrectionNote(mathFixes);
+      aiMsg.mathFixed = mathFixes.length;
+    }
+    answerCachePut(cacheKey, acc);
     aiMsg.content = acc;
     aiMsg.pending = false;
     aiMsg.truncated = !!(done && done.truncated);
