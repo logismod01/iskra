@@ -1,5 +1,5 @@
 /**
- * Раунд 42: база выросла до 1508 тем и находится по названию (1.44.0).
+ * Раунд 42: база выросла и находится по названию (1.45.0).
  *
  * Что требовалось:
  *   1) Тем должно быть много — заметно больше тысячи, и не за счёт повторов:
@@ -44,8 +44,8 @@ const items = (() => {
 })();
 
 /* ---------- 1. Объём и чистота ---------- */
-await test("тем не меньше тысячи и каждое название встречается один раз", async () => {
-  assert(items.items.length >= 1000, "тем мало: " + items.items.length);
+await test("тем не меньше пяти тысяч и каждое название встречается один раз", async () => {
+  assert(items.items.length >= 5000, "тем мало: " + items.items.length);
   const seen = new Map();
   for (const it of items.items) {
     const k = String(it.title || "").toLowerCase().trim();
@@ -155,8 +155,8 @@ await test("README называет то же число тем", async () => {
 
 /* ---------- 5. Версия ---------- */
 await test("версия поднята и кэш обновлён", async () => {
-  assert(pkg.version === "1.44.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.44\.0"/.test(sw), "кэш service worker не обновлён");
+  assert(pkg.version === "1.45.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.45\.0"/.test(sw), "кэш service worker не обновлён");
 });
 
 await test("этот тест подключён к npm test", async () => {

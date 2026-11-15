@@ -135,7 +135,7 @@ await test("темы про код и баги находятся по живо�
     ["IndentationError в питоне", ["code-python", "code-errors"]],
     ["как отладить баг и найти причину", ["code-debug"]],
     ["NullPointerException java", ["bug-null", "code-java"]],
-    ["SQL инъекция как защититься", ["code-security", "code-sql"]],
+    ["SQL инъекция как защититься", ["code-security", "code-sql", "na-sql-injection"]],
     ["как починить конфликт в git", ["code-git"]],
     ["ошибка кодировки кракозябры", ["bug-encoding"]],
     ["как работают тесты и зачем они", ["code-testing"]]
@@ -150,7 +150,7 @@ await test("темы про код и баги находятся по живо�
 
 await test("темы про языки находятся по живому вопросу", () => {
   const cases = [
-    ["времена в английском present perfect", ["lang-english-tenses", "lang-english-grammar"]],
+    ["времена в английском present perfect", ["lang-english-tenses", "lang-english-grammar", "en-tenses", "wld-engram-003", "wld-engram-004"]],
     ["ser и estar в испанском", ["lang-spanish"]],
     ["как учить китайские иероглифы", ["lang-chinese-characters"]],
     ["немецкие падежи и артикли", ["lang-german"]],
