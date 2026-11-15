@@ -194,8 +194,8 @@ await test("ядро выбирается по поддержке SIMD", async (
 });
 
 /* ---------- 6. Версия ---------- */
-await test("версия сайта и кэша — 1.40.0", async () => {
-  assert(pkg.version === "1.40.0", "версия сайта: " + pkg.version);
+await test("версия сайта и кэша — 1.41.0", async () => {
+  assert(pkg.version === "1.41.0", "версия сайта: " + pkg.version);
   assert(/const VERSION = "iskra-1\.35\.0";/.test(sw), "версия кэша не совпадает");
 });
 
