@@ -5,3 +5,6 @@ node_modules/
 # сборка агента Sye
 agent/dist/
 agent/node_modules/
+
+# сырьё для сборки тем (не в репозиторий)
+.kbsrc/
