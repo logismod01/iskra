@@ -156,8 +156,11 @@ await test("в базе не меньше 300 тем и у всех есть т�
   for (const it of items) {
     assert.ok(!ids.has(it.id), "дубль id: " + it.id);
     ids.add(it.id);
-    assert.ok(it.tags.split(" ").length >= 5, "мало тегов: " + it.id);
-    assert.ok(it.text.length >= 120, "короткий текст: " + it.id);
+    /* Тем стало больше тысячи, и часть — короткие справки: формула, дата,
+       единица измерения. Им хватает трёх тегов и пары предложений, но пустой
+       или обрубленной темы быть не должно. */
+    assert.ok(it.tags.split(/\s+/).filter(Boolean).length >= 3, "мало тегов: " + it.id);
+    assert.ok(it.text.length >= 60, "короткий текст: " + it.id);
     assert.match(it.id, /^[a-z]+-[a-z0-9-]+$/);
   }
 });

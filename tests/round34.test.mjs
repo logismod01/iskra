@@ -105,7 +105,9 @@ await test("в пакете нет повторов по названию", asyn
   const titles = pack.items.map((x) => x.title);
   assert(new Set(titles).size === titles.length, "есть повторы: " + (titles.length - new Set(titles).size));
   for (const it of pack.items) {
-    assert(it.text && it.text.length >= 120, "короткий текст у темы " + it.title);
+    /* Короткие справки (формула, дата, единица) — норма с 1.44: два-три
+       предложения, зато тем много. Пустых и обрубленных быть не должно. */
+    assert(it.text && it.text.length >= 60, "короткий текст у темы " + it.title);
   }
   dom.window.close();
 });
