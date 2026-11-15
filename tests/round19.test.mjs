@@ -171,7 +171,7 @@ await test("подписи в меню человеческие, без маши
 
 /* ---------- 6. Версия ---------- */
 await test("версия поднята, кэш обновлён", async () => {
-  assert(pkg.version === "1.38.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.39.0", "версия сайта: " + pkg.version);
   assert(/const VERSION = "iskra-1\.35\.0"/.test(sw), "кэш service worker не обновлён");
 });
 
