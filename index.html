@@ -19824,6 +19824,10 @@ function kbCheckRun(query) {
 function renderKnowledgePanel() {
   const list = learnedList().sort((a, b) => b.ts - a.ts);
   const shared = sharedKbList();
+  /* Сколько всего тем и из чего они сложились — чтобы не гадать по числам */
+  const kbBuilt = kbBuiltinPack().length;
+  const kbShared = shared.length;
+  const kbTotal = kbBuilt + kbShared + list.length;
   const box = $("#knowBody");
   if (!box) return;
   box.innerHTML = `
@@ -19849,8 +19853,11 @@ function renderKnowledgePanel() {
         Читаю только открытые страницы: 18+, оружие, наркотики и чужие персональные данные не учу. Ссылки из локальной сети не открываю.</div>
     </div>
     <div class="acct-sec">
-      <div class="acct-h">База знаний (${kbBuiltinPack().length + sharedKbList().length} тем)</div>
-      <div class="acct-note" style="margin-bottom:10px">Готовые конспекты (${kbBuiltinPack().length}) и общая база, которую владелец публикует для всех (${sharedKbList().length}). Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже.</div>
+      <div class="acct-h">База знаний — ${kbTotal} ${plural(kbTotal, "тема", "темы", "тем")}</div>
+      <div class="acct-row"><span>Внутри Искры — работает без интернета</span><b data-kbcount="built">${kbBuilt}</b></div>
+      <div class="acct-row"><span>Из общей базы — с сервера</span><b data-kbcount="shared">${kbShared}${kbShared ? "" : " (ещё не загружена)"}</b></div>
+      <div class="acct-row"><span>Выучено самой</span><b data-kbcount="learned">${list.length}</b></div>
+      <div class="acct-note" style="margin:8px 0 10px">Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже. Если число у общей базы не то, что ждёшь, нажми «Обновить базу» ниже.</div>
       <div class="auth-field">
         <input id="kbSearchInput" placeholder="Поиск: пифагор, моль, стресс…" autocomplete="off">
       </div>
@@ -20498,8 +20505,15 @@ async function consoleRun(raw) {
       byCat[k] = (byCat[k] || 0) + 1;
     }
     const rows = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-    return "ВСТРОЕННАЯ БАЗА: " + kbBuiltinPack().length + " тем\n" + rows.map(([k, n]) => "  " + k.padEnd(22, " ") + n).join("\n") +
-      "\n\nВыучено из интернета: " + learnedCount() + " тем\nСтатистика версии: " + (KNOWLEDGE_PACK.version || 1);
+    const built = kbBuiltinPack().length;
+    const sharedN = sharedKbList().length;
+    const learnedN = learnedCount();
+    return "ВСЕГО ТЕМ: " + (built + sharedN + learnedN) + "\n" +
+      "  внутри Искры (без интернета): " + built + "\n" +
+      "  общая база с сервера: " + sharedN + (sharedN ? "" : " (ещё не загружена — нажми «Обновить базу»)") + "\n" +
+      "  выучено самой: " + learnedN + "\n\n" +
+      "ВСТРОЕННАЯ БАЗА ПО РАЗДЕЛАМ: " + built + " тем\n" + rows.map(([k, n]) => "  " + k.padEnd(22, " ") + n).join("\n") +
+      "\n\nВерсия базы: " + (KNOWLEDGE_PACK.version || 1);
   }
   if (c === "learned") {
     const list = learnedList();

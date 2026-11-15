@@ -111,7 +111,7 @@ await test("поиск в знаниях находит тему из общей
 
 await test("в окне видно, сколько всего тем и где мои документы", async () => {
   const body = doc.getElementById("knowBody").textContent;
-  assert(/База знаний \(\d+ тем\)/.test(body), "не показано число тем");
+  assert(/База знаний — \d+ (тема|темы|тем)/.test(body), "не показано число тем: " + body.slice(0, 160));
   assert(body.includes("Мои документы"), "нет раздела с моими документами");
   assert(doc.getElementById("kbDocsOpen"), "нет кнопки «Открыть мои документы»");
 });
@@ -171,7 +171,7 @@ await test("подписи в меню человеческие, без маши
 
 /* ---------- 6. Версия ---------- */
 await test("версия поднята, кэш обновлён", async () => {
-  assert(pkg.version === "1.36.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.37.0", "версия сайта: " + pkg.version);
   assert(/const VERSION = "iskra-1\.35\.0"/.test(sw), "кэш service worker не обновлён");
 });
 
