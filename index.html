@@ -157,6 +157,66 @@ textarea { resize: none; }
 .chat-row:hover .del { opacity: 1; }
 .chat-row .del:hover { color: var(--err); background: rgba(224,108,90,.1); }
 
+/* ============ Папки и меню чата ============ */
+.sb-search-wrap { display: flex; gap: 6px; align-items: center; }
+.sb-search-wrap .sb-search { flex: 1; min-width: 0; }
+.sb-newfolder {
+  flex: none; width: 34px; height: 34px; border-radius: 9px;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  color: var(--text-soft); cursor: pointer;
+  display: grid; place-items: center;
+  transition: color .15s, border-color .15s;
+}
+.sb-newfolder:hover { color: var(--accent); border-color: var(--accent); }
+.sb-folder { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.sb-folder .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-folder .fcount { color: var(--text-dim); font-size: 11px; font-weight: 500; }
+.sb-folder .fmenu {
+  margin-left: auto; opacity: 0; padding: 2px; border-radius: 6px;
+  color: var(--text-dim); cursor: pointer;
+}
+.sb-folder:hover .fmenu { opacity: 1; }
+.sb-folder .fmenu:hover { color: var(--text); background: var(--bg-soft-2); }
+.sb-folder.closed .fname::after { content: " ›"; color: var(--text-dim); }
+.chat-row .more {
+  opacity: 0; padding: 2px; border-radius: 6px;
+  color: var(--text-dim); cursor: pointer; flex: none;
+  transition: opacity .15s, color .15s;
+}
+.chat-row:hover .more, .chat-row.active .more { opacity: 1; }
+.chat-row .more:hover { color: var(--text); background: var(--line); }
+@media (hover: none) { .chat-row .more { opacity: .8; } .sb-folder .fmenu { opacity: .8; } }
+.chat-row.pinned { color: var(--text); }
+.chat-row.pinned > .ic { color: var(--accent); }
+.chat-row.in-folder { padding-left: 20px; }
+.sb-folder-empty { padding: 6px 14px 10px 20px; font-size: 12px; color: var(--text-dim); }
+
+.chat-menu {
+  position: fixed; z-index: 300; width: 230px;
+  background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 12px; padding: 6px;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: 70vh; overflow-y: auto;
+  animation: menuIn .14s ease both;
+}
+@keyframes menuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.chat-menu button {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; border-radius: 8px;
+  font-size: 13.5px; color: var(--text); text-align: left;
+  cursor: pointer; width: 100%;
+  transition: background .13s;
+}
+.chat-menu button:hover { background: var(--bg-soft-2); }
+.chat-menu button.on { color: var(--accent); }
+.chat-menu .cm-sep {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-dim); padding: 8px 10px 2px;
+}
+.chat-menu .cm-del { color: var(--err); }
+.chat-menu .cm-del:hover { background: rgba(224,108,90,.12); }
+
 .sb-foot {
   padding: 12px 14px 14px;
   border-top: 1px solid var(--line);
@@ -415,7 +475,7 @@ body.generating .messages { scroll-behavior: auto; }
 .msg .thumbs img:hover { transform: scale(1.05); }
 
 .msg .actions {
-  display: flex; gap: 4px;
+  display: flex; gap: 4px; flex-wrap: wrap;
   margin-top: 8px;
   opacity: 0; transition: opacity .15s;
 }
@@ -587,6 +647,84 @@ body.generating .messages { scroll-behavior: auto; }
   transition: background .15s, color .15s;
 }
 .gen-actions button:hover { background: var(--line); }
+
+/* ============ Тренажёр ============ */
+#trainerModal .modal { width: min(620px, 100%); }
+.tr-hint { color: var(--text-soft); font-size: 13.5px; line-height: 1.5; margin-bottom: 12px; }
+.tr-search {
+  width: 100%; padding: 10px 12px; margin-bottom: 14px;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  border-radius: 10px; color: var(--text); font-size: 14px; font-family: var(--font);
+}
+.tr-search:focus { outline: none; border-color: var(--accent); }
+.tr-weak-title {
+  font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-dim); margin: 14px 0 8px;
+}
+.tr-count { font-weight: 500; text-transform: none; letter-spacing: 0; }
+.tr-topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.tr-topic {
+  text-align: left; padding: 10px 12px; cursor: pointer;
+  background: var(--bg-soft-2); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--text); font-family: var(--font); font-size: 13.5px; line-height: 1.35;
+  display: flex; flex-direction: column; gap: 3px;
+  transition: border-color .15s, background .15s;
+}
+.tr-topic:hover { border-color: var(--accent); }
+.tr-topic b { font-weight: 600; }
+.tr-topic span { color: var(--text-dim); font-size: 12px; }
+.tr-topic-weak { border-color: var(--warn); }
+.tr-empty { color: var(--text-soft); font-size: 14px; padding: 12px 0; }
+
+.tr-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.tr-exit {
+  border: 1px solid var(--line); background: var(--bg-soft-2); color: var(--text);
+  width: 30px; height: 30px; border-radius: 9px; cursor: pointer; font-size: 15px; line-height: 1;
+  flex: none;
+}
+.tr-exit:hover { border-color: var(--accent); }
+.tr-topicname { font-weight: 600; font-size: 14px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tr-progress { color: var(--text-dim); font-size: 12.5px; flex: none; }
+.tr-bar { height: 4px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 18px; }
+.tr-bar i { display: block; height: 100%; background: var(--accent); transition: width .25s; }
+.tr-q { font-size: 16.5px; line-height: 1.5; margin-bottom: 16px; white-space: normal; }
+.tr-opts { display: flex; flex-direction: column; gap: 8px; }
+.tr-opt {
+  text-align: left; padding: 11px 14px; cursor: pointer;
+  background: var(--ai); border: 1px solid var(--line); border-radius: 11px;
+  color: var(--text); font-family: var(--font); font-size: 14.5px; line-height: 1.45;
+  transition: border-color .15s, background .15s, opacity .15s;
+}
+.tr-opt:hover { border-color: var(--accent); }
+.tr-opt.locked { cursor: default; }
+.tr-opt.locked:hover { border-color: var(--line); }
+.tr-opt.right { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.tr-opt.wrong { border-color: var(--err); background: color-mix(in srgb, var(--err) 14%, transparent); }
+.tr-opt.locked:not(.right):not(.wrong) { opacity: .55; }
+.tr-open {
+  width: 100%; padding: 11px 13px; margin-bottom: 12px;
+  background: var(--ai); border: 1px solid var(--line); border-radius: 11px;
+  color: var(--text); font-family: var(--font); font-size: 14.5px; line-height: 1.5; resize: vertical;
+}
+.tr-open:focus { outline: none; border-color: var(--accent); }
+.tr-feedback { margin-top: 14px; }
+.tr-fb { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.tr-fb.ok { color: var(--ok); }
+.tr-fb.bad { color: var(--err); }
+.tr-explain { color: var(--text-soft); font-size: 13.5px; line-height: 1.5; margin-bottom: 12px; }
+.tr-next { width: 100%; }
+
+.tr-result { text-align: center; padding: 10px 0 6px; }
+.tr-big { font-size: 40px; font-weight: 700; line-height: 1.1; font-family: Georgia, serif; }
+.tr-pct { color: var(--accent); font-size: 18px; font-weight: 600; margin-top: 2px; }
+.tr-verdict { color: var(--text-soft); font-size: 14px; margin-top: 6px; }
+.tr-wrong { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.tr-wrong li {
+  padding: 10px 12px; background: var(--bg-soft-2); border-radius: 10px;
+  border-left: 3px solid var(--warn); font-size: 13.5px; line-height: 1.45;
+}
+.tr-wrong li b { display: block; font-weight: 600; margin-bottom: 3px; }
+.tr-wrong li span { color: var(--text-soft); }
 
 /* ============ Модалки ============ */
 .modal-bg {
@@ -875,11 +1013,69 @@ body.generating .messages { scroll-behavior: auto; }
 }
 
 /* Print-friendly */
+/* Печать: либо обычная страница (панели убираем), либо один аккуратный лист.
+   На бумаге всё чёрным по белому: фон, тени и цветные кнопки только пачкают. */
+#printArea { display: none; }
 @media print {
+  @page { margin: 16mm 14mm; }
   .sidebar, .topbar, .composer-wrap, .toast, .install-banner { display: none !important; }
   .app { grid-template-columns: 1fr; }
-  body { background: white; color: black; overflow: visible; }
+  body { background: white !important; color: black !important; overflow: visible; }
+  /* Печать одного ответа или всего разговора: показываем только лист */
+  body.printing > *:not(#printArea) { display: none !important; }
+  body.printing > #printArea {
+    display: block !important;
+    color: #000; background: #fff;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 11.5pt; line-height: 1.55;
+  }
+  #printArea .pr-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid #bbb; padding-bottom: 6px; margin-bottom: 14px;
+    font-size: 9.5pt; color: #444;
+  }
+  #printArea .pr-head b { font-size: 12pt; color: #000; letter-spacing: .02em; }
+  #printArea .pr-title { font-size: 9.5pt; color: #666; margin-bottom: 10px; }
+  #printArea .pr-q {
+    border-left: 3px solid #999; padding: 2px 0 2px 10px; margin: 0 0 14px;
+    color: #333; font-style: italic;
+  }
+  #printArea .pr-a { margin-bottom: 18px; }
+  #printArea .pr-a:last-child { margin-bottom: 0; }
+  #printArea h1, #printArea h2, #printArea h3 { color: #000; page-break-after: avoid; }
+  #printArea h1 { font-size: 15pt; }
+  #printArea h2 { font-size: 13pt; }
+  #printArea h3 { font-size: 12pt; }
+  #printArea p, #printArea li { orphans: 3; widows: 3; }
+  #printArea code {
+    font-family: "Courier New", monospace; font-size: 10pt;
+    background: #f3f3f3; padding: 0 2px;
+  }
+  #printArea pre {
+    white-space: pre-wrap; word-break: break-word;
+    font-family: "Courier New", monospace; font-size: 9.5pt; line-height: 1.4;
+    border: 1px solid #ddd; background: #fafafa; padding: 8px 10px;
+    page-break-inside: avoid;
+  }
+  #printArea table { border-collapse: collapse; width: 100%; font-size: 10.5pt; }
+  #printArea th, #printArea td { border: 1px solid #999; padding: 4px 6px; text-align: left; }
+  #printArea th { background: #eee; }
+  #printArea a { color: #000; text-decoration: underline; }
+  #printArea img { max-width: 100%; }
+  #printArea .pr-src { font-size: 9pt; color: #444; border-top: 1px solid #ccc; padding-top: 6px; margin-top: 10px; }
+  /* У карточек ответа и пузырей вопросов фон не печатаем */
+  #printArea .msg, #printArea .body, #printArea .content { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
 }
+
+/* Крупный текст: тренажёр и меню тоже должны расти вместе со всем остальным */
+html.big-text .tr-q { font-size: 19px; }
+html.big-text .tr-opt, html.big-text .tr-open { font-size: 16.5px; }
+html.big-text .tr-topic { font-size: 15px; }
+html.big-text .chat-menu button { font-size: 15px; }
+html.big-text .tr-big { font-size: 46px; }
+
+/* Кнопка «Стоп» во время чтения вслух */
+.msg .actions button.speaking { color: var(--accent); }
 
 /* ================= Режимы работы ================= */
 .ambient {
@@ -2433,6 +2629,7 @@ html.no-anim .theme-flash { display: none; }
 
     <div class="sb-search-wrap">
       <input type="search" id="chatSearch" class="sb-search" placeholder="Поиск по чатам…" />
+      <button class="sb-newfolder" id="newFolderBtn" title="Новая папка" aria-label="Новая папка">+</button>
     </div>
     <div class="sb-chats" id="chatsList"></div>
 
@@ -2743,9 +2940,18 @@ html.no-anim .theme-flash { display: none; }
     </div>
 
     <div class="tools-section">
+      <h3>Проверить себя</h3>
+      <div class="tools-row">
+        <button type="button" class="btn btn-ghost" id="toolsTrainer">Открыть тренажёр</button>
+      </div>
+      <p class="tools-note">Выбери тему из базы — Искра задаст вопросы и покажет, что западает. Ничего не отправляется, работает без ключей.</p>
+    </div>
+
+    <div class="tools-section">
       <h3>Разговор</h3>
       <div class="tools-row">
         <button type="button" class="btn btn-ghost" id="toolsExport">Скачать разговор файлом</button>
+        <button type="button" class="btn btn-ghost" id="toolsPrint">Печать разговора</button>
         <button type="button" class="btn btn-ghost" id="toolsBookmarks">Закладки</button>
       </div>
       <div class="bookmark-list" id="toolsBookmarksList" hidden></div>
@@ -9375,7 +9581,12 @@ const IC = {
   phone: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18.5h4"/>',
   lock: '<rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
   play: '<rect x="2" y="4" width="13" height="16" rx="3"/><path d="M15 10l6-4v12l-6-4z"/>',
-  cube: '<path d="M12 2.5l8.5 4.8v9.4L12 21.5l-8.5-4.8V7.3z"/><path d="M3.5 7.3L12 12l8.5-4.7M12 12v9.5"/>'
+  cube: '<path d="M12 2.5l8.5 4.8v9.4L12 21.5l-8.5-4.8V7.3z"/><path d="M3.5 7.3L12 12l8.5-4.7M12 12v9.5"/>',
+  printer: '<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 17h12v4H6z"/>',
+  pin: '<path d="M12 17v5"/><path d="M9 2h6l-1 6 4 4v2H6v-2l4-4-1-6z"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  more: '<circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>'
 };
 /* Пауза на N миллисекунд — нужна для таймаутов и повторов */
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -10607,6 +10818,191 @@ function chatSearchHit(chat, q) {
 
 function escRe(t) { return String(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
+/* ---------- 7. Папки и закреплённые чаты ----------
+   Закреплённые всегда сверху: это то, к чему человек возвращается.
+   Папки — обычные списки по названию; чат лежит максимум в одной. */
+
+function chatFolders() {
+  if (!Array.isArray(settings.chatFolders)) settings.chatFolders = [];
+  /* У папки должно быть имя, иначе она не отличима от соседней */
+  settings.chatFolders = settings.chatFolders.filter(f => f && f.id && String(f.name || "").trim());
+  return settings.chatFolders;
+}
+function folderById(id) {
+  return chatFolders().find(f => f.id === id) || null;
+}
+function newFolder(name) {
+  const folders = chatFolders();
+  const clean = String(name || "").trim().slice(0, 40);
+  if (!clean) return null;
+  const same = folders.find(f => f.name.toLowerCase() === clean.toLowerCase());
+  if (same) return same;
+  const f = { id: "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 4), name: clean, open: true };
+  folders.push(f);
+  saveSettings();
+  return f;
+}
+function renameFolder(id, name) {
+  const f = folderById(id);
+  const clean = String(name || "").trim().slice(0, 40);
+  if (!f || !clean) return;
+  f.name = clean;
+  saveSettings();
+  renderChatsList();
+}
+function deleteFolder(id) {
+  const f = folderById(id);
+  if (!f) return;
+  if (!confirm(`Удалить папку «${f.name}»? Чаты останутся, просто разложатся по датам.`)) return;
+  for (const c of Object.values(chats)) if (c.folder === id) delete c.folder;
+  settings.chatFolders = chatFolders().filter(x => x.id !== id);
+  saveSettings();
+  saveChats();
+  renderChatsList();
+}
+function setChatFolder(chatId, folderId) {
+  const c = chats[chatId];
+  if (!c) return;
+  if (folderId) c.folder = folderId; else delete c.folder;
+  /* Чат в папке не должен одновременно висеть в закреплённых */
+  if (folderId) delete c.pinned;
+  saveChats();
+  renderChatsList();
+  const f = folderId ? folderById(folderId) : null;
+  toast(f ? `Перенесла в «${f.name}»` : "Чат без папки", "ok");
+}
+function togglePinChat(chatId) {
+  const c = chats[chatId];
+  if (!c) return;
+  if (c.pinned) {
+    delete c.pinned;
+    toast("Открепила", "ok");
+  } else {
+    c.pinned = true;
+    c.pinnedAt = Date.now();
+    delete c.folder;   // закреплённый чат и так наверху
+    toast("Закрепила наверху", "ok");
+  }
+  saveChats();
+  renderChatsList();
+}
+function toggleFolderOpen(id) {
+  const f = folderById(id);
+  if (!f) return;
+  f.open = f.open === false;
+  saveSettings();
+  renderChatsList();
+}
+
+/* Меню действий у чата: закрепить, в папку, удалить.
+   Одна кнопка вместо трёх — и на телефоне есть куда нажать. */
+function closeChatMenu() {
+  const m = document.getElementById("chatMenu");
+  if (m) m.remove();
+}
+function openChatMenu(chatId, anchor) {
+  closeChatMenu();
+  const c = chats[chatId];
+  if (!c) return;
+  const menu = document.createElement("div");
+  menu.className = "chat-menu";
+  menu.id = "chatMenu";
+  const folders = chatFolders();
+  menu.innerHTML =
+    `<button data-cm="pin">${ic("pin", 15)} ${c.pinned ? "Открепить" : "Закрепить наверху"}</button>` +
+    `<div class="cm-sep">Папка</div>` +
+    folders.map(f => `<button data-cm="folder" data-id="${esc(f.id)}" class="${c.folder === f.id ? "on" : ""}">` +
+      `${ic("folder", 15)} ${esc(f.name)}${c.folder === f.id ? " ✓" : ""}</button>`).join("") +
+    `<button data-cm="folder" data-id="">${ic("folder", 15)} Без папки</button>` +
+    `<button data-cm="newfolder">${ic("plus", 15)} Новая папка…</button>` +
+    `<div class="cm-sep"></div>` +
+    `<button data-cm="del" class="cm-del">${ic("trash", 15)} Удалить чат</button>`;
+  document.body.appendChild(menu);
+
+  const r = anchor.getBoundingClientRect();
+  const mw = 230;
+  let left = r.right + 6;
+  if (left + mw > window.innerWidth - 8) left = Math.max(8, r.left - mw - 6);
+  let top = r.top;
+  const mh = menu.offsetHeight || 260;
+  if (top + mh > window.innerHeight - 8) top = Math.max(8, window.innerHeight - mh - 8);
+  menu.style.left = left + "px";
+  menu.style.top = top + "px";
+
+  menu.querySelectorAll("[data-cm]").forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const act = b.dataset.cm;
+      if (act === "pin") { togglePinChat(chatId); closeChatMenu(); }
+      else if (act === "folder") {
+        const fid = b.dataset.id;
+        if (fid && !folderById(fid)) return;
+        setChatFolder(chatId, fid || null);
+        closeChatMenu();
+      } else if (act === "newfolder") {
+        const name = prompt("Как назвать папку? Например: «Учёба» или «Работа»");
+        const f = name ? newFolder(name) : null;
+        if (f) { setChatFolder(chatId, f.id); }
+        closeChatMenu();
+      } else if (act === "del") {
+        closeChatMenu();
+        if (confirm(`Удалить чат «${c.title}»?`)) deleteChat(chatId);
+      }
+    };
+  });
+  setTimeout(() => {
+    const off = (ev) => {
+      if (!menu.contains(ev.target)) { closeChatMenu(); document.removeEventListener("click", off); }
+    };
+    document.addEventListener("click", off);
+  }, 0);
+}
+
+/* Одна строка чата — общая для закреплённых, папок и обычных списков */
+function chatRowEl(c, extraClass) {
+  const row = document.createElement("div");
+  row.className = "chat-row" + (c.id === currentChatId ? " active" : "") + (extraClass ? " " + extraClass : "");
+  const cm = c.mode && MODES[c.mode] ? MODES[c.mode] : null;
+  row.innerHTML = `${ic(c.pinned ? "pin" : (cm ? cm.icon : "chat"), 16)}<span class="title"><span class="tt">${esc(c.title)}</span>` +
+    (cm && c.mode !== "chat" ? `<span class="chat-mode">${esc(cm.name)}</span>` : "") +
+    `</span><button class="more" title="Действия с чатом">${ic("more", 16)}</button>`;
+  row.addEventListener("click", () => {
+    currentChatId = c.id;
+    renderChatsList();
+    renderMessages();
+    closeSidebar();
+  });
+  row.querySelector(".more").addEventListener("click", (e) => {
+    e.stopPropagation();
+    openChatMenu(c.id, e.currentTarget);
+  });
+  return row;
+}
+
+/* Заголовок папки: имя, число чатов, кнопки */
+function folderHeadEl(f) {
+  const count = Object.values(chats).filter(c => c.folder === f.id).length;
+  const head = document.createElement("div");
+  head.className = "sb-group-title sb-folder" + (f.open === false ? " closed" : "");
+  head.innerHTML = `<span class="fname">${esc(f.name)}</span><span class="fcount">${count}</span>` +
+    `<button class="fmenu" title="Папка: переименовать или удалить">${ic("more", 14)}</button>`;
+  head.addEventListener("click", (e) => {
+    if (e.target.closest(".fmenu")) return;
+    toggleFolderOpen(f.id);
+  });
+  head.querySelector(".fmenu").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const name = prompt(`Название папки «${f.name}»:`, f.name);
+    if (name === null) return;
+    if (!String(name).trim()) {
+      if (confirm(`Удалить папку «${f.name}»? Чаты останутся.`)) deleteFolder(f.id);
+      return;
+    }
+    renameFolder(f.id, name);
+  });
+  return head;
+}
+
 function renderChatsList() {
   const list = $("#chatsList");
   list.innerHTML = "";
@@ -10654,15 +11050,47 @@ function renderChatsList() {
   const entries = Object.values(chats)
     .sort((a, b) => b.created - a.created)
     .filter(c => !q || (c.title || "").toLowerCase().includes(q));
-  if (!entries.length) {
+  const foldersAll = chatFolders();
+  if (!entries.length && !foldersAll.length) {
     list.innerHTML = `<div style="padding:20px 14px;color:var(--text-dim);font-size:13px;text-align:center">Чатов пока нет.<br>Начни первый ✦</div>`;
     return;
   }
+
+  /* 1. Закреплённые — всегда сверху */
+  const pinned = entries.filter(c => c.pinned).sort((a, b) => (b.pinnedAt || 0) - (a.pinnedAt || 0));
+  if (pinned.length) {
+    const gt = document.createElement("div");
+    gt.className = "sb-group-title";
+    gt.textContent = "Закреплённые";
+    list.appendChild(gt);
+    pinned.forEach(c => list.appendChild(chatRowEl(c, "pinned")));
+  }
+
+  /* 2. Папки — свои списки, можно свернуть */
+  for (const f of foldersAll) {
+    const inFolder = entries
+      .filter(c => c.folder === f.id && !c.pinned)
+      .sort((a, b) => (b.created || 0) - (a.created || 0));
+    list.appendChild(folderHeadEl(f));
+    if (f.open === false) continue;
+    if (!inFolder.length) {
+      const d = document.createElement("div");
+      d.className = "sb-folder-empty";
+      d.textContent = "пусто — перенеси чат через «⋯»";
+      list.appendChild(d);
+      continue;
+    }
+    inFolder.forEach(c => list.appendChild(chatRowEl(c, "in-folder")));
+  }
+
+  /* 3. Остальные — по датам, как раньше */
+  const rest = entries.filter(c => !c.pinned && !(c.folder && folderById(c.folder)));
+  if (!rest.length) return;
   const today = new Date(); today.setHours(0,0,0,0);
   const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
   const week = new Date(today); week.setDate(week.getDate() - 7);
   const groups = { today: [], yesterday: [], week: [], older: [] };
-  for (const c of entries) {
+  for (const c of rest) {
     const d = new Date(c.created);
     if (d >= today) groups.today.push(c);
     else if (d >= yesterday) groups.yesterday.push(c);
@@ -10676,25 +11104,7 @@ function renderChatsList() {
     gt.className = "sb-group-title";
     gt.textContent = labels[k];
     list.appendChild(gt);
-    for (const c of groups[k]) {
-      const row = document.createElement("div");
-      row.className = "chat-row" + (c.id === currentChatId ? " active" : "");
-      const cm = c.mode && MODES[c.mode] ? MODES[c.mode] : null;
-      row.innerHTML = `${ic(cm ? cm.icon : "chat", 16)}<span class="title"><span class="tt">${esc(c.title)}</span>` +
-        (cm && c.mode !== "chat" ? `<span class="chat-mode">${esc(cm.name)}</span>` : "") +
-        `</span><button class="del" title="Удалить">${ic("x", 14)}</button>`;
-      row.addEventListener("click", () => {
-        currentChatId = c.id;
-        renderChatsList();
-        renderMessages();
-        closeSidebar();
-      });
-      row.querySelector(".del").addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (confirm(`Удалить чат «${c.title}»?`)) deleteChat(c.id);
-      });
-      list.appendChild(row);
-    }
+    for (const c of groups[k]) list.appendChild(chatRowEl(c, ""));
   }
 }
 /* Перезагрузка посреди ответа: запрос остаётся в чате, ответ помечаем как прерванный,
@@ -10739,10 +11149,12 @@ function renderMessages() {
 function answerActionsHtml(extra) {
   return `<button data-act="copy">${ic("copy", 14)} Копировать</button>` +
     `<button data-act="shorter">Короче</button>` +
+    `<button data-act="speak">${ic("play", 14)} Озвучить</button>` +
     `<button data-act="more" class="act-toggle" aria-label="Ещё действия">Ещё</button>` +
     `<span class="act-extra">` +
       `<button data-act="simpler">Проще</button>` +
       `<button data-act="longer">Подробнее</button>` +
+      `<button data-act="print">${ic("printer", 14)} Печать</button>` +
       `<button data-act="bookmark">${ic("star", 14)} В закладки</button>` +
       `<button data-act="regen">${ic("regen", 14)} Перегенерить</button>` +
       (extra || "") +
@@ -10750,6 +11162,8 @@ function answerActionsHtml(extra) {
 }
 /* Один обработчик на все кнопки: «Ещё» раскрывает скрытые, остальные — обычные действия. */
 function wireAnswerActions(actions, msgId) {
+  /* Кнопка озвучки должна знать, какое сообщение читает */
+  actions.querySelectorAll('button[data-act="speak"]').forEach(b => { b.dataset.msg = msgId; });
   actions.querySelectorAll("button").forEach(b => {
     if (b.dataset.wired) return;
     b.dataset.wired = "1";
@@ -10957,6 +11371,10 @@ function onMsgAction(id, act) {
     sendMessage("Объясни то же самое проще: короткими фразами, без терминов, как человеку, который видит это впервые.");
   } else if (act === "longer") {
     sendMessage("Раскрой этот ответ подробнее: добавь детали, примеры и пояснения к каждому шагу, но не повторяй то, что уже сказано.");
+  } else if (act === "speak") {
+    ttsToggle(id, msg.content);
+  } else if (act === "print") {
+    printMessage(id);
   } else if (act === "bookmark") {
     addBookmark(msg.content);
   } else if (act === "regen") {
@@ -11199,6 +11617,10 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
     sys += `\n\nТочный расчёт калькулятора (используй эти числа, не считай сам):\n` +
       calcs.map(c => `- ${c.expr} = ${c.value}`).join("\n");
   }
+
+  // физика и проценты — формулы и перевод единиц считает код
+  const exact = findExactModules(userText);
+  if (exact.length) sys += "\n\n" + exactPromptBlock(exact);
 
   // химия — точные коэффициенты, чтобы не путалась в уравнениях
   const chemText = [userText, extraText].filter(Boolean).join("\n");
@@ -12098,8 +12520,10 @@ function closeTools() {
 function wireTools() {
   const on = (id, fn) => { const el = $("#" + id); if (el) el.addEventListener("click", fn); };
   on("toolsClose", closeTools);
+  on("toolsTrainer", () => { closeTools(); openTrainer(); });
   on("toolsVoice", toggleVoice);
   on("toolsExport", exportChat);
+  on("toolsPrint", () => { closeTools(); setTimeout(printChat, 120); });
   on("toolsBookmarks", () => {
     const list = $("#toolsBookmarksList");
     if (!list) return;
@@ -12116,6 +12540,811 @@ function cycleTheme(ev) {
   saveSettings();
   applyTheme(next, ev);
   toast(`Тема: ${THEMES[next].name}`, "ok");
+}
+
+/* ============================================================
+   ТРЕНАЖЁР (1.33)
+   Искра не решает за человека, а спрашивает по выученной теме
+   и говорит, что не получается. Вопросы собираются из своей базы
+   прямо в браузере — без ключей, без сети, без чужих сервисов.
+   ============================================================ */
+const TRAINER_STORE = "iskra.trainer.v1";
+const TRAINER_ROUND = 8;      // вопросов за подход
+const TRAINER_PASS = 70;      // процент, с которого тема считается освоенной
+
+function trainerStats() {
+  try { return JSON.parse(localStorage.getItem(TRAINER_STORE) || "{}") || {}; } catch (e) { return {}; }
+}
+function trainerSaveStats(s) {
+  try { localStorage.setItem(TRAINER_STORE, JSON.stringify(s)); } catch (e) {}
+}
+
+/* Все темы, по которым можно заниматься: общая база, встроенная, свои */
+function trainerAllTopics() {
+  const out = [];
+  const seen = new Set();
+  const add = (title, text, tags) => {
+    const t = String(title || "").trim();
+    const txt = String(text || "").trim();
+    if (!t || txt.length < 70) return;
+    const key = kbNormText(t);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push({ title: t, text: txt, tags: String(tags || "") });
+  };
+  try { (typeof sharedKbList === "function" ? sharedKbList() : []).forEach(x => add(x.topic, x.text, x.tags)); } catch (e) {}
+  try { kbBuiltinPack().forEach(x => add(x.title, x.text, x.tags)); } catch (e) {}
+  try { learnedList().forEach(x => add(x.topic, x.text, x.tags)); } catch (e) {}
+  return out;
+}
+
+function kbNormText(s) {
+  return String(s || "").toLowerCase().replace(/ё/g, "е").replace(/[^a-zа-я0-9\s]/gi, " ").replace(/\s+/g, " ").trim();
+}
+
+/* Предложения темы — из них и собираются вопросы */
+function trainerSentences(text) {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .replace(/([.!?])\s+/g, "$1|")
+    .split("|")
+    .map(s => s.trim())
+    /* Короткие предложения тоже годятся: в математике они часто самые полезные
+       («Скидка 20 % от 1500 = 1200.»). Отсекаем только совсем огрызки. */
+    .filter(s => s.length >= 28 && s.length <= 240);
+}
+
+/* Определения вида «Рубец — отдел желудка…».
+   Важно не принять за термин целое предложение с тире в середине:
+   «В рубце живут бактерии — траву и сено…» термином не является.
+   Поэтому термин — короткая фраза без глагола и не прилагательное-обрубок. */
+function trainerLooksLikeVerb(word) {
+  return /(ет|ют|ит|ат|ят|ут|ать|ять|ить|еть|ыть|ся|тся)$/i.test(word);
+}
+function trainerLooksLikeAdj(word) {
+  return /(ая|яя|ое|ее|ый|ий|ой|ые|ие)$/i.test(word);
+}
+function trainerDefs(text) {
+  const out = [];
+  for (const s of trainerSentences(text)) {
+    const m = s.match(/^([А-ЯЁA-Z][^—–:]{2,60}?)\s*(?:—|–|:|\s+это\s+)\s*(.{25,220})$/);
+    if (!m) continue;
+    const term = m[1].trim().replace(/\s+/g, " ");
+    const def = m[2].trim().replace(/[.;]\s*$/, "");
+    const words = term.split(" ");
+    if (words.length > 5 || term.length > 42) continue;
+    if (words.some(trainerLooksLikeVerb)) continue;             // «смена корма вызывает сбой» — не термин
+    if (words.length === 1 && trainerLooksLikeAdj(term)) continue; // «Проверяемая:» — половина правила
+    if (/^(измени|смотри|пиши|пишется|ставь|помни|запомни|например|исключение)/i.test(def)) continue;
+    if (def.split(" ").length < 4) continue;
+    if (/[()]/.test(term)) continue;
+    if (def.length > 110) continue;   // длинная цитата — не определение
+    out.push({ term, def });
+  }
+  return out;
+}
+
+function trainerShuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* Похожие темы нужны для правдоподобных неправильных вариантов:
+   подставлять определение из чужого предмета слишком просто. */
+function trainerSiblings(topic, all) {
+  const tags = new Set(String(topic.tags || "").toLowerCase().split(/[,\s]+/).filter(Boolean));
+  const scored = [];
+  for (const t of all) {
+    if (kbNormText(t.title) === kbNormText(topic.title)) continue;
+    let score = 0;
+    for (const tg of String(t.tags || "").toLowerCase().split(/[,\s]+/)) {
+      if (tg && tags.has(tg)) score++;
+    }
+    scored.push({ t, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  /* Сначала темы того же предмета: подставлять в варианты испанский глагол
+     к теме про прямую речь слишком легко угадать. */
+  const same = scored.filter(x => x.score > 0).map(x => x.t);
+  const rest = scored.filter(x => x.score === 0).map(x => x.t);
+  return same.concat(rest);
+}
+
+/* Слово для вариантов ответа: без скобок, кавычек и обрубков */
+function trainerCleanWord(w) {
+  const s = String(w || "")
+    .replace(/[()\[\]«»"',;:!?]/g, "")
+    .replace(/^[-\s]+|[-\s]+$/g, "")
+    .trim();
+  if (s.length < 5 || s.length > 24) return "";
+  if (!/^[А-Яа-яЁёA-Za-z0-9-]+$/.test(s)) return "";
+  if (/^-|-$|--/.test(s)) return "";
+  return s;
+}
+
+/* Вопросы по теме */
+function trainerBuildQuestions(topic, all, count) {
+  const n = Math.max(4, count || TRAINER_ROUND);
+  const qs = [];
+  const defs = trainerDefs(topic.text);
+  const others = trainerSiblings(topic, all);
+
+  /* Чужие определения — база для неправильных вариантов */
+  const foreignDefs = [];
+  for (const o of others) {
+    for (const od of trainerDefs(o.text)) foreignDefs.push(od.def);
+    if (foreignDefs.length > 40) break;
+  }
+
+  /* 1. «Что такое …?» */
+  for (const d of defs) {
+    const pool = defs.map(x => x.def).filter(x => x !== d.def).concat(foreignDefs);
+    const wrong = [...new Set(trainerShuffle(pool))].filter(v => v !== d.def).slice(0, 3);
+    if (wrong.length < 3) continue;
+    qs.push({
+      kind: "choice",
+      q: `Что такое «${d.term}»?`,
+      right: d.def,
+      options: trainerShuffle([d.def, ...wrong]),
+      explain: `${d.term} — ${d.def}.`
+    });
+  }
+
+  /* 2. Пропущенное слово: варианты берём из других мест текста и соседних тем,
+        чтобы правильный ответ нельзя было вычислить по одному предложению */
+  const allWords = [];
+  for (const s2 of trainerSentences(topic.text)) allWords.push(...s2.split(" "));
+  for (const o of others.slice(0, 6)) for (const s2 of trainerSentences(o.text)) allWords.push(...s2.split(" "));
+  const wordPool = [...new Set(allWords.map(trainerCleanWord).filter(Boolean))];
+
+  const askWords = new Set(["сколько", "какой", "какая", "какое", "какие", "каков", "что", "кто", "чем",
+    "где", "когда", "почему", "зачем", "чему", "кого", "чего"]);
+  const titleStems2 = kbNormText(topic.title).split(" ").filter(w => w.length >= 4).map(w => w.slice(0, 5));
+  for (const s of trainerSentences(topic.text)) {
+    const tokens = s.split(" ");
+    const cand = tokens
+      .map((w, i) => ({ w: trainerCleanWord(w), i }))
+      .filter(x => x.w && x.w.length >= 6 && x.i > 0)
+      .filter(x => !askWords.has(x.w.toLowerCase()))
+      .filter(x => !titleStems2.some(st => x.w.toLowerCase().startsWith(st)));
+    if (cand.length < 2) continue;
+    /* До двух пропусков из предложения: на коротких темах иначе не набрать подход */
+    for (const pick of trainerShuffle(cand).slice(0, 2)) {
+      const gap = pick.w;
+      const wrong = trainerShuffle(wordPool.filter(w => w !== gap && !w.toLowerCase().startsWith(gap.toLowerCase().slice(0, 4)))).slice(0, 3);
+      if (wrong.length < 3) continue;
+      const shown = s.replace(tokens[pick.i], "…");
+      qs.push({
+        kind: "choice",
+        q: `Какое слово пропущено?\n\n${shown}`,
+        right: gap,
+        options: trainerShuffle([gap, ...wrong]),
+        explain: `Верно: ${s}`
+      });
+    }
+  }
+
+  /* 3. Число — только если в теме есть настоящие числа */
+  for (const s of trainerSentences(topic.text)) {
+    const m = s.match(/\b\d+(?:[.,]\d+)?\b/);
+    if (!m) continue;
+    const raw = m[0];
+    const num = parseFloat(raw.replace(",", "."));
+    if (!isFinite(num) || num <= 0) continue;
+    const gaps = [...new Set([String(num * 2), String(num + 1), String(Math.max(1, Math.round(num / 2)))])]
+      .filter(v => v !== raw && v !== String(num));
+    if (gaps.length < 3) continue;
+    const shown = s.slice(0, m.index) + "…" + s.slice(m.index + raw.length);
+    qs.push({
+      kind: "choice",
+      q: `Какое число пропущено?\n\n${shown}`,
+      right: raw,
+      options: trainerShuffle([raw, ...gaps.slice(0, 3)]),
+      explain: `Верно: ${s}`
+    });
+  }
+
+  /* 4. «Что относится к теме»: один вариант правда из этой темы,
+        остальные — понятия из соседних. Угадать нельзя, мусора нет. */
+  const stop = new Set(["который", "которая", "которые", "которых", "этого", "этому", "также", "чтобы",
+    "может", "можно", "нужно", "очень", "после", "перед", "между", "через", "такой", "такая", "такие",
+    "более", "менее", "только", "всегда", "иногда", "потому", "поэтому", "когда", "тогда", "например",
+    "пишется", "пишутся", "ставится", "называется", "является", "входит", "бывает", "бывают", "значит"]);
+  const foreignText = others.slice(0, 25).map(o => kbNormText(o.text)).join(" ");
+  const titleStems = kbNormText(topic.title).split(" ").filter(w => w.length >= 4).map(w => w.slice(0, 5));
+  const ownWords = [];
+  for (const s2 of trainerSentences(topic.text)) {
+    for (const raw of s2.split(" ")) {
+      const w = trainerCleanWord(raw);
+      if (!w || w.length < 6 || stop.has(w.toLowerCase())) continue;
+      if (foreignText.includes(w.toLowerCase())) continue;
+      /* «процентов» на тему «Проценты» — не вопрос, а подсказка */
+      if (titleStems.some(st => w.toLowerCase().startsWith(st))) continue;
+      if (!ownWords.some(x => x.toLowerCase() === w.toLowerCase())) ownWords.push(w);
+    }
+  }
+  const topicNorm = kbNormText(topic.text);
+  const foreignWords = [];
+  for (const w of wordPool) {
+    if (foreignWords.length >= 30) break;
+    if (ownWords.some(x => x.toLowerCase() === w.toLowerCase())) continue;
+    if (stop.has(w.toLowerCase())) continue;
+    if (topicNorm.includes(w.toLowerCase())) continue;
+    if (titleStems.some(st => w.toLowerCase().startsWith(st))) continue;
+    foreignWords.push(w);
+  }
+  for (const rightWord of trainerShuffle(ownWords).slice(0, 1)) {
+    const wrong = trainerShuffle(foreignWords.filter(w => w !== rightWord)).slice(0, 3);
+    if (wrong.length < 3) continue;
+    qs.push({
+      kind: "choice",
+      q: `Что относится к теме «${topic.title}»?`,
+      right: rightWord,
+      options: trainerShuffle([rightWord, ...wrong]),
+      explain: `«${rightWord}» встречается в теме «${topic.title}», остальные слова — из других тем.`
+    });
+  }
+
+  /* 5. Своими словами — открытый вопрос, проверка по ключевым словам.
+        Больше двух не берём: такую проверку легко оспорить. */
+  for (const d of defs.slice(0, 2)) {
+    qs.push({
+      kind: "open",
+      q: `Объясни своими словами: «${d.term}»`,
+      right: d.def,
+      explain: `В базе: ${d.term} — ${d.def}.`,
+      keys: trainerKeys(d.term + " " + d.def)
+    });
+  }
+
+  /* Одинаковые вопросы в одном подходе бессмысленны */
+  const uniq = [...new Map(qs.map(q => [q.q, q])).values()];
+  return trainerShuffle(uniq).slice(0, n);
+}
+
+/* Ключевые слова ответа для проверки открытого вопроса */
+function trainerKeys(text) {
+  const stop = new Set(["который", "которая", "которые", "этого", "этому", "также", "чтобы", "может", "можно",
+    "нужно", "очень", "после", "перед", "между", "через", "такой", "такая", "такие", "более", "менее"]);
+  return [...new Set(kbNormText(text).split(" ").filter(w => w.length >= 4 && !stop.has(w)))].slice(0, 12);
+}
+function trainerCheckOpen(answer, keys) {
+  const words = new Set(kbNormText(answer).split(" ").filter(Boolean));
+  if (!words.size) return false;
+  let hit = 0;
+  for (const k of keys) {
+    const stem = k.slice(0, Math.max(4, k.length - 2));
+    for (const w of words) {
+      if (w.startsWith(stem)) { hit++; break; }
+    }
+  }
+  return keys.length ? hit / keys.length >= 0.4 : false;
+}
+
+/* ---------- Состояние тренажёра ---------- */
+const trainerState = { topic: null, questions: [], index: 0, right: 0, wrong: [], done: false };
+
+function openTrainer(topicTitle) {
+  const m = $("#trainerModal");
+  if (!m) return;
+  m.classList.add("open");
+  const all = trainerAllTopics();
+  trainerState.all = all;
+  if (topicTitle) {
+    const found = all.find(t => kbNormText(t.title) === kbNormText(topicTitle));
+    if (found) return trainerStart(found);
+  }
+  trainerShowPicker();
+}
+function closeTrainer() {
+  const m = $("#trainerModal");
+  if (m) m.classList.remove("open");
+}
+/* Кнопки закрытия привязываем один раз, когда окно уже есть в разметке */
+function wireTrainer() {
+  const close = $("#trClose");
+  if (close) close.onclick = closeTrainer;
+  const m = $("#trainerModal");
+  if (m) m.addEventListener("click", (e) => { if (e.target === m) closeTrainer(); });
+}
+
+function trainerShowPicker() {
+  trainerState.done = false;
+  const box = $("#trainerBody");
+  if (!box) return;
+  const all = trainerState.all || trainerAllTopics();
+  const stats = trainerStats();
+  const weak = Object.entries(stats)
+    .filter(([, s]) => s && s.asked >= 3 && (s.right / s.asked) * 100 < TRAINER_PASS)
+    .sort((a, b) => (a[1].right / a[1].asked) - (b[1].right / b[1].asked))
+    .slice(0, 5);
+
+  box.innerHTML =
+    `<div class="tr-hint">Выбери тему — задам несколько вопросов и скажу, что западает. Вопросы берутся из базы Искры, интернет не нужен.</div>` +
+    `<input type="search" id="trSearch" class="tr-search" placeholder="Найти тему: рубец, квадратные уравнения, проценты…" autocomplete="off" />` +
+    (weak.length
+      ? `<div class="tr-weak-title">Слабые места</div><div class="tr-topics" id="trWeak">` +
+        weak.map(([title, s]) => `<button class="tr-topic tr-topic-weak" data-topic="${esc(title)}">` +
+          `<b>${esc(title)}</b><span>${Math.round((s.right / s.asked) * 100)}% верно из ${s.asked}</span></button>`).join("") +
+        `</div>`
+      : "") +
+    `<div class="tr-weak-title">Все темы <span class="tr-count" id="trCount"></span></div>` +
+    `<div class="tr-topics" id="trTopics"></div>`;
+
+  const fill = (q) => {
+    const list = $("#trTopics");
+    if (!list) return;
+    const needle = kbNormText(q);
+    const found = (needle ? all.filter(t => kbNormText(t.title).includes(needle) || kbNormText(t.text).includes(needle)) : all).slice(0, 40);
+    $("#trCount").textContent = needle ? `найдено ${found.length}` : `${all.length} тем`;
+    list.innerHTML = found.length
+      ? found.map(t => {
+          const s = stats[t.title];
+          const pct = s && s.asked ? Math.round((s.right / s.asked) * 100) : null;
+          return `<button class="tr-topic" data-topic="${esc(t.title)}"><b>${esc(t.title)}</b>` +
+            `<span>${pct === null ? "ещё не проходили" : `${pct}% верно`}</span></button>`;
+        }).join("")
+      : `<div class="tr-empty">Ничего не нашлось. Попробуй другое слово.</div>`;
+    list.querySelectorAll("[data-topic]").forEach(b => {
+      b.onclick = () => {
+        const t = all.find(x => x.title === b.dataset.topic);
+        if (t) trainerStart(t);
+      };
+    });
+  };
+  fill("");
+  const search = $("#trSearch");
+  if (search) {
+    search.oninput = () => fill(search.value);
+    search.focus();
+  }
+  $("#trWeak") && $("#trWeak").querySelectorAll("[data-topic]").forEach(b => {
+    b.onclick = () => {
+      const t = all.find(x => x.title === b.dataset.topic);
+      if (t) trainerStart(t);
+    };
+  });
+}
+
+function trainerStart(topic) {
+  const all = trainerState.all || trainerAllTopics();
+  trainerState.all = all;
+  trainerState.topic = topic;
+  trainerState.questions = trainerBuildQuestions(topic, all, TRAINER_ROUND);
+  trainerState.index = 0;
+  trainerState.right = 0;
+  trainerState.wrong = [];
+  trainerState.done = false;
+  if (!trainerState.questions.length) {
+    const box = $("#trainerBody");
+    if (box) box.innerHTML = `<div class="tr-empty">По этой теме не получается собрать вопросы — в ней нет подходящих предложений. Выбери другую.</div>
+      <div class="modal-foot"><button class="btn btn-ghost" id="trBack">Выбрать тему</button></div>`;
+    const back = $("#trBack");
+    if (back) back.onclick = trainerShowPicker;
+    return;
+  }
+  trainerAsk();
+}
+
+function trainerAsk() {
+  const st = trainerState;
+  const box = $("#trainerBody");
+  if (!box) return;
+  const q = st.questions[st.index];
+  const pct = Math.round((st.index / st.questions.length) * 100);
+  const head = `<div class="tr-top">
+      <button class="tr-exit" id="trExit" title="Закончить и показать итог">←</button>
+      <span class="tr-topicname">${esc(st.topic.title)}</span>
+      <span class="tr-progress">${st.index + 1} из ${st.questions.length} · ${st.right} верно</span>
+    </div>
+    <div class="tr-bar"><i style="width:${pct}%"></i></div>`;
+
+  if (q.kind === "choice") {
+    box.innerHTML = head + `<div class="tr-q">${esc(q.q).replace(/\n/g, "<br>")}</div>
+      <div class="tr-opts">${q.options.map((o, i) => `<button class="tr-opt" data-i="${i}">${esc(o)}</button>`).join("")}</div>
+      <div class="tr-feedback" id="trFb"></div>`;
+    box.querySelectorAll(".tr-opt").forEach(b => {
+      b.onclick = () => {
+        if (box.dataset.answered === "1") return;
+        box.dataset.answered = "1";
+        const chosen = q.options[Number(b.dataset.i)];
+        const ok = chosen === q.right;
+        box.querySelectorAll(".tr-opt").forEach(x => {
+          x.classList.add("locked");
+          if (x.textContent === q.right) x.classList.add("right");
+        });
+        if (!ok) b.classList.add("wrong");
+        trainerRecord(ok, q);
+        const fb = $("#trFb");
+        fb.innerHTML = `<div class="tr-fb ${ok ? "ok" : "bad"}">${ok ? "Верно" : "Неверно"}</div>
+          <div class="tr-explain">${esc(q.explain)}</div>
+          <button class="btn tr-next" id="trNext">${st.index + 1 >= st.questions.length ? "Итог" : "Дальше"}</button>`;
+        $("#trNext").onclick = trainerNext;
+      };
+    });
+    box.dataset.answered = "0";
+  } else {
+    box.innerHTML = head + `<div class="tr-q">${esc(q.q)}</div>
+      <textarea class="tr-open" id="trOpen" rows="4" placeholder="Ответь своими словами — зачту, если суть верная"></textarea>
+      <div class="tr-feedback" id="trFb"></div>
+      <button class="btn" id="trCheck">Проверить</button>`;
+    const check = $("#trCheck");
+    const input = $("#trOpen");
+    if (input) input.focus();
+    check.onclick = () => {
+      if (box.dataset.answered === "1") return;
+      const val = (input.value || "").trim();
+      if (val.length < 3) { toast("Напиши ответ — хотя бы пару слов", "err"); return; }
+      box.dataset.answered = "1";
+      const ok = trainerCheckOpen(val, q.keys || []);
+      trainerRecord(ok, q);
+      input.disabled = true;
+      check.hidden = true;
+      $("#trFb").innerHTML = `<div class="tr-fb ${ok ? "ok" : "bad"}">${ok ? "Зачтено" : "Пока нет"}</div>
+        <div class="tr-explain">${esc(q.explain)}</div>
+        <button class="btn tr-next" id="trNext">${st.index + 1 >= st.questions.length ? "Итог" : "Дальше"}</button>`;
+      $("#trNext").onclick = trainerNext;
+    };
+    box.dataset.answered = "0";
+  }
+  const exit = $("#trExit");
+  if (exit) exit.onclick = () => { trainerFinish(true); };
+}
+
+function trainerRecord(ok, q) {
+  const st = trainerState;
+  if (ok) st.right++; else st.wrong.push({ q: q.q.split("\n")[0], explain: q.explain });
+}
+
+function trainerNext() {
+  const st = trainerState;
+  st.index++;
+  if (st.index >= st.questions.length) return trainerFinish(false);
+  trainerAsk();
+}
+
+function trainerFinish(quitEarly) {
+  const st = trainerState;
+  const asked = quitEarly ? st.index : st.questions.length;
+  const right = st.right;
+  /* Итоги пишем, только если реально что-то прошли */
+  if (asked > 0 && st.topic) {
+    const stats = trainerStats();
+    const key = st.topic.title;
+    const cur = stats[key] || { asked: 0, right: 0 };
+    stats[key] = { asked: cur.asked + asked, right: cur.right + right, at: Date.now() };
+    trainerSaveStats(stats);
+    try { answerCachePut("", ""); } catch (e) {}
+    /* Неудачные вопросы кладём в память, чтобы в следующий раз спросить их первыми */
+    if (st.wrong.length) {
+      try {
+        const weakKey = "iskra.trainer.weak.v1";
+        const weak = JSON.parse(localStorage.getItem(weakKey) || "{}") || {};
+        weak[key] = st.wrong.slice(0, 10);
+        localStorage.setItem(weakKey, JSON.stringify(weak));
+      } catch (e) {}
+    }
+  }
+  const box = $("#trainerBody");
+  if (!box) return;
+  const pct = asked ? Math.round((right / asked) * 100) : 0;
+  const verdict = pct >= 90 ? "Отлично — тема держится."
+    : pct >= TRAINER_PASS ? "Нормально, но есть провалы."
+    : asked ? "Слабо — стоит повторить тему." : "Ни одного вопроса не пройдено.";
+  box.innerHTML = `<div class="tr-top"><span class="tr-topicname">${esc(st.topic ? st.topic.title : "Тренажёр")}</span></div>
+    <div class="tr-result">
+      <div class="tr-big">${right} / ${asked}</div>
+      <div class="tr-pct">${pct}%</div>
+      <div class="tr-verdict">${verdict}</div>
+    </div>` +
+    (st.wrong.length
+      ? `<div class="tr-weak-title">Что западает</div><ul class="tr-wrong">` +
+        st.wrong.map(w => `<li><b>${esc(w.q)}</b><span>${esc(w.explain)}</span></li>`).join("") + `</ul>`
+      : "") +
+    `<div class="modal-foot">
+      <button class="btn btn-ghost" id="trPick">Другая тема</button>
+      ${st.topic ? `<button class="btn" id="trAgain">Ещё раз</button>` : ""}
+    </div>`;
+  const pick = $("#trPick");
+  if (pick) pick.onclick = trainerShowPicker;
+  const again = $("#trAgain");
+  if (again) again.onclick = () => trainerStart(st.topic);
+}
+
+/* ---------- 4. Точные модули: физика и проценты ----------
+   Модель ошибается именно там, где нужно аккуратно перевести единицы
+   и подставить в формулу. Эти расчёты делает код, а модель только
+   объясняет ход: числа в ответе будут верные. */
+
+/* Число из русского текста: «1,5» и «1.5» — одно и то же */
+function exNum(s) { const v = parseFloat(String(s).replace(",", ".")); return isFinite(v) ? v : null; }
+function exRound(v, d) {
+  const k = Math.pow(10, d == null ? 2 : d);
+  return String(Math.round(v * k) / k).replace(".", ",");
+}
+
+/* Единицы к базовым: метры, секунды, килограммы */
+const EX_UNITS = {
+  "км": { kind: "len", k: 1000, name: "км" },
+  "м": { kind: "len", k: 1, name: "м" },
+  "см": { kind: "len", k: 0.01, name: "см" },
+  "мм": { kind: "len", k: 0.001, name: "мм" },
+  "км/ч": { kind: "speed", k: 1 / 3.6, name: "км/ч" },
+  "м/с": { kind: "speed", k: 1, name: "м/с" },
+  "час": { kind: "time", k: 3600, name: "ч" },
+  "ч": { kind: "time", k: 3600, name: "ч" },
+  "минут": { kind: "time", k: 60, name: "мин" },
+  "мин": { kind: "time", k: 60, name: "мин" },
+  "секунд": { kind: "time", k: 1, name: "с" },
+  "сек": { kind: "time", k: 1, name: "с" },
+  "с": { kind: "time", k: 1, name: "с" },
+  "кг": { kind: "mass", k: 1, name: "кг" },
+  "г": { kind: "mass", k: 0.001, name: "г" },
+  "т": { kind: "mass", k: 1000, name: "т" },
+  "литр": { kind: "vol", k: 0.001, name: "л" },
+  "л": { kind: "vol", k: 0.001, name: "л" },
+  "м³": { kind: "vol", k: 1, name: "м³" },
+  "м3": { kind: "vol", k: 1, name: "м³" },
+  "см³": { kind: "vol", k: 0.000001, name: "см³" },
+  "см3": { kind: "vol", k: 0.000001, name: "см³" },
+  "н": { kind: "force", k: 1, name: "Н" },
+  "па": { kind: "press", k: 1, name: "Па" },
+  "кпа": { kind: "press", k: 1000, name: "кПа" },
+  "дж": { kind: "energy", k: 1, name: "Дж" },
+  "кдж": { kind: "energy", k: 1000, name: "кДж" },
+  "вт": { kind: "power", k: 1, name: "Вт" },
+  "квт": { kind: "power", k: 1000, name: "кВт" },
+  "в": { kind: "volt", k: 1, name: "В" },
+  "а": { kind: "amp", k: 1, name: "А" },
+  "ом": { kind: "ohm", k: 1, name: "Ом" }
+};
+
+/* Слово после числа → единица. Пишут по-разному: «3 часа», «3 ч», «2,5 минуты».
+   Поэтому длинные формы стоят первыми, а короткие — только целым словом. */
+function exUnit(token) {
+  const t = String(token || "").toLowerCase();
+  if (!t) return null;
+  if (EX_UNITS[t]) return EX_UNITS[t];
+  if (/^час/.test(t)) return EX_UNITS["час"];
+  if (/^минут/.test(t)) return EX_UNITS["минут"];
+  if (/^секунд/.test(t)) return EX_UNITS["секунд"];
+  if (/^литр/.test(t)) return EX_UNITS["литр"];
+  if (/^килограмм/.test(t)) return EX_UNITS["кг"];
+  if (/^грамм/.test(t)) return EX_UNITS["г"];
+  if (/^тонн/.test(t)) return EX_UNITS["т"];
+  return null;
+}
+
+/* Все «число + единица» в тексте. Формы слов учитываем: «3 часа» — это время. */
+function exValues(text) {
+  const re = /(\d+(?:[.,]\d+)?)\s*(км\/ч|м\/с|см³|см3|м³|м3|кПа|кДж|кВт|килограмм[аов]*|грамм[аов]*|тонн[аы]?|часов|часа|час|минут[аы]?|минута|секунд[аы]?|секунда|литр[аов]*|сек|км|см|мм|кг|мг|м|т|ч|мин|с|л|г|н|па|дж|вт|в|а|ом)(?![а-яёa-z])/gi;
+  const out = [];
+  let m;
+  while ((m = re.exec(String(text || "")))) {
+    const u = exUnit(m[2]);
+    if (!u) continue;
+    const v = exNum(m[1]);
+    if (v === null) continue;
+    out.push({ raw: m[1], value: v, unit: m[2].toLowerCase(), kind: u.kind, base: v * u.k, name: u.name, index: m.index });
+  }
+  return out;
+}
+
+/* Физика: только те связки, где формула однозначна */
+function findPhysics(text) {
+  const src = String(text || "");
+  const low = src.toLowerCase().replace(/ё/g, "е");
+  const vals = exValues(src);
+  const pick = (kind) => vals.filter(v => v.kind === kind);
+  const res = [];
+
+  /* Путь: скорость и время */
+  const sp = pick("speed"), tm = pick("time"), ln = pick("len");
+  if (sp.length && tm.length && /путь|расстоян|проехал|прошёл|прошел|пролет|сколько километров|какой путь/.test(low)) {
+    const v = sp[0], t = tm[0];
+    if (!ln.length) {
+      const s = v.base * t.base;
+      const steps = [];
+      if (v.unit === "км/ч") steps.push(`${v.raw} км/ч = ${exRound(v.base, 2)} м/с (делим на 3,6)`);
+      if (t.unit !== "с") steps.push(`${t.raw} ${t.name} = ${exRound(t.base, 0)} с`);
+      steps.push(`S = v · t = ${exRound(v.base, 3)} · ${exRound(t.base, 0)} = ${exRound(s, 1)} м = ${exRound(s / 1000, 2)} км`);
+      res.push({ area: "физика", title: "Путь по скорости и времени", formula: "S = v · t",
+        given: `v = ${v.raw} ${v.name}, t = ${t.raw} ${t.name}`,
+        answer: `${exRound(s / 1000, 2)} км (${exRound(s, 1)} м)`, steps });
+    }
+  }
+
+  /* Время: путь и скорость */
+  if (ln.length && sp.length && !tm.length && /за сколько|сколько времени|время в пути|сколько часов|сколько минут/.test(low)) {
+    const s = ln[0], v = sp[0];
+    const t = s.base / v.base;
+    res.push({ area: "физика", title: "Время по пути и скорости", formula: "t = S / v",
+      given: `S = ${s.raw} ${s.name}, v = ${v.raw} ${v.name}`,
+      answer: `${exRound(t / 3600, 2)} ч (${exRound(t / 60, 1)} мин, ${exRound(t, 1)} с)`,
+      steps: [`S = ${exRound(s.base, 1)} м, v = ${exRound(v.base, 2)} м/с`,
+              `t = S / v = ${exRound(s.base, 1)} / ${exRound(v.base, 2)} = ${exRound(t, 2)} с`] });
+  }
+
+  /* Плотность */
+  const ms = pick("mass"), vol = pick("vol");
+  if (ms.length && vol.length && /плотност|ρ|ро\b/.test(low)) {
+    const m = ms[0], V = vol[0];
+    const rho = m.base / V.base;
+    res.push({ area: "физика", title: "Плотность", formula: "ρ = m / V",
+      given: `m = ${m.raw} ${m.name}, V = ${V.raw} ${V.name}`,
+      answer: `${exRound(rho, 1)} кг/м³ (${exRound(rho / 1000, 2)} г/см³)`,
+      steps: [`m = ${exRound(m.base, 3)} кг, V = ${exRound(V.base, 6)} м³`,
+              `ρ = m / V = ${exRound(rho, 1)} кг/м³`] });
+  }
+
+  /* Сила тяжести */
+  if (ms.length && /(сил[ауые]?\s+тяжест|вес\s+тел|найти вес|какой вес|сила притяжен|найти силу тяжест)/.test(low) && !pick("force").length) {
+    const m = ms[0];
+    res.push({ area: "физика", title: "Сила тяжести", formula: "F = m · g",
+      given: `m = ${m.raw} ${m.name}, g = 9,8 м/с²`,
+      answer: `${exRound(m.base * 9.8, 1)} Н (при g = 10 — ${exRound(m.base * 10, 1)} Н)`,
+      steps: [`m = ${exRound(m.base, 3)} кг`, `F = m · g = ${exRound(m.base, 3)} · 9,8 = ${exRound(m.base * 9.8, 1)} Н`] });
+  }
+
+  /* Давление: сила и площадь — площадь обычно в м² или см² */
+  const ar = (src.match(/(\d+(?:[.,]\d+)?)\s*(см2|см²|м2|м²)/gi) || []).map(x => x);
+  if (ar.length && pick("force").length && /давлен/.test(low)) {
+    const F = pick("force")[0];
+    const a = exNum(ar[0].replace(/[^\d,.]/g, ""));
+    const isSm = /см/.test(ar[0]);
+    const S = a * (isSm ? 0.0001 : 1);
+    const p = F.base / S;
+    res.push({ area: "физика", title: "Давление", formula: "p = F / S",
+      given: `F = ${F.raw} Н, S = ${ar[0].trim()}`,
+      answer: `${exRound(p, 1)} Па (${exRound(p / 1000, 2)} кПа)`,
+      steps: [`S = ${exRound(S, 6)} м²`, `p = F / S = ${F.raw} / ${exRound(S, 6)} = ${exRound(p, 1)} Па`] });
+  }
+
+  /* Закон Ома */
+  const u = pick("volt"), r = pick("ohm"), i = pick("amp");
+  if (u.length && r.length && !i.length) {
+    const I = u[0].base / r[0].base;
+    res.push({ area: "физика", title: "Закон Ома", formula: "I = U / R",
+      given: `U = ${u[0].raw} В, R = ${r[0].raw} Ом`,
+      answer: `${exRound(I, 3)} А`,
+      steps: [`I = U / R = ${u[0].raw} / ${r[0].raw} = ${exRound(I, 3)} А`] });
+  }
+  const asksPower = /мощност|ватт|квт/.test(low);
+  const asksResist = /сопротивлен|ом\b/.test(low);
+  if (u.length && i.length && !r.length && !asksPower) {
+    const R = u[0].base / i[0].base;
+    res.push({ area: "физика", title: "Сопротивление по закону Ома", formula: "R = U / I",
+      given: `U = ${u[0].raw} В, I = ${i[0].raw} А`,
+      answer: `${exRound(R, 2)} Ом`,
+      steps: [`R = U / I = ${u[0].raw} / ${i[0].raw} = ${exRound(R, 2)} Ом`] });
+  }
+  if (u.length && i.length && !asksResist) {
+    res.push({ area: "физика", title: "Мощность тока", formula: "P = U · I",
+      given: `U = ${u[0].raw} В, I = ${i[0].raw} А`,
+      answer: `${exRound(u[0].base * i[0].base, 1)} Вт`,
+      steps: [`P = U · I = ${u[0].raw} · ${i[0].raw} = ${exRound(u[0].base * i[0].base, 1)} Вт`] });
+  }
+
+  /* Мощность через работу и время */
+  const en = pick("energy"), pw = pick("power");
+  if (en.length && tm.length && !pw.length && /мощност/.test(low)) {
+    const P = en[0].base / tm[0].base;
+    res.push({ area: "физика", title: "Мощность", formula: "N = A / t",
+      given: `A = ${en[0].raw} ${en[0].name}, t = ${tm[0].raw} ${tm[0].name}`,
+      answer: `${exRound(P, 1)} Вт`,
+      steps: [`A = ${exRound(en[0].base, 1)} Дж, t = ${exRound(tm[0].base, 1)} с`,
+              `N = A / t = ${exRound(P, 1)} Вт`] });
+  }
+
+  return res.slice(0, 2);
+}
+
+/* Проценты: скидки, наценки, вклады, «сколько процентов от» */
+function findPercents(text) {
+  const src = String(text || "").replace(/\u00a0/g, " ");
+  const low = src.toLowerCase().replace(/ё/g, "е");
+  const res = [];
+  const N = "(\\d+(?:[.,]\\d+)?)";
+  const num = (s) => exNum(s);
+
+  /* «сколько процентов составляет A от B» */
+  let m = low.match(new RegExp("сколько\\s+(?:процентов|%)\\s+составляет\\s+" + N + "\\s+от\\s+" + N));
+  if (m && num(m[2]) !== 0) {
+    const a = num(m[1]), b = num(m[2]);
+    const p = (a / b) * 100;
+    res.push({ area: "проценты", title: "Сколько процентов одно число от другого", formula: "p = A / B · 100 %",
+      given: `A = ${m[1]}, B = ${m[2]}`,
+      answer: `${exRound(p, 2)} %`,
+      steps: [`p = ${m[1]} / ${m[2]} · 100 % = ${exRound(p, 2)} %`] });
+  }
+
+  /* Скидка: «скидка 20 % от 1500» или «товар 1500 со скидкой 20 %» */
+  m = low.match(new RegExp("скидк[а-я]*\\s*(?:в\\s*)?" + N + "\\s*(?:%|процент[а-я]*)[^\\d]{0,20}" + N))
+    || low.match(new RegExp(N + "[^\\d%]{0,25}скидк[а-я]*\\s*(?:в\\s*)?" + N + "\\s*(?:%|процент)"));
+  if (m) {
+    let price = num(m[1]), disc = num(m[2]);
+    if (disc > 100) { const t = price; price = disc; disc = t; }
+    if (price && disc != null && disc <= 100) {
+      const save = price * disc / 100, pay = price - save;
+      res.push({ area: "проценты", title: "Скидка", formula: "цена − цена · p / 100",
+        given: `цена = ${exRound(price, 2)}, скидка = ${exRound(disc, 2)} %`,
+        answer: `${exRound(pay, 2)} (экономия ${exRound(save, 2)})`,
+        steps: [`скидка = ${exRound(disc, 2)} % от ${exRound(price, 2)} = ${exRound(save, 2)}`,
+                `к оплате = ${exRound(price, 2)} − ${exRound(save, 2)} = ${exRound(pay, 2)}`] });
+    }
+  }
+
+  /* Наценка / увеличить на p % */
+  m = low.match(new RegExp("(?:наценк[а-я]*|увелич[а-я]*|подорожал[а-я]*)[^\\d]{0,25}" + N + "\\s*(?:%|процент[а-я]*)[^\\d]{0,25}" + N))
+    || low.match(new RegExp(N + "[^\\d%]{0,25}(?:наценк[а-я]*|увелич[а-я]*|подорожал[а-я]*)[^\\d]{0,15}" + N + "\\s*(?:%|процент)"));
+  if (m) {
+    let base = num(m[1]), pct = num(m[2]);
+    if (pct > 100) { const t = base; base = pct; pct = t; }
+    if (base && pct != null && pct <= 100) {
+      const add = base * pct / 100, total = base + add;
+      res.push({ area: "проценты", title: "Наценка (увеличение на p %)", formula: "A + A · p / 100",
+        given: `A = ${exRound(base, 2)}, p = ${exRound(pct, 2)} %`,
+        answer: `${exRound(total, 2)}`,
+        steps: [`прибавка = ${exRound(add, 2)}`, `итого = ${exRound(base, 2)} + ${exRound(add, 2)} = ${exRound(total, 2)}`] });
+    }
+  }
+
+  /* Вклад под p % годовых на n лет */
+  m = low.match(new RegExp("(?:вклад|депозит|положил[а-я]*|внес[а-я]*)[^\\d]{0,30}" + N + "[^\\d%]{0,30}" + N + "\\s*(?:%|процент)[^\\d]{0,20}" + N + "\\s*(?:год|лет|года)"));
+  if (m) {
+    const sum = num(m[1]), pct = num(m[2]), years = num(m[3]);
+    if (sum && pct != null && years) {
+      const simple = sum * (1 + pct * years / 100);
+      const compound = sum * Math.pow(1 + pct / 100, years);
+      res.push({ area: "проценты", title: "Вклад: простой и сложный процент",
+        formula: "S = A · (1 + p·n/100) — простой; S = A · (1 + p/100)ⁿ — сложный",
+        given: `A = ${exRound(sum, 2)}, p = ${exRound(pct, 2)} %, n = ${exRound(years, 0)}`,
+        answer: `простой: ${exRound(simple, 2)}; сложный: ${exRound(compound, 2)}`,
+        steps: [`простой: ${exRound(sum, 2)} · (1 + ${exRound(pct, 2)} · ${exRound(years, 0)} / 100) = ${exRound(simple, 2)}`,
+                `сложный: ${exRound(sum, 2)} · (1 + ${exRound(pct, 2)}/100)^${exRound(years, 0)} = ${exRound(compound, 2)}`] });
+    }
+  }
+
+  /* Просто «p % от A» — если не скидка и не наценка */
+  if (!res.length) {
+    m = low.match(new RegExp(N + "\\s*(?:%|процент[а-я]*)\\s*(?:от\\s*)" + N));
+    if (m) {
+      const pct = num(m[1]), A = num(m[2]);
+      if (pct != null && A) {
+        const v = A * pct / 100;
+        res.push({ area: "проценты", title: "Проценты от числа", formula: "A · p / 100",
+          given: `A = ${exRound(A, 2)}, p = ${exRound(pct, 2)} %`,
+          answer: `${exRound(v, 2)}`,
+          steps: [`${exRound(pct, 2)} % от ${exRound(A, 2)} = ${exRound(A, 2)} · ${exRound(pct, 2)} / 100 = ${exRound(v, 2)}`] });
+      }
+    }
+  }
+  return res.slice(0, 2);
+}
+
+function findExactModules(text) {
+  const out = [];
+  try { out.push(...findPercents(text)); } catch (e) {}
+  try { out.push(...findPhysics(text)); } catch (e) {}
+  return out.slice(0, 3);
+}
+
+/* Блок для промпта: модель пересказывает, но не пересчитывает */
+function exactPromptBlock(items) {
+  if (!items.length) return "";
+  const lines = items.map(it =>
+    `• ${it.area}: ${it.title}. Дано: ${it.given}. Формула: ${it.formula}. Ответ: ${it.answer}. Ход: ${it.steps.join("; ")}.`);
+  return "ТОЧНЫЙ РАСЧЁТ (посчитан кодом, ошибки нет — используй эти числа и ход решения, сам не пересчитывай):\n" + lines.join("\n");
+}
+
+/* Плашка под ответом: человек видит, что числа проверены */
+function exactAnswerNote(items) {
+  if (!items || !items.length) return "";
+  return "\n\n_Проверено расчётом: " + items.map(it => `${it.title} — ${it.answer}`).join("; ") + "._";
 }
 
 /* ---------- 3. Калькулятор (точные вычисления) ---------- */
@@ -12707,6 +13936,216 @@ function mathCorrectionNote(found) {
   return "\n\n_Пересчитала сама: " + lines.join("; ") + "._";
 }
 
+/* ---------- 5. Озвучка ответа (без ключей и денег) ----------
+   Речь собирает сам браузер: speechSynthesis. Ничего не уходит в сеть,
+   никаких аккаунтов. Длинный ответ режем на куски по предложениям —
+   иначе некоторые браузеры обрывают речь на середине. */
+
+let ttsState = { msgId: null, queue: [], index: 0, stopped: false, voice: null };
+
+function ttsSupported() {
+  return typeof window !== "undefined" && "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
+}
+
+/* Голос: сначала русский, лучше локальный — он работает без интернета */
+function ttsPickVoice() {
+  try {
+    const voices = window.speechSynthesis.getVoices() || [];
+    const ru = voices.filter(v => /^ru(\b|-)/i.test(v.lang || ""));
+    if (!ru.length) return null;
+    return ru.find(v => v.localService) || ru[0];
+  } catch (e) { return null; }
+}
+
+/* Текст для речи: без разметки, формул и кусков кода.
+   Код вслух — это бесконечное «фигурная скобка», поэтому его пропускаем. */
+function ttsPlain(text) {
+  let t = String(text || "");
+  t = t.replace(/```[\s\S]*?```/g, " (код на экране) ");
+  t = t.replace(/`([^`]+)`/g, "$1");
+  t = t.replace(/\$\$[\s\S]*?\$\$/g, " формула ");
+  t = t.replace(/!\[[^\]]*\]\([^)]*\)/g, " ");
+  t = t.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+  t = t.replace(/^\s{0,3}#{1,6}\s*/gm, "");
+  t = t.replace(/[*_~]{1,3}/g, "");
+  t = t.replace(/^\s*[-–—|]\s*/gm, "");
+  t = t.replace(/\|/g, " ");
+  t = t.replace(/https?:\/\/\S+/g, " ссылка ");
+  t = t.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  return t.slice(0, 12000);
+}
+
+/* Делим на куски до 220 знаков, не разрывая слова и по возможности предложения */
+function ttsChunks(text) {
+  const clean = ttsPlain(text);
+  /* Без lookbehind: на старых Safari он роняет весь скрипт при разборе файла */
+  const sentences = clean.match(/[^.!?…;:]+[.!?…;:]*/g) || [clean];
+  const out = [];
+  let cur = "";
+  for (const s of sentences) {
+    if (!s) continue;
+    if (s.length > 220) {
+      if (cur) { out.push(cur); cur = ""; }
+      let rest = s;
+      while (rest.length > 220) {
+        let cut = rest.lastIndexOf(" ", 220);
+        if (cut < 120) cut = 220;
+        out.push(rest.slice(0, cut).trim());
+        rest = rest.slice(cut).trim();
+      }
+      if (rest) cur = rest;
+      continue;
+    }
+    if ((cur + " " + s).length > 220) { out.push(cur); cur = s; }
+    else cur = cur ? cur + " " + s : s;
+  }
+  if (cur) out.push(cur);
+  return out.filter(Boolean);
+}
+
+function ttsStop() {
+  ttsState.stopped = true;
+  ttsState.msgId = null;
+  ttsState.queue = [];
+  ttsState.index = 0;
+  try { window.speechSynthesis.cancel(); } catch (e) {}
+  ttsPaintButtons();
+}
+
+/* Кнопка показывает, что происходит: «Озвучить» → «Стоп» */
+function ttsPaintButtons() {
+  document.querySelectorAll('.msg .actions button[data-act="speak"]').forEach(b => {
+    const on = ttsState.msgId && b.dataset.msg === ttsState.msgId;
+    b.innerHTML = on ? `${ic("x", 14)} Стоп` : `${ic("play", 14)} Озвучить`;
+    b.classList.toggle("speaking", !!on);
+  });
+}
+
+function ttsToggle(msgId, text) {
+  if (!ttsSupported()) {
+    toast("Этот браузер не умеет читать вслух. Попробуй Chrome, Edge или Safari.", "err");
+    return;
+  }
+  if (ttsState.msgId === msgId) { ttsStop(); return; }
+  ttsStop();
+  const chunks = ttsChunks(text);
+  if (!chunks.length) { toast("Тут нечего читать: один код или картинки", "err"); return; }
+  const synth = window.speechSynthesis;
+  try { synth.cancel(); } catch (e) {}
+  ttsState = { msgId, queue: chunks, index: 0, stopped: false, voice: ttsPickVoice() };
+  ttsPaintButtons();
+  ttsSpeakNext();
+}
+
+function ttsSpeakNext() {
+  if (ttsState.stopped || ttsState.index >= ttsState.queue.length) { ttsStop(); return; }
+  const synth = window.speechSynthesis;
+  const u = new window.SpeechSynthesisUtterance(ttsState.queue[ttsState.index]);
+  if (ttsState.voice) u.voice = ttsState.voice;
+  u.lang = (ttsState.voice && ttsState.voice.lang) || "ru-RU";
+  u.rate = 1;
+  u.pitch = 1;
+  u.onend = () => {
+    if (ttsState.stopped) return;
+    ttsState.index++;
+    setTimeout(() => { if (!ttsState.stopped) ttsSpeakNext(); }, 60);
+  };
+  u.onerror = () => {
+    /* Без русского голоса браузер может отказаться читать. Не молчим. */
+    if (!ttsState.stopped) {
+      ttsStop();
+      toast("Не получилось прочитать: в браузере нет русского голоса. Он ставится в настройках системы.", "err");
+    }
+  };
+  try { synth.speak(u); } catch (e) { ttsStop(); }
+}
+
+/* Голоса подгружаются не сразу — обновим, когда браузер их отдаст */
+if (ttsSupported() && typeof window.speechSynthesis.addEventListener === "function") {
+  window.speechSynthesis.addEventListener("voiceschanged", () => {
+    if (ttsState.msgId) ttsState.voice = ttsState.voice || ttsPickVoice();
+  });
+}
+
+/* ---------- 6. Печать и PDF ----------
+   На бумаге не должно быть тёмного фона, кнопок и боковых панелей.
+   Поэтому собираем отдельный лист: вопрос, ответ, источники — чёрным по белому. */
+
+function printStamp() {
+  try {
+    return new Date().toLocaleString("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch (e) { return ""; }
+}
+
+/* Текст сообщения бывает строкой или списком частей (текст + фото) */
+function printMsgText(m) {
+  if (!m) return "";
+  if (typeof m.content === "string") return m.content;
+  if (Array.isArray(m.content)) {
+    return m.content.filter(p => p && p.type === "text").map(p => p.text || "").join("\n");
+  }
+  return "";
+}
+
+function printAreaFill(inner) {
+  let area = document.getElementById("printArea");
+  if (!area) {
+    area = document.createElement("div");
+    area.id = "printArea";
+    document.body.appendChild(area);
+  }
+  const title = (getCurrentChat() && getCurrentChat().title) || "Разговор";
+  area.innerHTML = `<div class="pr-head"><b>Искра</b><span>${printStamp()}</span></div>` +
+    `<div class="pr-title">${esc(title)}</div>` + inner;
+  /* В отрендеренном ответе есть кнопки (например, «Скачать» у кода).
+     На бумаге они бесполезны — убираем. */
+  area.querySelectorAll("button").forEach(b => b.remove());
+  return area;
+}
+
+function printGo() {
+  document.body.classList.add("printing");
+  let printed = false;
+  try { window.print(); printed = true; } catch (e) {}
+  setTimeout(() => document.body.classList.remove("printing"), printed ? 300 : 50);
+}
+
+function printMessage(id) {
+  const chat = getCurrentChat();
+  if (!chat) return;
+  const i = chat.messages.findIndex(m => m.id === id);
+  if (i < 0) return;
+  const msg = chat.messages[i];
+  let q = null;
+  for (let k = i - 1; k >= 0; k--) {
+    if (chat.messages[k].role === "user") { q = chat.messages[k]; break; }
+  }
+  const qText = printMsgText(q).trim();
+  const aText = printMsgText(msg).trim();
+  printAreaFill(
+    (qText ? `<div class="pr-q">${esc(qText)}</div>` : "") +
+    `<div class="pr-a">${renderMarkdown(aText)}</div>` +
+    (msg.sources && msg.sources.length
+      ? `<div class="pr-src">Источники: ${msg.sources.map(s => esc(String(s.title || s.url || ""))).filter(Boolean).join("; ")}</div>`
+      : "")
+  );
+  printGo();
+}
+
+function printChat() {
+  const chat = getCurrentChat();
+  if (!chat || !chat.messages.length) { toast("Разговор пустой — печатать нечего", "err"); return; }
+  const body = chat.messages.map(m => {
+    const t = printMsgText(m).trim();
+    if (!t) return "";
+    return m.role === "user"
+      ? `<div class="pr-q">${esc(t)}</div>`
+      : `<div class="pr-a">${renderMarkdown(t)}</div>`;
+  }).join("");
+  printAreaFill(body);
+  printGo();
+}
+
 /* ---------- Стриминг ---------- */
 
 
@@ -12926,6 +14365,8 @@ function buildSystemPromptLite(userText = "") {
   }
   const calcs = findCalcs(userText);
   if (calcs.length) sys += `\n\nТочный расчёт: ${calcs.map(c => c.expr + " = " + c.value).join("; ")}.`;
+  const exactLite = findExactModules(userText);
+  if (exactLite.length) sys += "\n\n" + exactPromptBlock(exactLite);
   const chemLite = findChemBalances(userText);
   if (chemLite.length) sys += `\n\n${chemPromptBlock(chemLite)}`;
   sys += `\n\nСегодня: ${new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}.`;
@@ -13076,6 +14517,10 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   /* Тот же вопрос уже был недавно — отвечаем сразу, не дожидаясь чужих лимитов */
   const cacheKey = answerCacheKey(trimmed, images, settings.webSearch);
   const cachedText = answerCacheGet(cacheKey);
+  /* Расчёт по физике и процентам — один раз на вопрос. Если ответ взяли
+     из кэша, плашка не нужна: она уже была в сохранённом тексте. */
+  let exactMsgs = [];
+  try { exactMsgs = findExactModules(trimmed); } catch (e) { exactMsgs = []; }
   if (cachedText) {
     aiMsg.content = cachedText;
     aiMsg.pending = false;
@@ -13216,6 +14661,8 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       aiMsg.masked = true;
       toast("Убрала крепкие слова: они доступны только в Pro", "err");
     }
+    /* Физика и проценты: показываем, что числа проверены расчётом */
+    if (exactMsgs.length) acc += exactAnswerNote(exactMsgs);
     /* Самопроверка арифметики: поймали ошибку в счёте — дописали верное число */
     const mathFixes = auditAnswerMath(acc);
     if (mathFixes.length) {
@@ -17306,6 +18753,7 @@ function renderKbCards() {
       <p>${esc(it.text)}</p>
       <div class="kb-acts">
         <button data-ask="${esc(it.learned ? it.title : it.id)}" data-learned="${it.learned ? "1" : ""}" data-shared="${it.shared ? "1" : ""}">${ic("chat", 14)} Спросить Искру</button>
+        <button data-train="${esc(it.title)}">${ic("check", 14)} Проверить себя</button>
         ${it.learned
           ? `<button data-forget="${esc(it.id)}">${ic("trash", 14)} Забыть</button>`
           : `<button data-learn="${esc(it.title)}">${ic("book", 14)} Выучить глубже</button>`}
@@ -17346,6 +18794,12 @@ function renderKbCards() {
       autoresize();
     }
     toast("Тема подставлена в чат — отправь сообщение", "ok");
+  });
+  box.querySelectorAll("[data-train]").forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    const title = b.dataset.train;
+    const m = $("#knowModal"); if (m) m.classList.remove("open");
+    openTrainer(title);
   });
   box.querySelectorAll("[data-learn]").forEach(b => b.onclick = () => {
     const t = b.dataset.learn;
@@ -18502,6 +19956,15 @@ function closeRules() { $("#rulesModal").classList.remove("open"); }
 function wire() {
   // Бренд в DOM
   $("#brandName").textContent = BRAND.name;
+
+  // Новая папка для чатов
+  const nf = $("#newFolderBtn");
+  if (nf) nf.addEventListener("click", () => {
+    const name = prompt("Как назвать папку? Например: «Учёба» или «Работа»");
+    if (!name || !String(name).trim()) return;
+    const f = newFolder(name);
+    if (f) { renderChatsList(); toast(`Папка «${f.name}» создана`, "ok"); }
+  });
   document.title = `${BRAND.name} — ИИ-ассистент`;
 
   // Composer
@@ -19028,6 +20491,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (cb) cb.addEventListener("click", () => { cb.disabled = true; cb.textContent = "Проверяю…"; runSelfCheck().finally(() => { cb.disabled = false; cb.textContent = "Проверить ИИ"; }); });
   wire();
   wireTools();
+  wireTrainer();
   initScrollWatcher();
   /* Сообщения о заявке на смену страны: показываем, как только они появились.
      Если владелец решает в другой вкладке этого же браузера — ловим сразу. */
@@ -19193,6 +20657,18 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
 
+
+<!-- ================= Тренажёр ================= -->
+<div class="modal-bg" id="trainerModal">
+  <div class="modal">
+    <h2>
+      <svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+      Тренажёр
+      <button type="button" class="tr-exit" id="trClose" style="margin-left:auto" title="Закрыть">✕</button>
+    </h2>
+    <div id="trainerBody"></div>
+  </div>
+</div>
 
 <!-- ================= Аккаунт ================= -->
 <div id="profileMenu"></div>
