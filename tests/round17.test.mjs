@@ -250,7 +250,7 @@ await test("account.access объясняет причину, а не «ниче
 /* ---------- Версии ---------- */
 await test("версии подняты", async () => {
   assert(pkg.version === "1.35.0", "версия сайта: " + pkg.version);
-  assert(/version:\s*"0\.8\.0"/.test(brandJs), "версия Sye не 0.8.0");
+  assert(/version:\s*"0\.9\.0"/.test(brandJs), "версия Sye не 0.9.0");
 });
 
 await test("новый тест подключён к npm test", async () => {

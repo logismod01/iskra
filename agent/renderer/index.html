@@ -235,6 +235,33 @@
       </section>
 
       <section>
+        <h3>Версия</h3>
+        <div class="lic-card">
+          <div class="lic-row"><span>Установлено</span><b id="updCurrent">—</b></div>
+          <div class="lic-row"><span>На сайте</span><b id="updLatest">не проверяли</b></div>
+        </div>
+        <p class="hint" id="updNote">Проверка только смотрит на сайт. Скачивать и ставить ничего не будет — покажешь, что вышло нового.</p>
+        <div class="row">
+          <button class="ghost" id="updCheckBtn">Проверить обновление</button>
+          <button class="ghost" id="updOpenBtn" hidden>Открыть страницу</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Память</h3>
+        <div class="lic-card">
+          <div class="lic-row"><span>Задач в памяти</span><b id="memTasks">0</b></div>
+          <div class="lic-row"><span>Папок</span><b id="memFolders">0</b></div>
+        </div>
+        <div class="mem-list" id="memList"></div>
+        <p class="hint">Sye помнит, что уже делал в этой папке: не переспрашивает про сборку и тесты и может повторить вчерашнюю задачу. Память лежит на этом компьютере и никуда не уходит.</p>
+        <div class="row">
+          <button class="ghost" id="memForgetBtn">Забыть эту папку</button>
+          <button class="ghost" id="memForgetAllBtn">Забыть всё</button>
+        </div>
+      </section>
+
+      <section>
         <h3>Маскот</h3>
         <div class="mascot-grid" id="mascotGrid"></div>
         <p class="mascot-about" id="mascotAbout"></p>
