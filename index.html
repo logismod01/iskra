@@ -3277,9 +3277,13 @@ html.no-anim .theme-flash { display: none; }
           <div class="conn-result" id="connResult"></div>
           <div class="set-adv-inner" style="display:block;margin-top:12px">
             <b>Что даёт ключ.</b> Без ключа Искра отвечает бесплатными движками: коротко и по делу,
-            но на сложных задачах они слабее. С ключом отвечает сильная модель: длинные объяснения,
-            разбор задачи по шагам, сочинения и код получаются заметно лучше. Ключ бесплатный,
+            но на сложных задачах они слабее. С ключом на сложных задачах включается сильная модель:
+            разбор по шагам, доказательства, сочинения и код получаются заметно лучше. На простых
+            вопросах — та же быстрая модель, чтобы не жечь лимит. Ключ бесплатный,
             карту привязывать не нужно, счёт за запросы не приходит.
+            <br><b>Проверка честная:</b> «Проверить ключ» отправляет живой запрос и быстрой, и сильной
+            модели. Если сильная упёрлась в лимит или недоступна на этом ключе — я так и напишу,
+            а не буду делать вид, что ключ дал ум.
           </div>
         </details>
       </div>
@@ -11009,10 +11013,19 @@ function orderedEnginesFor(payload, needVision) {
      а бесплатный лимит у неё заметно меньше. */
   const base = hard ? all : all.filter(e => !e.pro);
   if (!hard) return base;
-  /* сильные вперёд, крупные за ними, мелкие — только страховкой в конце */
-  return base.filter(e => !e.small && e.pro)
+  /* Проверка ключа выяснила, что сильная модель в лимите или недоступна —
+     не тратим на неё первую попытку, отвечаем сразу быстрой. */
+  const proOk = settings.keyPro !== "limit" && settings.keyPro !== "no";
+  const head = proOk ? base.filter(e => !e.small && e.pro) : [];
+  /* сильные вперёд, крупные за ними, мелкие — только страховкой в конце.
+     Если сильная в лимите, она остаётся в самом конце: попробуем, только
+     когда всё остальное промолчало. */
+  const tail = proOk
+    ? base.filter(e => e.small)
+    : base.filter(e => !e.small && e.pro).concat(base.filter(e => e.small));
+  return head
     .concat(base.filter(e => !e.small && !e.pro))
-    .concat(base.filter(e => e.small));
+    .concat(tail);
 }
 
 /* ---------- Характеры ---------- */
@@ -11192,6 +11205,9 @@ function loadSettings() {
     keyVerified: "",
     keyVerifiedAt: 0,
     keyModel: "",
+    /* что выяснили про сильную модель: null — не проверяли, ok / limit / no */
+    keyPro: null,
+    keyProModel: "",
     lite: "auto",
     animations: true,
     bigText: false,
@@ -13134,7 +13150,7 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
       const key = (box2.querySelector("#failKeyInput").value || "").trim();
       const parsed = parseKeys(key);
       if (key && !parsed.length) { toast("Ключ не распознан. Нужен ключ со зрением — AQ.…, AIza… или gsk_….", "err"); return; }
-      settings.apiKey = key;
+      rememberKey(key);
       settings.provider = parsed.length ? (detectKeyKind(parsed[0])?.provider || "custom") : "custom";
       saveSettings(); updateComposerNote();
       toast(key ? "Ключ сохранён — повторяю с фото" : "Ключ убран", "ok");
@@ -13185,7 +13201,7 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
       toast("Такой ключ не распознан. Вставь его целиком или очисти поле, чтобы отвечала без ключа.", "err");
       return;
     }
-    settings.apiKey = key;
+    rememberKey(key);
     settings.provider = parsed.length ? (detectKeyKind(parsed[0])?.provider || "custom") : "custom";
     saveSettings(); updateComposerNote();
     toast(key ? "Ключ сохранён — повторяю вопрос" : "Ключ убран — отвечаю без него", "ok");
@@ -15851,6 +15867,37 @@ function keyIsVerified() {
   if (!k) return false;
   return !!settings.keyVerified && settings.keyVerified === keyTag(k);
 }
+/* Что выяснили про сильную модель. Сбрасываем при смене ключа:
+   у другого ключа может быть другой лимит. */
+function markKeyPro(state, model) {
+  settings.keyPro = state || null;
+  settings.keyProModel = String(model || "");
+  try { saveSettings(); } catch (e) {}
+}
+function resetKeyPro() {
+  settings.keyPro = null;
+  settings.keyProModel = "";
+}
+/* Ставим ключ так, чтобы статус сильной модели не переезжал на другой ключ. */
+function rememberKey(next) {
+  const v = String(next || "").trim();
+  if (v !== String(settings.apiKey || "").trim()) resetKeyPro();
+  settings.apiKey = v;
+  return v;
+}
+function keyProLine() {
+  if (settings.keyPro === "ok") {
+    return "На сложных задачах включается <b>сильная модель</b> — она и даёт ум: разбор по шагам, доказательства, код.";
+  }
+  if (settings.keyPro === "limit") {
+    return "Сильная модель сейчас в лимите — на сложных задачах отвечает быстрая. Лимит обновляется за сутки, дальше станет лучше.";
+  }
+  if (settings.keyPro === "no") {
+    return "Сильная модель на этом ключе не отвечает — значит на сложных задачах будет обычная. Проверка ключа это показала.";
+  }
+  return "Сильную модель ещё не проверяли. Нажми «Проверить ключ» — скажу честно, включится она или нет.";
+}
+
 function markKeyWorking(model) {
   const k = String(settings.apiKey || "").trim();
   if (!k) return;
@@ -17680,9 +17727,11 @@ function updateComposerNote() {
     return;
   }
   const key = String(settings.apiKey || "").trim();
+  const strong = settings.keyPro === "ok";
   n.textContent = key
     ? (keyIsVerified()
-      ? "Искра · отвечает твоим ключом" + (settings.keyModel ? " (" + String(settings.keyModel).split("/").pop() + ")" : "") + ". Ключ хранится только в этом браузере."
+      ? "Искра · отвечает твоим ключом" + (settings.keyModel ? " (" + String(settings.keyModel).split("/").pop() + ")" : "") +
+        (strong ? " · на сложном включается сильная модель" : "") + ". Ключ хранится только в этом браузере."
       : "Искра · свой ключ подключён. Напиши что-нибудь — проверю, что он отвечает.")
     : "Искра · работает без ключа и регистрации. Важное проверяй сам.";
 }
@@ -17776,8 +17825,37 @@ async function probeGeminiNative(key, kind, ctrl) {
   return { state: "model", status: last || 404 };
 }
 
-async function probeKey(key) {
-  const kind = detectKeyKind(key);
+/* Отдельная проверка сильной модели. Её зовём только на сложных задачах, и
+   бесплатный лимит у неё маленький — поэтому проверяем один раз и запоминаем,
+   чтобы не тратить попытки впустую на каждом вопросе. */
+async function probeProModel(key, kind) {
+  if (!kind || kind.native !== "gemini" || !(kind.proModels || []).length) return { state: "none" };
+  const model = String(kind.proModels[0]).replace(/^models\//, "");
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 20000);
+  try {
+    const r = await fetch(geminiNativeUrl(model, "generateContent"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": String(key) },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: "Скажи одно слово: привет" }] }],
+        generationConfig: { maxOutputTokens: 16 }
+      }),
+      signal: ctrl.signal
+    });
+    if (r.ok) return { state: "ok", model, status: 200 };
+    if (r.status === 429 || r.status === 402) return { state: "limit", model, status: r.status };
+    if (r.status === 401 || r.status === 403) return { state: "auth", model, status: r.status };
+    return { state: "no", model, status: r.status };
+  } catch (e) {
+    /* сети нет — это не приговор ключу: ничего не запоминаем */
+    return { state: "net", model, status: 0 };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function probeKey(key) {  const kind = detectKeyKind(key);
   if (!kind) return { state: "unknown", status: 0 };
   const ctrl = new AbortController();
   const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 20000);
@@ -17877,11 +17955,33 @@ async function testConnection() {
     if (results.every(r => r.state === "net")) text = "Не удалось проверить: нет связи. Ключ всё равно сохраню.";
     cls = "err";
   }
-  if (box) { box.className = "conn-result " + cls; box.textContent = text; }
   /* Проверка прошла — значит ключ правда работает. Запоминаем это,
      чтобы строка под полем ввода больше не сомневалась. */
   const firstOk = results.find(r => r.state === "ok");
   if (firstOk) markKeyWorking(firstOk.model);
+
+  /* Отдельно — сильная модель. Ключ без неё почти не меняет ум, поэтому
+     человек должен видеть правду сразу, а не догадываться по ответам. */
+  let proNote = "";
+  const okIndex = results.findIndex(r => r.state === "ok");
+  if (okIndex >= 0) {
+    const kind = detectKeyKind(keys[okIndex]);
+    const pr = await probeProModel(keys[okIndex], kind);
+    if (pr.state === "ok") {
+      markKeyPro("ok", pr.model);
+      proNote = " Сильная модель для сложных задач тоже отвечает — она включится на задачах, доказательствах и коде.";
+    } else if (pr.state === "limit") {
+      markKeyPro("limit", pr.model);
+      proNote = " Сильная модель сейчас в лимите: на сложных задачах пока ответит быстрая, через сутки станет лучше.";
+    } else if (pr.state === "auth" || pr.state === "no") {
+      markKeyPro("no", pr.model);
+      proNote = " Сильная модель на этом ключе не отвечает — на сложных задачах будет обычная.";
+    }
+  }
+  if (box) {
+    box.className = "conn-result " + cls;
+    box.textContent = text + proNote;
+  }
   paintKeyStatus();
 }
 
@@ -17900,7 +18000,8 @@ function paintKeyStatus() {
     const model = settings.keyModel ? String(settings.keyModel).split("/").pop() : "";
     box.className = "key-state ok";
     box.innerHTML = "Ключ работает" + (model ? " — отвечает <b>" + esc(model) + "</b>" : "") +
-      (when ? " (проверен " + esc(when) + ")" : "") + ". Хранится только в этом браузере.";
+      (when ? " (проверен " + esc(when) + ")" : "") + ". Хранится только в этом браузере." +
+      "<br>" + keyProLine();
     return;
   }
   box.className = "key-state wait";
@@ -21350,7 +21451,7 @@ async function consoleRun(raw) {
   }
   if (c === "key") {
     if (!arg) return "Формат: key <api-ключ>";
-    settings.apiKey = arg; saveSettings();
+    rememberKey(arg); saveSettings();
     return "Ключ записан (провайдер: " + settings.provider + ").";
   }
   if (c === "lock") {
@@ -22002,6 +22103,7 @@ function wire() {
   $("#testConn") && $("#testConn").addEventListener("click", testConnection);
   $("#keyClear") && $("#keyClear").addEventListener("click", () => {
     settings.apiKey = ""; settings.provider = "custom"; settings.baseUrl = ""; settings.customModel = "";
+    resetKeyPro();
     settings.keyVerified = ""; settings.keyVerifiedAt = 0; settings.keyModel = "";
     saveSettings();
     const bu = $("#baseUrl"); if (bu) bu.value = "";
@@ -22097,7 +22199,7 @@ function wire() {
     /* Ключей может быть два: вид определяем по первому, а не по всей строке. */
     const firstKey = parseKeys(key)[0] || "";
     const kind = firstKey ? detectKeyKind(firstKey) : null;
-    settings.apiKey = key;
+    rememberKey(key);
     settings.baseUrl = ($("#baseUrl")?.value || "").trim();
     settings.customModel = ($("#customModel")?.value || "").trim();
     settings.provider = kind ? kind.provider : "custom";
