@@ -12,7 +12,7 @@ module.exports = {
   tagline: "Пишет код, чинит баги, читает скриншоты и делает работу за тебя",
   accent: "#d97757",
   bg: "#141413",
-  version: "0.9.0",
+  version: "0.10.0",
   site: "https://logismod01.github.io/iskra/",
   telegram: "@Yehndhkw",
   /**

@@ -20,10 +20,13 @@ const path = require("node:path");
 
 const PER_FOLDER = 30;      // сколько задач помним по одной папке
 const IN_PROMPT = 5;        // сколько подсказываем модели
+const GAPS_MAX = 8;         // сколько «пробелов» помним (опросов, на которые нет темы)
 const FILE = "sye-memory.json";
 
 let file = "";
-let data = { folders: {} };  // { [путь]: [ {task, summary, files, at, ok} ] }
+/* gaps — то, о чём спрашивали, а в базе не нашлось: это подсказка,
+   что стоит повторить или что владельцу стоит добавить в общую базу. */
+let data = { folders: {}, gaps: {} };  // { [путь]: [ {task, summary, files, at, ok} ] }
 
 function key(folder) {
   return String(folder || "").trim().replace(/[\\/]+$/, "").toLowerCase() || "(без папки)";
@@ -100,6 +103,53 @@ function recent(folder, limit) {
   return list.slice(0, Math.max(1, limit || PER_FOLDER));
 }
 
+/**
+ * Запомнить пробел: вопрос, на который в базе не нашлось темы.
+ * Храним по папке, без повторов, самое свежее сверху.
+ * Зачем: агент видит, что человек уже спрашивал, и не делает вид,
+ * что тема есть; а владелец может добавить её в общую базу.
+ */
+function noteGap(folder, topic) {
+  const t = cut(topic, 160);
+  if (!t) return null;
+  const k = key(folder);
+  if (!data.gaps) data.gaps = {};
+  const list = Array.isArray(data.gaps[k]) ? data.gaps[k] : [];
+  const same = list.find((x) => x.topic.toLowerCase() === t.toLowerCase());
+  if (same) {
+    same.at = Date.now();
+    same.times = (same.times || 1) + 1;
+  } else {
+    list.unshift({ topic: t, at: Date.now(), times: 1 });
+  }
+  data.gaps[k] = list.slice(0, GAPS_MAX);
+  save();
+  return data.gaps[k][0];
+}
+
+/** Пробелы по папке: от частого и свежего к старому. */
+function gaps(folder, limit) {
+  const list = (data.gaps && data.gaps[key(folder)]) || [];
+  return list
+    .slice()
+    .sort((a, b) => (b.times || 1) - (a.times || 1) || (b.at || 0) - (a.at || 0))
+    .slice(0, Math.max(1, limit || GAPS_MAX));
+}
+
+/** Блок для промпта: о чём уже спрашивали, а знания нет. */
+function gapBlock(folder, maxChars) {
+  const list = gaps(folder, 5);
+  if (!list.length) return "";
+  const lines = ["ПРОБЕЛЫ В ЗНАНИЯХ (спрашивали, а темы не нашлось — не выдумывай, скажи честно):"];
+  for (const it of list) {
+    lines.push("- " + it.topic + (it.times > 1 ? " (спрашивали " + it.times + " раза)" : ""));
+  }
+  let text = lines.join("\n");
+  const limit = maxChars || 500;
+  if (text.length > limit) text = text.slice(0, limit) + "…";
+  return text;
+}
+
 function forget(folder) {
   const k = key(folder);
   delete data.folders[k];
@@ -108,7 +158,7 @@ function forget(folder) {
 }
 
 function forgetAll() {
-  data = { folders: {} };
+  data = { folders: {}, gaps: {} };
   save();
   return true;
 }
@@ -117,7 +167,8 @@ function forgetAll() {
 function stats() {
   const folders = Object.keys(data.folders);
   const tasks = folders.reduce((n, k) => n + (data.folders[k] || []).length, 0);
-  return { folders: folders.length, tasks };
+  const gapCount = Object.keys(data.gaps || {}).reduce((n, k) => n + (data.gaps[k] || []).length, 0);
+  return { folders: folders.length, tasks, gaps: gapCount };
 }
 
 function when(ts) {
@@ -179,8 +230,9 @@ function reset() {
 }
 
 module.exports = {
-  FILE,
+  FILE, GAPS_MAX,
   setDir, remember, recent, forget, forgetAll, stats,
+  noteGap, gaps, gapBlock,
   promptBlock, similar, when, key, reset,
   _data: () => data
 };

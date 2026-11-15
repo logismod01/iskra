@@ -26,6 +26,10 @@ const CONFIG = {
 };
 
 const CACHE_FILE = "shared-kb.json";
+/* Офлайн-пакет: те же темы, что сайт держит внутри index.html.
+   Он лежит рядом с агентом и работает, когда сети нет вообще —
+   ни первый запуск, ни сохранённой копии ещё нет. */
+const PACK_FILE = "kb-pack.json";
 const TTL = 6 * 3600e3;
 /* Сколько тем держим в памяти. Раньше стояло 500 — и агент видел меньше
    половины базы (в ней уже 1300+ тем), потому что запрос шёл одной страницей.
@@ -172,10 +176,33 @@ async function saveCache(dir) {
   }
 }
 
-/** Старт приложения: сначала копия с диска, потом тихое обновление с сервера. */
+/**
+ * Офлайн-пакет: читает JSON вида { items: [{ topic, text, tags }] }.
+ * Нужен на самом первом запуске без интернета — иначе агент не знает
+ * ни одной темы, хотя они уже лежат в его же папке.
+ */
+async function loadPack(filePath) {
+  if (!filePath) return list();
+  try {
+    const raw = await fs.readFile(filePath, "utf8");
+    const saved = JSON.parse(raw);
+    if (saved && Array.isArray(saved.items) && saved.items.length) {
+      items = parseRows(saved.items);
+      loadedAt = Date.now();
+    }
+  } catch (e) {
+    /* файла нет или он битый — работаем дальше без него */
+  }
+  return list();
+}
+
+/** Старт приложения: сначала копия с диска (или офлайн-пакет), потом тихое обновление. */
 async function boot(dir, opts) {
+  const o = opts || {};
   await loadCache(dir);
-  const fresh = await refresh(opts);
+  /* Копии нет — берём встроенный пакет, чтобы знания были сразу. */
+  if (isEmpty() && o.packPath) await loadPack(o.packPath);
+  const fresh = await refresh(o);
   if (fresh.length) await saveCache(dir);
   return fresh;
 }
@@ -207,6 +234,32 @@ function search(query, limit) {
   return scored.slice(0, Math.max(1, limit || 3)).map((x) => x.item);
 }
 
+/**
+ * Пробел: вопрос, на который в базе нет темы.
+ * Отдаём сам вопрос (или пустую строку, если тема нашлась).
+ * Только для настоящих вопросов — очень короткие реплики пропускаем.
+ */
+function miss(task) {
+  const q = String(task || "").trim();
+  if (q.length < 8) return "";
+  const words = norm(q).split(/[^a-zа-я0-9]+/).filter((w) => w.length >= 5);
+  if (!words.length) return "";
+  /* Считаем не «хоть что-то похожее», а настоящие попадания:
+     слово из вопроса в названии или теге. Иначе «про» цеплялось
+     за «процесс» и пробел не находился никогда. */
+  let hits = 0;
+  for (const it of items) {
+    const title = norm(it.topic);
+    const tags = norm(it.tags);
+    for (const w of words) {
+      if (title.includes(w)) hits += 2;
+      else if (tags.includes(w)) hits += 1;
+    }
+  }
+  if (hits > 0) return "";
+  return q.length > 120 ? q.slice(0, 119) + "…" : q;
+}
+
 /** Что подставить в системный промпт под конкретную задачу. */
 function promptBlock(task, maxChars) {
   const found = search(task, 2);
@@ -227,7 +280,7 @@ function reset() {
 }
 
 module.exports = {
-  CONFIG, CACHE_FILE, TTL,
+  CONFIG, CACHE_FILE, PACK_FILE, TTL,
   parseRows, setItems, list, isEmpty, error, age, isFresh,
-  refresh, loadCache, saveCache, boot, search, promptBlock, reset
+  refresh, loadCache, saveCache, loadPack, boot, search, miss, promptBlock, reset
 };

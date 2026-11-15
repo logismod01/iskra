@@ -122,7 +122,7 @@ test("«забыть всё» стирает всё", () => {
   memory.remember("C:/one", { task: "Первая", at: 1000 });
   memory.remember("C:/two", { task: "Вторая", at: 1000 });
   memory.forgetAll();
-  assert.deepStrictEqual(memory.stats(), { folders: 0, tasks: 0 });
+  assert.deepStrictEqual(memory.stats(), { folders: 0, tasks: 0, gaps: 0 });
 });
 
 test("пустая задача в память не попадает", () => {
@@ -154,4 +154,30 @@ test("в сборке та же версия, что в brand.js и package.json
   const info = require("../../agent-version.json");
   assert.strictEqual(brand.version, pkg.version, "brand.js и package.json разошлись");
   assert.ok(version.cmp(info.version, pkg.version) >= 0, "на сайте указана версия старее сборки");
+});
+
+test("пробелы: вопрос без темы запоминается один раз и считается", () => {
+  memory.reset();
+  memory.noteGap("/work/a", "квантовая запутанность");
+  memory.noteGap("/work/a", "Квантовая запутанность");
+  const list = memory.gaps("/work/a");
+  assert.strictEqual(list.length, 1, "повтор не должен дублировать запись");
+  assert.strictEqual(list[0].times, 2);
+  assert.ok(memory.gapBlock("/work/a").includes("квантовая запутанность"));
+  assert.strictEqual(memory.gaps("/work/b").length, 0, "чужая папка не видит пробелы");
+  assert.strictEqual(memory.gapBlock("/work/b"), "");
+});
+
+test("пробелов не больше восьми, старые вытесняются", () => {
+  memory.reset();
+  for (let i = 0; i < 12; i++) memory.noteGap("/work/g", "тема " + i);
+  const list = memory.gaps("/work/g", 20);
+  assert.strictEqual(list.length, memory.GAPS_MAX);
+  assert.ok(list.some((x) => x.topic === "тема 11"), "свежий пробел на месте");
+});
+
+test("пустой пробел не записывается", () => {
+  memory.reset();
+  assert.strictEqual(memory.noteGap("/work/c", "   "), null);
+  assert.strictEqual(memory.gaps("/work/c").length, 0);
 });

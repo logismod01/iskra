@@ -26,7 +26,7 @@ const read = (p) => fs.readFileSync(new URL("../" + p, import.meta.url), "utf8")
 const html = read("index.html");
 const pkg = JSON.parse(read("package.json"));
 
-console.log("round31: умная часть 1.35.0");
+console.log("round31: умная часть 1.36.0");
 
 const vc = new VirtualConsole();
 vc.on("jsdomError", () => {});
@@ -141,8 +141,8 @@ await test("ответ Искры лежит карточкой, заголов�
   assert(/\.msg\.ai \.content h1[^{]*\{[^}]*Georgia/.test(html), "засечек нет");
 });
 
-await test("версия сайта и кэша — 1.35.0", async () => {
-  assert(pkg.version === "1.35.0", "версия сайта: " + pkg.version);
+await test("версия сайта и кэша — 1.36.0", async () => {
+  assert(pkg.version === "1.36.0", "версия сайта: " + pkg.version);
   assert(/const VERSION = "iskra-1\.35\.0";/.test(read("sw.js")), "версия кэша не совпадает");
 });
 
