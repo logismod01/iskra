@@ -14,6 +14,8 @@ const { exec, spawn } = require("node:child_process");
 
 const brand = require("./core/brand.js");
 const mascots = require("./core/mascots.js");
+const memory = require("./core/memory.js");
+const version = require("./core/version.js");
 const guard = require("./core/guard.js");
 const { createLicense } = require("./core/license.js");
 const { createAccount } = require("./core/account.js");
@@ -34,6 +36,9 @@ const FILES = {
   account: path.join(USER_DIR, "sye-account.json"),
   history: path.join(USER_DIR, "sye-history.json")
 };
+
+/* Память по папкам лежит рядом с настройками: переустановка её не трогает */
+memory.setDir(USER_DIR);
 
 let win = null;
 let tray = null;
@@ -168,6 +173,27 @@ function historyList() {
   const list = readJson(FILES.history, []);
   return Array.isArray(list) ? list.slice(0, 60) : [];
 }
+/**
+ * Память так, как её видит окно: сколько задач, по каким папкам и что было
+ * последним в текущей. Те же данные уходят и в state, и в канал memory:info.
+ */
+function memoryView() {
+  const recent = memory.recent(settings.workspace, 12);
+  return {
+    stats: memory.stats(),
+    folder: settings.workspace,
+    recent: recent.map((x) => ({
+      id: x.id,
+      task: x.task,
+      summary: x.summary,
+      files: x.files,
+      ok: x.ok,
+      at: x.at,
+      when: memory.when(x.at)
+    }))
+  };
+}
+
 function historyPush(item) {
   const list = historyList();
   list.unshift(item);
@@ -782,18 +808,36 @@ async function startTask(payload) {
       maxSteps: st.steps,
       onEvent: (e) => send(e)
     });
-    historyPush({
+    const entry = {
       id: taskId,
       task,
       final: result.final,
       ok: result.ok !== false,
       steps: result.steps,
       at: Date.now(),
-      state: st.state
-    });
+      state: st.state,
+      workspace: ctx.workspace,
+      files: result.files || []
+    };
+    historyPush(entry);
+    /* Память привязана к папке: в другом проекте этих задач не вспомнит */
+    try {
+      memory.remember(ctx.workspace, {
+        id: taskId,
+        task,
+        summary: result.final,
+        files: result.files || [],
+        ok: result.ok !== false,
+        at: entry.at
+      });
+    } catch (e) { /* память не должна ронять задачу */ }
     petReact(result && result.ok ? "done" : "error");
     if (win && !win.isDestroyed()) win.webContents.send("task:done", { taskId, result: { ok: result.ok, final: result.final, steps: result.steps, exhausted: !!result.exhausted, stopped: !!result.stopped } });
-    if (win && !win.isDestroyed()) win.webContents.send("history:changed", historyList());
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("history:changed", historyList());
+      /* память изменилась — окно обновит список «что уже делали» */
+      win.webContents.send("state:changed", { license: licenseView(), settings, brand, account: account.view(), memory: memoryView() });
+    }
     return { ok: true, taskId };
   } catch (e) {
     send({ type: "error", text: e.message || String(e) });
@@ -817,6 +861,47 @@ function wireIpc() {
   });
 
   ipcMain.handle("kb:info", () => kbInfo());
+
+  /* ---------- Память ---------- */
+  const memoryInfo = () => memoryView();
+  ipcMain.handle("memory:info", () => memoryInfo());
+  ipcMain.handle("memory:forget", (event, what) => {
+    if (what === "all") memory.forgetAll();
+    else memory.forget(settings.workspace);
+    return memoryInfo();
+  });
+  /* ---------- Обновление ----------
+     Смотрим version.json на сайте. Ничего не скачиваем и не ставим сами:
+     человек видит, что вышла новая версия, и решает сам. */
+  ipcMain.handle("update:check", async () => {
+    const current = app.getVersion();
+    try {
+      const res = await fetch(brand.site.replace(/\/+$/, "") + "agent-version.json?t=" + Date.now(), {
+        headers: { "User-Agent": "Sye Agent" }
+      });
+      if (!res.ok) return { ok: false, current, error: "Сервер ответил " + res.status };
+      const info = await res.json();
+      const latest = String((info && info.version) || "").trim();
+      if (!latest) return { ok: false, current, error: "В ответе нет версии" };
+      return {
+        ok: true,
+        current,
+        latest,
+        newer: version.isNewer(latest, current),
+        what: String(info.what || ""),
+        download: String(info.download || ""),
+        page: String(info.page || "")
+      };
+    } catch (e) {
+      return { ok: false, current, error: (e && e.message) || "нет связи" };
+    }
+  });
+
+  /* «Повтори вчерашнее»: отдаём задачу, а запускает её человек той же кнопкой */
+  ipcMain.handle("memory:similar", (event, query) => {
+    const found = memory.similar(settings.workspace, query);
+    return found ? { ok: true, task: found.task, at: found.at, when: memory.when(found.at) } : { ok: false };
+  });
   ipcMain.handle("kb:refresh", async () => {
     await shared.refresh({ force: true });
     await shared.saveCache(USER_DIR);
@@ -831,7 +916,8 @@ function wireIpc() {
     device: DEVICE_NAME,
     version: app.getVersion(),
     kb: kbInfo(),
-    history: historyList()
+    history: historyList(),
+    memory: memoryInfo()
   }));
 
   /* ---------- Аккаунт Искры ---------- */

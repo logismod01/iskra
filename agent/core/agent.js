@@ -12,6 +12,7 @@ const { parseModelOutput, formatCorrection, toolsPrompt } = require("./protocol.
 const guard = require("./guard.js");
 const { runTool } = require("./tools.js");
 const knowledge = require("./knowledge.js");
+const memory = require("./memory.js");
 const shared = require("./shared.js");
 const brand = require("./brand.js");
 
@@ -66,6 +67,8 @@ function systemPrompt(opts) {
     knowledge.promptBlock(task || "", 2600),
     // темы, которые владелец опубликовал для всех (сайт Искры пишет в ту же базу)
     shared.promptBlock(task || "", 1200),
+    // что уже делали именно в этой папке: чтобы не переспрашивать и не искать заново
+    memory.promptBlock(workspace, 900),
     "",
     "ФОРМАТ ОТВЕТА — строго один из двух вариантов, без лишнего текста:",
     '  1) действие: <action>{"tool":"имя","args":{...},"why":"зачем это делаю"}</action>',
@@ -102,6 +105,7 @@ function liteSystemPrompt(opts) {
     "ИНСТРУМЕНТЫ: " + toolNames + ".",
     knowledge.promptBlock(task || "", 900),
     shared.promptBlock(task || "", 500),
+    memory.promptBlock(workspace, 500),
     "ОТВЕЧАЙ РОВНО ОДНИМ ИЗ ДВУХ, без другого текста:",
     '  <action>{"tool":"имя","args":{...},"why":"зачем"}</action>',
     "  <final>что сделано и что проверить</final>",
@@ -172,13 +176,14 @@ async function runTask(opts) {
   let steps = 0;
   let lastText = "";
   let wroteFiles = false;   // трогал ли файлы
+  const touched = [];       // какие файлы менял — это уходит в память
   let ranCheck = false;     // запускал ли терминал
   let nudged = false;       // просили ли уже проверить результат
 
   while (steps < maxSteps) {
     if (signal && signal.aborted) {
       emit({ type: "stopped" });
-      return { ok: false, stopped: true, final: lastText || "Остановлено.", steps, events };
+      return { ok: false, stopped: true, final: lastText || "Остановлено.", steps, events, files: touched };
     }
 
     emit({ type: "thinking", step: steps + 1, maxSteps });
@@ -196,7 +201,7 @@ async function runTask(opts) {
     } catch (e) {
       if (e && e.name === "AbortError") {
         emit({ type: "stopped" });
-        return { ok: false, stopped: true, final: lastText || "Остановлено.", steps, events };
+        return { ok: false, stopped: true, final: lastText || "Остановлено.", steps, events, files: touched };
       }
       const msg = (e && e.message) || "движки не ответили";
       emit({ type: "error", text: msg });
@@ -223,7 +228,11 @@ async function runTask(opts) {
       }
       steps++;
       emit({ type: "action", action });
-      if (/^fs\.(write|append|replace|mkdir|delete)$/.test(action.tool)) wroteFiles = true;
+      if (/^fs\.(write|append|replace|mkdir|delete)$/.test(action.tool)) {
+        wroteFiles = true;
+        const fp = action.args && (action.args.path || action.args.file || action.args.name);
+        if (fp && !touched.includes(fp)) touched.push(String(fp));
+      }
       if (action.tool === "shell.run") ranCheck = true;
       const result = await runTool(action, ctx);
       const observation = {
@@ -242,7 +251,7 @@ async function runTask(opts) {
       });
       if (result.final) {
         emit({ type: "final", text: result.final });
-        return { ok: true, final: result.final, steps, events };
+        return { ok: true, final: result.final, steps, events, files: touched };
       }
       if (steps === maxSteps - 1) {
         messages.push({ role: "user", content: "Остался последний шаг. Заканчивай и дай <final> с итогом." });
@@ -268,7 +277,7 @@ async function runTask(opts) {
     summary = "Шаги закончились. Что успел — в журнале выше.";
   }
   emit({ type: "final", text: summary });
-  return { ok: true, final: summary, steps, events, exhausted: true };
+  return { ok: true, final: summary, steps, events, exhausted: true, files: touched };
 }
 
 function clampText(text, max) {

@@ -9,8 +9,9 @@ const state = {
   license: null,
   account: null,
   settings: null,
-  brand: { name: "Sye", version: "0.4.4" },
+  brand: { name: "Sye", version: "" },
   history: [],
+  memory: null,
   shot: null,
   running: false
 };
@@ -173,6 +174,50 @@ function renderHistory(list) {
   }
 }
 
+/* ---------- Память ----------
+   Агент помнит задачи по каждой папке. Здесь только показ и две кнопки:
+   «Повторить» подставляет старую задачу в поле ввода, но не запускает её —
+   последнее слово всегда за человеком. */
+function renderMemory(mem) {
+  if (mem) state.memory = mem;
+  const m = state.memory || { stats: { tasks: 0, folders: 0 }, recent: [] };
+  const tasks = $("#memTasks"); if (tasks) tasks.textContent = String(m.stats.tasks || 0);
+  const folders = $("#memFolders"); if (folders) folders.textContent = String(m.stats.folders || 0);
+  const box = $("#memList");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!(m.recent || []).length) {
+    const empty = document.createElement("div");
+    empty.className = "mem-empty";
+    empty.textContent = "Пока пусто. Сделаю первую задачу — и запомню.";
+    box.appendChild(empty);
+    return;
+  }
+  for (const it of m.recent) {
+    const row = document.createElement("div");
+    row.className = "mem-row" + (it.ok === false ? " bad" : "");
+    row.innerHTML = `<span class="mem-when">${esc(it.when || "")}</span>` +
+      `<span class="mem-task">${esc(it.task || "")}</span>`;
+    const again = document.createElement("button");
+    again.type = "button";
+    again.className = "mem-again";
+    again.textContent = "Повторить";
+    again.title = "Подставить в поле ввода";
+    again.addEventListener("click", () => {
+      const input = $("#input");
+      if (!input) return;
+      input.value = it.task || "";
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 180) + "px";
+      openDrawer(false);
+      input.focus();
+      toast("Задача в поле ввода — проверь и отправь");
+    });
+    row.appendChild(again);
+    box.appendChild(row);
+  }
+}
+
 function renderSettings() {
   const s = state.settings || {};
   $$('input[name="access"]').forEach((r) => { r.checked = r.value === (s.access || "folder"); });
@@ -186,8 +231,11 @@ function renderSettings() {
   const pTalk = $("#petTalk"); if (pTalk) pTalk.checked = s.petTalkMode !== "manual";
   const pRare = $("#petTalkRare"); if (pRare) pRare.checked = (s.petTalkMode || "rare") === "rare";
   const pMedia = $("#petMediaKeys"); if (pMedia) pMedia.checked = s.petMediaKeys !== false;
+  const cur = $("#updCurrent");
+  if (cur) cur.textContent = state.brand.version ? "v" + state.brand.version : "—";
   paintMascotGrid();
   paintMascots();
+  renderMemory();
   applyLook();
 }
 
@@ -490,6 +538,7 @@ function wireEvents() {
     if (payload.license) renderLicense(payload.license);
     if (payload.account) renderAccount(payload.account);
     if (payload.settings) { state.settings = payload.settings; renderWorkspace(payload.settings.workspace); renderSettings(); }
+    if (payload.memory) renderMemory(payload.memory);
     if (payload.brand) state.brand = payload.brand;
     if (payload.kb) renderKb(payload.kb);
   });
@@ -565,6 +614,45 @@ function wireUi() {
   });
 
   $("#openSettingsBtn").addEventListener("click", () => openDrawer(true));
+  /* Проверка обновления: ничего не ставит, только показывает */
+  const updBtn = $("#updCheckBtn");
+  if (updBtn) {
+    updBtn.addEventListener("click", async () => {
+      updBtn.disabled = true;
+      updBtn.textContent = "Смотрю…";
+      const res = await window.sye.checkUpdate();
+      updBtn.disabled = false;
+      updBtn.textContent = "Проверить обновление";
+      const latest = $("#updLatest");
+      const note = $("#updNote");
+      const open = $("#updOpenBtn");
+      if (!res || !res.ok) {
+        if (latest) latest.textContent = "не вышло";
+        if (note) note.textContent = "Не получилось узнать: " + ((res && res.error) || "нет связи") +
+          ". Это не поломка — просто проверь позже.";
+        return;
+      }
+      if (latest) latest.textContent = "v" + res.latest + (res.newer ? " — новее" : " — как у тебя");
+      if (note) note.textContent = res.newer
+        ? "Вышла новая версия. Что нового: " + (res.what || "см. страницу агента") + "."
+        : "У тебя последняя версия.";
+      if (open && res.newer) {
+        open.hidden = false;
+        open.onclick = () => window.sye.openExternal(res.download || res.page || "");
+      }
+    });
+  }
+
+  const memForget = $("#memForgetBtn");
+  if (memForget) memForget.addEventListener("click", async () => {
+    renderMemory(await window.sye.memoryForget("folder"));
+    toast("Забыл задачи этой папки");
+  });
+  const memForgetAll = $("#memForgetAllBtn");
+  if (memForgetAll) memForgetAll.addEventListener("click", async () => {
+    renderMemory(await window.sye.memoryForget("all"));
+    toast("Память очищена");
+  });
   $("#drawerClose").addEventListener("click", () => openDrawer(false));
   $("#drawer").addEventListener("click", (e) => { if (e.target.id === "drawer") openDrawer(false); });
 
@@ -810,6 +898,7 @@ function wirePresets() {
   renderLicense(s.license);
   renderHistory(s.history);
   renderKb(s.kb);
+  renderMemory(s.memory);
   renderSettings();
   applyLook();
   wirePresets();

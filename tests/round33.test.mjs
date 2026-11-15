@@ -1,5 +1,5 @@
 /**
- * Раунд 33: скорость, шесть маскотов и вся база у агента (1.34.0 / Sye 0.8.0).
+ * Раунд 33: скорость, шесть маскотов и вся база у агента (1.35.0 / Sye 0.9.0).
  *
  * Что было не так:
  *   1) окно тормозило: в потоке ответа каждый кусочек текста перерисовывал
@@ -155,10 +155,79 @@ await test("тема из общей базы попадает в промпт �
   shared.reset();
 });
 
+
+/* ---------- 6. Старт страницы ---------- */
+await test("база знаний не разбирается при загрузке", async () => {
+  assert(/<script type="application\/json" id="kbPack">/.test(html), "база снова лежит обычным скриптом");
+  assert(/function kbPack\(/.test(html), "нет ленивого разбора базы");
+  assert(/Object\.defineProperty\(window, "KNOWLEDGE_PACK"/.test(html), "KNOWLEDGE_PACK больше не подменяется лениво");
+  /* сам JSON должен быть валидным — иначе разбор молча вернёт пустоту */
+  const m = html.match(/<script type="application\/json" id="kbPack">([\s\S]*?)<\/script>/);
+  assert(m, "JSON-блок базы не найден");
+  const pack = JSON.parse(m[1]);
+  assert(pack.items.length > 700, "в базе меньше 700 тем: " + pack.items.length);
+});
+
+await test("вечные анимации не крутятся постоянно", async () => {
+  assert(!/\.brand-logo[^{]*\{[^}]*animation:\s*gradShift 7s ease infinite/.test(html), "логотип снова переливается вечно");
+  assert(/html\.quiet \.ambient/.test(html), "нет тихого режима для фона");
+  assert(/function quietWake\(/.test(html), "нет пробуждения из тихого режима");
+  assert(/visibilitychange/.test(html), "скрытая вкладка не переводит сайт в тихий режим");
+  assert(/QUIET_IDLE/.test(html), "нет времени до тихого режима");
+});
+
+await test("тихий режим не срабатывает на каждое движение мыши", async () => {
+  assert(/QUIET_STEP/.test(html), "движение мыши переставляет таймер без ограничения");
+});
+
+
+/* ---------- 7. Память и обновление у агента ---------- */
+await test("агент помнит, что делал в этой папке", async () => {
+  assert(agentHtml.includes('id="memList"'), "в настройках нет раздела памяти");
+  assert(/function renderMemory\(/.test(agentApp), "память не показывается");
+  assert(/memory\.promptBlock/.test(agentMain) || /memory\.promptBlock/.test(read("agent/core/agent.js")),
+    "память не попадает в промпт");
+  assert(/memory\.remember\(/.test(agentMain), "задачи не записываются в память");
+  assert(/memory\.setDir\(USER_DIR\)/.test(agentMain), "память не сохраняется между запусками");
+});
+
+await test("память можно стереть, и она не уходит в сеть", async () => {
+  assert(/memory:forget/.test(agentMain), "нет канала очистки памяти");
+  assert(agentHtml.includes('id="memForgetAllBtn"'), "нет кнопки «забыть всё»");
+  const mem = read("agent/core/memory.js");
+  assert(!/fetch\(|https?:\/\//.test(mem), "память ходит в сеть");
+});
+
+await test("«повторить» подставляет задачу, но не запускает её сама", async () => {
+  assert(/memorySimilar|memory:similar/.test(agentMain), "нет поиска похожей задачи");
+  assert(/Повторить/.test(agentApp), "нет кнопки «Повторить»");
+  /* подставленная задача попадает в поле ввода, а отправляет её человек */
+  const i = agentApp.indexOf("function renderMemory");
+  const body = agentApp.slice(i, i + 2600);
+  assert(/input\.value\s*=\s*it\.task/.test(body), "задача не подставляется в поле ввода");
+  assert(!/startTask\(/.test(body), "память запускает задачу сама");
+});
+
+await test("обновление проверяется, но не ставится само", async () => {
+  assert(/update:check/.test(agentMain), "нет проверки обновлений");
+  assert(agentApp.includes('id="updCheckBtn"') || agentApp.includes("updCheckBtn"), "нет кнопки проверки");
+  assert(read("agent/core/version.js").includes("isNewer"), "нет сравнения версий");
+  assert(!/autoUpdater|electron-updater/.test(agentMain), "появилось авто-обновление без спроса");
+});
+
+await test("версии агента совпадают в трёх местах", async () => {
+  const brand = read("agent/core/brand.js");
+  const info = JSON.parse(read("agent-version.json"));
+  const v = (brand.match(/version:\s*"([^"]+)"/) || [])[1];
+  assert(v, "в brand.js нет версии");
+  assert(v === agentPkg.version, "brand.js и package.json разошлись: " + v + " / " + agentPkg.version);
+  assert(v === info.version, "agent-version.json отстал: " + info.version + " вместо " + v);
+});
+
 /* ---------- 5. Версии ---------- */
 await test("версии подняты", async () => {
-  assert(pkg.version === "1.34.0", "версия сайта: " + pkg.version);
-  assert(agentPkg.version === "0.8.0", "версия агента: " + agentPkg.version);
+  assert(pkg.version === "1.35.0", "версия сайта: " + pkg.version);
+  assert(agentPkg.version === "0.9.0", "версия агента: " + agentPkg.version);
 });
 
 if (!process.exitCode) console.log("round33: " + passed + " проверок пройдено");
