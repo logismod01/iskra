@@ -3251,13 +3251,14 @@ html.no-anim .theme-flash { display: none; }
           <div class="hint" style="margin-top:6px">
             <b>Как это сделать — три шага.</b><br>
             1. Открой <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">страницу с бесплатным ключом</a> и войди своим аккаунтом.<br>
-            2. Нажми там кнопку создания ключа — получишь строку, которая начинается на <b>AIza…</b>. Скопируй её целиком.<br>
+            2. Нажми там кнопку создания ключа — получишь строку. Новые ключи начинаются на <b>AQ.…</b>, старые — на <b>AIza…</b>. Скопируй её целиком.<br>
             3. Вставь сюда и нажми «Проверить ключ». Если всё хорошо, ниже появится «Ключ работает».
           </div>
           <div class="hint" style="margin-top:6px">
             Такой ключ видит фото (домашку с листа сфотографировать достаточно) и даёт более сильную модель для длинных объяснений.
-            Он бесплатный, карту привязывать не нужно, счёт за запросы не приходит. Ключ начинается на <b>AIza…</b> или <b>gsk_…</b> —
-            Искра сама поймёт, какой он, и включит нужное.
+            Он бесплатный, карту привязывать не нужно, счёт за запросы не приходит. Ключ начинается на <b>AQ.…</b>, <b>AIza…</b> или <b>gsk_…</b> —
+            Искра сама поймёт, какой он, и включит нужное.<br>
+            <b>Без лишних обещаний:</b> на простых вопросах разницы почти нет — Искра и без ключа отвечает теми же бесплатными движками. Зато на сложных задачах с ключом включается более сильная модель, и ключ видит фото.
             Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.
             <br><b>Если сервис не открывается из твоей страны</b> — ключ не заработает, и обойти это нельзя. Тогда остаются
             бесплатные движки: они отвечают без ключа, просто слабее. Нажми «Проверить ключ» — я скажу честно, что получилось.
@@ -10714,8 +10715,12 @@ const KEY_PROVIDERS = {
   },
   /* Google AI Studio: ключ бесплатный, фото видит, работает прямо из браузера */
   gemini: {
-    base: "https://generativelanguage.googleapis.com/v1beta/openai", keyed: true, list: true, vision: true,
-    models: ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"]
+    base: "https://generativelanguage.googleapis.com/v1beta/openai",
+    nativeBase: "https://generativelanguage.googleapis.com/v1beta",
+    keyed: true, list: true, vision: true, native: "gemini",
+    models: ["gemini-3.8-flash", "gemini-2.5-flash"],
+    /* сильная модель есть и на бесплатном тарифе: её зовём только на сложное */
+    proModels: ["gemini-2.5-pro"]
   },
   huggingface: {
     base: "https://router.huggingface.co/v1", keyed: true, list: true,
@@ -10740,7 +10745,10 @@ function guessVision(id) {
 function detectKeyKind(key) {
   const k = String(key || "").trim();
   if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", base: KEY_PROVIDERS.groq.base, models: KEY_PROVIDERS.groq.models };
-  if (/^AIza[A-Za-z0-9_\-]{30,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.base, models: KEY_PROVIDERS.gemini.models };
+  if (/^AIza[A-Za-z0-9_\-]{30,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.base, models: KEY_PROVIDERS.gemini.models, native: "gemini", proModels: KEY_PROVIDERS.gemini.proModels };
+  /* Новые ключи Google начинаются на AQ.… — их выдаёт тот же кабинет, что и старые.
+     Живут они только на родном адресе, поэтому сразу помечаем их как родные. */
+  if (/^AQ\.[A-Za-z0-9_.~\-]{10,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.nativeBase, models: KEY_PROVIDERS.gemini.models, native: "gemini", proModels: KEY_PROVIDERS.gemini.proModels };
   if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", base: KEY_PROVIDERS.huggingface.base, models: KEY_PROVIDERS.huggingface.models };
   if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", base: KEY_PROVIDERS.openrouter.base, models: KEY_PROVIDERS.openrouter.models };
   return null;
@@ -10752,15 +10760,15 @@ function detectKeyKind(key) {
    Отдельный случай: раньше поле было однострочным, и браузер вырезал перевод строки —
    два ключа слипались в один ("gsk_…sk-or-…") и не работал ни один. Поэтому режем
    ещё и по началам ключей, а не только по пробелам и запятым. */
-const KEY_MARKER = /(?=(?:gsk_|sk-or-|hf_))/;
-const KEY_TOKEN = /(?:gsk_[A-Za-z0-9_-]{10,}|sk-or-[A-Za-z0-9_-]{10,}|hf_[A-Za-z0-9_-]{10,})/;
+const KEY_MARKER = /(?=(?:gsk_|sk-or-|hf_|AIza|AQ\.))/;
+const KEY_TOKEN = /(?:gsk_[A-Za-z0-9_-]{10,}|sk-or-[A-Za-z0-9_-]{10,}|hf_[A-Za-z0-9_-]{10,}|AIza[A-Za-z0-9_-]{20,}|AQ\.[A-Za-z0-9_.~-]{10,})/;
 function parseKeys(text) {
   const raw = String(text || "");
   const out = [];
   for (const chunk of raw.split(KEY_MARKER)) {
     const m = chunk.match(KEY_TOKEN);
     if (!m) continue;
-    const key = m[0].replace(/[-_]+$/, "");
+    const key = m[0].replace(/[-_.]+$/, "");
     if (detectKeyKind(key) && !out.includes(key)) out.push(key);
   }
   return out;
@@ -10786,18 +10794,29 @@ function keyEngines() {
     n++;
     const id = n === 1 ? "key" : "key" + n;
     const vision = !!provider.vision ? true : guessVision(provider.models[0]);
+    const base = kind.native === "gemini" ? KEY_PROVIDERS.gemini.nativeBase : kind.base;
+    const native = kind.native || "";
     if (provider.discovery) {
       // имя модели подберём у сервиса при первом запросе (см. resolveKeyEngines)
-      out.push({ id, base: kind.base, model: "", models: kind.models, key, timeout: 25, vision, provider: kind.provider, discovery: provider.discovery });
+      out.push({ id, base, model: "", models: kind.models, key, timeout: 25, vision, provider: kind.provider, native, discovery: provider.discovery });
     } else {
       // несколько моделей одного сервиса = запасные варианты, а не одна попытка
       kind.models.forEach((model, i) => {
         out.push({
-          id: i === 0 ? id : id + "-" + (i + 1), base: kind.base, model, key, timeout: 25,
-          provider: kind.provider, models: kind.models, list: !!provider.list,
+          id: i === 0 ? id : id + "-" + (i + 1), base, model, key, timeout: 25,
+          provider: kind.provider, models: kind.models, list: !!provider.list, native,
           vision: provider.vision || guessVision(model)
         });
       });
+      /* На сложных задачах первым делом просим сильную модель. На простых её
+         не зовём: очередь отсекает её, чтобы не жечь бесплатный лимит. */
+      if (kind.proModels && kind.proModels.length) {
+        out.push({
+          id: id + "-pro", base, model: kind.proModels[0], key, timeout: 30,
+          provider: kind.provider, models: kind.proModels, list: !!provider.list, native,
+          pro: true, vision: true
+        });
+      }
     }
   }
   return out;
@@ -10851,8 +10870,10 @@ async function discoverChatModels(provider, key, base) {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
+    const nativeList = provider === "gemini" && /googleapis\.com\/v1beta$/.test(String(base).replace(/\/+$/, ""));
     const res = await fetch(String(base).replace(/\/+$/, "") + "/models", {
-      headers: { Authorization: "Bearer " + key }, signal: ctrl.signal
+      headers: nativeList ? { "x-goog-api-key": String(key) } : { Authorization: "Bearer " + key },
+      signal: ctrl.signal
     });
     clearTimeout(t);
     if (!res || !res.ok) {
@@ -10860,8 +10881,12 @@ async function discoverChatModels(provider, key, base) {
       return hit && !hit.fail ? hit.ids : [];
     }
     const json = await res.json();
-    const ids = ((json && json.data) || [])
-      .map(m => (m && (m.id || m.model)) || "")
+    const ids = (nativeList
+      ? ((json && json.models) || [])
+        .filter(m => !Array.isArray(m.supportedGenerationMethods) || m.supportedGenerationMethods.includes("generateContent"))
+        .map(m => String((m && m.name) || "").replace(/^models\//, ""))
+        .filter(id => id && !/embed|live|audio|veo|imagen|tts/i.test(id))
+      : ((json && json.data) || []).map(m => (m && (m.id || m.model)) || ""))
       .filter(id => typeof id === "string" && id && !CHAT_ONLY.test(id));
     if (ids.length) _chatModelsCache.set(tag, { at: Date.now(), ids });
     else _chatModelsCache.set(tag, { at: Date.now(), ids: [], fail: true });
@@ -10881,6 +10906,7 @@ async function resolveKeyEngines(list, needVision) {
   // Группируем по адресу и ключу: у одного ключа несколько моделей — это запасные варианты
   const groups = new Map();
   for (const e of list) {
+    if (e.pro) continue;              // сильная модель уже названа
     if (!e.discovery && !e.list) continue;
     const tag = (e.base || "") + "|" + (e.key || "");
     if (!groups.has(tag)) groups.set(tag, []);
@@ -10914,6 +10940,7 @@ async function resolveKeyEngines(list, needVision) {
   const out = [];
   const done = new Set();
   for (const e of list) {
+    if (e.pro) { out.push(e); continue; }
     if (!e.discovery && !e.list) { out.push(e); continue; }
     const tag = (e.base || "") + "|" + (e.key || "");
     if (done.has(tag)) continue;
@@ -10976,10 +11003,16 @@ function requestComplexity(payload) {
 
 /* Порядок движков с учётом сложности запроса */
 function orderedEnginesFor(payload, needVision) {
-  const base = orderedEngines(needVision);
-  if (requestComplexity(payload) !== "hard") return base;
-  /* Крупные вперёд, мелкие — только страховкой в конце */
-  return base.filter(e => !e.small).concat(base.filter(e => e.small));
+  const hard = requestComplexity(payload) === "hard";
+  const all = orderedEngines(needVision);
+  /* Сильную модель зовём только на сложное: на «привет» разницы нет,
+     а бесплатный лимит у неё заметно меньше. */
+  const base = hard ? all : all.filter(e => !e.pro);
+  if (!hard) return base;
+  /* сильные вперёд, крупные за ними, мелкие — только страховкой в конце */
+  return base.filter(e => !e.small && e.pro)
+    .concat(base.filter(e => !e.small && !e.pro))
+    .concat(base.filter(e => e.small));
 }
 
 /* ---------- Характеры ---------- */
@@ -13066,7 +13099,7 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
      Врать «у меня нет твоих заданий» нельзя — человек уже прислал фото. */
   if (err && err.kind === "no-vision") {
     aiMsg.content = hadImages
-      ? "Фотографию я разобрать не смогла: движки её не видят, а распознавание текста на телефоне не справилось — снимок, скорее всего, мелкий, смазанный или под углом.\n\nЧто можно сделать (по порядку, всё без ключей):\n1) Пересними ближе и ровно, чтобы страница занимала весь кадр, и отправь снова — я попробую прочитать ещё раз.\n2) Напиши задание словами или продиктуй голосом («Инструменты» → «Говорить вместо печати») — решу по тексту, это работает всегда.\n3) Если хочется, чтобы я видела любые фото с первого раза, — впиши свой ключ со зрением (AIza… или gsk_…), он бесплатный. Но для домашки хватает и первых двух пунктов."
+      ? "Фотографию я разобрать не смогла: движки её не видят, а распознавание текста на телефоне не справилось — снимок, скорее всего, мелкий, смазанный или под углом.\n\nЧто можно сделать (по порядку, всё без ключей):\n1) Пересними ближе и ровно, чтобы страница занимала весь кадр, и отправь снова — я попробую прочитать ещё раз.\n2) Напиши задание словами или продиктуй голосом («Инструменты» → «Говорить вместо печати») — решу по тексту, это работает всегда.\n3) Если хочется, чтобы я видела любые фото с первого раза, — впиши свой ключ со зрением (AQ.…, AIza… или gsk_…), он бесплатный. Но для домашки хватает и первых двух пунктов."
       : "Не получилось ответить: сейчас нечем.";
     aiMsg.failedSoft = true;
     aiMsg.needVision = hadImages;
@@ -13080,7 +13113,7 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
         <button type="button" data-fail="text">Написать задание словами</button>
       </div>
       <div class="fail-key" id="failKeyBox" style="display:none">
-        <textarea id="failKeyInput" rows="2" placeholder="ключ со зрением: AIza… или gsk_…" autocomplete="off" spellcheck="false"></textarea>
+        <textarea id="failKeyInput" rows="2" placeholder="ключ со зрением: AQ.…, AIza… или gsk_…" autocomplete="off" spellcheck="false"></textarea>
         <button id="failKeySave" type="button">Включить</button>
       </div>
       <div class="fail-note">Ключ хранится только в твоём браузере и никуда не уходит. Без ключа я тоже отвечаю — просто текстом.</div>`;
@@ -13100,7 +13133,7 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
     box2.querySelector("#failKeySave").onclick = () => {
       const key = (box2.querySelector("#failKeyInput").value || "").trim();
       const parsed = parseKeys(key);
-      if (key && !parsed.length) { toast("Ключ не распознан. Нужен ключ со зрением — AIza… или gsk_….", "err"); return; }
+      if (key && !parsed.length) { toast("Ключ не распознан. Нужен ключ со зрением — AQ.…, AIza… или gsk_….", "err"); return; }
       settings.apiKey = key;
       settings.provider = parsed.length ? (detectKeyKind(parsed[0])?.provider || "custom") : "custom";
       saveSettings(); updateComposerNote();
@@ -15531,6 +15564,69 @@ function sanitizeMessages(msgs) {
   return [{ role: "system", content: sys || "Ты — Искра, полезный ассистент. Отвечай по-русски." }, ...rest];
 }
 
+/* Родной адрес Gemini. Ключ передаём заголовком x-goog-api-key: в адресе он
+   оседает в логах и истории браузера, а в заголовке — нет. */
+function geminiNativeUrl(model, method, query) {
+  const m = String(model || "").replace(/^models\//, "");
+  return KEY_PROVIDERS.gemini.nativeBase + "/models/" + encodeURIComponent(m) + ":" + method + (query ? "?" + query : "");
+}
+
+/* Из нашего разговора делаем тело, понятное родному адресу: роли user/model,
+   текст и картинки отдельными частями, системная подсказка — отдельным полем. */
+function geminiNativeBody(payload, engine) {
+  const msgs = sanitizeMessages(engine.small ? liteMessages(payload.messages) : payload.messages);
+  const sys = msgs.filter(m => m.role === "system").map(m => m.content).join("\n\n");
+  const contents = [];
+  for (const m of msgs) {
+    if (!m || m.role === "system") continue;
+    const parts = [];
+    if (typeof m.content === "string") {
+      if (m.content.trim()) parts.push({ text: m.content });
+    } else if (Array.isArray(m.content)) {
+      for (const p of m.content) {
+        if (!p) continue;
+        if (p.type === "text" && p.text) parts.push({ text: String(p.text) });
+        else if (p.type === "image_url") {
+          const url = String((p.image_url && (p.image_url.url || p.image_url)) || "");
+          const mm = url.match(/^data:([^;]+);base64,(.+)$/);
+          if (mm) parts.push({ inlineData: { mimeType: mm[1], data: mm[2] } });
+        }
+      }
+    }
+    if (!parts.length) continue;
+    const role = m.role === "assistant" ? "model" : "user";
+    const last = contents[contents.length - 1];
+    if (last && last.role === role) last.parts.push(...parts);
+    else contents.push({ role, parts });
+  }
+  if (!contents.length) contents.push({ role: "user", parts: [{ text: "Привет" }] });
+  const body = { contents };
+  if (sys) body.systemInstruction = { parts: [{ text: sys }] };
+  const cfg = {};
+  if (Number.isFinite(payload.temperature)) cfg.temperature = payload.temperature;
+  if (Number.isFinite(payload.max_tokens)) cfg.maxOutputTokens = payload.max_tokens;
+  if (Object.keys(cfg).length) body.generationConfig = cfg;
+  return body;
+}
+
+/* Куски ответа бывают в двух формах: привычной (choices) и родной (candidates). */
+function engineDelta(j) {
+  if (!j) return "";
+  const ch = j.choices && j.choices[0];
+  if (ch) return ch.delta?.content || ch.message?.content || ch.text || "";
+  const c = j.candidates && j.candidates[0];
+  const parts = c && c.content && c.content.parts;
+  return Array.isArray(parts) ? parts.map(p => (p && p.text) || "").join("") : "";
+}
+function engineFinish(j) {
+  if (!j) return "";
+  const ch = j.choices && j.choices[0];
+  if (ch && ch.finish_reason) return ch.finish_reason;
+  const c = j.candidates && j.candidates[0];
+  const fr = (c && c.finishReason) || "";
+  return fr === "MAX_TOKENS" ? "length" : fr;
+}
+
 /* Один движок: отправляем запрос, читаем поток, отдаём куски по мере появления.
    Каждый движок ограничен по времени — чтобы зависший сервис не держал человека. */
 async function streamOnce(engine, payload, onDelta, signal) {
@@ -15543,27 +15639,38 @@ async function streamOnce(engine, payload, onDelta, signal) {
     if (signal.aborted) { clearTimeout(timer); throw new ApiError(0, "остановлено", "abort"); }
     signal.addEventListener("abort", onAbort);
   }
-  const headers = { "Content-Type": "application/json" };
-  if (engine.auth === "anonymous") headers.Authorization = "Bearer anonymous";
-  else if (engine.key) headers.Authorization = "Bearer " + engine.key;
+  const native = engine.native === "gemini";
+  const headers = native
+    ? { "Content-Type": "application/json", "x-goog-api-key": String(engine.key || "") }
+    : { "Content-Type": "application/json" };
+  if (!native) {
+    if (engine.auth === "anonymous") headers.Authorization = "Bearer anonymous";
+    else if (engine.key) headers.Authorization = "Bearer " + engine.key;
+  }
   /* Никаких лишних заголовков: браузер сначала спрашивает разрешение (CORS),
      и незнакомый заголовок может отменить весь запрос. Для ответа достаточно ключа. */
-  const msgsForEngine = engine.small ? liteMessages(payload.messages) : payload.messages;
-  const body = { ...payload, model: engine.model, stream: true, messages: sanitizeMessages(msgsForEngine) };
-  // бесплатные движки не понимают половину настроек — лишнее убираем, иначе 400
-  delete body.reasoning_effort;
-  delete body.reasoning;
-  delete body.verbosity;
-  delete body.service_tier;
-  delete body.provider;
-  delete body.plugins;
-  delete body.reasoning_effort;
+  let body;
+  let endpoint;
+  if (native) {
+    body = geminiNativeBody(payload, engine);
+    endpoint = geminiNativeUrl(engine.model, "streamGenerateContent", "alt=sse");
+  } else {
+    const msgsForEngine = engine.small ? liteMessages(payload.messages) : payload.messages;
+    body = { ...payload, model: engine.model, stream: true, messages: sanitizeMessages(msgsForEngine) };
+    // бесплатные движки не понимают половину настроек — лишнее убираем, иначе 400
+    delete body.reasoning_effort;
+    delete body.reasoning;
+    delete body.verbosity;
+    delete body.service_tier;
+    delete body.provider;
+    delete body.plugins;
+    endpoint = engine.url || (engine.base.replace(/\/+$/, "") + "/chat/completions");
+  }
   let got = 0;
   let acc = "";
   let finish = "";
   let res;
   try {
-    const endpoint = engine.url || (engine.base.replace(/\/+$/, "") + "/chat/completions");
     res = await fetch(endpoint, {
       method: "POST", headers, body: JSON.stringify(body), signal: ctrl.signal
     });
@@ -15593,9 +15700,10 @@ async function streamOnce(engine, payload, onDelta, signal) {
     };
     if (!res.body || typeof res.body.getReader !== "function" || (!ctype.includes("event-stream") && ctype.includes("json"))) {
       const data = await res.json();
-      take(data.choices?.[0]?.message?.content || data.choices?.[0]?.text || "");
+      if (data && data.error) throw new ApiError(Number(data.error.code) || 400, JSON.stringify(data.error), "api");
+      take(engineDelta(data));
       if (!got) throw new ApiError(503, "пустой ответ движка", "empty");
-      return { engine: engine.id, text: acc, truncated: data.choices?.[0]?.finish_reason === "length" };
+      return { engine: engine.id, text: acc, truncated: engineFinish(data) === "length" };
     }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
@@ -15613,18 +15721,22 @@ async function streamOnce(engine, payload, onDelta, signal) {
         if (d === "[DONE]") continue;
         try {
           const j = JSON.parse(d);
-          const fr = j.choices?.[0]?.finish_reason;
+          if (j && j.error) throw new ApiError(Number(j.error.code) || 400, JSON.stringify(j.error), "api");
+          const fr = engineFinish(j);
           if (fr) finish = fr;
-          const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || j.choices?.[0]?.text || "";
+          const delta = engineDelta(j);
           if (delta) take(delta);
-        } catch (e) { /* битые куски пропускаем */ }
+        } catch (e) {
+          /* настоящую ошибку сервера не глотаем — иначе карточка соврёт «пустой ответ» */
+          if (e instanceof ApiError) throw e;
+        }
       }
     }
     const rest = buf.trim();
     if (rest.startsWith("data:")) {
       try {
         const j = JSON.parse(rest.slice(5).trim());
-        take(j.choices?.[0]?.delta?.content || "");
+        take(engineDelta(j));
       } catch (e) {}
     }
     if (!got) throw new ApiError(503, "пустой ответ движка", "empty");
@@ -15667,7 +15779,7 @@ async function askIskra(payload, onDelta, signal, onTry) {
       if (r && r.text) {
         _lastGoodEngine = engine.id;
         _deadBases.delete(baseKeyOf(engine));
-        if (engine.key) markKeyWorking();
+        if (engine.key) markKeyWorking(engine.model);
         return r;
       }
     } catch (e) {
@@ -15742,7 +15854,17 @@ function keyIsVerified() {
 function markKeyWorking(model) {
   const k = String(settings.apiKey || "").trim();
   if (!k) return;
-  if (keyIsVerified()) return;
+  if (keyIsVerified()) {
+    /* ключ уже проверен этим браузером — обновляем только имя модели,
+       чтобы строка не показывала старую */
+    if (model && settings.keyModel !== String(model)) {
+      settings.keyModel = String(model);
+      try { saveSettings(); } catch (e) {}
+      try { updateComposerNote(); } catch (e) {}
+      try { paintKeyStatus(); } catch (e) {}
+    }
+    return;
+  }
   settings.keyVerified = keyTag(k);
   settings.keyVerifiedAt = Date.now();
   if (model) settings.keyModel = String(model);
@@ -17602,6 +17724,58 @@ async function hostReachable(url) {
   }
 }
 
+/* Проверка ключа Google родным путём: сначала список моделей, потом живой
+   короткий ответ. «Список отдался» ещё не значит «ключ отвечает». */
+async function probeGeminiNative(key, kind, ctrl) {
+  const head = { "x-goog-api-key": String(key) };
+  const listUrl = KEY_PROVIDERS.gemini.nativeBase + "/models?pageSize=100";
+  let names = (kind.models || []).slice();
+  try {
+    const lr = await fetch(listUrl, { headers: head, signal: ctrl.signal });
+    if (lr.status === 401 || lr.status === 403) return { state: "auth", status: lr.status };
+    if (lr.ok) {
+      const json = await lr.json();
+      const ids = ((json && json.models) || [])
+        .filter(m => !Array.isArray(m.supportedGenerationMethods) || m.supportedGenerationMethods.includes("generateContent"))
+        .map(m => String((m && m.name) || "").replace(/^models\//, ""))
+        .filter(id => id && !/embed|tts|image|live|audio|veo|imagen/i.test(id));
+      const flash = ids.filter(m => /flash/i.test(m));
+      names = (flash.length ? flash : ids).concat(names);
+    }
+  } catch (e) {
+    const alive = await hostReachable(listUrl);
+    return { state: alive ? "cors" : "net", status: 0 };
+  }
+  let last = 0;
+  const seen = new Set();
+  for (const model of names) {
+    const id = String(model).replace(/^models\//, "");
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    if (seen.size > 4) break;
+    let rr;
+    try {
+      rr = await fetch(geminiNativeUrl(id, "generateContent"), {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, head),
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "Скажи одно слово: привет" }] }],
+          generationConfig: { maxOutputTokens: 16 }
+        }),
+        signal: ctrl.signal
+      });
+    } catch (e) {
+      const alive = await hostReachable(listUrl);
+      return { state: alive ? "cors" : "net", status: 0 };
+    }
+    if (rr.ok) return { state: "ok", status: 200, model: id };
+    last = rr.status;
+    if (last === 429 || last === 402) return { state: "limit", status: last };
+    if (last === 401 || last === 403) return { state: "auth", status: last };
+  }
+  return { state: "model", status: last || 404 };
+}
+
 async function probeKey(key) {
   const kind = detectKeyKind(key);
   if (!kind) return { state: "unknown", status: 0 };
@@ -17609,6 +17783,7 @@ async function probeKey(key) {
   const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 20000);
   const auth = { Authorization: "Bearer " + key };
   try {
+    if (kind.native === "gemini") return await probeGeminiNative(key, kind, ctrl);
     /* 1. Ключ вообще принят? */
     let res;
     try {
