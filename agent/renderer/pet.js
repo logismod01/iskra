@@ -54,6 +54,38 @@ function hideBubble() {
 window.sye.petState().then(apply).catch(() => {});
 window.sye.petOnState(apply);
 
+/* ---------- Кто стоит на рабочем столе ----------
+   Родная разметка Сью умеет моргать и менять рот (в ней классы eye-normal,
+   m-happy и прочие). Остальные пять персонажей — статичные: у них своя
+   картинка, а мимика просто не включается. Родную разметку запоминаем,
+   чтобы можно было вернуться на Сью без перезапуска. */
+const figureBox = document.getElementById("figure");
+const nativeSvg = (figureBox && figureBox.querySelector(".sye-mascot"))
+  ? figureBox.querySelector(".sye-mascot").outerHTML
+  : "";
+
+/** Меняет картинку фигуры целиком: у Сью мимика, у остальных — своя форма. */
+function setFigure(svgHtml) {
+  if (!figureBox || !svgHtml) return;
+  const cur = figureBox.querySelector(".sye-mascot");
+  if (cur) cur.outerHTML = svgHtml;
+}
+
+function paintPetMascot(info) {
+  if (!info || !figureBox) return;
+  if (!info.id || info.id === "sye") {
+    /* Возврат на родного Сью: в нём есть моргание, рот и брови */
+    if (nativeSvg) setFigure(nativeSvg);
+    return;
+  }
+  const name = String(info.name || "").replace(/[<>&"]/g, "");
+  setFigure('<svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="' + name + '">' +
+    String(info.svg || "") + "</svg>");
+}
+
+window.sye.petMascot().then(paintPetMascot).catch(() => {});
+window.sye.onPetMascot(paintPetMascot);
+
 /* ---------- Выключить ----------
    Крестик появляется при наведении. Он внутри фигуры, иначе прозрачное окно
    не пропустит по нему клик. */

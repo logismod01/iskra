@@ -2247,6 +2247,83 @@ input.switch:checked::after { transform: translateX(18px); background: #fff; }
 .look-sye-t { font-size: 13px; line-height: 1.55; color: var(--text-soft); }
 .look-sye-t b { color: var(--text); }
 
+/* ============ Маскоты ============ */
+.msk { display: block; width: 100%; height: 100%; }
+.msk .msk-body { fill: var(--accent); }
+.msk .msk-2 { fill: var(--accent-soft); }
+.msk .msk-face { fill: var(--bg); opacity: .92; }
+.msk .msk-tuft { fill: var(--accent); }
+.msk .msk-ray { fill: var(--accent); opacity: .85; }
+.msk .msk-eye { fill: #241a15; }
+.msk .msk-eye-sq { fill: var(--bg); }
+.msk .msk-cheek { fill: #fff; opacity: .35; }
+.msk .msk-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
+.msk .msk-shadow { fill: #000; opacity: .18; }
+.msk .msk-line { stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; }
+.msk .msk-beak { fill: #e0a15a; }
+.msk-brand { width: 26px; height: 26px; }
+/* В тёмных темах лицо робота и совы должно быть светлее фона карточки */
+html[data-theme="midnight"] .msk .msk-face,
+html[data-theme="ocean"] .msk .msk-face,
+html[data-theme="forest"] .msk .msk-face,
+html[data-theme="neon"] .msk .msk-face,
+html[data-theme="rose"] .msk .msk-face,
+html[data-theme="coffee"] .msk .msk-face,
+html[data-theme="lavender"] .msk .msk-face,
+html[data-theme="graphite"] .msk .msk-face,
+html[data-theme="sunset"] .msk .msk-face,
+html[data-theme="matrix"] .msk .msk-face,
+html[data-theme="ice"] .msk .msk-face,
+html[data-theme="cherry"] .msk .msk-face,
+html[data-theme="claude"] .msk .msk-face { fill: #221e1a; }
+
+.mascot-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px; margin-bottom: 10px;
+}
+.mascot-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 6px 8px;
+  background: var(--bg-soft-2);
+  border: 1px solid var(--line); border-radius: 12px;
+  cursor: pointer; font-family: var(--font);
+  transition: border-color .15s, transform .12s;
+}
+.mascot-card:hover { border-color: var(--accent); }
+.mascot-card.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.mascot-pic { width: 40px; height: 40px; display: block; }
+.mascot-nm { font-size: 11.5px; color: var(--text-soft); text-align: center; line-height: 1.2; }
+.mascot-card.on .mascot-nm { color: var(--text); font-weight: 600; }
+
+/* ============ Лёгкий режим ============
+   Слабый ноут или старый телефон: убираем размытие, узоры по фону, тени
+   и плавные появления. Всё остальное на месте — просто без украшений. */
+html.perf .ambient { display: none !important; }
+html.perf .welcome .big-logo { animation: none !important; }
+html.perf .modal-bg { backdrop-filter: none !important; }
+html.perf .welcome .big-logo,
+html.perf .modal,
+html.perf .msg.ai .body,
+html.perf .install-banner { box-shadow: none !important; }
+html.perf .msg .ava { box-shadow: none !important; }
+html.perf .msg,
+html.perf .chat-row,
+html.perf .msg .content,
+html.perf .icon-btn { transition: none !important; }
+html.perf .chat-row { animation: none !important; }
+html.perf .msg { animation: none !important; }
+html.perf .typing span { animation-duration: 2.4s; }
+
+/* Кнопка «показать раньше» в длинном чате */
+.msg-more {
+  display: block; margin: 6px auto 14px;
+  padding: 8px 14px;
+  background: var(--bg-soft-2); border: 1px solid var(--line);
+  border-radius: 10px; color: var(--text-soft);
+  font-size: 13px; cursor: pointer; font-family: var(--font);
+}
+.msg-more:hover { color: var(--text); border-color: var(--accent); }
+
 /* ============ Компактный вид ============ */
 html.compact .messages { padding: 12px 14px 12px; }
 html.compact .msg { margin-bottom: 12px; gap: 10px; }
@@ -3117,6 +3194,25 @@ html.no-anim .theme-flash { display: none; }
             <input type="checkbox" id="animToggle" class="switch" checked />
           </label>
           <div class="hint">Если в системе включено «уменьшить движение», анимации не играют, даже когда переключатель включён.</div>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">⚡</span> Скорость</div>
+          <label class="set-row">
+            <span><b>Лёгкий режим</b><em>Без размытия, узоров по фону, теней и плавных появлений</em></span>
+            <select id="liteSelect">
+              <option value="auto">Авто</option>
+              <option value="on">Всегда</option>
+              <option value="off">Никогда</option>
+            </select>
+          </label>
+          <div class="hint" id="liteHint">В режиме «Авто» включается сам на слабом устройстве. Сейчас: <b>—</b></div>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">✦</span> Маскот</div>
+          <div class="mascot-grid" id="mascotGrid"></div>
+          <div class="hint" id="mascotAbout">Маскот — это лицо Искры: на приветствии и в меню.</div>
         </section>
 
         <section class="set-card">
@@ -9588,6 +9684,144 @@ const IC = {
   more: '<circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>'
 };
+/* ---------- Маскоты ----------
+   Лицо Искры можно менять. Каждый маскот — свой характер и своё имя,
+   но все они нарисованы одними линиями и берут цвет из темы.
+   Всё — простой SVG: ни картинок, ни загрузок. */
+const MASCOTS = {
+  spark: {
+    name: "Искра",
+    about: "Четырёхлучевая звезда. Родной знак, спокойный и нейтральный.",
+    svg: `<path class="msk-body" d="M32 5 L37.2 26.8 L59 32 L37.2 37.2 L32 59 L26.8 37.2 L5 32 L26.8 26.8 Z"/>
+          <circle class="msk-eye" cx="27.4" cy="30.4" r="1.9"/>
+          <circle class="msk-eye" cx="36.6" cy="30.4" r="1.9"/>
+          <path class="msk-mouth" d="M29.6 36.2c1.4 1.5 3.4 1.5 4.8 0"/>`
+  },
+  sye: {
+    name: "Сью",
+    about: "Рыжий и деловой. Тот же, что живёт в агенте на рабочем столе.",
+    svg: `<ellipse class="msk-shadow" cx="32" cy="57.5" rx="14" ry="2.8"/>
+          <path class="msk-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
+          <path class="msk-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
+          <circle class="msk-eye" cx="25.4" cy="31.4" r="2.5"/>
+          <circle class="msk-eye" cx="38.6" cy="31.4" r="2.5"/>
+          <circle class="msk-cheek" cx="20.2" cy="37.4" r="2.3"/>
+          <circle class="msk-cheek" cx="43.8" cy="37.4" r="2.3"/>
+          <path class="msk-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>`
+  },
+  ember: {
+    name: "Уголёк",
+    about: "Тёплый камешек с огоньком внутри. Медленный, но не гаснет.",
+    svg: `<ellipse class="msk-shadow" cx="32" cy="57" rx="13" ry="2.6"/>
+          <path class="msk-body" d="M32 10c10.6 0 18.5 7.6 18.5 19.4C50.5 42 42.4 53 32 53S13.5 42 13.5 29.4C13.5 17.6 21.4 10 32 10z"/>
+          <path class="msk-2" d="M32 20.5c3.4 4.6 7 7.9 7 12.4a7 7 0 0 1-14 0c0-4.5 3.6-7.8 7-12.4z"/>
+          <circle class="msk-eye" cx="25.6" cy="30.6" r="2.1"/>
+          <circle class="msk-eye" cx="38.4" cy="30.6" r="2.1"/>
+          <path class="msk-mouth" d="M28.6 37.6c1.2 1.4 5.6 1.4 6.8 0"/>`
+  },
+  ray: {
+    name: "Лучик",
+    about: "Солнышко с короткими лучами. Утренний, бодрый характер.",
+    svg: `<g class="msk-rays">
+            <rect class="msk-ray" x="30.6" y="2" width="2.8" height="6" rx="1.4"/>
+            <rect class="msk-ray" x="30.6" y="56" width="2.8" height="6" rx="1.4"/>
+            <rect class="msk-ray" x="2" y="30.6" width="6" height="2.8" rx="1.4"/>
+            <rect class="msk-ray" x="56" y="30.6" width="6" height="2.8" rx="1.4"/>
+            <rect class="msk-ray" x="9.4" y="9.4" width="2.8" height="6" rx="1.4" transform="rotate(-45 10.8 12.4)"/>
+            <rect class="msk-ray" x="51.8" y="48.6" width="2.8" height="6" rx="1.4" transform="rotate(-45 53.2 51.6)"/>
+            <rect class="msk-ray" x="51.8" y="9.4" width="2.8" height="6" rx="1.4" transform="rotate(45 53.2 12.4)"/>
+            <rect class="msk-ray" x="9.4" y="48.6" width="2.8" height="6" rx="1.4" transform="rotate(45 10.8 51.6)"/>
+          </g>
+          <circle class="msk-body" cx="32" cy="32" r="16"/>
+          <circle class="msk-eye" cx="26.4" cy="30.4" r="2.2"/>
+          <circle class="msk-eye" cx="37.6" cy="30.4" r="2.2"/>
+          <path class="msk-mouth" d="M27.6 37c1.9 2.6 6.9 2.6 8.8 0"/>`
+  },
+  pixel: {
+    name: "Пиксель",
+    about: "Квадратная голова и антенна. Тот, кто любит код и точность.",
+    svg: `<line class="msk-line" x1="32" y1="12" x2="32" y2="6.5"/>
+          <circle class="msk-body" cx="32" cy="5" r="2.6"/>
+          <rect class="msk-body" x="11" y="12" width="42" height="38" rx="9"/>
+          <rect class="msk-face" x="17" y="19" width="30" height="19" rx="6"/>
+          <rect class="msk-eye-sq" x="22" y="24.5" width="5.5" height="6.5" rx="1.6"/>
+          <rect class="msk-eye-sq" x="36.5" y="24.5" width="5.5" height="6.5" rx="1.6"/>
+          <path class="msk-mouth" d="M27.6 43.5h8.8"/>`
+  },
+  owl: {
+    name: "Сова Глаша",
+    about: "Круглые глаза и брови домиком. Для учёбы и разборов задач.",
+    svg: `<ellipse class="msk-shadow" cx="32" cy="57.4" rx="12" ry="2.6"/>
+          <path class="msk-body" d="M32 8c11 0 19 9.4 19 22.6C51 44.8 43 56 32 56S13 44.8 13 30.6C13 17.4 21 8 32 8z"/>
+          <path class="msk-2" d="M18.4 12.6 24.2 22 16 22.6zM45.6 12.6 39.8 22 48 22.6z"/>
+          <circle class="msk-face" cx="24.6" cy="30.6" r="7.4"/>
+          <circle class="msk-face" cx="39.4" cy="30.6" r="7.4"/>
+          <circle class="msk-eye" cx="24.6" cy="30.6" r="2.8"/>
+          <circle class="msk-eye" cx="39.4" cy="30.6" r="2.8"/>
+          <path class="msk-beak" d="M32 34.4 35 39.4 29 39.4z"/>
+          <path class="msk-mouth" d="M28 45c1.6 1.4 6.4 1.4 8 0"/>`
+  }
+};
+const MASCOT_ORDER = ["spark", "sye", "ember", "ray", "pixel", "owl"];
+
+function mascotId() {
+  return MASCOT_ORDER.includes(settings.mascot) ? settings.mascot : "spark";
+}
+function mascotName(id) {
+  const m = MASCOTS[id || mascotId()];
+  return m ? m.name : "Искра";
+}
+/* Готовый SVG маскота. size — сторона в пикселях. */
+function mascotSvg(id, size, cls) {
+  const key = MASCOT_ORDER.includes(id) ? id : mascotId();
+  const m = MASCOTS[key];
+  const s = size || 32;
+  return `<svg class="msk msk-${key} ${cls || ""}" viewBox="0 0 64 64" width="${s}" height="${s}" ` +
+    `role="img" aria-label="${esc(m.name)}">${m.svg}</svg>`;
+}
+/* Куда ставить маскота: приветствие, логотип в меню, превью в настройках */
+function paintMascots() {
+  const id = mascotId();
+  const welcome = $("#welcomeIcon");
+  if (welcome) welcome.innerHTML = mascotSvg(id, 40);
+  const brand = document.querySelector(".brand-logo");
+  if (brand) brand.innerHTML = mascotSvg(id, 26, "msk-brand");
+  const grid = $("#mascotGrid");
+  if (grid) {
+    grid.querySelectorAll("[data-mascot]").forEach(b => {
+      b.classList.toggle("on", b.dataset.mascot === id);
+    });
+  }
+  const say = $("#mascotAbout");
+  if (say) say.innerHTML = `<b>${esc(mascotName(id))}.</b> ${esc(MASCOTS[id].about)}`;
+}
+function setMascot(id) {
+  if (!MASCOT_ORDER.includes(id)) return;
+  settings.mascot = id;
+  saveSettings();
+  paintMascots();
+  try { applyMode(); } catch (e) {}
+  toast(`Маскот: ${mascotName(id)}`, "ok");
+}
+function mascotPickerHtml() {
+  return MASCOT_ORDER.map(id => {
+    const m = MASCOTS[id];
+    return `<button type="button" class="mascot-card" data-mascot="${id}" title="${esc(m.about)}">` +
+      `<span class="mascot-pic">${mascotSvg(id, 40)}</span>` +
+      `<span class="mascot-nm">${esc(m.name)}</span></button>`;
+  }).join("");
+}
+function wireMascots() {
+  const grid = $("#mascotGrid");
+  if (!grid || grid.dataset.wired) return;
+  grid.dataset.wired = "1";
+  grid.innerHTML = mascotPickerHtml();
+  grid.querySelectorAll("[data-mascot]").forEach(b => {
+    b.addEventListener("click", () => setMascot(b.dataset.mascot));
+  });
+  paintMascots();
+}
+
 /* Пауза на N миллисекунд — нужна для таймаутов и повторов */
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -10333,6 +10567,8 @@ let liveStream = null;
   /* Компактный вид теперь по умолчанию: у кого настройки ещё без этой пары,
      получаем плотную вёрстку, а не раздутую. Переключатель в ⚙ → «Вид». */
   if (typeof settings.compact !== "boolean") settings.compact = true;
+  if (!MASCOT_ORDER.includes(settings.mascot)) settings.mascot = "spark";
+  if (!["auto", "on", "off"].includes(settings.lite)) settings.lite = "auto";
   if (typeof settings.animations !== "boolean") settings.animations = true;
   /* Крупный текст — из меню «⋯». Старые настройки этого поля не знали. */
   if (typeof settings.bigText !== "boolean") settings.bigText = false;
@@ -10367,6 +10603,8 @@ function loadSettings() {
     customPersona: "",
     theme: "ivory",
     compact: true,
+    mascot: "spark",
+    lite: "auto",
     animations: true,
     bigText: false,
     memoryOn: true,
@@ -10464,6 +10702,29 @@ function applyLook() {
   if (!html) return;
   html.classList.toggle("compact", settings.compact === true);
   html.classList.toggle("no-anim", settings.animations === false);
+  html.classList.toggle("perf", liteModeOn());
+}
+
+/* ---------- Лёгкий режим ----------
+   На слабом ноуте или старом телефоне украшения стоят дороже пользы:
+   размытие под окнами, узоры по фону, тени и плавные появления.
+   По умолчанию режим включается сам, если устройство выглядит слабым. */
+function deviceLooksWeak() {
+  try {
+    const cores = navigator.hardwareConcurrency || 0;
+    const mem = navigator.deviceMemory || 0;
+    const saveData = navigator.connection && navigator.connection.saveData;
+    if (saveData) return true;
+    if (cores && cores <= 4) return true;
+    if (mem && mem <= 4) return true;
+  } catch (e) {}
+  return false;
+}
+function liteModeOn() {
+  const v = settings.lite;
+  if (v === "on") return true;
+  if (v === "off") return false;
+  return deviceLooksWeak();   // «авто» и всё неизвестное
 }
 
 /* ---------- Markdown-рендер ---------- */
@@ -11127,9 +11388,18 @@ function recoverInterruptedChats() {
   if (touched) saveChats();
 }
 
+/* Сколько сообщений держим в DOM. Первое открытие — хвост, дальше можно
+   догружать вверх кнопкой. Число растёт на шаг, сбрасывается при смене чата. */
+const MSG_RENDER_STEP = 40;
+let msgRenderMore = 0;
+let msgRenderChat = null;
+function msgRenderLimit() { return MSG_RENDER_STEP + msgRenderMore; }
+
 function renderMessages() {
   const m = $("#messages");
   const chat = getCurrentChat();
+  /* Другой чат — сворачиваем длинный список обратно к хвосту */
+  if (chat && chat.id !== msgRenderChat) { msgRenderChat = chat.id; msgRenderMore = 0; }
   if (!chat || !chat.messages.length) {
     $("#welcome").style.display = "";
     m.querySelectorAll(".msg").forEach(n => n.remove());
@@ -11139,8 +11409,24 @@ function renderMessages() {
   }
   $("#welcome").style.display = "none";
   $("#chatTitle").textContent = chat.title;
-  m.querySelectorAll(".msg").forEach(n => n.remove());
-  for (const msg of chat.messages) appendMessage(msg, false);
+  m.querySelectorAll(".msg, .msg-more").forEach(n => n.remove());
+  /* Длинный чат целиком в DOM — это сотни карточек с кодом и таблицами:
+     браузер начинает подтормаживать при каждой прокрутке. Рисуем хвост,
+     а раннее открываем кнопкой. */
+  const total = chat.messages.length;
+  const shown = Math.min(total, msgRenderLimit());
+  if (total > shown) {
+    const more = document.createElement("button");
+    more.className = "msg-more";
+    more.type = "button";
+    more.textContent = `Показать раньше (ещё ${total - shown})`;
+    more.onclick = () => {
+      msgRenderMore += MSG_RENDER_STEP;
+      renderMessages();
+    };
+    m.appendChild(more);
+  }
+  for (const msg of chat.messages.slice(total - shown)) appendMessage(msg, false);
   stickBottom = true;       /* открыли чат — смотрим на последний ответ */
   scrollToBottom(true);
 }
@@ -11339,15 +11625,8 @@ function appendMessage(msg, animate = true) {
   el.querySelectorAll(".thumbs img").forEach(img => {
     img.addEventListener("click", () => openLightbox(img.src));
   });
-  el.querySelectorAll(".code-head button[data-copy]").forEach(b => {
-    b.addEventListener("click", () => {
-      const code = document.getElementById(b.dataset.copy).textContent;
-      navigator.clipboard.writeText(code).then(() => {
-        b.innerHTML = `${ic("check", 12)} Скопировано`;
-        setTimeout(() => b.textContent = "Копировать", 1400);
-      }).catch(() => toast("Не удалось скопировать", "err"));
-    });
-  });
+  /* Кнопки «Копировать» ловятся одним обработчиком (см. wire): так они работают
+     и в готовом сообщении, и в недописанном ответе, который перерисовывается. */
   m.appendChild(el);
   scrollToBottom();
   return el;
@@ -14398,6 +14677,27 @@ class ApiError extends Error {
   }
 }
 /* ---------- Отправка ---------- */
+/* Перерисовка потока с ограничением по частоте.
+   Живой поток: не чаще одного кадра в ~80 мс. Конец ответа рисуем принудительно. */
+let _paintAt = 0, _paintTimer = null, _paintJob = null;
+function paintStreamNow() {
+  _paintTimer = null;
+  const job = _paintJob;
+  if (!job || !job.el || !job.el.isConnected) return;
+  _paintAt = Date.now();
+  job.el.innerHTML = renderMarkdown(job.text);
+  if (_lastSearch && _lastSearch.sources && _lastSearch.sources.length) renderSources(job.el, _lastSearch.sources);
+  if (job.scroll) scrollToBottom();
+}
+function paintStream(el, text, force) {
+  if (!el || !el.isConnected) return;
+  _paintJob = { el, text, scroll: true };
+  if (force && _paintTimer) { clearTimeout(_paintTimer); _paintTimer = null; }
+  const left = 80 - (Date.now() - _paintAt);
+  if (force || left <= 0) { paintStreamNow(); return; }
+  if (!_paintTimer) _paintTimer = setTimeout(paintStreamNow, left);
+}
+
 async function sendMessage(text, images = [], addChat = true, isResend = false) {
   const trimmed = text.trim();
   if (!trimmed && !images.length) return;
@@ -14578,23 +14878,14 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
         `<p class="gen-note">Секунду — подбираю, кто ответит…</p>`;
     };
+    /* Раньше на КАЖДЫЙ кусок ответа заново собирался весь markdown: на длинном
+       тексте это десятки тысяч символов по 30–60 раз в секунду. Ноут грелся,
+       текст дёргался, прокрутка отставала. Теперь рисуем не чаще 12 раз в секунду,
+       а последний кусок дорисовывается, когда поток закончился. */
     const onDelta = (delta) => {
       acc += delta;
       el.classList.remove("thinking");
-      const t = streamEl();
-      t.innerHTML = renderMarkdown(acc);
-      if (_lastSearch && _lastSearch.sources && _lastSearch.sources.length) renderSources(t, _lastSearch.sources);
-      // rewire copy buttons
-      t.querySelectorAll(".code-head button[data-copy]").forEach(b => {
-        b.onclick = () => {
-          const code = document.getElementById(b.dataset.copy).textContent;
-          navigator.clipboard.writeText(code).then(() => {
-            b.innerHTML = `${ic("check", 12)} Скопировано`;
-            setTimeout(() => b.textContent = "Копировать", 1400);
-          }).catch(() => {});
-        };
-      });
-      scrollToBottom();
+      paintStream(streamEl(), acc);
     };
 
     /* Пока движок думает над фото, Искра заранее читает текст с него:
@@ -14677,6 +14968,9 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       // обрез по лимиту длины — честно говорим и даём кнопку продолжить
       toast("Ответ упёрся в лимит длины — можно продолжить", "err");
     }
+    /* Поток закончился — дорисовываем последний кусок сразу, без ожидания кадра */
+    if (_paintTimer) { clearTimeout(_paintTimer); _paintTimer = null; }
+    _paintJob = null;
     if (_lastSearch && _lastSearch.sources && _lastSearch.sources.length) {
       aiMsg.sources = _lastSearch.sources;
       contentEl.innerHTML = renderMarkdown(acc);
@@ -16053,10 +16347,21 @@ function renderPersonaGrid() {
 
 /* Вид: два переключателя. Классы на <html> применяет applyLook(). */
 function renderLookControls() {
+  wireMascots();
   const cp = $("#compactToggle");
   const an = $("#animToggle");
   if (cp) cp.checked = settings.compact === true;
   if (an) an.checked = settings.animations !== false;
+  const lite = $("#liteSelect");
+  if (lite) lite.value = ["auto", "on", "off"].includes(settings.lite) ? settings.lite : "auto";
+  const hint = $("#liteHint");
+  if (hint) {
+    const on = liteModeOn();
+    const why = settings.lite === "off" ? "выключен вручную"
+      : settings.lite === "on" ? "включён вручную"
+      : deviceLooksWeak() ? "включён сам: устройство выглядит слабым" : "не нужен: устройство справляется";
+    hint.innerHTML = `Сейчас <b>${on ? "включён" : "выключен"}</b> — ${why}.`;
+  }
   applyLook();
 }
 function wireLookControls() {
@@ -16078,6 +16383,16 @@ function wireLookControls() {
       saveSettings();
       applyLook();
       toast(settings.animations ? "Анимации включены" : "Анимации выключены");
+    });
+  }
+  const lite = $("#liteSelect");
+  if (lite && !lite.dataset.wired) {
+    lite.dataset.wired = "1";
+    lite.addEventListener("change", () => {
+      settings.lite = ["auto", "on", "off"].includes(lite.value) ? lite.value : "auto";
+      saveSettings();
+      renderLookControls();
+      toast(liteModeOn() ? "Лёгкий режим включён" : "Лёгкий режим выключен");
     });
   }
 }
@@ -19865,7 +20180,13 @@ function applyMode() {
 
   // иконка и подпись на главном экране
   const wi = $("#welcomeIcon");
-  if (wi) wi.innerHTML = ic(m.icon, 34, settings.mode === "chat" ? "fill" : "");
+  /* В обычном чате на приветствии стоит выбранный маскот,
+     в остальных режимах — иконка режима: она подсказывает, что включено. */
+  if (wi) {
+    wi.innerHTML = settings.mode === "chat"
+      ? mascotSvg(mascotId(), 40)
+      : ic(m.icon, 34, "fill");
+  }
   const wt = $("#welcomeTag");
   if (wt) wt.textContent = m.sub;
   const st = $("#send");
@@ -19956,6 +20277,20 @@ function closeRules() { $("#rulesModal").classList.remove("open"); }
 function wire() {
   // Бренд в DOM
   $("#brandName").textContent = BRAND.name;
+
+  /* Копирование кода — один обработчик на страницу.
+     Раньше кнопки привязывались заново после каждой перерисовки ответа:
+     на длинном потоке это тысячи лишних обработчиков. */
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest(".code-head button[data-copy]");
+    if (!b) return;
+    const codeEl = document.getElementById(b.dataset.copy);
+    if (!codeEl) return;
+    navigator.clipboard.writeText(codeEl.textContent).then(() => {
+      b.innerHTML = `${ic("check", 12)} Скопировано`;
+      setTimeout(() => { b.textContent = "Копировать"; }, 1400);
+    }).catch(() => toast("Не удалось скопировать", "err"));
+  });
 
   // Новая папка для чатов
   const nf = $("#newFolderBtn");
@@ -20372,6 +20707,7 @@ function wire() {
   // Тема и плотность
   applyTheme(settings.theme);
   applyLook();
+  try { paintMascots(); } catch (e) {}
   applyBigText(settings.bigText);
   try { updateKnowledgeChip(); } catch (e) {}
   $("#webBtn").classList.toggle("on", !!settings.webSearch);

@@ -3,6 +3,8 @@
  */
 "use strict";
 
+const mascots = require("./mascots.js");
+
 module.exports = {
   name: "Sye",
   nameRu: "Сью",
@@ -10,12 +12,20 @@ module.exports = {
   tagline: "Пишет код, чинит баги, читает скриншоты и делает работу за тебя",
   accent: "#d97757",
   bg: "#141413",
-  version: "0.7.0",
+  version: "0.8.0",
   site: "https://logismod01.github.io/iskra/",
   telegram: "@Yehndhkw",
-  /** Маскот: рыжий, спокойный, без лишних движений */
+  /**
+   * Маскоты: шесть персонажей с именами, те же, что на сайте.
+   * Выбор хранится в настройках (settings.mascot), по умолчанию — Сью.
+   * Картинки живут в core/mascots.js, здесь только список для интерфейса.
+   */
+  mascotId: "sye",
+  mascots: mascots.all(true),
+  /** Маскот по умолчанию: рыжий, спокойный, без лишних движений */
   mascot: {
-    name: "Сью",
+    id: "sye",
+    name: mascots.name("sye"),
     line: "Живёт в трее. Показывает, когда думает, а когда упёрся в ошибку.",
     moods: ["idle", "work", "error"]
   },

@@ -27,7 +27,11 @@ const CONFIG = {
 
 const CACHE_FILE = "shared-kb.json";
 const TTL = 6 * 3600e3;
-const MAX_ITEMS = 500;
+/* Сколько тем держим в памяти. Раньше стояло 500 — и агент видел меньше
+   половины базы (в ней уже 1300+ тем), потому что запрос шёл одной страницей.
+   Теперь страницы по 1000 и потолок 8000: хватает с большим запасом. */
+const MAX_ITEMS = 8000;
+const PAGE_SIZE = 1000;
 
 let items = [];
 let loadedAt = 0;
@@ -89,34 +93,50 @@ async function refresh(opts) {
   const doFetch = o.fetchImpl || (typeof fetch === "function" ? fetch : null);
   if (!doFetch) return list();
 
-  const url =
+  const base =
     String(CONFIG.url).replace(/\/+$/, "") +
     "/rest/v1/" + CONFIG.table +
-    "?select=topic,body,tags,source,updated_at&active=eq.true&order=updated_at.desc&limit=" + MAX_ITEMS;
+    "?select=topic,body,tags,source,updated_at&active=eq.true&order=topic_norm.asc";
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), o.timeoutMs || 8000);
+  const got = [];
   try {
-    const res = await doFetch(url, {
-      headers: {
-        apikey: CONFIG.anonKey,
-        Authorization: "Bearer " + CONFIG.anonKey,
-        Accept: "application/json"
-      },
-      signal: controller.signal
-    });
-    if (!res || !res.ok) {
-      lastError = "сервер ответил " + (res && res.status);
-      return list();
+    for (let page = 0; page * PAGE_SIZE < MAX_ITEMS; page++) {
+      const url = base + "&limit=" + PAGE_SIZE + "&offset=" + page * PAGE_SIZE;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), o.timeoutMs || 8000);
+      let res;
+      try {
+        res = await doFetch(url, {
+          headers: {
+            apikey: CONFIG.anonKey,
+            Authorization: "Bearer " + CONFIG.anonKey,
+            Accept: "application/json",
+            /* считаем точное число строк — иначе не понять, всё ли забрали */
+            Prefer: "count=exact"
+          },
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+      if (!res || !res.ok) {
+        lastError = "сервер ответил " + (res && res.status);
+        /* первая страница не пришла — оставляем что было;
+           остальные — отдаём то, что успели собрать */
+        if (!got.length) return list();
+        break;
+      }
+      const json = await res.json();
+      const rows = parseRows(json);
+      if (!rows.length) break;
+      got.push(...rows);
+      if (rows.length < PAGE_SIZE) break;
     }
-    const json = await res.json();
     lastError = "";
-    return setItems(json);
+    return setItems(got);
   } catch (e) {
     lastError = (e && e.message) || "нет связи";
-    return list();
-  } finally {
-    clearTimeout(timer);
+    return got.length ? setItems(got) : list();
   }
 }
 
