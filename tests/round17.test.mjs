@@ -249,7 +249,7 @@ await test("account.access объясняет причину, а не «ниче
 
 /* ---------- Версии ---------- */
 await test("версии подняты", async () => {
-  assert(pkg.version === "1.42.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.43.0", "версия сайта: " + pkg.version);
   assert(/version:\s*"0\.11\.0"/.test(brandJs), "версия Sye не 0.11.0");
 });
 

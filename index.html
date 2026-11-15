@@ -2702,6 +2702,104 @@ html.no-anim .theme-flash { display: none; }
   .more-item.only-phone { display: flex; }
   .more-sep.only-phone { display: block; }
 }
+
+/* ============================================================
+   1.43: сила ответа, проект, знакомство
+   ============================================================ */
+/* Кнопка «сила» в строке инструментов: одна вместо двух переключателей */
+.power-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 0 8px; height: 30px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--bg-soft);
+  font-size: 12px; font-weight: 600; color: var(--text-soft);
+  white-space: nowrap;
+}
+.power-btn:hover { color: var(--text); border-color: var(--accent-soft); }
+.power-btn .pw-ico { font-size: 13px; line-height: 1; }
+.power-btn.hot { color: var(--accent); border-color: var(--accent-soft); }
+.power-menu {
+  position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 60;
+  width: min(330px, calc(100vw - 28px));
+  background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
+  max-height: min(60vh, 420px); overflow-y: auto;
+}
+.power-menu[hidden] { display: none; }
+.power-item {
+  display: grid; grid-template-columns: 22px 1fr auto; align-items: center;
+  gap: 8px; width: 100%; text-align: left;
+  padding: 8px 9px; border-radius: 10px; background: none; border: 0;
+  color: var(--text);
+}
+.power-item:hover { background: var(--bg); }
+.power-item.on { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.power-item .pi-ico { font-size: 15px; text-align: center; }
+.power-item .pi-name { font-size: 13px; font-weight: 600; display: block; }
+.power-item .pi-desc { font-size: 11.5px; color: var(--text-dim); display: block; margin-top: 1px; }
+.power-item .pi-bar { width: 42px; display: flex; flex-direction: column; gap: 3px; }
+.power-item .pi-bar i { display: block; height: 3px; border-radius: 2px; background: var(--line); }
+.power-item .pi-bar i b { display: block; height: 3px; border-radius: 2px; background: var(--accent); }
+.power-item .pi-lock { font-size: 12px; color: var(--text-dim); }
+.power-head { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-dim); padding: 7px 9px 4px; }
+
+/* Полоски скорости и точности в настройках */
+.pow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.pow-card {
+  text-align: left; padding: 9px; border-radius: 11px;
+  border: 1px solid var(--line); background: var(--bg);
+  color: var(--text); display: flex; flex-direction: column; gap: 4px;
+}
+.pow-card.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.pow-card .pc-top { display: flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; }
+.pow-card .pc-d { font-size: 10.5px; color: var(--text-dim); line-height: 1.3; }
+.pow-card .pc-bars { display: flex; gap: 4px; margin-top: 2px; }
+.pow-card .pc-bars span { flex: 1; font-size: 9px; color: var(--text-dim); }
+.pow-card .pc-bars i { display: block; height: 3px; border-radius: 2px; background: var(--line); margin-bottom: 2px; }
+.pow-card .pc-bars i b { display: block; height: 3px; border-radius: 2px; background: var(--accent); }
+@media (max-width: 520px) { .pow-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* Плашка «Познакомьтесь с Искрой» */
+.acq-card {
+  position: relative;
+  margin: 0 auto 14px; width: min(560px, 100%);
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-soft));
+}
+.acq-card[hidden] { display: none; }
+.acq-card .acq-ico { font-size: 22px; line-height: 1; }
+.acq-card .acq-t { font-size: 13.5px; font-weight: 700; }
+.acq-card .acq-d { font-size: 12px; color: var(--text-soft); margin-top: 2px; line-height: 1.35; }
+.acq-card .acq-x { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.acq-go {
+  border: 0; border-radius: 9px; padding: 7px 12px;
+  background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 600;
+}
+.acq-skip { font-size: 12px; color: var(--text-dim); background: none; border: 0; padding: 6px; }
+.acq-skip:hover { color: var(--text); }
+
+/* Модалки проекта и знакомства */
+.ob-wide { width: min(620px, 100%); }
+.qbox { font-size: 15px; line-height: 1.5; margin: 4px 0 12px; }
+.qnum { font-size: 11.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .4px; }
+.qprog { height: 4px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 10px 0 16px; }
+.qprog i { display: block; height: 4px; background: var(--accent); transition: width .2s; }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 6px 0 4px; }
+.chip {
+  padding: 7px 12px; border-radius: 20px; font-size: 12.5px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text);
+}
+.chip.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent); font-weight: 600; }
+.proj-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border-radius: 20px; font-size: 11.5px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent); border: 1px solid var(--accent-soft); max-width: 190px;
+}
+.proj-badge b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.brief-line { font-size: 12.5px; color: var(--text-soft); line-height: 1.5; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.brief-line b { color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -2963,6 +3061,17 @@ html.no-anim .theme-flash { display: none; }
         </div>
         <h1>Привет, я Искра</h1>
         <div class="tag" id="welcomeTag">Спроси что угодно — отвечу сразу, без ключа и регистрации</div>
+        <div class="acq-card" id="acqCard" hidden>
+          <span class="acq-ico">👋</span>
+          <div>
+            <div class="acq-t">Познакомьтесь с Искрой</div>
+            <div class="acq-d">Расскажи о себе — подстрою тему общения под тебя. Минута, можно пропустить.</div>
+          </div>
+          <div class="acq-x">
+            <button type="button" class="acq-go" id="acqStart">Начать</button>
+            <button type="button" class="acq-skip" id="acqLater">Позже</button>
+          </div>
+        </div>
         <div class="welcome-actions" id="welcomeActions">
           <button type="button" class="wa-card" data-wa="объясни простыми словами, как работает " >
             <span class="wa-ico">✎</span>
@@ -3005,6 +3114,7 @@ html.no-anim .theme-flash { display: none; }
           </button>
           <div class="mode-menu" id="modebar" hidden></div>
         </div>
+        <div class="power-menu" id="powerMenu" hidden></div>
         <div class="img-strip" id="imgStrip" style="display:none"></div>
         <textarea id="input" rows="1" placeholder="Спроси что угодно…"></textarea>
         <div class="comp-row">
@@ -3021,21 +3131,19 @@ html.no-anim .theme-flash { display: none; }
               </svg>
             </button>
 
+            <button type="button" class="tool-btn" id="projBtn" title="Проект — Искра расспросит и будет помнить">
+              <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              </svg>
+            </button>
             <button type="button" class="tool-btn" id="skillsBtn" title="Навыки — готовые команды">
               <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>
               </svg>
             </button>
-            <button type="button" class="tool-btn mode-toggle" id="deepBtn" title="Глубокое мышление — дольше, но точнее">
-              <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2z"/>
-                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/>
-              </svg>
-            </button>
-            <button type="button" class="tool-btn mode-toggle" id="riskBtn" title="Риск — очень быстро, возможны ошибки. Не рекомендовано к использованию">
-              <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
+            <button type="button" class="power-btn" id="powerBtn" aria-haspopup="true" aria-expanded="false" title="Сила ответа: от «Молнии» до «Ультры»">
+              <span class="pw-ico" id="powerIco">⚡</span>
+              <span id="powerName">Обычно</span>
             </button>
             <button type="button" class="tool-btn" id="makerBtn" hidden style="display:none" title="3D-мастерская · Pro — фигуры, .obj и скрипт Blender">
               <svg class="ic" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
@@ -3149,6 +3257,31 @@ html.no-anim .theme-flash { display: none; }
     <div class="set-body">
       <!-- Основное -->
       <div class="set-pane" data-pane="main">
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">⚡</span> Сила ответа</div>
+          <p class="set-p">Шесть уровней: слева быстрее, справа точнее. Уровень работает сразу — он же в кнопке рядом с полем ввода.</p>
+          <div class="pow-grid" id="powGrid"></div>
+          <div class="hint" id="powNote"></div>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">📁</span> Проект</div>
+          <p class="set-p">Искра расспросит о проекте (от 15 до 100 вопросов), запомнит его и будет отвечать уже с ним в голове: советы, гайды, следующий шаг.</p>
+          <div class="hint" id="projSetHint"></div>
+          <div class="modal-row" style="margin-top:8px">
+            <button class="btn btn-ghost" id="projOpenBtn" type="button">Открыть проект</button>
+          </div>
+        </section>
+
+        <section class="set-card">
+          <div class="set-h"><span class="set-ico">👋</span> О тебе</div>
+          <p class="set-p">«Познакомьтесь с Искрой» — рассказ о себе и четыре вопроса. По ним Искра подбирает тему общения. Можно пройти заново в любой момент.</p>
+          <div class="hint" id="acqSetHint"></div>
+          <div class="modal-row" style="margin-top:8px">
+            <button class="btn btn-ghost" id="acqOpenBtn" type="button">Познакомиться заново</button>
+          </div>
+        </section>
+
         <section class="set-card">
           <div class="set-h"><span class="set-ico">✦</span> Версия</div>
           <div class="edition-grid" id="editionBtns">
@@ -11011,8 +11144,11 @@ function orderedEnginesFor(payload, needVision) {
   const all = orderedEngines(needVision);
   /* Сильную модель зовём только на сложное: на «привет» разницы нет,
      а бесплатный лимит у неё заметно меньше. */
-  const base = hard ? all : all.filter(e => !e.pro);
-  if (!hard) return base;
+  /* Уровень силы решает, звать ли сильную модель вообще: «Молния» и «Быстро» —
+     никогда, «Сильно» и «Ультра» — всегда, остальные — только на сложном. */
+  const wantPro = powerWantsPro(hard);
+  const base = wantPro ? all : all.filter(e => !e.pro);
+  if (!wantPro) return base;
   /* Проверка ключа выяснила, что сильная модель в лимите или недоступна —
      не тратим на неё первую попытку, отвечаем сразу быстрой. */
   const proOk = settings.keyPro !== "limit" && settings.keyPro !== "no";
@@ -11061,6 +11197,77 @@ const PERSONAS = {
     prompt: ""
   }
 };
+
+/* ---------- Шесть уровней силы ----------
+   Человек сам решает, что важнее: скорость или точность. Каждый уровень —
+   это набор настроек ответа: какая модель зовётся, сколько ей дать на ответ,
+   проверяет ли Искра себя после.
+   Уровни 1–2 — быстрые и дешёвые, 3 — обычный, 4–5 — сложное, 6 — максимум. */
+const POWER_LEVELS = [
+  {
+    id: "flash", name: "Молния", ico: "⚡", desc: "мгновенно, но может ошибиться",
+    speed: 6, precision: 2, pro: "never", checks: 0, maxTokens: 900, temp: 0.9, effort: "low",
+    sys: "Отвечай молниеносно и коротко: 2–4 предложения, без списков и рассуждений. Скорость важнее полноты. Если ответ может быть неточным — честно добавь «примерно»."
+  },
+  {
+    id: "quick", name: "Быстро", ico: "🏃", desc: "быстрый ответ, простые вопросы точно",
+    speed: 5, precision: 3, pro: "never", checks: 0, maxTokens: 2000, temp: 0.75, effort: "low",
+    sys: "Отвечай быстро и по делу: короткий ответ, при необходимости — короткий список. Не расписывай лишнего, не повторяй вопрос."
+  },
+  {
+    id: "norm", name: "Обычно", ico: "◎", desc: "баланс скорости и точности",
+    /* «Обычно» — прежнее поведение: 4096, иначе код обрывается на середине */
+    speed: 4, precision: 4, pro: "hard", checks: 0, maxTokens: 4096, temp: 0.65, effort: "low",
+    sys: "Отвечай обычно: понятно и достаточно подробно, структурируй ответ, если он длинный. На сложных задачах рассуждай по шагам."
+  },
+  {
+    id: "deep", name: "Умно", ico: "🧠", desc: "думает, разбирает по шагам",
+    speed: 3, precision: 5, pro: "hard", checks: 0, maxTokens: 4096, temp: 0.5, effort: "high",
+    sys: "Думай перед ответом. Сначала разбери задачу по шагам, проверь условие и крайние случаи, потом дай ответ. Показывай ход решения, но без воды."
+  },
+  {
+    id: "strong", name: "Сильно", ico: "💪", desc: "сильная модель и самопроверка",
+    speed: 2, precision: 6, pro: "always", checks: 1, maxTokens: 4096, temp: 0.45, effort: "high",
+    sys: "Работай как на важном проекте: разбери условие, назови допущения, дай ответ, проверь его. Если в задаче есть подвох или неоднозначность — скажи об этом. В конце коротко: что может пойти не так."
+  },
+  {
+    id: "ultra", name: "Ультра", ico: "🔥", desc: "максимум: всегда сильная, сверяет себя",
+    speed: 1, precision: 6, pro: "always", checks: 2, maxTokens: 6000, temp: 0.35, effort: "high",
+    proOnly: true,
+    sys: "Это самая ответственная работа. План → решение → проверка → ответ. Проверь каждый факт и число, назови риски и что стоит перепроверить человеку. Не выдумывай источники и цифры: не знаешь — так и скажи."
+  }
+];
+const POWER_IDS = POWER_LEVELS.map(l => l.id);
+function powerLevel() {
+  return POWER_LEVELS.find(l => l.id === settings.power) || POWER_LEVELS[2];
+}
+/* Ультра — для Искры Про или со своим проверенным ключом: она жжёт лимит быстрее всех. */
+function powerUnlocked(lv) {
+  if (!lv || !lv.proOnly) return true;
+  try { return !!(proActive() || keyIsVerified()); } catch (e) { return false; }
+}
+/* Нужно ли на этом уровне звать сильную модель */
+function powerWantsPro(hard) {
+  const lv = powerLevel();
+  if (lv.pro === "always") return true;
+  if (lv.pro === "never") return false;
+  return !!hard;
+}
+function setPower(id) {
+  const lv = POWER_LEVELS.find(l => l.id === id);
+  if (!lv) return;
+  if (!powerUnlocked(lv)) {
+    toast("«Ультра» — для Искры Про или со своим ключом: она сильнее всех жжёт лимит.", "err");
+    try { openAccessPanel(); } catch (e) {}
+    return;
+  }
+  settings.power = lv.id;
+  saveSettings();
+  try { renderPowerUI(); } catch (e) {}
+  try { updateComposerNote(); } catch (e) {}
+  toast("Сила ответа: " + lv.name + " — " + lv.desc);
+}
+
 
 /* ---------- 15 тем ---------- */
 const THEMES = {
@@ -11168,6 +11375,17 @@ let liveStream = null;
   if (typeof settings.animations !== "boolean") settings.animations = true;
   /* Крупный текст — из меню «⋯». Старые настройки этого поля не знали. */
   if (typeof settings.bigText !== "boolean") settings.bigText = false;
+  /* Сила ответа. Раньше было два переключателя («Риск» и «Глубокое мышление»),
+     теперь это один набор из шести уровней: старые значения переносим. */
+  if (!POWER_IDS.includes(settings.power)) {
+    settings.power = settings.riskMode ? "flash" : (settings.deepThink ? "deep" : "norm");
+  }
+  if (typeof settings.deepThink !== "boolean") settings.deepThink = false;
+  if (typeof settings.riskMode !== "boolean") settings.riskMode = false;
+  if (settings.project && typeof settings.project !== "object") settings.project = null;
+  if (settings.project && !Array.isArray(settings.project.answers)) settings.project.answers = [];
+  if (settings.profile && typeof settings.profile !== "object") settings.profile = null;
+  if (typeof settings.acquainted !== "boolean") settings.acquainted = false;
   saveSettings();
 })();
 
@@ -11208,6 +11426,13 @@ function loadSettings() {
     /* что выяснили про сильную модель: null — не проверяли, ok / limit / no */
     keyPro: null,
     keyProModel: "",
+    /* сила ответа: flash / quick / norm / deep / strong / ultra */
+    power: "norm",
+    /* проект, о котором Искра помнит; null — проекта нет */
+    project: null,
+    /* «Познакомьтесь с Искрой»: ответы о себе, чтобы подстроить общение */
+    profile: null,
+    acquainted: false,
     lite: "auto",
     animations: true,
     bigText: false,
@@ -12053,6 +12278,7 @@ function renderMessages() {
   if (!chat || !chat.messages.length) {
     $("#welcome").style.display = "";
     m.querySelectorAll(".msg").forEach(n => n.remove());
+    try { acqCardShow(); } catch (e) {}
     m.scrollTop = 0;            /* новый чат всегда открывается сверху, с приветствия */
     $("#chatTitle").textContent = chat?.title || "Новый чат";
     return;
@@ -12214,7 +12440,7 @@ function appendMessage(msg, animate = true) {
   el.innerHTML = `
     ${avatar}
     <div class="body">
-      <div class="who">${who}</div>
+      <div class="who">${who}${msg.checked ? ' <span class="proj-badge" title="Ответ перечитан и исправлен">✓ проверила себя</span>' : ""}${msg.byProject ? ' <span class="proj-badge">📁 проект</span>' : ""}</div>
       <div class="content">${msg.role === "user" ? escUser(msg.content) : renderMarkdown(msg.content || "")}</div>
       ${msg.image ? `<div class="gen-wrap"><img class="gen-img" src="${msg.image}" alt=""/>
         ${msg.imageNote ? `<p class="gen-note">${esc(msg.imageNote)}</p>` : ""}
@@ -12525,14 +12751,15 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
     sys += "\n\nСПРАВКА ИЗ ВСТРОЕННОЙ БАЗЫ ИСКРЫ (пользуйся ею как главным источником, если она подходит):\n" + kb.block;
   }
 
-  // режимы скорости
-  if (settings.riskMode) {
-    sys += "\n\nРежим «Риск»: отвечай максимально быстро, коротко, без проверки себя. Скорость важнее точности.";
-  } else if (settings.deepThink) {
-    sys += "\n\nРежим «Глубокое мышление»: продумай задачу шаг за шагом, проверь себя, рассмотри альтернативы, и только потом дай выверенный ответ с кратким пояснением хода решения.";
-  } else {
-    sys += "\n\n" + SPEED_RULE;
+  /* сила ответа: от «Молнии» до «Ультры» — одним уровнем задаётся и манера, и проверка */
+  const lv = powerLevel();
+  sys += "\n\nСИЛА ОТВЕТА — «" + lv.name + "» (" + lv.speed + "/6 скорость, " + lv.precision + "/6 точность). " + lv.sys;
+  if (lv.checks > 0) {
+    sys += " После ответа перечитай его и исправь ошибки: числа, факты, противоречия, пропущенные шаги.";
   }
+  /* проект: Искра помнит, над чем человек работает */
+  const pj = projectContext();
+  if (pj) sys += "\n\n" + pj;
   const modeHint = MODES[settings.mode]?.hint;
   if (modeHint) sys += `\n\n${modeHint}`;
   sys += `\n\nСегодня: ${new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}.`;
@@ -12591,21 +12818,14 @@ function apiPayload(chatMessages, opts = {}) {
   if (settings.webSearch && settings.apiKey && settings.provider === "openrouter") {
     body.plugins = [{ id: "web", max_results: 3 }];
   }
-  // скорость и глубина
-  if (settings.riskMode) {
-    body.reasoning_effort = "low";
-    body.max_tokens = 900;
-    body.temperature = 0.9;
-  } else if (settings.deepThink) {
-    body.reasoning_effort = "high";
-    body.max_tokens = 4096;
-    body.temperature = 0.4;
-  } else if (settings.edition !== "pro") {
-    // бесплатная версия: быстрый ответ, без долгих размышлений.
-    // Но не 1200: на такой длине код обрывался на середине функции.
-    body.reasoning_effort = "low";
-    body.max_tokens = String(settings.apiKey || "").trim() ? 4096 : 2000;
-    body.temperature = 0.65;
+  /* скорость и глубина — по выбранному уровню силы */
+  const lvP = powerLevel();
+  body.reasoning_effort = lvP.effort;
+  body.temperature = lvP.temp;
+  body.max_tokens = lvP.maxTokens;
+  /* без ключа и без Про длину урезаем: бесплатные движки рвут длинные ответы */
+  if (settings.edition !== "pro" && !String(settings.apiKey || "").trim()) {
+    body.max_tokens = Math.min(body.max_tokens, 2000);
   }
   return body;
 }
@@ -15829,8 +16049,8 @@ function buildSystemPromptLite(userText = "") {
   const tone = TONES[settings.tone];
   if (tone && tone.prompt) sys += "\n\n" + tone.prompt;
   if (!profanityAllowed()) sys += "\n\nБез мата и грубых выражений.";
-  if (settings.riskMode) sys += "\n\nОтвечай коротко и быстро.";
-  else if (settings.deepThink) sys += "\n\nПродумай шаг за шагом и проверь себя перед ответом.";
+  const lvL = powerLevel();
+  sys += "\n\nСила ответа: «" + lvL.name + "». " + lvL.sys.slice(0, 220);
   const modeHint = MODES[settings.mode]?.hint;
   if (modeHint) sys += `\n\n${modeHint}`;
   if (settings.memoryOn && settings.memory.length) {
@@ -16244,6 +16464,31 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       acc += mathCorrectionNote(mathFixes);
       aiMsg.mathFixed = mathFixes.length;
     }
+    /* Уровни «Сильно» и «Ультра»: перечитать свой же ответ и исправить ошибки.
+       Проверка необязательная: не ответила — показываем как есть, без вранья. */
+    const checks = selfCheckNeeded(trimmed, acc);
+    if (checks && !signal.aborted) {
+      let fixedText = "";
+      for (let i = 0; i < checks; i++) {
+        const t = streamEl();
+        if (t && t.isConnected) {
+          const tip = document.createElement("p");
+          tip.className = "gen-note";
+          tip.textContent = i === 0 ? "Перечитываю ответ и проверяю себя…" : "Проверяю ещё раз…";
+          t.appendChild(tip);
+        }
+        let res = null;
+        try { res = await runAnswerCheck(trimmed, fixedText || acc, signal); } catch (e) { res = null; }
+        if (res && res.fixed) { fixedText = res.fixed; continue; }
+        break;
+      }
+      if (fixedText && fixedText.trim().length > 120) {
+        acc = fixedText;
+        aiMsg.checked = true;
+        if (!profanityAllowed() && maskProfanity(acc) !== acc) acc = maskProfanity(acc);
+      }
+    }
+    if (projectOn()) aiMsg.byProject = true;
     answerCachePut(cacheKey, acc);
     aiMsg.content = acc;
     aiMsg.pending = false;
@@ -17591,6 +17836,17 @@ function openSettings(tab) {
   setSettingsTab(tab === "access" || tab === "look" ? tab : "main");
   renderEditionUI();
   renderPersonaGrid();
+  try { renderPowerUI(); } catch (e) {}
+  try {
+    const ph = $("#projSetHint");
+    if (ph) ph.textContent = projectOn()
+      ? "В памяти: «" + settings.project.name + "» · отвечено " + (settings.project.answers || []).filter(x => x.a).length + " из " + (settings.project.total || 0) + "."
+      : "Проекта пока нет. Опрос длится от 15 до 100 вопросов — сколько выберешь.";
+    const ah = $("#acqSetHint");
+    if (ah) ah.textContent = settings.acquainted
+      ? (settings.profile && settings.profile.about ? "Знакомы. Помню: " + String(settings.profile.about).slice(0, 90) + "…" : "Знакомы.")
+      : "С Искрой ещё не знакомились — это займёт минуту.";
+  } catch (e) {}
   renderThemeGrid();
   renderLookControls();
   wireLookControls();
@@ -17722,8 +17978,10 @@ function plural(n, one, few, many) {
 function updateComposerNote() {
   const n = document.querySelector(".composer-note");
   if (!n) return;
-  if (settings.riskMode) {
-    n.textContent = "Режим «Риск»: очень быстро, возможны ошибки.";
+  const lv = powerLevel();
+  const lvNote = lv.id === "norm" ? "" : " · сила: " + lv.name.toLowerCase();
+  if (lv.id === "flash") {
+    n.textContent = "Сила «Молния»: мгновенно, но возможны ошибки." + (projectOn() ? " · проект: " + settings.project.name : "");
     return;
   }
   const key = String(settings.apiKey || "").trim();
@@ -17734,6 +17992,7 @@ function updateComposerNote() {
         (strong ? " · на сложном включается сильная модель" : "") + ". Ключ хранится только в этом браузере."
       : "Искра · свой ключ подключён. Напиши что-нибудь — проверю, что он отвечает.")
     : "Искра · работает без ключа и регистрации. Важное проверяй сам.";
+  n.textContent = n.textContent.replace(/\.$/, "") + lvNote + (projectOn() ? " · проект: " + settings.project.name : "") + ".";
 }
 
 /* Чип в шапке: версия и остаток Pro — вместо чужих названий моделей */
@@ -18286,6 +18545,15 @@ async function handleAuthRedirect() {
     history.replaceState(null, "", location.pathname + location.search);
     toast("Вход выполнен: " + acc.name, "ok");
     if (!settings.model || settings.onboarded !== true) setTimeout(openOnboarding, 600);
+    /* Новому человеку после регистрации сразу показываем «Познакомьтесь с Искрой».
+       Один раз: потом только кнопка в настройках. */
+    if (!settings.acquainted) {
+      setTimeout(() => {
+        const ob = $("#onboardModal");
+        if (ob && ob.classList.contains("open")) return;
+        try { openAcq(); } catch (e) {}
+      }, 1600);
+    }
     return true;
   } catch (e) {
     toast("Не удалось завершить вход: " + e.message, "err");
@@ -18813,9 +19081,12 @@ function openOnboarding() {
   });
   $("#obFinish").onclick = () => {
     if (chosen) chosen.apply();
+    /* раньше отметка не ставилась вовсе — окно выбора версии вылезало при каждом входе */
+    settings.onboarded = true;
     saveSettings(); syncProviderUI(); updateModelChip();
     $("#onboardModal").classList.remove("open");
     toast("Готово: " + modelDisplayName(settings.model), "ok");
+    if (!settings.acquainted) setTimeout(() => { try { openAcq(); } catch (e) {} }, 500);
   };
   $("#onboardModal").classList.add("open");
 }
@@ -21799,30 +22070,15 @@ function renderEditionUI() {
   try { refreshProUI(); } catch (e) {}
 }
 
+/* Раньше здесь были два переключателя («Риск» и «Глубокое мышление»).
+   Теперь это один ряд из шести уровней силы — см. renderPowerUI(). */
 function renderModeToggles() {
-  const d = $("#deepBtn"), r = $("#riskBtn");
-  if (d) d.classList.toggle("on", !!settings.deepThink && !settings.riskMode);
-  if (r) r.classList.toggle("on", !!settings.riskMode);
-  const note = document.querySelector(".composer-note");
-  if (note && settings.riskMode) {
-    note.textContent = "Внимание: режим «Риск»: очень быстро, но возможны ошибки. Не рекомендовано к использованию.";
-  } else if (note) {
-    updateComposerNote();
-  }
+  try { renderPowerUI(); } catch (e) {}
+  if (document.querySelector(".composer-note")) updateComposerNote();
 }
-
-function setDeepThink(on) {
-  settings.deepThink = on;
-  if (on) settings.riskMode = false;
-  saveSettings(); renderModeToggles();
-  toast(on ? "Глубокое мышление включено — отвечаю дольше, но точнее" : "Глубокое мышление выключено");
-}
-function setRiskMode(on) {
-  settings.riskMode = on;
-  if (on) settings.deepThink = false;
-  saveSettings(); renderModeToggles();
-  if (on) toast("Внимание: режим «Риск» — очень быстро, возможны ошибки. Не рекомендовано к использованию.", "err");
-}
+/* Оставлено для старых вызовов: включают силу, а не отдельные флаги */
+function setDeepThink(on) { setPower(on ? "deep" : "norm"); }
+function setRiskMode(on) { setPower(on ? "flash" : "norm"); }
 
 function openRules() { $("#rulesModal").classList.add("open"); }
 function closeRules() { $("#rulesModal").classList.remove("open"); }
@@ -21908,8 +22164,79 @@ function wire() {
   // Чип модели
   $("#modelChip") && $("#modelChip").addEventListener("click", openSettings);
   $("#baseUrl") && $("#baseUrl").addEventListener("input", syncProviderUI);
-  $("#deepBtn") && $("#deepBtn").addEventListener("click", () => setDeepThink(!settings.deepThink));
-  $("#riskBtn") && $("#riskBtn").addEventListener("click", () => setRiskMode(!settings.riskMode));
+  /* Сила ответа: кнопка и меню рядом с полем ввода */
+  const _pwBtn = $("#powerBtn");
+  if (_pwBtn) _pwBtn.addEventListener("click", (e) => { e.preventDefault(); togglePowerMenu(); });
+  document.addEventListener("click", (e) => {
+    const menu = $("#powerMenu");
+    if (!menu || menu.hidden) return;
+    if (!e.target.closest("#powerMenu") && !e.target.closest("#powerBtn")) togglePowerMenu(false);
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") togglePowerMenu(false); });
+
+  /* Проект */
+  const _pjBtn = $("#projBtn");
+  if (_pjBtn) _pjBtn.addEventListener("click", () => openProject());
+  const pjSet = $("#projOpenBtn");
+  if (pjSet) pjSet.addEventListener("click", () => openProject());
+  const pjX = $("#projX");
+  if (pjX) pjX.addEventListener("click", closeProject);
+  $("#projCountChips") && $("#projCountChips").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-n]");
+    if (!b) return;
+    $$("#projCountChips .chip").forEach((c) => c.classList.toggle("on", c === b));
+    const lim = projectLimit();
+    const n = Number(b.dataset.n);
+    if (n > lim) toast("Длинный разбор (больше 15 вопросов) открывает Искра Про", "err");
+  });
+  $("#projBegin") && $("#projBegin").addEventListener("click", () => {
+    const on = $("#projCountChips .chip.on");
+    projectBegin(Number(on && on.dataset.n) || 15);
+  });
+  $("#projResume") && $("#projResume").addEventListener("click", () => {
+    const p = settings.project;
+    if (!p) return;
+    projectSwitchStep("projAsk");
+    projectShowCurrent();
+  });
+  $("#projNext") && $("#projNext").addEventListener("click", () => projectAnswerNext(false));
+  $("#projSkipQ") && $("#projSkipQ").addEventListener("click", () => projectAnswerNext(true));
+  $("#projStop") && $("#projStop").addEventListener("click", () => projectFinish());
+  $("#projChat") && $("#projChat").addEventListener("click", () => {
+    closeProject();
+    sendMessage("Давай разберём мой проект «" + (settings.project ? settings.project.name : "") + "»: с чего начать и что делать в первую очередь?");
+  });
+  $("#projMore") && $("#projMore").addEventListener("click", () => { projectAskMore(); });
+  $("#projNew") && $("#projNew").addEventListener("click", () => {
+    if (!confirm("Начать новый проект? Записи по текущему останутся в истории чатов, но из памяти проекта уйдут.")) return;
+    settings.project = null; saveSettings(); projectSwitchStep("projStart");
+    $("#projName").value = ""; $("#projGoal").value = ""; updateComposerNote();
+  });
+
+  /* Познакомьтесь с Искрой */
+  const acqStart = $("#acqStart"), acqLater = $("#acqLater");
+  if (acqStart) acqStart.addEventListener("click", () => openAcq());
+  if (acqLater) acqLater.addEventListener("click", () => { acqMarkSeen(); toast("Ладно, позже. Кнопка «Познакомиться заново» — в настройках."); });
+  const acqOpenBtn = $("#acqOpenBtn");
+  if (acqOpenBtn) acqOpenBtn.addEventListener("click", () => openAcq());
+  const acqX = $("#acqX");
+  if (acqX) acqX.addEventListener("click", () => { acqMarkSeen(); closeAcq(); });
+  $("#acqNext") && $("#acqNext").addEventListener("click", () => acqSwitch("acqQuiz"));
+  ["acqSkip1", "acqSkip2"].forEach((id) => {
+    const b = $("#" + id);
+    if (b) b.addEventListener("click", () => { acqMarkSeen(); closeAcq(); toast("Пропустили — вернуться можно в настройках"); });
+  });
+  $("#acqModal") && $("#acqModal").addEventListener("click", (e) => {
+    const c = e.target.closest(".chip");
+    if (!c) return;
+    const box = c.parentElement;
+    box.querySelectorAll(".chip").forEach((x) => x.classList.remove("on"));
+    c.classList.add("on");
+    const key = box.id.replace(/^acq/, "").toLowerCase();
+    ACQ_PICKS[key] = c.dataset.v;
+  });
+  $("#acqFinish") && $("#acqFinish").addEventListener("click", () => acqApply());
+  $("#acqCloseEnd") && $("#acqCloseEnd").addEventListener("click", () => { closeAcq(); acqCardShow(); });
   $("#openRules") && $("#openRules").addEventListener("click", openRules);
 
   // Консоль владельца
@@ -22371,6 +22698,519 @@ function toggleModeMenu(force) {
   else { menu.setAttribute("hidden", ""); trig.setAttribute("aria-expanded", "false"); }
 }
 
+/* ============================================================
+   1.43 — сила ответа, проект, знакомство
+   ============================================================ */
+
+/* ---------- Сила ответа: кнопка в чате и карточки в настройках ---------- */
+function powerBarsHtml(lv) {
+  const bar = (v) => '<i><b style="width:' + Math.round(v / 6 * 100) + '%"></b></i>';
+  return '<span>скорость' + bar(lv.speed) + '</span><span>точность' + bar(lv.precision) + '</span>';
+}
+function fillPowerMenu() {
+  const menu = $("#powerMenu");
+  if (!menu) return;
+  const cur = powerLevel().id;
+  menu.innerHTML = '<div class="power-head">Сила ответа</div>' + POWER_LEVELS.map((lv) => {
+    const lock = powerUnlocked(lv) ? "" : '<span class="pi-lock">🔒</span>';
+    return '<button type="button" class="power-item' + (lv.id === cur ? " on" : "") + '" data-power="' + lv.id + '">' +
+      '<span class="pi-ico">' + lv.ico + '</span>' +
+      '<span><span class="pi-name">' + esc(lv.name) + (lv.proOnly ? ' · Про' : '') + '</span>' +
+      '<span class="pi-desc">' + esc(lv.desc) + '</span></span>' +
+      '<span class="pi-bar"><i><b style="width:' + Math.round(lv.speed / 6 * 100) + '%"></b></i>' +
+      '<i><b style="width:' + Math.round(lv.precision / 6 * 100) + '%"></b></i></span>' + lock +
+      '</button>';
+  }).join("");
+  menu.querySelectorAll("[data-power]").forEach((b) => b.addEventListener("click", () => {
+    setPower(b.dataset.power);
+    togglePowerMenu(false);
+  }));
+}
+function togglePowerMenu(on) {
+  const menu = $("#powerMenu");
+  const btn = $("#powerBtn");
+  if (!menu) return;
+  const show = typeof on === "boolean" ? on : menu.hidden;
+  if (show) fillPowerMenu();
+  menu.hidden = !show;
+  if (btn) btn.setAttribute("aria-expanded", show ? "true" : "false");
+}
+function renderPowerUI() {
+  const lv = powerLevel();
+  const ico = $("#powerIco"), nm = $("#powerName"), btn = $("#powerBtn");
+  if (ico) ico.textContent = lv.ico;
+  if (nm) nm.textContent = lv.name;
+  if (btn) {
+    btn.classList.toggle("hot", lv.id !== "norm");
+    btn.title = "Сила ответа: " + lv.name + " — " + lv.desc;
+  }
+  if ($("#powerMenu") && !$("#powerMenu").hidden) fillPowerMenu();
+  const grid = $("#powGrid");
+  if (grid) {
+    grid.innerHTML = POWER_LEVELS.map((x) => {
+      const lock = powerUnlocked(x) ? "" : " 🔒";
+      return '<button type="button" class="pow-card' + (x.id === lv.id ? " on" : "") + '" data-power="' + x.id + '">' +
+        '<span class="pc-top">' + x.ico + " " + esc(x.name) + lock + "</span>" +
+        '<span class="pc-d">' + esc(x.desc) + "</span>" +
+        '<span class="pc-bars">' + powerBarsHtml(x) + "</span></button>";
+    }).join("");
+    grid.querySelectorAll("[data-power]").forEach((b) => b.addEventListener("click", () => setPower(b.dataset.power)));
+  }
+  const note = $("#powNote");
+  if (note) {
+    const strongReady = settings.keyPro === "ok";
+    note.textContent = lv.pro === "always"
+      ? (strongReady || !String(settings.apiKey || "").trim()
+        ? "Сильная модель зовётся на каждый вопрос — это точнее, но лимит тратится быстрее."
+        : "Сильная модель зовётся на каждый вопрос; проверь ключ, чтобы точно знать, доступна ли она.")
+      : lv.pro === "never"
+        ? "Быстрые уровни не зовут сильную модель — ответ будет мгновенным, но проще."
+        : "Сильная модель включается только на сложных задачах: доказательства, код, длинные объяснения.";
+  }
+}
+
+/* ---------- Самопроверка ответа ----------
+   На уровнях «Сильно» и «Ультра» Искра после ответа перечитывает его
+   отдельным запросом. Модель-проверяющий возвращает либо «ЧИСТО»,
+   либо исправленный текст целиком — тогда мы показываем его. */
+const SELF_CHECK_PROMPT = `Ты — строгий проверяющий. Тебе дают вопрос пользователя и готовый ответ на него.
+Найди настоящие ошибки: неверные числа и вычисления, выдуманные факты и источники, противоречия, пропущенные шаги, код, который не сработает.
+Не придирайся к стилю, не сокращай ответ, не добавляй вступлений.
+
+Если ошибок нет — ответь одним словом: ЧИСТО
+Если ошибки есть — ответь так:
+ИСПРАВЛЕНО:
+<полный исправленный ответ, целиком, в том же формате>`;
+
+function parseSelfCheck(raw) {
+  const t = String(raw || "").trim();
+  if (!t) return null;
+  /* \b в JS работает только с латиницей: «ЧИСТО» по-русски им не поймать */
+  if (/^чисто[\s.!)]*$/i.test(t) || /^чисто\b/i.test(t.split("\n")[0])) return { clean: true };
+  const m = t.match(/ИСПРАВЛЕНО:\s*([\s\S]+)$/i);
+  const fixed = (m ? m[1] : (t.length > 200 ? t : "")).trim();
+  if (!fixed) return null;
+  return { clean: false, fixed };
+}
+
+async function runAnswerCheck(question, answer, signal) {
+  const payload = {
+    messages: [
+      { role: "system", content: SELF_CHECK_PROMPT },
+      { role: "user", content: "Вопрос пользователя:\n" + question + "\n\nГотовый ответ:\n" + answer }
+    ],
+    stream: true,
+    temperature: 0.2,
+    max_tokens: 4096
+  };
+  let out = "";
+  await askIskra(payload, (d) => { out += d; }, signal);
+  return parseSelfCheck(out);
+}
+
+/* Нужна ли проверка: только на уровнях с checks и не на мусорных коротких ответах */
+function selfCheckNeeded(question, answer) {
+  const lv = powerLevel();
+  if (!lv.checks) return 0;
+  const a = String(answer || "");
+  if (a.trim().length < 180) return 0;
+  if (/\[Остановлено\]/.test(a)) return 0;
+  const hard = requestComplexity({ messages: [{ role: "user", content: String(question || "") }] }) === "hard";
+  if (lv.id !== "ultra" && !hard) return 0;
+  return lv.checks;
+}
+
+/* ============================================================
+   ПРОЕКТ
+   ============================================================ */
+const PROJECT_BLOCKS = ["Замысел", "Для кого", "Что входит", "Технологии", "Сроки", "Деньги", "Кто делает", "Риски", "Качество", "Запуск"];
+const PROJECT_QUESTIONS = [
+  /* Замысел */
+  "Опиши проект одной фразой, как будто объясняешь другу: что это и зачем?",
+  "Какую проблему он решает? Что человек делает сейчас без него?",
+  "Почему этим стоит заниматься именно тебе?",
+  "Как поймёшь, что проект удался? Назови один измеримый признак.",
+  "Что этот проект НЕ делает — чтобы не расползся?",
+  "Есть ли похожие вещи на рынке? Чем твой будет отличаться?",
+  "Какая главная «фишка», ради которой им будут пользоваться?",
+  "Что будет, если проект вообще не делать?",
+  "Как формулируется результат для заказчика или пользователя?",
+  "Есть ли у проекта рабочее название и слоган?",
+  /* Для кого */
+  "Кто главный пользователь: возраст, чем занимается, сколько времени в интернете?",
+  "Сколько таких людей, хотя бы примерно?",
+  "На каком устройстве они будут этим пользоваться — телефон или компьютер?",
+  "Как они сейчас решают эту задачу?",
+  "Что для них важнее: скорость, красота или надёжность?",
+  "Будут ли пользователи, которые платят, и чем они отличаются от остальных?",
+  "Нужен ли вход по аккаунту или всё должно работать без регистрации?",
+  "Насколько пользователи разбираются в технике?",
+  "На каком языке они говорят и нужен ли второй язык?",
+  "Что бесит их в похожих сервисах чаще всего?",
+  /* Что входит */
+  "Перечисли главные экраны или разделы — что там точно должно быть?",
+  "Какая одна функция обязательна, без неё проект бессмыслен?",
+  "Что можно добавить позже, во второй версии?",
+  "Нужны ли картинки, фото, видео или документы?",
+  "Нужен ли поиск и фильтры?",
+  "Нужны ли уведомления или письма?",
+  "Нужна ли оплата, и если да — картой или переводом?",
+  "Нужна ли админ-панель и кто в ней будет работать?",
+  "Нужна ли статистика: что чаще открывают, откуда приходят?",
+  "Что точно НЕ входит в первую версию?",
+  /* Технологии */
+  "На чём собираешься делать: готовый конструктор, CMS или свой код?",
+  "Есть ли уже домен, хостинг или аккаунты?",
+  "Нужны ли база данных и хранение файлов?",
+  "Будешь ли писать код сам или собирать из готового?",
+  "Какие языки и инструменты знаешь — и какие готов учить?",
+  "Нужно ли работать без интернета или как приложение на телефоне?",
+  "Нужна ли интеграция с чем-то ещё: почта, мессенджер, календарь, карты?",
+  "Есть ли ограничения по сборке и размеру сайта?",
+  "Нужно ли, чтобы работало в старых браузерах?",
+  "Устроит ли самый простой вариант: один HTML-файл плюс база?",
+  /* Сроки */
+  "Когда тебе реально нужно это закончить?",
+  "Сколько часов в неделю ты можешь на это тратить?",
+  "Есть ли дата, после которой всё сгорает: событие, запуск, сезон?",
+  "Какие части обязательны к дате, а какие можно доделать потом?",
+  "Что делаешь в первую очередь, если времени в обрез?",
+  "На какой срок планируешь контент: фотографии, тексты, товары?",
+  "Когда сможешь показать первую версию людям?",
+  "Кто кроме тебя будет проверять готовность?",
+  "Что уже сделано на сегодня?",
+  "Что съедает время чаще всего: правки, контент, проверка?",
+  /* Деньги */
+  "Какой бюджет на проект: ноль, до тысячи, больше?",
+  "Готов платить за домен и хостинг каждый месяц?",
+  "Нужны ли платные сервисы: рассылки, аналитика, хранение?",
+  "Если проект зарабатывает — как именно: подписка, реклама, продажа товара?",
+  "Сколько времени проект может быть убыточным?",
+  "Готов ли ты к тому, что часть денег уйдёт на «невидимое»: домен, поддержку, бэкапы?",
+  "Нужны ли чеки, эквайринг и документы для покупателей?",
+  "Что дешевле: сделать самому, купить готовое или заказать?",
+  "Какие траты точно можно отложить?",
+  "Есть ли сумма, выше которой проект надо останавливать и думать заново?",
+  /* Кто делает */
+  "Ты делаешь один или есть ещё люди?",
+  "Кто принимает последнее решение по проекту?",
+  "Кто пишет тексты и делает фотографии?",
+  "Кто будет отвечать пользователям и разбирать проблемы?",
+  "Есть ли человек, который разбирается в теме лучше?",
+  "Как вы обмениваетесь файлами и где храните исходники?",
+  "Нужен ли ревью-глаз: кто-то проверяет перед публикацией?",
+  "Светишь ли проект заранее или запускаешь молча?",
+  "Кто останется заниматься этим через полгода?",
+  "Что делать, если ты заболел или уехал?",
+  /* Риски */
+  "Что самое страшное может случиться с проектом?",
+  "Что будет, если данные потеряются: есть где хранить бэкап?",
+  "Есть ли юридические риски: персональные данные, авторские права, реклама?",
+  "Что будет при внезапно большом количестве пользователей?",
+  "Какие функции скорее всего окажутся ненужными?",
+  "Что может сломаться при обновлении сайта?",
+  "Есть ли риск, что проект забросят через месяц?",
+  "Что нужно, чтобы работа не зависела от одного сервиса?",
+  "Как поймёшь, что пора остановиться и переделать?",
+  "Что сделаешь, если что-то пойдёт не так в первый же день?",
+  /* Качество */
+  "По каким признакам поймёшь, что версия готова?",
+  "Что проверять перед публикацией каждый раз?",
+  "Какие ошибки для тебя недопустимы?",
+  "Насколько важно, чтобы было быстро: за сколько секунд должна открываться страница?",
+  "Устроит ли черновик с припиской «скоро доделаю»?",
+  "Нужны ли тесты или проверяешь руками?",
+  "Как часто планируешь выпускать улучшения?",
+  "Есть ли пример качества, на который ты ориентируешься?",
+  "Что важнее: идеальный вид или работающая кнопка?",
+  "Кто говорит «это плохо», когда всё нравится тебе?",
+  /* Запуск */
+  "Что должно произойти в день запуска?",
+  "Где собираешься рассказать о проекте?",
+  "Нужна ли страница-визитка до полного запуска?",
+  "Как люди найдут проект: поиск, мессенджеры, реклама, сарафан?",
+  "Что покажешь в первой публикации?",
+  "Нужно ли собирать контакты посетителей?",
+  "Как будешь понимать, что люди приходят и возвращаются?",
+  "Что сделаешь в первую неделю после запуска?",
+  "Есть ли план на второй месяц?",
+  "Что для тебя будет честным итогом через полгода?"
+];
+
+function projectLimit() {
+  try { return proActive() ? 100 : 15; } catch (e) { return 15; }
+}
+function projectOn() {
+  return !!(settings.project && settings.project.on !== false && settings.project.name);
+}
+/* Что Искра помнит о проекте: уходит в системный промпт каждого ответа */
+function projectContext() {
+  if (!projectOn()) return "";
+  const p = settings.project;
+  const answered = (p.answers || []).filter((x) => String(x.a || "").trim());
+  if (!answered.length && !p.goal) return "";
+  let out = "ПРОЕКТ ПОЛЬЗОВАТЕЛЯ (это не выдумка, он сам рассказал): «" + p.name + "»";
+  if (p.goal) out += "\nЦель: " + p.goal;
+  const picked = answered.slice(-40).map((x) => "- " + x.q + " → " + x.a).join("\n");
+  out += "\nЧто известно:\n" + picked.slice(0, 2400);
+  out += "\n\nОтвечай с учётом этого проекта: не спрашивай заново то, что уже известно, предлагай шаги под его цель и уровень.";
+  return out;
+}
+function projectSwitchStep(which) {
+  ["projStart", "projAsk", "projDone"].forEach((id) => {
+    const el = $("#" + id);
+    if (el) el.hidden = id !== which;
+  });
+}
+/* Вопросы берём по кругу из всех блоков: так при 15 вопросах темы не перекосятся */
+function projectPick(total) {
+  const per = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const out = [];
+  let guard = 0;
+  while (out.length < total && guard < 400) {
+    guard++;
+    for (let b = 0; b < 10 && out.length < total; b++) {
+      const idx = b * 10 + per[b];
+      if (idx < PROJECT_QUESTIONS.length && per[b] < 10) {
+        out.push({ q: PROJECT_QUESTIONS[idx], block: PROJECT_BLOCKS[b] });
+        per[b]++;
+      }
+    }
+  }
+  return out;
+}
+function openProject() {
+  const m = $("#projModal");
+  if (!m) return;
+  m.classList.add("open");
+  const p = settings.project;
+  const lim = projectLimit();
+  const hint = $("#projLimitHint");
+  if (hint) {
+    hint.innerHTML = "Без подписки — до 15 вопросов, с Искрой Про — до 100. " +
+      (lim > 15 ? "У тебя открыто 100." : "Сейчас доступно 15: длинный разбор открывает Про.");
+  }
+  if (p && p.name) {
+    $("#projName").value = p.name || "";
+    $("#projGoal").value = p.goal || "";
+    const left = (p.total || 0) - (p.answers || []).length;
+    const rb = $("#projResume");
+    if (rb) {
+      rb.hidden = !(left > 0);
+      rb.textContent = "Продолжить опрос (" + Math.max(0, left) + " осталось)";
+    }
+    if ((p.answers || []).length) projectSwitchStep("projDone");
+  } else {
+    projectSwitchStep("projStart");
+  }
+  try { renderProjectBrief(); } catch (e) {}
+}
+function closeProject() { const m = $("#projModal"); if (m) m.classList.remove("open"); }
+function projectBegin(total) {
+  const name = String(($("#projName") || {}).value || "").trim() || "Мой проект";
+  const goal = String(($("#projGoal") || {}).value || "").trim();
+  const lim = projectLimit();
+  const n = Math.max(5, Math.min(Number(total) || 15, lim));
+  settings.project = {
+    id: uid(), name, goal, total: n, answers: [], on: true,
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+  saveSettings();
+  projectSwitchStep("projAsk");
+  projectShowCurrent();
+  updateComposerNote();
+}
+let _projCurrent = null;
+function projectShowCurrent() {
+  const p = settings.project;
+  if (!p) return;
+  const asked = (p.answers || []).length;
+  const list = projectPick(p.total || 15);
+  _projCurrent = list[asked] || null;
+  if (!_projCurrent) { projectFinish(); return; }
+  const qn = $("#projQNum"), qt = $("#projQText"), bar = $("#projQBar"), ans = $("#projAnswer");
+  if (qn) qn.textContent = "Вопрос " + (asked + 1) + " из " + (p.total || 15);
+  if (qt) qt.textContent = _projCurrent.q;
+  if (bar) bar.style.width = Math.round((asked + 1) / (p.total || 15) * 100) + "%";
+  if (ans) { ans.value = ""; ans.focus(); }
+}
+function projectAnswerNext(skip) {
+  const p = settings.project;
+  if (!p || !_projCurrent) return;
+  const a = skip ? "" : String(($("#projAnswer") || {}).value || "").trim();
+  p.answers = p.answers || [];
+  p.answers.push({ q: _projCurrent.q, block: _projCurrent.block, a, ts: Date.now() });
+  p.updatedAt = Date.now();
+  saveSettings();
+  if (p.answers.length >= (p.total || 15)) projectFinish();
+  else projectShowCurrent();
+}
+function projectFinish() {
+  const p = settings.project;
+  if (!p) return;
+  p.stage = "done";
+  p.updatedAt = Date.now();
+  saveSettings();
+  projectSwitchStep("projDone");
+  renderProjectBrief();
+  updateComposerNote();
+  try { sharedKbRefresh && null; } catch (e) {}
+}
+function projectBriefHtml() {
+  const p = settings.project;
+  if (!p) return '<p class="brief-line">Проекта пока нет.</p>';
+  const answered = (p.answers || []).filter((x) => String(x.a || "").trim());
+  const empty = (p.answers || []).filter((x) => !String(x.a || "").trim());
+  let h = '<div style="font-size:13px;line-height:1.5;margin-bottom:10px">' +
+    '<b>' + esc(p.name || "Проект") + '</b>' +
+    (p.goal ? ' <span style="color:var(--text-dim)">· ' + esc(p.goal) + '</span>' : "") + "</div>";
+  h += '<div class="brief-line">Отвечено: <b>' + answered.length + "</b> из " + (p.total || answered.length) +
+    (empty.length ? ' <span style="color:var(--text-dim)">(пропущено: ' + empty.length + ")</span>" : "") + "</div>";
+  const byBlock = {};
+  answered.forEach((x) => { (byBlock[x.block] = byBlock[x.block] || []).push(x); });
+  Object.keys(byBlock).forEach((b) => {
+    h += '<div class="brief-line"><b>' + esc(b) + "</b><br>" +
+      byBlock[b].slice(0, 6).map((x) => "• " + esc(x.a)).join("<br>") + "</div>";
+  });
+  if (!answered.length) {
+    h += '<div class="brief-line">Ответов пока нет — начни опрос, и Искра запомнит проект.</div>';
+  }
+  return h;
+}
+function renderProjectBrief() {
+  const box = $("#projBrief");
+  if (box) box.innerHTML = projectBriefHtml();
+}
+/* Модель задаёт вопрос по ситуации: смотрит, что уже известно, и спрашивает недостающее */
+async function projectNextQuestionAI() {
+  const p = settings.project;
+  if (!p) return null;
+  const known = (p.answers || []).filter((x) => x.a).slice(-12).map((x) => "- " + x.q + " → " + x.a).join("\n");
+  const payload = {
+    messages: [
+      { role: "system", content: "Ты помогаешь разобраться в проекте. Задай РОВНО ОДИН вопрос, который сейчас важнее всего. Вопрос — одна строка, без нумерации, без вступлений, без пояснений." },
+      { role: "user", content: "Проект: " + p.name + "\nЦель: " + (p.goal || "не указана") + "\nЧто уже известно:\n" + (known || "(пока ничего)") + "\n\nКакой следующий вопрос задать?" }
+    ],
+    stream: true, temperature: 0.5, max_tokens: 200
+  };
+  let out = "";
+  try { await askIskra(payload, (d) => { out += d; }, null); } catch (e) { return null; }
+  const line = String(out || "").replace(/^[\s\-•\d.)]+/, "").split("\n")[0].trim();
+  if (line.length < 8 || line.length > 220) return null;
+  return line;
+}
+async function projectAskMore() {
+  const p = settings.project;
+  if (!p) return;
+  const q = (await projectNextQuestionAI()) || "Что ещё важно знать о проекте, чего я не спросила?";
+  const a = String(prompt(q) || "").trim();
+  if (a) {
+    p.answers = p.answers || [];
+    p.answers.push({ q, block: "По ситуации", a, ts: Date.now() });
+    p.updatedAt = Date.now();
+    saveSettings();
+    renderProjectBrief();
+    updateComposerNote();
+    toast("Запомнила", "ok");
+  }
+}
+
+/* ============================================================
+   ПОЗНАКОМЬТЕСЬ С ИСКРОЙ
+   ============================================================ */
+const ACQ_PICKS = { sphere: "", level: "", style: "", need: "" };
+function acqCardShow() {
+  const card = $("#acqCard");
+  if (!card) return;
+  const welcome = $("#welcome");
+  const empty = welcome && welcome.style.display !== "none";
+  card.hidden = !(empty && !settings.acquainted);
+}
+function acqHideCard() { const c = $("#acqCard"); if (c) c.hidden = true; }
+function acqSwitch(step) {
+  ["acqIntro", "acqQuiz", "acqDone"].forEach((id) => {
+    const el = $("#" + id);
+    if (el) el.hidden = id !== step;
+  });
+}
+function openAcq() {
+  const m = $("#acqModal");
+  if (!m) return;
+  m.classList.add("open");
+  const pr = settings.profile || {};
+  const about = $("#acqAbout");
+  if (about) about.value = pr.about || "";
+  ["sphere", "level", "style", "need"].forEach((k) => {
+    ACQ_PICKS[k] = (pr[k] || "");
+    const box = $("#acq" + k.charAt(0).toUpperCase() + k.slice(1));
+    if (box) box.querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c.dataset.v === ACQ_PICKS[k]));
+  });
+  acqSwitch("acqIntro");
+}
+function closeAcq() { const m = $("#acqModal"); if (m) m.classList.remove("open"); }
+function acqMarkSeen() {
+  settings.acquainted = true;
+  saveSettings();
+  acqHideCard();
+}
+/* Ответы превращаются в настройки: характер, тон, режим и сила ответа */
+function acqApply() {
+  const about = String(($("#acqAbout") || {}).value || "").trim();
+  const style = ACQ_PICKS.style;
+  const sphere = ACQ_PICKS.sphere;
+  const level = ACQ_PICKS.level;
+  const need = ACQ_PICKS.need;
+
+  if (style && PERSONAS[style]) settings.persona = style;
+  else if (need === "code") settings.persona = "coder";
+  else if (need === "study") settings.persona = "tutor";
+  else if (style === "friend") settings.persona = "friend";
+
+  if (style === "friend") settings.tone = "warm";
+  else if (style === "neutral") settings.tone = "neutral";
+  else settings.tone = settings.tone || "neutral";
+
+  if (sphere === "study" || need === "study") settings.mode = "study";
+  else if (need === "code") settings.mode = "code";
+  else if (need === "text") settings.mode = "text" in MODES ? "text" : "chat";
+  else settings.mode = "chat";
+
+  if (level === "pro") settings.power = "deep";
+  else if (level === "new") settings.power = "quick";
+  else settings.power = "norm";
+
+  settings.profile = {
+    about, sphere, level, style, need,
+    persona: settings.persona, tone: settings.tone, power: settings.power,
+    at: Date.now()
+  };
+  if (about) {
+    settings.memory = Array.isArray(settings.memory) ? settings.memory : [];
+    const fact = "О себе: " + about.slice(0, 300);
+    if (!settings.memory.some((m) => String(m).startsWith("О себе:"))) settings.memory.unshift(fact);
+  }
+  settings.acquainted = true;
+  saveSettings();
+  try { renderPowerUI(); } catch (e) {}
+  try { renderPersonaUI && renderPersonaUI(); } catch (e) {}
+  try { syncProviderUI && syncProviderUI(); } catch (e) {}
+  try { updateComposerNote(); } catch (e) {}
+  try { renderMessages && renderMessages(); } catch (e) {}
+  try { renderProfile && renderProfile(); } catch (e) {}
+
+  const sum = $("#acqSummary");
+  if (sum) {
+    const P = PERSONAS[settings.persona] || PERSONAS.universal;
+    const lv = powerLevel();
+    sum.innerHTML = '<div class="brief-line">Тема общения: <b>' + esc(P.name) + " — " + esc(P.desc) + "</b></div>" +
+      '<div class="brief-line">Сила ответа: <b>' + lv.ico + " " + esc(lv.name) + "</b> · " + esc(lv.desc) + "</div>" +
+      '<div class="brief-line">Режим: <b>' + esc((MODES[settings.mode] || MODES.chat).name) + "</b></div>" +
+      (about ? '<div class="brief-line">Запомнила о тебе: <b>' + esc(about.slice(0, 160)) + "</b></div>" : "");
+  }
+  acqSwitch("acqDone");
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const trig = document.getElementById("modeTrigger");
   if (trig) trig.addEventListener("click", (e) => { e.preventDefault(); toggleModeMenu(); });
@@ -22385,6 +23225,8 @@ document.addEventListener("DOMContentLoaded", () => {
   wire();
   wireTools();
   wireTrainer();
+  try { renderPowerUI(); } catch (e) {}
+  try { acqCardShow(); } catch (e) {}
   initScrollWatcher();
   /* Сообщения о заявке на смену страны: показываем, как только они появились.
      Если владелец решает в другой вкладке этого же браузера — ловим сразу. */
@@ -22742,6 +23584,129 @@ document.addEventListener("DOMContentLoaded", () => {
     <p class="auth-sub">Версию можно поменять в любой момент — в настройках.</p>
     <div class="ob-grid" id="obGrid"></div>
     <button class="auth-btn" id="obFinish">Продолжить</button>
+  </div>
+</div>
+
+
+<!-- ================= Проект ================= -->
+<div class="modal-bg" id="projModal">
+  <div class="modal ob-wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h2 style="margin:0">Проект</h2>
+      <button class="icon-btn" id="projX" type="button" aria-label="Закрыть">
+        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Экран 1: начать -->
+    <div class="proj-step" id="projStart">
+      <p class="hint" style="font-size:12.5px;line-height:1.5;margin-bottom:12px">
+        Расскажи, что делаешь. Искра задаст вопросы — от 15 до 100, сколько выберешь, — запомнит проект
+        и дальше будет отвечать уже с ним в голове: советы, гайды, следующий шаг.
+      </p>
+      <div class="field"><label>Название проекта</label><input id="projName" maxlength="80" placeholder="Например: сайт для маминой пекарни"></div>
+      <div class="field"><label>Что должно получиться</label><textarea id="projGoal" rows="2" maxlength="600" placeholder="Сайт с меню, ценами и заказом на почту. Запуск к 1 декабря."></textarea></div>
+      <div class="field">
+        <label>Сколько вопросов задать</label>
+        <div class="chips" id="projCountChips">
+          <button type="button" class="chip" data-n="15">15 · быстро</button>
+          <button type="button" class="chip on" data-n="30">30 · обычно</button>
+          <button type="button" class="chip" data-n="60">60 · подробно</button>
+          <button type="button" class="chip" data-n="100">100 · максимум</button>
+        </div>
+        <div class="hint" id="projLimitHint"></div>
+      </div>
+      <div class="modal-row" style="margin-top:14px">
+        <button class="btn btn-primary" id="projBegin" type="button">Начать опрос</button>
+        <button class="btn btn-ghost" id="projResume" type="button" hidden>Продолжить опрос</button>
+      </div>
+    </div>
+
+    <!-- Экран 2: вопросы -->
+    <div class="proj-step" id="projAsk" hidden>
+      <div class="qnum" id="projQNum">Вопрос 1 из 30</div>
+      <div class="qprog"><i id="projQBar" style="width:3%"></i></div>
+      <div class="qbox" id="projQText">—</div>
+      <textarea id="projAnswer" rows="3" placeholder="Пиши как есть, можно коротко"></textarea>
+      <div class="modal-row" style="margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="projNext" type="button">Дальше</button>
+        <button class="btn btn-ghost" id="projSkipQ" type="button">Пропустить</button>
+        <button class="btn btn-ghost" id="projStop" type="button">Закончить</button>
+      </div>
+      <div class="hint" id="projSaveHint" style="margin-top:8px">Ответы сохраняются сразу — можно закрыть и вернуться.</div>
+    </div>
+
+    <!-- Экран 3: итог -->
+    <div class="proj-step" id="projDone" hidden>
+      <div id="projBrief"></div>
+      <div class="modal-row" style="margin-top:14px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="projChat" type="button">Поговорить о проекте</button>
+        <button class="btn btn-ghost" id="projMore" type="button">Спросить ещё</button>
+        <button class="btn btn-ghost" id="projNew" type="button">Новый проект</button>
+      </div>
+      <div class="hint" style="margin-top:8px">Проект запомнен: он подставляется в каждый ответ, пока включён.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Познакомьтесь с Искрой ================= -->
+<div class="modal-bg" id="acqModal">
+  <div class="modal ob-wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h2 style="margin:0">Познакомьтесь с Искрой</h2>
+      <button class="icon-btn" id="acqX" type="button" aria-label="Закрыть">
+        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="proj-step" id="acqIntro">
+      <p class="hint" style="font-size:12.5px;margin-bottom:10px">Расскажи о себе своими словами — кто ты, чем занимаешься, что нужно чаще всего. Искра запомнит и подстроится.</p>
+      <textarea id="acqAbout" rows="4" maxlength="1200" placeholder="Меня зовут… учусь/работаю… чаще всего нужны…"></textarea>
+      <div class="modal-row" style="margin-top:12px">
+        <button class="btn btn-primary" id="acqNext" type="button">Дальше</button>
+        <button class="btn btn-ghost" id="acqSkip1" type="button">Пропустить</button>
+      </div>
+    </div>
+
+    <div class="proj-step" id="acqQuiz" hidden>
+      <p class="hint" style="font-size:12.5px;margin-bottom:12px">Четыре коротких вопроса — по ним выберу тему общения. Можно не отвечать.</p>
+      <div class="field"><label>Чем занимаешься</label><div class="chips" id="acqSphere">
+        <button type="button" class="chip" data-v="study">Учёба</button>
+        <button type="button" class="chip" data-v="work">Работа</button>
+        <button type="button" class="chip" data-v="own">Своё дело</button>
+        <button type="button" class="chip" data-v="hobby">Для себя</button>
+      </div></div>
+      <div class="field"><label>Насколько глубоко копать</label><div class="chips" id="acqLevel">
+        <button type="button" class="chip" data-v="new">Объясняй просто</button>
+        <button type="button" class="chip" data-v="mid">Средне</button>
+        <button type="button" class="chip" data-v="pro">Можно сложно</button>
+      </div></div>
+      <div class="field"><label>Как со мной говорить</label><div class="chips" id="acqStyle">
+        <button type="button" class="chip" data-v="friend">По-дружески</button>
+        <button type="button" class="chip" data-v="neutral">По делу</button>
+        <button type="button" class="chip" data-v="coach">Поддерживающе</button>
+        <button type="button" class="chip" data-v="tutor">Как репетитор</button>
+        <button type="button" class="chip" data-v="coder">Как напарник по коду</button>
+      </div></div>
+      <div class="field"><label>Что чаще нужно</label><div class="chips" id="acqNeed">
+        <button type="button" class="chip" data-v="study">Учёба и домашка</button>
+        <button type="button" class="chip" data-v="code">Код</button>
+        <button type="button" class="chip" data-v="text">Тексты</button>
+        <button type="button" class="chip" data-v="all">Всё понемногу</button>
+      </div></div>
+      <div class="modal-row" style="margin-top:14px">
+        <button class="btn btn-primary" id="acqFinish" type="button">Готово</button>
+        <button class="btn btn-ghost" id="acqSkip2" type="button">Пропустить</button>
+      </div>
+    </div>
+
+    <div class="proj-step" id="acqDone" hidden>
+      <div id="acqSummary"></div>
+      <div class="modal-row" style="margin-top:14px">
+        <button class="btn btn-primary" id="acqCloseEnd" type="button">Начать</button>
+      </div>
+      <div class="hint" style="margin-top:8px">Передумаешь — «Познакомиться заново» есть в меню профиля и в настройках.</div>
+    </div>
   </div>
 </div>
 
