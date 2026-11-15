@@ -163,7 +163,7 @@ await test("меню закрывается после выбора телефо
 
 /* ---------- 6. Версия ---------- */
 await test("версия поднята, кэш обновлён", async () => {
-  assert(pkg.version === "1.39.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.40.0", "версия сайта: " + pkg.version);
   assert(/const VERSION = "iskra-1\.35\.0"/.test(sw), "кэш service worker не обновлён");
 });
 

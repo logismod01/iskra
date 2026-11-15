@@ -1198,6 +1198,13 @@ html, body { overflow-x: hidden; }  /* без горизонтального с�
   animation: spin .7s linear infinite; vertical-align: -1px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.key-state {
+  margin-top:10px; padding:10px 12px; border-radius:12px;
+  background: color-mix(in srgb, var(--card) 88%, var(--accent) 12%);
+  border:1px solid var(--line); font-size:13px; line-height:1.45; color:var(--muted);
+}
+.key-state.ok { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); color:var(--text); }
+.key-state.wait { border-color: color-mix(in srgb, #d9b23c 40%, var(--line)); }
 .conn-result { font-size: 12.5px; line-height: 1.4; display: flex; align-items: center; gap: 6px; }
 .conn-result.ok { color: var(--ok); }
 .conn-result.err { color: var(--err); }
@@ -3241,9 +3248,20 @@ html.no-anim .theme-flash { display: none; }
           <summary>Свой ключ доступа <em>необязательно</em></summary>
           <p class="set-p">Без ключа всё работает: у Искры несколько бесплатных движков. Ключ снимает общий лимит и даёт более сильную модель — ответы становятся точнее. Хранится только в этом браузере и никуда не отправляется.</p>
           <textarea id="apiKey" rows="2" placeholder="вставь ключ — или два, по одному в строке" autocomplete="off" spellcheck="false"></textarea>
-          <div class="hint" style="margin-top:6px"><b>Хочешь, чтобы Искра видела фото?</b> Нужен ключ со зрением — он бесплатный, лимита хватает на домашку и документы. Ключ начинается на <b>AIza…</b> (взять можно <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">здесь</a>) или на <b>gsk_…</b>. Вставь его сюда — Искра сама поймёт, чей он, и начнёт смотреть картинки.
+          <div class="hint" style="margin-top:6px">
+            <b>Как это сделать — три шага.</b><br>
+            1. Открой <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">страницу с бесплатным ключом</a> и войди своим аккаунтом.<br>
+            2. Нажми там кнопку создания ключа — получишь строку, которая начинается на <b>AIza…</b>. Скопируй её целиком.<br>
+            3. Вставь сюда и нажми «Проверить ключ». Если всё хорошо, ниже появится «Ключ работает».
+          </div>
+          <div class="hint" style="margin-top:6px">
+            Такой ключ видит фото (домашку с листа сфотографировать достаточно) и даёт более сильную модель для длинных объяснений.
+            Он бесплатный, карту привязывать не нужно, счёт за запросы не приходит. Ключ начинается на <b>AIza…</b> или <b>gsk_…</b> —
+            Искра сама поймёт, какой он, и включит нужное.
             Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.
-            Нажми «Проверить ключ»: если сервис не пускает запросы прямо из браузера, кнопка так и скажет — такой ключ работает в приложении Sye.</div>
+            <br><b>Если сервис не открывается из твоей страны</b> — ключ не заработает, и обойти это нельзя. Тогда остаются
+            бесплатные движки: они отвечают без ключа, просто слабее. Нажми «Проверить ключ» — я скажу честно, что получилось.
+          </div>
           <details class="set-adv-inner" style="margin-top:10px">
             <summary>Свой адрес и модель <em>для любого совместимого сервиса</em></summary>
             <p class="set-p">Если сервис не распознаётся по ключу — впиши адрес вида `…/v1` и название модели. Тогда Искра будет отвечать именно этой моделью.</p>
@@ -3254,7 +3272,14 @@ html.no-anim .theme-flash { display: none; }
             <button class="btn btn-ghost" id="testConn" type="button">Проверить ключ</button>
             <button class="btn btn-ghost" id="keyClear" type="button">Убрать ключ</button>
           </div>
+          <div class="key-state" id="keyState"></div>
           <div class="conn-result" id="connResult"></div>
+          <div class="set-adv-inner" style="display:block;margin-top:12px">
+            <b>Что даёт ключ.</b> Без ключа Искра отвечает бесплатными движками: коротко и по делу,
+            но на сложных задачах они слабее. С ключом отвечает сильная модель: длинные объяснения,
+            разбор задачи по шагам, сочинения и код получаются заметно лучше. Ключ бесплатный,
+            карту привязывать не нужно, счёт за запросы не приходит.
+          </div>
         </details>
       </div>
 
@@ -11130,6 +11155,10 @@ function loadSettings() {
     compact: true,
     mascot: "spark",
     mascotColor: "",
+    /* пометка «ключ проверен»: отпечаток ключа и модель, которая ответила */
+    keyVerified: "",
+    keyVerifiedAt: 0,
+    keyModel: "",
     lite: "auto",
     animations: true,
     bigText: false,
@@ -15696,13 +15725,31 @@ function buildSystemPromptLite(userText = "") {
 }
 
 /* Ключ человека сработал хоть раз — говорим об этом прямо.
-   Раньше человек вписывал ключ и не понимал, отвечает Искра им или нет. */
-let _keyWorked = false;
-function markKeyWorking() {
-  if (_keyWorked) return;
-  _keyWorked = true;
+   Раньше человек вписывал ключ и не понимал, отвечает Искра им или нет.
+   Пометку храним в настройках: иначе после перезагрузки строка снова врала бы
+   «проверю», хотя ключ уже давно работает. Отпечаток ключа нужен, чтобы
+   пометка сбрасывалась, когда человек вставил другой ключ. */
+function keyTag(key) {
+  const k = String(key || "").trim();
+  if (!k) return "";
+  return k.slice(0, 6) + "…" + k.slice(-4) + ":" + k.length;
+}
+function keyIsVerified() {
+  const k = String(settings.apiKey || "").trim();
+  if (!k) return false;
+  return !!settings.keyVerified && settings.keyVerified === keyTag(k);
+}
+function markKeyWorking(model) {
+  const k = String(settings.apiKey || "").trim();
+  if (!k) return;
+  if (keyIsVerified()) return;
+  settings.keyVerified = keyTag(k);
+  settings.keyVerifiedAt = Date.now();
+  if (model) settings.keyModel = String(model);
+  try { saveSettings(); } catch (e) {}
   try { toast("Ключ работает — теперь отвечаю через него", "ok"); } catch (e) {}
   try { updateComposerNote(); } catch (e) {}
+  try { paintKeyStatus(); } catch (e) {}
 }
 
 /* Какой промпт отправить движку: короткий для мелких моделей, полный для остальных */
@@ -17379,6 +17426,7 @@ function openSettings(tab) {
   renderLookControls();
   wireLookControls();
   const key = $("#apiKey"); if (key) key.value = settings.apiKey || "";
+  try { paintKeyStatus(); } catch (e) {}
   const bu = $("#baseUrl"); if (bu) bu.value = settings.baseUrl || "";
   const cm = $("#customModel"); if (cm) cm.value = settings.customModel || "";
   const mo = $("#memoryOn"); if (mo) mo.checked = !!settings.memoryOn;
@@ -17511,8 +17559,8 @@ function updateComposerNote() {
   }
   const key = String(settings.apiKey || "").trim();
   n.textContent = key
-    ? (_keyWorked
-      ? "Искра · отвечает твоим ключом — он работает. Хранится только в этом браузере."
+    ? (keyIsVerified()
+      ? "Искра · отвечает твоим ключом" + (settings.keyModel ? " (" + String(settings.keyModel).split("/").pop() + ")" : "") + ". Ключ хранится только в этом браузере."
       : "Искра · свой ключ подключён. Напиши что-нибудь — проверю, что он отвечает.")
     : "Искра · работает без ключа и регистрации. Важное проверяй сам.";
 }
@@ -17595,7 +17643,7 @@ async function probeKey(key) {
         const alive = await hostReachable(kind.base + "/models");
         return { state: alive ? "cors" : "net", status: 0 };
       }
-      if (rr.ok) return { state: "ok", status: 200 };
+      if (rr.ok) return { state: "ok", status: 200, model };
       last = rr.status;
       if (last === 429 || last === 402) return { state: "limit", status: last };
       if (last === 401 || last === 403) return { state: "auth", status: last };
@@ -17655,6 +17703,33 @@ async function testConnection() {
     cls = "err";
   }
   if (box) { box.className = "conn-result " + cls; box.textContent = text; }
+  /* Проверка прошла — значит ключ правда работает. Запоминаем это,
+     чтобы строка под полем ввода больше не сомневалась. */
+  const firstOk = results.find(r => r.state === "ok");
+  if (firstOk) markKeyWorking(firstOk.model);
+  paintKeyStatus();
+}
+
+/* Плашка о ключе в настройках: одна строка, по делу, без чужих названий */
+function paintKeyStatus() {
+  const box = $("#keyState");
+  if (!box) return;
+  const key = String(settings.apiKey || "").trim();
+  if (!key) {
+    box.className = "key-state";
+    box.innerHTML = "Своего ключа нет — работаю на бесплатных движках. Это нормально: всё главное работает и так.";
+    return;
+  }
+  if (keyIsVerified()) {
+    const when = settings.keyVerifiedAt ? new Date(settings.keyVerifiedAt).toLocaleDateString("ru-RU") : "";
+    const model = settings.keyModel ? String(settings.keyModel).split("/").pop() : "";
+    box.className = "key-state ok";
+    box.innerHTML = "Ключ работает" + (model ? " — отвечает <b>" + esc(model) + "</b>" : "") +
+      (when ? " (проверен " + esc(when) + ")" : "") + ". Хранится только в этом браузере.";
+    return;
+  }
+  box.className = "key-state wait";
+  box.innerHTML = "Ключ вписан, но ещё ни разу не отвечал. Нажми «Проверить ключ» — скажу честно, работает он или нет.";
 }
 
 /* ---------- Память ---------- */
@@ -21751,7 +21826,9 @@ function wire() {
   $$("#setTabs button").forEach(b => b.addEventListener("click", () => setSettingsTab(b.dataset.tab)));
   $("#testConn") && $("#testConn").addEventListener("click", testConnection);
   $("#keyClear") && $("#keyClear").addEventListener("click", () => {
-    settings.apiKey = ""; settings.provider = "custom"; settings.baseUrl = ""; settings.customModel = ""; saveSettings();
+    settings.apiKey = ""; settings.provider = "custom"; settings.baseUrl = ""; settings.customModel = "";
+    settings.keyVerified = ""; settings.keyVerifiedAt = 0; settings.keyModel = "";
+    saveSettings();
     const bu = $("#baseUrl"); if (bu) bu.value = "";
     const cm = $("#customModel"); if (cm) cm.value = "";
     const inp = $("#apiKey"); if (inp) inp.value = "";
