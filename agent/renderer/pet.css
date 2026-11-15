@@ -109,6 +109,19 @@ body.dragging { cursor: grabbing; }
 .pet[data-facing="-1"] .sye-mascot { transform: scaleX(-1); }
 
 .sye-mascot { display: block; width: 100%; height: 100%; }
+/* Пять «не родных» маскотов: цвета и форма те же, что на сайте */
+.sye-mascot .msk-body { fill: #d97757; }
+.sye-mascot .msk-2 { fill: #8a4a33; }
+.sye-mascot .msk-face { fill: #201e1c; }
+.sye-mascot .msk-tuft { fill: #d97757; }
+.sye-mascot .msk-ray { fill: #d97757; opacity: .85; }
+.sye-mascot .msk-eye { fill: #241a15; }
+.sye-mascot .msk-eye-sq { fill: #201e1c; }
+.sye-mascot .msk-cheek { fill: #fff; opacity: .3; }
+.sye-mascot .msk-beak { fill: #e0a15a; }
+.sye-mascot .msk-shadow { fill: #000; opacity: .2; }
+.sye-mascot .msk-line { stroke: #d97757; stroke-width: 2.6; stroke-linecap: round; }
+.sye-mascot .msk-mouth { fill: none; stroke: #241a15; stroke-width: 2.2; stroke-linecap: round; }
 .sye-mascot .sye-body { fill: #d97757; }
 .sye-mascot .sye-tuft { fill: #d97757; }
 .sye-mascot .sye-eye { fill: #241a15; }

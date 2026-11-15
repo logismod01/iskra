@@ -30,6 +30,8 @@ const agentCss = read("agent/renderer/styles.css");
 const keysJs = read("agent/core/keys.js");
 const accountJs = read("agent/core/account.js");
 const brandJs = read("agent/core/brand.js");
+const mascotsJs = read("agent/core/mascots.js");
+const petHtml = read("agent/renderer/pet.html");
 const mainJs = read("agent/main.js");
 const pkg = JSON.parse(read("package.json"));
 
@@ -178,8 +180,15 @@ await test("маскот Сью есть в сайте и в агенте", asyn
     assert(src.includes("sye-tuft"), name + ": нет хохолка");
   };
   check(html, "сайт");
-  check(agentHtml, "агент");
-  assert(agentApp.includes("sye-mascot"), "агент: стартовый экран без маскота");
+  /* В агенте картинка теперь одна на всех — в core/mascots.js,
+     а окна просят её по имени. Родная разметка Сью осталась только
+     на рабочем столе: там она умеет моргать и менять рот. */
+  check(petHtml, "рабочий стол");
+  assert(agentCss.includes(".msk-tuft"), "агент: у маскота нет хохолка");
+  assert(mascotsJs.includes("msk-eye"), "агент: у маскота нет глаз");
+  assert(mascotsJs.includes("msk-tuft"), "агент: у маскота нет хохолка");
+  assert(agentApp.includes("paintMascots"), "агент: стартовый экран без маскота");
+  assert(agentHtml.includes('class=\"sye-wrap\"'), "агент: нет места под маскота");
 });
 
 await test("у маскота есть состояния и он не мешает движению", async () => {
@@ -240,8 +249,8 @@ await test("account.access объясняет причину, а не «ниче
 
 /* ---------- Версии ---------- */
 await test("версии подняты", async () => {
-  assert(pkg.version === "1.33.0", "версия сайта: " + pkg.version);
-  assert(/version:\s*"0\.7\.0"/.test(brandJs), "версия Sye не 0.7.0");
+  assert(pkg.version === "1.34.0", "версия сайта: " + pkg.version);
+  assert(/version:\s*"0\.8\.0"/.test(brandJs), "версия Sye не 0.8.0");
 });
 
 await test("новый тест подключён к npm test", async () => {

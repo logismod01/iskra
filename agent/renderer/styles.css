@@ -335,6 +335,19 @@ code { font-family: "JetBrains Mono", "Consolas", monospace; font-size: 12px; }
 
 /* ============ Маскот Сью ============ */
 .sye-mascot { display: block; width: 100%; height: 100%; }
+/* Шесть маскотов: цвета берутся из темы, поэтому новые темы не требуют правок */
+.sye-mascot .msk-body { fill: var(--accent); }
+.sye-mascot .msk-2 { fill: var(--accent-soft); }
+.sye-mascot .msk-face { fill: var(--bg-soft-2); }
+.sye-mascot .msk-tuft { fill: var(--accent); }
+.sye-mascot .msk-ray { fill: var(--accent); opacity: .85; }
+.sye-mascot .msk-eye { fill: #24150f; }
+.sye-mascot .msk-eye-sq { fill: var(--bg-soft-2); }
+.sye-mascot .msk-cheek { fill: #fff; opacity: .32; }
+.sye-mascot .msk-mouth { fill: none; stroke: #24150f; stroke-width: 2.2; stroke-linecap: round; }
+.sye-mascot .msk-shadow { fill: #000; opacity: .2; }
+.sye-mascot .msk-line { stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; }
+.sye-mascot .msk-beak { fill: #e0a15a; }
 .sye-mascot .sye-body { fill: var(--accent); }
 .sye-mascot .sye-tuft { fill: var(--accent); }
 .sye-mascot .sye-eye { fill: #24150f; }
@@ -382,3 +395,36 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after {
 .pet-text { display: grid; gap: 4px; font-size: 12.5px; line-height: 1.45; color: var(--text-soft); }
 .pet-text b { color: var(--text); font-size: 13px; }
 .pet-text i { font-style: normal; color: var(--text-soft); }
+
+/* ---------- Выбор маскота ---------- */
+.mascot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 6px 0 8px;
+}
+.mascot-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  color: var(--text-soft);
+  font-size: 11.5px;
+  line-height: 1.2;
+  text-align: center;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.mascot-card:hover { border-color: var(--accent-soft); color: var(--text); }
+.mascot-card.on { border-color: var(--accent); background: var(--bg-soft-2); color: var(--text); }
+.mascot-card .sye-mascot { width: 40px; height: 40px; }
+.mascot-card b { font-weight: 600; font-size: 12px; }
+.mascot-about {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+  min-height: 30px;
+}

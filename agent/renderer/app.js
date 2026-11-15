@@ -186,6 +186,8 @@ function renderSettings() {
   const pTalk = $("#petTalk"); if (pTalk) pTalk.checked = s.petTalkMode !== "manual";
   const pRare = $("#petTalkRare"); if (pRare) pRare.checked = (s.petTalkMode || "rare") === "rare";
   const pMedia = $("#petMediaKeys"); if (pMedia) pMedia.checked = s.petMediaKeys !== false;
+  paintMascotGrid();
+  paintMascots();
   applyLook();
 }
 
@@ -195,6 +197,59 @@ function applyLook() {
   const html = document.documentElement;
   html.classList.toggle("compact", s.compact === true);
   html.classList.toggle("no-anim", s.animations === false);
+}
+
+/* ---------- Маскоты ----------
+   Раньше картинка Сью была вкопирована в разметку шесть раз, и любой новый
+   персонаж означал шесть правок. Теперь картинки приходят из brand.mascots,
+   а здесь только одна функция, которая их расставляет. */
+
+function mascotId() {
+  const id = (state.settings && state.settings.mascot) || state.brand.mascotId || "sye";
+  const list = state.brand.mascots || [];
+  return list.some((m) => m.id === id) ? id : "sye";
+}
+
+function mascotMeta(id) {
+  return (state.brand.mascots || []).find((m) => m.id === (id || mascotId())) ||
+    { id: "sye", name: "Сью", about: "", svg: "" };
+}
+
+/** Вставляет выбранного маскота во все места, где он стоит. */
+function paintMascots() {
+  const m = mascotMeta();
+  for (const wrap of $$(".sye-wrap")) {
+    if (wrap.classList.contains("mascot-card")) continue;   // карточки рисуем отдельно
+    wrap.innerHTML = `<svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="${esc(m.name)}">${m.svg}</svg>`;
+  }
+}
+
+/** Сетка выбора в настройках: шесть карточек с именами. */
+function paintMascotGrid() {
+  const grid = $("#mascotGrid");
+  if (!grid) return;
+  const cur = mascotId();
+  grid.innerHTML = "";
+  for (const m of state.brand.mascots || []) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "mascot-card" + (m.id === cur ? " on" : "");
+    b.dataset.mascot = m.id;
+    b.title = m.about || m.name;
+    b.innerHTML = `<svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="${esc(m.name)}">${m.svg}</svg><b>${esc(m.name)}</b>`;
+    b.addEventListener("click", () => chooseMascot(m.id));
+    grid.appendChild(b);
+  }
+  const about = $("#mascotAbout");
+  if (about) about.textContent = mascotMeta(cur).about || "";
+}
+
+/** Выбор применяется сразу: и в окне, и на рабочем столе. */
+async function chooseMascot(id) {
+  state.settings = Object.assign({}, state.settings, { mascot: id });
+  paintMascots();
+  paintMascotGrid();
+  try { await window.sye.saveSettings({ mascot: id }); } catch (e) { /* покажем при следующем открытии */ }
 }
 
 /* Маскот: idle → работаю → ошибка. Без лишней мимики. */
@@ -465,22 +520,14 @@ function wireUi() {
     if (state.running) return;
     feedEl().innerHTML = `
       <div class="hello" id="hello">
-        <div class="hello-mark sye-mascot-pic"><div class="sye-wrap" data-mood="idle"><svg class="sye-mascot" viewBox="0 0 64 64" role="img" aria-label="Сью">
-            <ellipse class="sye-shadow" cx="32" cy="58.5" rx="15" ry="3"/>
-            <path class="sye-body" d="M32 11c10.5 0 19 8 19 18.5V40c0 8.6-8.5 15.5-19 15.5S13 48.6 13 40v-10.5C13 19 21.5 11 32 11z"/>
-            <path class="sye-tuft" d="M28.4 12.6c1.2-3.9 2.3-6.2 3.6-7.8 1.3 1.6 2.4 3.9 3.6 7.8-2.4-.9-4.8-.9-7.2 0z"/>
-            <circle class="sye-eye" cx="25.4" cy="31.4" r="2.5"/>
-            <circle class="sye-eye" cx="38.6" cy="31.4" r="2.5"/>
-            <circle class="sye-cheek" cx="20.2" cy="37.4" r="2.3"/>
-            <circle class="sye-cheek" cx="43.8" cy="37.4" r="2.3"/>
-            <path class="sye-mouth" d="M28.2 38.6c1.3 1.7 6.3 1.7 7.6 0"/>
-          </svg></div></div>
+        <div class="hello-mark sye-mascot-pic"><div class="sye-wrap" data-mood="idle"></div></div>
         <h1>Новая задача</h1>
         <p>Опиши, что сделать. Я прочитаю файлы, поправлю код, запущу проверку и покажу результат.</p>
       </div>`;
     $("#input").value = "";
     $("#input").focus();
     wirePresets();
+    paintMascots();
   });
 
   $("#clearHistory").addEventListener("click", async () => {

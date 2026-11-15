@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld("sye", {
   petMenu: () => ipcRenderer.invoke("pet:menu"),
   petOff: () => ipcRenderer.invoke("pet:off"),
   petHover: (inside) => ipcRenderer.invoke("pet:hover", !!inside),
+  petMascot: () => ipcRenderer.invoke("pet:mascot-info"),
 
   onState: (fn) => on("state:changed", fn),
   onEvent: (fn) => on("task:event", fn),
@@ -57,5 +58,6 @@ contextBridge.exposeInMainWorld("sye", {
   onHistory: (fn) => on("history:changed", fn),
   onOpenSettings: (fn) => on("ui:openSettings", fn),
   petOnState: (fn) => on("pet:state", fn),
-  petOnAngry: (fn) => on("pet:angry", fn)
+  petOnAngry: (fn) => on("pet:angry", fn),
+  onPetMascot: (fn) => on("pet:mascot", fn)
 });

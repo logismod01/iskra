@@ -13,6 +13,7 @@ const crypto = require("node:crypto");
 const { exec, spawn } = require("node:child_process");
 
 const brand = require("./core/brand.js");
+const mascots = require("./core/mascots.js");
 const guard = require("./core/guard.js");
 const { createLicense } = require("./core/license.js");
 const { createAccount } = require("./core/account.js");
@@ -61,6 +62,10 @@ const DEFAULT_SETTINGS = {
   /* Вид: плотность и движение. Меняются в настройках без перезапуска. */
   compact: false,
   animations: true,
+  /* Кто из шести маскотов показывается: spark, sye, ember, ray, pixel, owl.
+     Один и тот же выбор действует в окне и на рабочем столе — не надо
+     настраивать дважды. */
+  mascot: "sye",
   /* Сью на рабочем столе: стоит, изредка гуляет, прыгает и говорит облачком. */
   petOn: true,
   /* Как часто Сью говорит: "normal" — как раньше, "rare" — только по делу,
@@ -898,9 +903,19 @@ function wireIpc() {
   });
 
   ipcMain.handle("settings:save", (event, patch) => {
-    const next = saveSettings(patch || {});
     const p = patch || {};
+    /* Неизвестного маскота не сохраняем: иначе окно останется пустым */
+    if ("mascot" in p && !mascots.has(p.mascot)) delete p.mascot;
+    const next = saveSettings(p);
     if ("petOn" in p) { if (next.petOn) startPet(); else stopPet(); }
+    if ("mascot" in p) {
+      if (petWin && !petWin.isDestroyed()) petWin.webContents.send("pet:mascot", {
+        id: next.mascot,
+        name: mascots.name(next.mascot),
+        svg: mascots.svg(next.mascot)
+      });
+      if (petCore) petPush();
+    }
     if ("petTalk" in p && petCore) { petCore.setQuiet(next.petTalk === false); petPush(); }
     if ("petMediaKeys" in p) {
       unregisterVolumeKeys();
@@ -911,6 +926,13 @@ function wireIpc() {
   });
 
   /* ---------- Сью на рабочем столе ---------- */
+  /* Какой маскот выбран: окно на рабочем столе просит картинку у главного */
+  ipcMain.handle("pet:mascot-info", () => ({
+    id: mascots.has(settings.mascot) ? settings.mascot : "sye",
+    name: mascots.name(settings.mascot),
+    svg: mascots.svg(settings.mascot),
+    list: mascots.all(true)
+  }));
   ipcMain.handle("pet:state", () => {
     ensurePetCore();
     return petCore.snapshot();
