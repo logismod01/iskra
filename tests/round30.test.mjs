@@ -106,9 +106,9 @@ await test("пункт «Крупный текст» в меню «⋯» по-п
   assert(doc.querySelector('#bigTextTop[data-more="bigtext"]'), "пункт меню пропал");
 });
 
-await test("версия сайта и кэша — 1.46.0", async () => {
-  assert(pkg.version === "1.46.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.46\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.47.0", async () => {
+  assert(pkg.version === "1.47.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.47\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round30: " + passed + " проверок пройдено");
