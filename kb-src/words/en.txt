@@ -1,0 +1,971 @@
+# word|перевод|пример
+abandon|бросать, покидать|They had to abandon the car in the snow.
+ability|способность, умение|She has the ability to learn fast.
+abroad|за границей|He works abroad for half of the year.
+accept|принимать, соглашаться|I accept your offer with pleasure.
+access|доступ|We lost access to the account yesterday.
+accident|случай, авария|The accident happened at the crossroads.
+account|счёт, отчёт|Please check the amount on my account.
+achieve|достигать|You can achieve this result in a month.
+across|через, поперёк|We walked across the bridge together.
+act|действовать, поступок|It is time to act, not to talk.
+active|активный|She stays active even in winter.
+actually|на самом деле|Actually, the shop closes at nine.
+add|добавлять|Add some salt to the soup, please.
+address|адрес|Write your address on the envelope.
+admit|признавать|He admitted his mistake at once.
+adult|взрослый|Every adult needs about eight hours of sleep.
+advice|совет|Take my advice and rest for a day.
+afraid|испуганный, бояться|I am afraid of deep water.
+agree|соглашаться|We agree with your plan in general.
+ahead|впереди|The road ahead was empty and quiet.
+aim|цель, целиться|Our aim is a simple and clear answer.
+air|воздух|Open the window, the air is stuffy.
+allow|разрешать|They do not allow pets in this hotel.
+almost|почти|The work is almost finished now.
+alone|один, в одиночестве|I prefer to work alone in the morning.
+already|уже|The train has already left the station.
+although|хотя|Although it rained, we went for a walk.
+always|всегда|She always answers letters the same day.
+amount|количество, сумма|A small amount of salt changes the taste.
+ancient|древний|The ancient city stood on this hill.
+angry|злой|He was angry about the broken window.
+animal|животное|Every animal needs water and shelter.
+announce|объявлять|They will announce the results on Friday.
+answer|ответ, отвечать|Give a short answer to a simple question.
+anyway|всё равно, так или иначе|Anyway, we should try this way first.
+apart|отдельно, кроме|Apart from the price, the plan is good.
+appear|появляться, казаться|The first stars appear after sunset.
+apply|применять, подавать заявку|Apply this rule to every new task.
+approach|подход, приближаться|A calm approach solves most conflicts.
+argue|спорить|They argue about small things every day.
+arm|рука (от плеча)|He hurt his arm while lifting the box.
+army|армия|The army built a bridge in two days.
+around|вокруг, около|There are shops around the corner.
+arrive|прибывать|We arrive in the city before dark.
+article|статья, статья расходов|I read an interesting article about sleep.
+asleep|спящий|The child fell asleep on the way home.
+attack|атака, нападать|The dog may attack if you run.
+attend|посещать|I attend a class twice a week.
+attention|внимание|Pay attention to the small print.
+attitude|отношение, настрой|Her attitude to work changed this year.
+available|доступный|The room is available from Monday.
+average|средний|The average price here is quite low.
+avoid|избегать|Avoid sugar in the evening if you can.
+awake|бодрствующий|I was awake until three in the morning.
+aware|осведомлённый|Are you aware of the new rule?
+away|вдали, прочь|The village is ten kilometres away.
+background|фон, происхождение|The photo has a grey background.
+balance|равновесие, баланс|Keep a balance between work and rest.
+bank|банк, берег|The bank opens at nine in the morning.
+bar|брусок, закусочная|He bought a bar of chocolate.
+basic|базовый, основной|Learn the basic rules before the details.
+battle|битва|The battle lasted for three long days.
+beat|бить, побеждать|Our team beat the guests by two goals.
+beauty|красота|The beauty of the place is in its silence.
+become|становиться|The days become longer in March.
+begin|начинать|Let us begin with the easiest question.
+behind|позади|The car behind us turned to the left.
+believe|верить|I believe you can finish it today.
+belong|принадлежать|These keys belong to the neighbour.
+below|ниже|Write your name below the line.
+bend|изгиб, сгибать|The road has a sharp bend near the bridge.
+benefit|польза, выгода|Fresh air is a real benefit for health.
+beside|рядом с|The chair stands beside the window.
+best|лучший|The best answer is often the shortest.
+better|лучше|It is better to call before you come.
+between|между|The shop is between the bank and the park.
+beyond|за, вне|The lake lies beyond the forest.
+bill|счёт, законопроект|Please bring the bill, we are leaving.
+bind|связывать|Bind the papers before you store them.
+bite|кусать, укус|Do not let the dog bite the postman.
+bitter|горький|The coffee tastes bitter without sugar.
+blame|винить|Do not blame the tool for a bad plan.
+blank|пустой, бланк|Fill in the blank line with your name.
+blind|слепой|The blind man crossed the road with help.
+block|блокировать, квартал|A fallen tree blocked the whole street.
+blood|кровь|Blood carries oxygen to every cell.
+blow|дуть, удар|The wind began to blow from the sea.
+board|доска, садиться|The passengers board the plane at six.
+boat|лодка|We crossed the river by a small boat.
+body|тело|The body needs water and rest to recover.
+boil|кипятить|Boil the water and add the tea.
+bone|кость|A broken bone needs time to heal.
+borrow|брать взаймы|May I borrow your pen for a minute?
+boss|начальник|The boss asked for a short report.
+both|оба|Both answers are correct in this case.
+bother|беспокоить|Do not bother him during the meeting.
+bottle|бутылка|Take a bottle of water on the road.
+bottom|дно, нижняя часть|Write the total at the bottom of the page.
+branch|ветка, филиал|The bank has a branch near the station.
+brave|смелый|It was a brave but risky decision.
+break|ломать, перерыв|Take a break every forty minutes.
+breathe|дышать|Breathe slowly and count to four.
+bridge|мост|The bridge was built a hundred years ago.
+bright|яркий|The room is bright in the morning.
+bring|приносить|Bring your documents to the office.
+broken|сломанный|The broken chair stands in the corner.
+brother|брат|My brother lives in another city.
+budget|бюджет|We keep the budget in a simple table.
+build|строить|They build a new school near the park.
+burn|гореть, жечь|Do not burn dry grass in the wind.
+business|бизнес, дело|A small business needs clear numbers.
+busy|занятый|He is busy until the end of the day.
+buy|покупать|Buy tickets in advance to save money.
+call|звонить, называть|Call me when you reach the station.
+calm|спокойный|Stay calm and read the question twice.
+camera|камера, фотоаппарат|The camera works well in low light.
+cancel|отменять|We had to cancel the trip because of rain.
+carry|нести|Can you carry this box upstairs?
+case|случай, футляр|In that case we should wait a day.
+catch|ловить, успевать|Run, or we will not catch the bus.
+cause|причина, вызывать|The cause of the noise was a loose part.
+ceiling|потолок|The ceiling is white and quite high.
+century|век|The house was built in the last century.
+certain|уверенный, определённый|I am certain about the date of the meeting.
+chain|цепь, сеть|The chain of shops has twenty stores.
+chair|стул|Take a chair and sit closer.
+chance|шанс|You have a good chance to win.
+change|менять, сдача|Change the password once a year.
+cheap|дешёвый|The cheaper model is enough for this job.
+check|проверять|Check the address before you send it.
+choice|выбор|You always have a choice of two ways.
+choose|выбирать|Choose the size that fits best.
+circle|круг|Draw a circle around the right answer.
+city|город|The city grows along the river.
+claim|требовать, заявлять|You can claim a refund within two weeks.
+class|класс, занятие|The class starts at nine sharp.
+clean|чистый, убирать|Clean the table before dinner.
+clear|ясный, понятный|The rule is clear from the example.
+climb|подниматься|We climbed the hill in an hour.
+close|закрывать, близкий|Close the door, please, it is cold.
+cloth|ткань|Use a soft cloth for the screen.
+cloud|облако|A grey cloud covered the sun.
+coach|тренер, автобус|The coach explained the plan before the match.
+coast|побережье|The road runs along the coast.
+cold|холодный|The water is cold even in summer.
+collect|собирать|We collect old books for the school.
+colour|цвет|The colour of the wall is warm.
+come|приходить|Come early, the place gets crowded.
+comfort|удобство, утешать|This chair gives real comfort.
+common|общий, обычный|This is a common mistake for beginners.
+company|компания|The company has fifty workers.
+compare|сравнивать|Compare prices before you buy.
+complete|полный, завершать|Complete the form in block letters.
+computer|компьютер|The computer needs a restart.
+concern|беспокойство, касаться|This question concerns every family.
+condition|условие, состояние|The car is in good condition.
+confirm|подтверждать|Please confirm the time by message.
+connect|соединять|Connect the cable to the screen.
+consider|обдумывать|Consider both options before the answer.
+contain|содержать|The box contains old photos.
+continue|продолжать|Continue reading after the marked line.
+control|контроль, управлять|Keep control of the spending every week.
+cook|готовить|He can cook dinner in twenty minutes.
+cool|прохладный, классный|Let the soup cool before you serve it.
+copy|копия, копировать|Make a copy of the documents.
+corner|угол|The shop is on the corner.
+correct|правильный, исправлять|Correct answer is the second one.
+cost|стоимость, стоить|The cost includes delivery.
+count|считать|Count the chairs before the guests arrive.
+country|страна|The country has many long rivers.
+couple|пара, несколько|I need a couple of minutes.
+course|курс, блюдо|The course lasts three months.
+cover|накрывать, обложка|Cover the pan with a lid.
+create|создавать|Create a folder for the new project.
+credit|кредит, заслуга|The credit is paid in equal parts.
+cross|пересекать, крест|Cross the street at the green light.
+crowd|толпа|The crowd waited for the doors to open.
+cry|плакать, кричать|The child began to cry in the cold.
+culture|культура|Every culture has its own table rules.
+cup|чашка|A cup of tea helps in cold weather.
+current|текущий, течение|The current plan works well.
+cut|резать|Cut the bread into thin slices.
+damage|ущерб, повреждать|The frost damaged the young trees.
+danger|опасность|Wet floors are a real danger.
+dark|тёмный|The street is dark after ten.
+data|данные|Check the data before you send the file.
+date|дата, свидание|Write the date at the top of the page.
+deal|сделка, иметь дело|We made a deal with the supplier.
+decide|решать|Decide today so we can plan tomorrow.
+deep|глубокий|The lake is deep near the middle.
+defend|защищать|You must defend your rights in court.
+degree|градус, степень|The temperature dropped by ten degrees.
+delay|задержка, откладывать|The delay was caused by the weather.
+deliver|доставлять|They deliver food in half an hour.
+demand|спрос, требовать|The demand for this service is high.
+deny|отрицать, отказывать|He denied any part in the deal.
+depend|зависеть|The result depends on the first step.
+describe|описывать|Describe the problem in two sentences.
+deserve|заслуживать|You deserve a short holiday.
+design|дизайн, проектировать|The design is simple and clean.
+detail|подробность|One small detail changes the whole story.
+develop|развивать|They develop a new app for schools.
+device|устройство|The device works on one battery.
+die|умирать|Old habits die slowly but surely.
+differ|отличаться|The two plans differ in one point.
+difficult|трудный|The task is difficult but possible.
+dinner|ужин|Dinner is served at seven.
+direct|прямой, направлять|Take a direct train to the city.
+dirty|грязный|The floor is dirty after the rain.
+discover|обнаружить|We discovered a small cafe near the park.
+discuss|обсуждать|Let us discuss the details tomorrow.
+disease|болезнь|The disease is easier to treat early.
+distance|расстояние|The distance between the towns is small.
+divide|делить|Divide the sum by the number of people.
+doctor|врач|The doctor asked two simple questions.
+dog|собака|The dog sleeps near the door.
+door|дверь|Close the door slowly, please.
+double|двойной|We paid double the usual price.
+doubt|сомнение|I doubt that the shop is still open.
+draw|рисовать|Draw a simple plan on paper.
+dream|сон, мечта|I had a strange dream last night.
+dress|платье, одеваться|She bought a light summer dress.
+drink|пить, напиток|Drink water before you feel thirsty.
+drive|водить|He drives to work every morning.
+drop|капля, ронять|Do not drop the glass on the tiles.
+dry|сухой, сушить|Dry the clothes outside today.
+during|во время|Do not call during the meeting.
+duty|обязанность, пошлина|It is your duty to check the figures.
+each|каждый|Each answer needs a short reason.
+early|рано|Come early to get a good seat.
+earn|зарабатывать|She earns enough for the family.
+earth|земля|The earth gives us food and water.
+easy|легкий|The first step is easy and quick.
+economy|экономика|A strong economy needs small business.
+edge|край|Stand back from the edge of the roof.
+education|образование|Education opens more doors than luck.
+effect|эффект, влияние|The new rule had a good effect.
+effort|усилие|A small effort every day adds up.
+either|любой из двух|Either way is fine with me.
+electric|электрический|The electric kettle boils water fast.
+else|ещё, другой|Do you have anything else to add?
+empty|пустой|The street was empty at dawn.
+end|конец, заканчивать|The film has a happy end.
+energy|энергия|Sleep gives you the energy to work.
+engine|двигатель|The engine started after two tries.
+enough|достаточно|We have enough time for a walk.
+enter|входить|Enter the code on the screen.
+entire|целый, весь|The entire team was at the meeting.
+equal|равный|Two equal parts make the whole.
+escape|побег, убежать|They escaped through the back door.
+especially|особенно|Fresh bread is especially good warm.
+event|событие|The event starts in the main hall.
+ever|когда-либо|Have you ever been to the north?
+every|каждый|Every detail matters in a contract.
+everything|всё|Everything is ready for the trip.
+evidence|доказательство|The photo is strong evidence.
+exact|точный|Give me the exact time of arrival.
+example|пример|The example shows how the rule works.
+exchange|обмен, обменивать|We can exchange the book tomorrow.
+excited|взволнованный|The children were excited about the trip.
+excuse|извинение, повод|Excuse me, where is the station?
+exercise|упражнение|A short exercise in the morning helps.
+exist|существовать|The problem exists only on old devices.
+expect|ожидать|We expect an answer by Friday.
+expensive|дорогой|The repairs turned out expensive.
+experience|опыт|Experience saves money and time.
+explain|объяснять|Explain the rule with your own words.
+express|выражать, скорый|Express delivery costs more.
+extra|дополнительный|Take an extra pair of socks.
+fact|факт|Check every fact before you publish.
+fail|провалиться|Plans fail when the goal is vague.
+fair|справедливый, светлый|The price seems fair for this quality.
+fall|падать, осень|Leaves fall in October.
+familiar|знакомый|The face looks familiar to me.
+family|семья|The family gathers on Sundays.
+famous|известный|The town is famous for its bread.
+far|далеко|The station is not far from here.
+farm|ферма|The farm sells milk and cheese.
+fast|быстрый|The train is fast and quiet.
+fault|вина, неисправность|It was my fault, not yours.
+fear|страх|Fear of mistakes stops many people.
+feed|кормить|Feed the cat twice a day.
+feel|чувствовать|I feel tired after the trip.
+few|немногие|Few people know this road.
+field|поле|The field is green in May.
+fight|борьба, бороться|Do not fight for a useless detail.
+figure|цифра, фигура|The figure in the report is wrong.
+fill|наполнять|Fill the bottle to the top.
+film|плёнка, фильм|The film lasts two hours.
+final|последний, финал|The final answer is on the last page.
+find|находить|Find the error before the client does.
+fine|хорошо, штраф|I feel fine after a short walk.
+finger|палец|He cut his finger on the glass.
+finish|заканчивать|Finish the report before lunch.
+fire|огонь, пожар|A small fire started in the kitchen.
+firm|фирма, твёрдый|The firm has three small offices.
+fit|подходить, помещаться|These shoes fit me well.
+fix|чинить, фиксировать|Fix the price before the deal.
+flat|квартира, плоский|The flat has two bright rooms.
+flight|полёт, рейс|Our flight leaves at six.
+floor|пол, этаж|The floor is cold without a carpet.
+flow|поток, течь|The water flow is weak today.
+fly|летать, муха|We fly to the south in June.
+follow|следовать|Follow the road to the bridge.
+food|еда|Food tastes better when you are hungry.
+foot|ступня|My foot hurts after a long walk.
+force|сила, заставлять|Do not force the door, it opens easily.
+foreign|иностранный|He learns two foreign languages.
+forget|забывать|Do not forget to take the keys.
+forgive|прощать|It is easier to forgive when you rest.
+form|форма, бланк|The form asks for two dates.
+forward|вперёд|Move forward without sudden turns.
+free|свободный, бесплатный|The first lesson is free.
+fresh|свежий|Fresh air helps more than coffee.
+friend|друг|A good friend listens without judging.
+front|передняя часть|Park in front of the shop.
+fruit|фрукт|Fruit in season is cheaper and better.
+full|полный|The bus was full at eight.
+fun|веселье|The game was simple and fun.
+future|будущее|Small steps today build the future.
+gain|прирост, получать|You gain time when the plan is clear.
+game|игра|The game lasted an hour.
+garden|сад|The garden needs water every evening.
+gas|газ|Check the gas before you leave.
+gather|собирать, собираться|We gather in the kitchen at six.
+general|общий, генерал|The general rule is simple enough.
+gift|подарок|A book is a safe and useful gift.
+give|давать|Give a short answer, not a lecture.
+glad|рад|I am glad to hear the news.
+glass|стекло, стакан|A glass of water helps in the heat.
+go|идти|Go straight and turn at the bank.
+goal|цель, гол|Set one goal for the week.
+gold|золото|The ring is made of gold.
+good|хороший|A good plan saves half the work.
+government|правительство|The government changed the rule.
+grade|оценка, класс|She got a good grade in maths.
+grand|большой, величественный|The grand hall was full of light.
+grass|трава|The grass is wet after the rain.
+great|большой, отличный|That is a great idea for a gift.
+green|зелёный|Wait for the green light.
+grow|расти|Tomatoes grow well in the sun.
+guard|охранять, охрана|The guard checks every car.
+guess|догадываться, догадка|My guess was close to the answer.
+guest|гость|The guest asked for a glass of water.
+guide|гид, путеводитель|The guide spoke about the old bridge.
+gun|оружие|The law controls the use of guns.
+habit|привычка|A morning habit changes the whole day.
+half|половина|Half of the work is already done.
+hand|рука|Raise your hand if you agree.
+hang|вешать|Hang the coat behind the door.
+happen|случаться|It can happen to anyone.
+happy|счастливый|He looked happy after the call.
+hard|твёрдый, трудный|The exam was hard but fair.
+harm|вред|Loud music at night does real harm.
+hate|ненавидеть|I hate late meetings on Friday.
+head|голова, глава|The head of the company was late.
+health|здоровье|Health matters more than money.
+hear|слышать|I cannot hear you, speak louder.
+heart|сердце|The heart beats about sixty times a minute.
+heat|жара, нагревать|Heat the milk but do not boil it.
+heavy|тяжёлый|The bag is heavy for one person.
+help|помощь, помогать|Help your neighbour with the door.
+here|здесь|Wait here for ten minutes.
+hide|прятать, скрываться|Do not hide the mistake from the team.
+high|высокий|The wall is high and old.
+hill|холм|A small hill stands behind the house.
+history|история|History explains many modern borders.
+hit|ударять|He hit the nail with one blow.
+hold|держать|Hold the cup with both hands.
+hole|дыра|There is a hole in the sleeve.
+holiday|праздник, отпуск|The holiday starts on the first of May.
+home|дом|I work from home twice a week.
+honest|честный|Be honest about the deadlines.
+hope|надежда|I hope the weather stays warm.
+horse|лошадь|The horse stood quietly by the fence.
+hospital|больница|The hospital is near the park.
+hot|горячий|The tea is too hot to drink.
+hotel|отель|The hotel has a quiet inner yard.
+hour|час|The road takes about an hour.
+house|дом|The house has a green roof.
+huge|огромный|A huge tree grows in the yard.
+human|человек, человеческий|Human attention fades after an hour.
+hungry|голодный|I am hungry after the long walk.
+hurry|спешить|Do not hurry, read the task twice.
+hurt|болеть, ранить|My back hurts after the move.
+idea|идея|The idea is simple and cheap.
+imagine|представлять|Imagine the result before you start.
+important|важный|The most important step is the first.
+improve|улучшать|Small changes improve the result.
+include|включать|The price includes two meals.
+increase|увеличивать|Increase the dose only with a doctor.
+indeed|действительно|The task is indeed harder than it looks.
+industry|промышленность|The industry grows along the river.
+influence|влияние|Sleep has a strong influence on mood.
+inform|сообщать|Please inform the office about the change.
+inside|внутри|Keep the keys inside the bag.
+instead|вместо|Call instead of writing a long letter.
+interest|интерес, проценты|The bank pays interest once a month.
+inside|внутри|The answer is inside the second box.
+invite|приглашать|We invite friends for dinner on Sunday.
+island|остров|A small island lies near the shore.
+issue|вопрос, выпуск|The main issue is the short deadline.
+item|пункт, предмет|Every item has its own price.
+job|работа|A new job needs a new daily plan.
+join|присоединяться|Join the meeting five minutes early.
+joke|шутка|The joke was lost in translation.
+journey|путешествие|The journey took all day.
+joy|радость|Small joys carry us through the week.
+judge|судья, судить|Do not judge by the first impression.
+jump|прыгать|The cat jumped on the table.
+just|только что, справедливый|The train has just left.
+keep|держать, хранить|Keep the receipt in the same folder.
+key|ключ|The key is under the mat.
+kick|пинать, удар ногой|He kicked the ball over the fence.
+kid|ребёнок|The kid asked a simple question.
+kill|убивать|Frost can kill young plants.
+kind|вид, добрый|What kind of tea do you prefer?
+kitchen|кухня|The kitchen is small but bright.
+knee|колено|My knee hurts after running.
+knife|нож|Use a sharp knife for bread.
+knot|узел|Tie a strong knot on the rope.
+know|знать|I know the answer but need a check.
+knowledge|знание|Knowledge grows with use, not with rest.
+labour|труд|Physical labour needs water and rest.
+lack|нехватка|The lack of sleep ruins the whole day.
+ladies|дамы|Ladies and gentlemen, the show begins.
+land|земля, приземляться|The plane landed on time.
+language|язык|A language is learned by speaking.
+large|большой|The large hall was almost empty.
+last|последний, длиться|The film lasted two hours.
+late|поздний, поздно|Late calls annoy the whole team.
+laugh|смеяться|We laughed at the silly mistake.
+law|закон|The law protects both sides.
+lead|вести, свинец|Good questions lead to good answers.
+leaf|лист|A green leaf fell on the table.
+learn|учить|Learn five words a day and repeat them.
+least|наименьший|At least try once before you refuse.
+leave|уходить, оставлять|Leave the door open for the cat.
+left|левый, оставленный|Turn left after the bridge.
+leg|нога|My leg hurts after the long walk.
+lead|свинец|Old paint may contain lead.
+lend|одалживать|Can you lend me a pen?
+length|длина|Measure the length of the wall first.
+less|меньше|Eat less sugar in the evening.
+lesson|урок|The lesson starts at nine.
+letter|письмо, буква|The letter arrived after a week.
+level|уровень|The water level rose after the rain.
+lie|лгать, лежать|Do not lie about small things.
+life|жизнь|Life is easier with a clear plan.
+lift|поднимать, лифт|The lift is out of order today.
+light|свет, лёгкий|Turn off the light when you leave.
+like|нравиться, как|I like strong tea in the morning.
+limit|предел, ограничивать|Limit the call to five minutes.
+line|линия, очередь|Draw a line under the answer.
+link|ссылка, связывать|Send me the link to the file.
+list|список|Write a list before shopping.
+listen|слушать|Listen to the question to the end.
+little|маленький, немного|A little salt improves the taste.
+live|жить|They live near the station.
+load|груз, загружать|The load was too heavy for the car.
+local|местный|The local shop closes at nine.
+lock|замок, запирать|Lock the door at night.
+long|длинный, долгий|The road is long but easy.
+look|смотреть, вид|Look at the date on the label.
+lose|терять|Do not lose the receipt.
+loud|громкий|The music is too loud for this room.
+love|любовь, любить|I love quiet mornings at home.
+low|низкий|The price is low for this quality.
+luck|удача|Luck helps those who prepare.
+lunch|обед|Lunch is at one o'clock.
+machine|машина, механизм|The machine makes noise when it starts.
+main|главный|The main road is closed today.
+major|крупный, основной|A major part of the plan is ready.
+make|делать|Make a short plan for the week.
+man|мужчина, человек|The man asked for directions.
+manage|управлять, успевать|She manages three small projects.
+many|много|Many answers sound right but fail.
+map|карта|Open the map before you drive.
+mark|метка, оценка|Mark the right answer with a cross.
+market|рынок|The market opens early on Saturday.
+marry|жениться, выходить замуж|They married in a small town.
+match|спичка, матч|The match starts at eight.
+matter|дело, иметь значение|Every detail matters in a contract.
+maybe|может быть|Maybe the shop works till ten.
+meal|приём пищи|A warm meal helps in cold weather.
+mean|значить, подлый|What does this word mean?
+measure|измерять, мера|Measure twice before you cut.
+meat|мясо|Keep the meat in the cold part.
+medical|медицинский|The medical report is ready.
+meet|встречать|Let us meet near the entrance.
+member|член, участник|Every member has one vote.
+memory|память|Memory improves with sleep and repetition.
+mention|упоминать|Do not forget to mention the price.
+message|сообщение|Send a short message after the call.
+metal|металл|The door is made of thin metal.
+method|метод|This method saves a lot of time.
+middle|середина|Put the table in the middle.
+might|мог бы, сила|It might rain in the evening.
+mind|ум, возражать|Do you mind a short delay?
+minute|минута|Wait a minute, please.
+miss|скучать, пропускать|Do not miss the last train.
+mistake|ошибка|A mistake on paper costs money.
+mix|смешивать|Mix the flour with water slowly.
+model|модель|The new model uses less power.
+modern|современный|Modern tools need simple rules.
+moment|момент|Wait a moment, I will check.
+money|деньги|Money loves a clear plan.
+month|месяц|The report is due next month.
+mood|настроение|Sleep fixes the mood faster than coffee.
+moon|луна|The moon is bright tonight.
+more|больше|Try one more time and stop.
+morning|утро|The morning is the best time to write.
+most|большинство|Most people learn by examples.
+mother|мать|His mother lives in the village.
+mount|подниматься, монтировать|Mount the shelf with two screws.
+mouth|рот|Rinse your mouth after the medicine.
+move|двигать, переезжать|Move the chair closer to the window.
+much|много|This work needs much more time.
+music|музыка|Quiet music helps concentration.
+must|должен|You must read the rules first.
+name|имя|Write your name in block letters.
+narrow|узкий|The street is too narrow for a bus.
+nation|нация, страна|The nation celebrated the day.
+natural|естественный|Natural light is better for the eyes.
+nature|природа|Nature recovers faster than we think.
+near|близко|The shop is near the station.
+necessary|необходимый|Water is necessary for every cell.
+neck|шея|My neck hurts after a long day.
+need|нужда, нуждаться|We need a clearer plan.
+neighbour|сосед|The neighbour helped with the bags.
+neither|ни один из двух|Neither answer is correct.
+nervous|нервный|I get nervous before speaking.
+network|сеть|The network works slowly today.
+never|никогда|Never send the file without checking.
+news|новости|The news came late in the evening.
+next|следующий|The next train leaves at six.
+nice|приятный, милый|The room has a nice view.
+night|ночь|The night was quiet and warm.
+noise|шум|The noise comes from the old fridge.
+none|ни один|None of the options fits.
+normal|обычный|It is normal to ask twice.
+north|север|The north of the country is colder.
+nose|нос|My nose is blocked by a cold.
+note|записка, замечание|Make a note of the date.
+nothing|ничего|Nothing is cheaper than a good plan.
+notice|замечать, объявление|I did not notice the small print.
+now|сейчас|Do it now, later it will be harder.
+number|число, номер|Write the number without spaces.
+object|предмет, возражать|The object is hidden in the box.
+observe|наблюдать|Observe the result after a week.
+obtain|получать|You can obtain the form online.
+obvious|очевидный|The mistake is obvious on the screen.
+occur|происходить|The error occurs only at night.
+offer|предложение, предлагать|The offer is valid until Friday.
+office|офис|The office is closed on Sunday.
+often|часто|He often works from home.
+oil|масло, нефть|Add a spoon of oil to the pan.
+old|старый|The old bridge is still open.
+once|однажды, раз|Read the rule once more.
+only|только|Only two seats are left.
+open|открытый, открывать|Open the window for five minutes.
+operate|работать, управлять|The old machine still operates well.
+opinion|мнение|Everyone has an opinion about food.
+opposite|напротив, противоположный|The bank is opposite the park.
+option|вариант|The cheapest option is often enough.
+order|порядок, заказ|Check the order before you send it.
+ordinary|обычный|An ordinary day can give good ideas.
+organise|организовать|Organise the files by date.
+other|другой|Take the other road, it is shorter.
+outside|снаружи|Wait outside for a minute.
+over|над, через|The bridge goes over the river.
+own|свой, владеть|She owns a small cafe.
+page|страница|The table is on the last page.
+pain|боль|The pain went away after a day.
+paint|краска, красить|The paint dries in two hours.
+pair|пара|Take a pair of gloves.
+paper|бумага, документ|The papers are in the top drawer.
+parent|родитель|A parent can sign the form.
+part|часть|Only part of the plan works.
+particular|определённый, особый|This particular model is cheaper.
+pass|проходить, передавать|Pass the salt, please.
+past|прошлое, мимо|In the past the road was empty.
+pay|платить|Pay in advance to save time.
+peace|мир, покой|Quiet music gives a little peace.
+people|люди|People learn faster with examples.
+percent|процент|Ten percent is a fair discount.
+perfect|идеальный|There is no perfect plan.
+perhaps|возможно|Perhaps the shop is still open.
+period|период|The busy period starts in May.
+person|человек|One person can carry this box.
+phone|телефон|The phone is on silent now.
+photo|фотография|The photo shows the old square.
+pick|выбирать, собирать|Pick the answer that fits best.
+picture|картина, изображение|The picture hangs above the table.
+piece|кусок|Take a piece of paper and write.
+place|место|The place is quiet in the morning.
+plan|план|A plan saves half of the nerves.
+plant|растение, завод|Water the plant twice a week.
+play|играть|Children play in the yard.
+please|пожалуйста|Please close the door quietly.
+plenty|много|Plenty of time is left for the test.
+point|точка, указывать|The main point is the deadline.
+police|полиция|The police arrived in ten minutes.
+policy|политика, полис|The policy covers small repairs.
+poor|бедный, слабый|Poor sleep ruins the whole week.
+popular|популярный|This dish is popular in autumn.
+position|положение, должность|Write your position in the form.
+possible|возможный|It is possible to finish today.
+post|почта, столб|Send the letter by post.
+power|сила, мощность|The power went off for a minute.
+practice|практика|Practice makes the rule automatic.
+prepare|готовить|Prepare the documents in advance.
+present|подарок, настоящий|The present was simple and useful.
+press|нажимать, пресса|Press the button once only.
+pretty|довольно, милый|The answer is pretty close.
+prevent|предотвращать|A check prevents most mistakes.
+price|цена|Compare the price per kilo.
+print|печать, печатать|Print the form in two copies.
+private|частный|The road is private property.
+problem|проблема|Every problem has a simple start.
+process|процесс|The process takes three days.
+produce|производить|The farm produces milk and cheese.
+product|продукт, товар|The product has a short shelf life.
+promise|обещание|Keep the promise about the date.
+proper|правильный, надлежащий|Use the proper tool for the job.
+protect|защищать|Protect the screen from the sun.
+prove|доказывать|The receipt proves the purchase.
+provide|обеспечивать|The hotel provides clean towels.
+public|публичный, общественный|Public transport is faster here.
+pull|тянуть|Pull the door, do not push.
+purchase|покупка|Keep the purchase receipt for a year.
+push|толкать|Push the button and wait.
+put|класть|Put the keys in the same place.
+quality|качество|Quality costs less in the long run.
+quarter|четверть|A quarter of the work is left.
+question|вопрос|A clear question gets a clear answer.
+quick|быстрый|A quick check saves a long call.
+quiet|тихий|The street is quiet after nine.
+quite|довольно|The room is quite small but bright.
+race|гонка, раса|The race starts at noon.
+radio|радио|The radio works on batteries.
+rain|дождь|The rain stopped before noon.
+raise|поднимать, повышать|Raise the price only after the test.
+range|диапазон|The price range is quite wide.
+rate|ставка, темп|The rate grows once a year.
+reach|достигать|We reached the town before dark.
+read|читать|Read the terms before signing.
+ready|готовый|The report is ready for review.
+real|настоящий|The real cost includes delivery.
+reason|причина|Every rule needs a reason.
+receive|получать|You will receive the code by mail.
+recent|недавний|The recent update fixed the error.
+record|запись, рекорд|Keep a record of every payment.
+reduce|сокращать|Reduce the sugar by half.
+refer|относиться, ссылаться|Refer to the first page for details.
+refuse|отказывать|It is fine to refuse politely.
+regard|считать, отношение|I regard this plan as safe.
+region|регион|The region is famous for apples.
+regular|регулярный, обычный|Regular walks improve sleep.
+relate|связывать|The two problems relate to one cause.
+remain|оставаться|Two questions remain open.
+remember|помнить|Remember to save the file.
+remove|удалять, убирать|Remove the old number from the list.
+repeat|повторять|Repeat the word aloud three times.
+replace|заменять|Replace the filter twice a year.
+reply|ответ|A short reply is better than silence.
+report|отчёт, сообщать|The report has three tables.
+require|требовать|The form requires two photos.
+research|исследование|Research takes time and records.
+rest|отдых, остаток|Take a rest after every hour.
+result|результат|The result depends on the input.
+return|возврат, возвращаться|Return the book by Friday.
+rich|богатый|The soil is rich near the river.
+right|правый, правильный|Turn right at the corner.
+rise|расти, подниматься|Prices rise slowly this year.
+risk|риск|A small risk is still a risk.
+road|дорога|The road is wet after the rain.
+rock|камень|The rock is too heavy to move.
+role|роль|Every member has a clear role.
+room|комната|The room is ready for guests.
+root|корень|The root goes deep into the soil.
+rough|грубый, шероховатый|The surface feels rough to the touch.
+round|круглый, круг|We sat round the table.
+route|маршрут|The route by the river is shorter.
+row|ряд, грести|Sit in the first row.
+rule|правило|One simple rule covers most cases.
+run|бежать, управлять|Run the test before the release.
+safe|безопасный, сейф|Keep the documents in a safe place.
+sale|распродажа, продажа|The sale ends on Sunday.
+salt|соль|Add salt at the end of cooking.
+same|тот же|We use the same plan every month.
+save|сохранять, экономить|Save the file under a new name.
+say|говорить|Say your name slowly.
+scale|масштаб, весы|The scale shows the weight in kilos.
+school|школа|The school is behind the park.
+science|наука|Science explains the result, not the wish.
+score|счёт, балл|The score was two to one.
+search|поиск|Search by the exact title.
+season|сезон|The rainy season starts in June.
+seat|место, сиденье|Take a seat near the window.
+second|второй, секунда|Wait a second, please.
+secret|секрет, тайный|Keep the code in a safe place.
+section|раздел|Read the first section twice.
+see|видеть|I see the problem on the screen.
+seek|искать|Seek advice before the big deal.
+seem|казаться|The task seems easy at first.
+sell|продавать|They sell fresh bread every morning.
+send|отправлять|Send the file after the check.
+sense|смысл, чувство|The rule makes sense with examples.
+separate|отдельный|Keep personal and work files separate.
+series|серия|The series has ten short lessons.
+serious|серьёзный|It is a serious mistake, not a typo.
+serve|служить, подавать|They serve lunch from twelve.
+service|услуга, сервис|The service works without a key.
+set|набор, ставить|Set the alarm for six.
+several|несколько|Several answers look similar.
+shake|трясти|Shake the bottle before use.
+shape|форма|The table is a simple shape.
+share|делиться, доля|Share the report with the team.
+sharp|острый|The knife is sharp, be careful.
+ship|корабль|The ship left the port at dawn.
+shoe|обувь|The shoes need a larger size.
+short|короткий|Write a short and clear answer.
+shoulder|плечо|My shoulder hurts from the bag.
+shout|кричать|Do not shout, speak slower.
+show|показывать, шоу|Show the example on the screen.
+sick|больной|He felt sick after the trip.
+side|сторона|Stand on the other side.
+sign|знак, подписывать|Sign the form at the bottom.
+silent|тихий, молчащий|The phone stayed silent all day.
+similar|похожий|The two models look similar.
+simple|простой|A simple rule works longer.
+since|с тех пор как|The shop is closed since Monday.
+sing|петь|She sings in the local choir.
+single|один, единственный|A single mistake ruined the sum.
+sit|сидеть|Sit straight and rest your eyes.
+situation|ситуация|The situation changed after the call.
+size|размер|Check the size before you order.
+skill|навык|A skill grows with short practice.
+skin|кожа|Protect the skin from the sun.
+sky|небо|The sky was clear all night.
+sleep|сон, спать|Sleep is the cheapest medicine.
+slow|медленный|Slow reading catches more errors.
+small|маленький|Small steps beat big plans.
+smell|запах, пахнуть|The bread smells wonderful.
+smile|улыбка|A short smile softens the answer.
+snow|снег|The snow melted by noon.
+social|общественный|Social rules differ from country to country.
+society|общество|A society grows on trust.
+soft|мягкий|Use a soft brush for the screen.
+soldier|солдат|The soldier helped after the storm.
+solve|решать|Solve one task at a time.
+some|некоторые, немного|Some answers need a second look.
+son|сын|His son studies at the same school.
+song|песня|The song was on the radio all day.
+soon|скоро|The train will come soon.
+sorry|извините, жаль|Sorry, I mixed up the dates.
+sort|вид, сортировать|Sort the files by date.
+sound|звук, звучать|The sound is too quiet to hear.
+source|источник|Check the source before sharing news.
+south|юг|The south is warmer in winter.
+space|пространство, космос|There is space for two more chairs.
+speak|говорить|Speak slowly and clearly.
+special|особый|A special tool is not needed here.
+speed|скорость|Speed matters less than accuracy.
+spend|тратить|Spend half an hour on the plan.
+sport|спорт|Sport helps sleep and mood.
+spot|место, пятно|This spot is good for a picnic.
+spring|весна, пружина|The spring was cold this year.
+staff|персонал|The staff answers within a day.
+stage|этап, сцена|The first stage is the hardest.
+stand|стоять|Stand near the door, please.
+star|звезда|A bright star appeared at dusk.
+start|начинать|Start with the easiest question.
+state|государство, состояние|The state of the road is poor.
+station|станция|The station is ten minutes away.
+stay|оставаться|Stay at home if you feel sick.
+step|шаг|One step forward is enough today.
+stone|камень|A stone path leads to the door.
+stop|останавливать|Stop and read the sign.
+store|магазин, хранить|Store the seeds in a dry place.
+story|история, рассказ|The story explains the rule well.
+straight|прямой|Go straight for two blocks.
+strange|странный|The answer looks strange at first.
+street|улица|The street is empty in the morning.
+strength|сила|Strength is built by small loads.
+stress|стресс, подчёркивать|Stress ruins sleep and appetite.
+stretch|растягивать|Stretch your back every hour.
+strong|сильный|A strong password is long.
+structure|структура|The structure of the answer is clear.
+study|учёба, изучать|Study in short blocks with breaks.
+stupid|глупый|It was a stupid mistake, not a plan.
+subject|предмет, тема|The subject of the letter is clear.
+success|успех|Success comes from boring routine.
+such|такой|Such results need a bigger sample.
+sudden|внезапный|A sudden noise woke the child.
+suffer|страдать|The plants suffer without water.
+sugar|сахар|Sugar hides in drinks and sauces.
+suggest|предлагать|I suggest a short break now.
+suit|костюм, подходить|This time suits me fine.
+summer|лето|The summer was dry and hot.
+sun|солнце|The sun dries the clothes fast.
+supply|поставка|The supply arrives on Tuesday.
+support|поддержка, поддерживать|Support helps more than advice.
+suppose|предполагать|I suppose the shop is closed.
+sure|уверенный|Are you sure about the time?
+surface|поверхность|Clean the surface before painting.
+surprise|сюрприз|The gift was a pleasant surprise.
+surround|окружать|Trees surround the old house.
+system|система|The system works without the internet.
+table|стол, таблица|The table has three columns.
+take|брать|Take the umbrella, it will rain.
+talk|разговор, говорить|Talk about the plan, not the person.
+taste|вкус|The taste improves after a day.
+teach|учить, преподавать|Teach by showing one example.
+team|команда|The team meets on Monday.
+tell|рассказывать|Tell me the short version.
+temperature|температура|The temperature drops at night.
+tend|склоняться, ухаживать|Prices tend to grow in winter.
+term|срок, термин|The term ends in June.
+test|тест, проверять|Test the change on one page.
+than|чем|Better late than never.
+thank|благодарить|Thank the driver and leave.
+that|тот, что|That answer is the correct one.
+then|тогда, затем|Read first, then write.
+there|там|Put the box there, near the wall.
+thick|толстый|The wall is thick and warm.
+thin|тонкий|Cut the bread into thin slices.
+thing|вещь, дело|One thing at a time is enough.
+think|думать|Think about the reason first.
+third|третий|The third answer is right.
+thirsty|хотящий пить|I am thirsty after the walk.
+this|этот|This example is the clearest.
+though|хотя|Though tired, she finished the work.
+thought|мысль|A good thought came on the walk.
+thousand|тысяча|A thousand small steps make a road.
+thread|нить, резьба|The thread is too thin for the needle.
+threat|угроза|The frost is a threat for the crop.
+through|через|The path goes through the forest.
+throw|бросать|Do not throw paper on the floor.
+ticket|билет|Keep the ticket until the end.
+tidy|опрятный, убирать|Tidy the desk before you start.
+tie|галстук, связывать|Tie the bag before the trip.
+tight|тесный, плотный|The lid is too tight to open.
+time|время|Time saved is money saved.
+tiny|крошечный|A tiny crack grows with frost.
+tired|усталый|I am tired after the long call.
+title|заголовок|The title should be short.
+today|сегодня|Today is the best day to start.
+together|вместе|We work together on Fridays.
+tomorrow|завтра|Tomorrow the shop opens later.
+tone|тон|The tone of the letter is polite.
+tool|инструмент|A simple tool solves most jobs.
+top|верх|The top shelf is empty.
+total|общий, итог|The total includes delivery.
+touch|трогать|Do not touch the hot pan.
+towards|по направлению к|Walk towards the river.
+town|городок|The town has one long street.
+track|след, дорожка|The track leads to the lake.
+trade|торговля|Trade grows along the border.
+train|поезд, тренировать|The train is late by ten minutes.
+travel|путешествие|Travel light and plan ahead.
+treat|лечить, угощать|Treat small cuts with clean water.
+tree|дерево|The tree gives shade in summer.
+trip|поездка|The trip takes three hours.
+trouble|проблема|The trouble started with one typo.
+true|верный, правдивый|The story is true in every detail.
+trust|доверие|Trust is built by small promises.
+try|пробовать|Try the simple version first.
+turn|поворот, поворачивать|Turn the key to the right.
+twice|дважды|Check the figures twice.
+type|тип, печатать|This type of task needs a plan.
+ugly|некрасивый|The old fence looks ugly.
+under|под|The keys are under the paper.
+understand|понимать|I understand the rule now.
+unhappy|несчастный|He looked unhappy after the call.
+uniform|форма, одинаковый|The rules are uniform for everyone.
+union|союз|The union protects the workers.
+unit|единица, блок|One unit costs less than two.
+university|университет|The university is near the centre.
+unless|если не|Do not start unless the file is ready.
+until|до|Wait until the light turns green.
+up|вверх|Look up at the sky.
+upon|на|The story is based upon old notes.
+upper|верхний|The upper shelf is out of reach.
+upset|расстроенный|She was upset by the short answer.
+urban|городской|Urban life moves faster.
+urge|побуждение, убеждать|I urge you to check the date.
+use|использовать|Use one tool for the whole job.
+useful|полезный|A short list is more useful than a long one.
+usual|обычный|The usual price is a bit higher.
+value|ценность, значение|The value grows with time.
+variety|разнообразие|A variety of examples helps memory.
+various|различный|Various answers are possible here.
+vast|огромный|A vast field lies beyond the road.
+vehicle|транспортное средство|The vehicle needs new tyres.
+version|версия|The new version fixes the bug.
+very|очень|The room is very quiet.
+view|вид, взгляд|The view from the hill is wide.
+village|деревня|The village has one shop.
+visit|визит, посещать|Visit the doctor if the pain stays.
+voice|голос|Her voice sounds tired.
+volume|объём, громкость|Turn the volume down a little.
+vote|голос, голосовать|Every vote counts in a small town.
+wait|ждать|Wait here and check the time.
+walk|идти, прогулка|A short walk helps the head.
+wall|стена|The wall needs a fresh coat.
+want|хотеть|I want a simple answer.
+war|война|The war changed the whole map.
+warm|тёплый|Warm water helps the muscles.
+wash|мыть|Wash your hands before cooking.
+waste|трата, тратить|Do not waste time on small fights.
+watch|смотреть, часы|Watch the price for a week.
+water|вода|Water is the simplest medicine.
+way|путь, способ|There is a shorter way home.
+weak|слабый|The signal is weak in the basement.
+wear|носить, износ|Wear a hat in the sun.
+weather|погода|The weather changes by the hour.
+week|неделя|The week starts with a plan.
+weight|вес|The weight is written on the pack.
+welcome|добро пожаловать|Welcome, the table is ready.
+well|хорошо, колодец|The plan works well in practice.
+west|запад|The west of the region is dry.
+wet|мокрый|The floor is wet near the door.
+what|что|What is the exact address?
+wheel|колесо|The front wheel needs air.
+when|когда|When does the shop open?
+where|где|Where is the nearest bus stop?
+whether|ли|Ask whether the price includes tax.
+which|который|Which answer looks correct?
+while|пока, в то время как|Read while the water boils.
+white|белый|The wall is white and clean.
+who|кто|Who signed the form?
+whole|целый|Read the whole text once.
+why|почему|Why did the price change?
+wide|широкий|The road is wide enough for two cars.
+wife|жена|His wife works at the school.
+wild|дикий|Wild berries grow near the path.
+will|воля, будет|I will call you in the evening.
+win|побеждать|A small win today is enough.
+wind|ветер|The wind brings cold from the north.
+window|окно|Open the window for fresh air.
+wine|вино|A glass of wine is not a medicine.
+wing|крыло|The bird hurt its wing.
+winter|зима|The winter is long in the north.
+wipe|протирать|Wipe the table after dinner.
+wise|мудрый|A wise plan has a spare day.
+wish|желание|Best wishes for the new job.
+with|с|Come with me to the shop.
+within|в пределах|The answer comes within a day.
+without|без|You cannot work without sleep.
+woman|женщина|The woman asked for the bill.
+wonder|удивляться, чудо|I wonder why the shop is closed.
+wood|дерево, лес|The table is made of wood.
+word|слово|One word can change the tone.
+work|работа, работать|Work in short blocks with breaks.
+world|мир|The world is bigger than one opinion.
+worry|беспокоиться|Do not worry about the small delay.
+worse|хуже|The second version is worse.
+worth|стоящий|The book is worth the price.
+would|бы|I would choose the simpler plan.
+write|писать|Write the date first.
+wrong|неправильный|The wrong address delayed the parcel.
+year|год|The year starts with a short list.
+yellow|жёлтый|The leaves turn yellow in October.
+yes|да|Say yes only when the plan is clear.
+yesterday|вчера|Yesterday the shop was closed.
+yet|ещё, однако|The report is not ready yet.
+young|молодой|Young trees need water often.
+zone|зона|The quiet zone starts at nine.

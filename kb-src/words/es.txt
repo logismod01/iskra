@@ -1,0 +1,194 @@
+# слово|перевод|пример
+la mesa|стол|La mesa está junto a la ventana.
+la silla|стул|La silla es cómoda y ligera.
+la ventana|окно|La ventana está abierta por la mañana.
+la puerta|дверь|La puerta se cierra muy despacio.
+la habitación|комната|La habitación es pequeña y clara.
+la cocina|кухня|La cocina huele a pan.
+la cama|кровать|La cama está junto a la pared.
+el armario|шкаф|El armario tiene dos puertas.
+el estante|полка|El estante está sobre la mesa.
+la alfombra|ковёр|La alfombra es suave y cálida.
+la lámpara|лампа|La lámpara da poca luz.
+la luz|свет|La luz del sol despierta temprano.
+la llave|ключ|La llave está en el bolsillo.
+el bolso|сумка|El bolso pesa demasiado.
+el libro|книга|El libro está sobre la mesita.
+el periódico|газета|El periódico llega cada mañana.
+la carta|письмо|La carta vino de otra ciudad.
+el billete|билет|El billete cuesta cinco euros.
+el dinero|деньги|El dinero está en el banco.
+el precio|цена|El precio es justo por esta calidad.
+la cuenta|счёт|La cuenta llega a fin de mes.
+la tienda|магазин|La tienda abre a las ocho.
+el mercado|рынок|El mercado está lleno el sábado.
+el pan|хлеб|El pan está mejor recién hecho.
+la leche|молоко|La leche está en la nevera.
+el queso|сыр|El queso es suave y fresco.
+la carne|мясо|La carne necesita dos horas.
+el pescado|рыба|El pescado está fresco hoy.
+el huevo|яйцо|El huevo se cuece en ocho minutos.
+el arroz|рис|El arroz está listo en veinte minutos.
+la patata|картофель|La patata es un plato sencillo.
+la manzana|яблоко|La manzana está ácida pero buena.
+la pera|груша|La pera está madura y dulce.
+la uva|виноград|La uva crece junto al muro.
+el agua|вода|El agua está fría y clara.
+el café|кофе|El café es fuerte por la mañana.
+el té|чай|El té calienta las manos.
+el azúcar|сахар|El azúcar no es necesario aquí.
+la sal|соль|Falta sal en la sopa.
+el plato|тарелка|El plato está en el centro.
+el tenedor|вилка|El tenedor está a la izquierda.
+el cuchillo|нож|El cuchillo está afilado.
+la cuchara|ложка|Falta la cuchara en la mesa.
+la taza|чашка|La taza está caliente.
+el vaso|стакан|El vaso está lleno de agua.
+la botella|бутылка|La botella está en la nevera.
+la sopa|суп|La sopa está caliente y sabrosa.
+el pastel|пирог|El pastel estará listo en una hora.
+el desayuno|завтрак|El desayuno es a las siete.
+la comida|обед, еда|La comida dura una hora.
+la cena|ужин|La cena es a las ocho.
+el día|день|El día empieza con un café.
+la semana|неделя|La semana es corta y llena.
+el mes|месяц|El mes termina con una cuenta.
+el año|год|El año tiene doce meses.
+la hora|час|La hora tiene sesenta minutos.
+el minuto|минута|El minuto es largo si esperas.
+la mañana|утро|La mañana es la hora más tranquila.
+la tarde|вечер, вторая половина дня|La tarde es cálida y quieta.
+la noche|ночь|La noche fue corta y fresca.
+hoy|сегодня|Hoy no tengo tiempo.
+mañana|завтра|Mañana vamos a la ciudad.
+ayer|вчера|Ayer la tienda estaba cerrada.
+siempre|всегда|Él llega siempre muy temprano.
+a menudo|часто|Ella trabaja a menudo en casa.
+a veces|иногда|A veces voy a pie.
+nunca|никогда|Nunca tomo café por la noche.
+rápido|быстро|El tren va rápido y suave.
+despacio|медленно|Habla un poco más despacio.
+fácil|просто|La tarea es más fácil de lo que parece.
+difícil|трудный|La pregunta es difícil.
+correcto|правильный|La respuesta es correcta.
+falso|неправильный|Un número falso cuesta dinero.
+nuevo|новый|El plan nuevo es más corto.
+viejo|старый|La casa vieja está junto al río.
+grande|большой|La ciudad es más grande que el pueblo.
+pequeño|маленький|La habitación es pequeña y clara.
+bueno|хороший|La comida es buena y barata.
+malo|плохой|El tiempo está malo hoy.
+caliente|горячий|El té está todavía caliente.
+frío|холодный|El agua está demasiado fría.
+bonito|красивый|La vista es muy bonita.
+importante|важный|El tiempo es importante aquí.
+posible|возможный|Hoy no es posible.
+listo|готовый|El trabajo está casi listo.
+libre|свободный|El sitio está todavía libre.
+abierto|открытый|La ventana está abierta toda la noche.
+cerrado|закрытый|La tienda está cerrada el domingo.
+hablar|говорить|Habla un poco más despacio.
+decir|сказать|Dime la fecha exacta.
+preguntar|спрашивать|Preguntar no cuesta nada.
+contestar|отвечать|Él contesta siempre con calma.
+trabajar|работать|Trabajo mejor por la mañana.
+aprender|учиться|Aprende diez palabras cada día.
+hacer|делать|¿Qué hacemos el fin de semana?
+cocinar|готовить|Él cocina una sopa sencilla.
+comer|есть|Comemos a las siete.
+beber|пить|Bebe más agua con calor.
+dormir|спать|Duermo siete horas.
+ir|идти|Vamos a pie al trabajo.
+venir|приходить|Ven un poco más temprano.
+quedarse|оставаться|Hoy quédate en casa.
+abrir|открывать|Abre la ventana, por favor.
+cerrar|закрывать|Cierra la puerta despacio.
+comprar|покупать|Compro pan cada mañana.
+pagar|платить|Pagamos con tarjeta.
+buscar|искать|Busco mis llaves.
+encontrar|находить|No encuentro el camino.
+ayudar|помогать|¿Puedes ayudarme un momento?
+esperar|ждать|Espera cinco minutos, por favor.
+entender|понимать|No entiendo la pregunta.
+saber|знать|No sé la cifra exacta.
+pensar|думать|Pienso que es una buena idea.
+esperar|надеяться|Espero que el tiempo siga bueno.
+necesitar|нуждаться|Necesitamos más tiempo.
+empezar|начинать|El curso empieza a las nueve.
+terminar|заканчивать|La película termina tarde.
+cambiar|менять|No cambiamos el plan.
+probar|проверять, пробовать|Prueba el número dos veces.
+explicar|объяснять|Explícame la regla despacio.
+mostrar|показывать|Muéstrame el camino en el mapa.
+dar|давать|Dame un minuto, por favor.
+tomar|брать|Toma un paraguas.
+traer|приносить|Trae el pan, por favor.
+escribir|писать|Escríbeme un mensaje corto.
+leer|читать|Lee el texto en voz alta.
+oír|слышать|Oigo la música muy baja.
+ver|видеть|No veo el cartel.
+correr|бежать|Corremos cada tarde un rato.
+vivir|жить|Vivimos cerca de la estación.
+alquilar|арендовать|Alquilamos un piso pequeño.
+el piso|квартира|El piso tiene dos habitaciones.
+la casa|дом|La casa es vieja y silenciosa.
+el patio|двор|El patio es verde en verano.
+el jardín|сад|El jardín necesita agua.
+el árbol|дерево|El árbol da sombra en verano.
+la flor|цветок|La flor está en la ventana.
+el camino|дорога, путь|El camino es corto y seco.
+la calle|улица|La calle está vacía por la mañana.
+la ciudad|город|La ciudad crece cada año.
+el pueblo|деревня|El pueblo está junto al lago.
+el país|страна|El país es grande y verde.
+el río|река|El río está lleno en primavera.
+el lago|озеро|El lago está templado en agosto.
+la montaña|гора|La montaña es alta y fría.
+el bosque|лес|El bosque está quieto por la mañana.
+el cielo|небо|El cielo está claro y azul.
+el sol|солнце|El sol brilla todo el día.
+la lluvia|дождь|La lluvia para por la tarde.
+la nieve|снег|La nieve dura una semana.
+el viento|ветер|El viento viene del norte.
+el tiempo|время, погода|El tiempo cambia muy rápido.
+el trabajo|работа|El trabajo me gusta.
+la profesión|профессия|Su profesión es maestra.
+el jefe|начальник|El jefe llega a las diez.
+la oficina|офис|La oficina está vacía el viernes.
+la cita|встреча, срок|La cita es el martes.
+la pausa|перерыв|La pausa dura quince minutos.
+el problema|проблема|El problema se resuelve rápido.
+la pregunta|вопрос|La pregunta es simple y clara.
+la respuesta|ответ|La respuesta llega esta noche.
+la idea|идея|La idea es buena y barata.
+el plan|план|El plan tiene un error.
+el resultado|результат|El resultado es mejor de lo esperado.
+la experiencia|опыт|La experiencia ahorra tiempo.
+la ayuda|помощь|La ayuda llega pronto.
+el principio|начало|El principio siempre es difícil.
+el fin|конец|El fin es sorprendente.
+la amistad|дружба|La amistad necesita tiempo.
+el amigo|друг|Mi amigo vive en otra ciudad.
+la familia|семья|La familia se reúne el domingo.
+el niño|ребёнок|El niño ya duerme.
+el chico|парень|El chico lee mucho.
+la chica|девушка|La chica canta bajito.
+la mujer|женщина|La mujer espera en la puerta.
+el hombre|мужчина|El hombre pregunta por el camino.
+la madre|мать|La madre cocina la sopa.
+el padre|отец|El padre trabaja en el jardín.
+la escuela|школа|La escuela empieza a las ocho.
+la clase|урок, класс|La clase dura dos horas.
+el maestro|учитель|El maestro explica la regla.
+el alumno|ученик|El alumno pregunta bajito.
+la palabra|слово|La palabra tiene dos sílabas.
+la frase|предложение|La frase es corta y clara.
+la lengua|язык|La lengua no es fácil.
+el número|число|El número está en la hoja.
+el color|цвет|El color es cálido y tranquilo.
+rojo|красный|La manzana es roja y jugosa.
+azul|синий|El cielo es azul claro.
+verde|зелёный|El bosque es verde en verano.
+negro|чёрный|El bolso es negro.
+blanco|белый|La pared es blanca y limpia.
+gris|серый|El día fue gris y quieto.

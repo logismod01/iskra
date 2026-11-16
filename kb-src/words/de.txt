@@ -1,0 +1,196 @@
+# слово|перевод|пример
+der Tisch|стол|Der Tisch steht am Fenster.
+der Stuhl|стул|Der Stuhl ist bequem und leicht.
+das Fenster|окно|Das Fenster ist im Sommer offen.
+die Tür|дверь|Die Tür schließt sehr leise.
+das Zimmer|комната|Das Zimmer ist hell und warm.
+die Küche|кухня|Die Küche ist klein, aber gemütlich.
+das Bett|кровать|Das Bett steht an der Wand.
+der Schrank|шкаф|Der Schrank hat drei Türen.
+das Regal|полка|Das Regal hängt über dem Tisch.
+der Teppich|ковёр|Der Teppich ist weich und warm.
+die Lampe|лампа|Die Lampe brennt den ganzen Abend.
+das Licht|свет|Das Licht ist zu hell für die Augen.
+der Schlüssel|ключ|Der Schlüssel liegt in der Tasche.
+die Tasche|сумка|Die Tasche ist zu schwer für mich.
+das Buch|книга|Das Buch liegt auf dem Nachttisch.
+die Zeitung|газета|Die Zeitung kommt jeden Morgen.
+der Brief|письмо|Der Brief kommt aus einer anderen Stadt.
+die Karte|карта, билет|Die Karte kostet fünf Euro.
+das Geld|деньги|Das Geld liegt sicher in der Bank.
+der Preis|цена|Der Preis ist fair für diese Qualität.
+die Rechnung|счёт|Die Rechnung kommt am Monatsende.
+der Laden|магазин|Der Laden öffnet um acht Uhr.
+der Markt|рынок|Der Markt ist am Samstag voll.
+das Brot|хлеб|Das Brot schmeckt frisch am besten.
+die Milch|молоко|Die Milch steht im Kühlschrank.
+der Käse|сыр|Der Käse ist mild und weich.
+das Fleisch|мясо|Das Fleisch braucht zwei Stunden.
+der Fisch|рыба|Der Fisch ist heute frisch.
+das Ei|яйцо|Das Ei kocht in acht Minuten.
+der Reis|рис|Der Reis ist fertig in zwanzig Minuten.
+die Kartoffel|картофель|Die Kartoffel ist ein einfaches Gericht.
+der Apfel|яблоко|Der Apfel ist sauer, aber gut.
+die Birne|груша|Die Birne ist reif und süß.
+die Traube|виноград|Die Traube wächst an der Wand.
+das Wasser|вода|Das Wasser ist kalt und klar.
+der Kaffee|кофе|Der Kaffee ist stark am Morgen.
+der Tee|чай|Der Tee hilft bei kalten Händen.
+der Zucker|сахар|Der Zucker ist im Kaffee nicht nötig.
+das Salz|соль|Das Salz fehlt noch in der Suppe.
+der Teller|тарелка|Der Teller steht in der Mitte.
+die Gabel|вилка|Die Gabel liegt links vom Teller.
+das Messer|нож|Das Messer ist scharf und sauber.
+der Löffel|ложка|Der Löffel fehlt auf dem Tisch.
+die Tasse|чашка|Die Tasse ist warm vom Tee.
+das Glas|стакан, стекло|Das Glas ist voll Wasser.
+die Flasche|бутылка|Die Flasche steht im Kühlschrank.
+die Suppe|суп|Die Suppe ist heiß und würzig.
+der Kuchen|пирог|Der Kuchen ist in einer Stunde fertig.
+das Frühstück|завтрак|Das Frühstück ist um sieben Uhr.
+das Mittagessen|обед|Das Mittagessen dauert eine Stunde.
+das Abendessen|ужин|Das Abendessen ist um acht Uhr.
+der Tag|день|Der Tag beginnt mit einem Kaffee.
+die Woche|неделя|Die Woche ist kurz und voll.
+der Monat|месяц|Der Monat endet mit einer Rechnung.
+das Jahr|год|Das Jahr hat zwölf Monate.
+die Stunde|час|Die Stunde dauert sechzig Minuten.
+die Minute|минута|Die Minute ist lang, wenn man wartet.
+der Morgen|утро|Der Morgen ist die ruhigste Zeit.
+der Abend|вечер|Der Abend ist warm und still.
+die Nacht|ночь|Die Nacht war kurz und kühl.
+heute|сегодня|Heute habe ich keine Zeit.
+morgen|завтра|Morgen fahren wir in die Stadt.
+gestern|вчера|Gestern war der Laden geschlossen.
+immer|всегда|Er kommt immer zu früh.
+oft|часто|Sie arbeitet oft von zu Hause.
+manchmal|иногда|Manchmal gehe ich zu Fuß.
+nie|никогда|Ich trinke nie Kaffee am Abend.
+schnell|быстро|Der Zug fährt schnell und ruhig.
+langsam|медленно|Sprich bitte etwas langsamer.
+einfach|просто|Die Aufgabe ist einfacher als sie aussieht.
+schwer|тяжёлый, трудный|Die Tasche ist zu schwer.
+richtig|правильный|Die Antwort ist richtig.
+falsch|неправильный|Eine falsche Zahl kostet Geld.
+neu|новый|Der neue Plan ist kürzer.
+alt|старый|Das alte Haus steht am Fluss.
+groß|большой|Die Stadt ist größer als das Dorf.
+klein|маленький|Das Zimmer ist klein und hell.
+gut|хороший|Das Essen ist gut und günstig.
+schlecht|плохой|Das Wetter ist heute schlecht.
+warm|тёплый|Der Tee ist noch warm.
+kalt|холодный|Das Wasser ist zu kalt.
+schön|красивый|Der Blick ist wirklich schön.
+wichtig|важный|Die Zeit ist wichtig für das Ergebnis.
+möglich|возможный|Das ist heute nicht möglich.
+fertig|готовый|Die Arbeit ist fast fertig.
+frei|свободный|Der Platz ist noch frei.
+offen|открытый|Das Fenster ist die ganze Nacht offen.
+geschlossen|закрытый|Der Laden ist am Sonntag geschlossen.
+sprechen|говорить|Sprechen Sie bitte etwas langsamer.
+sagen|сказать|Sagen Sie mir den genauen Termin.
+fragen|спрашивать|Fragen kostet nichts.
+antworten|отвечать|Er antwortet immer sehr freundlich.
+arbeiten|работать|Ich arbeite gern am Morgen.
+lernen|учиться|Sie lernt jeden Tag zehn Wörter.
+machen|делать|Was machen wir am Wochenende?
+kochen|готовить|Er kocht eine einfache Suppe.
+essen|есть|Wir essen um sieben Uhr.
+trinken|пить|Trink mehr Wasser bei der Hitze.
+schlafen|спать|Ich schlafe sieben Stunden.
+gehen|идти|Wir gehen zu Fuß zur Arbeit.
+fahren|ехать|Wir fahren mit dem Zug.
+kommen|приходить|Komm bitte etwas früher.
+bleiben|оставаться|Bleib heute zu Hause.
+öffnen|открывать|Öffne bitte das Fenster.
+schließen|закрывать|Schließe die Tür leise.
+kaufen|покупать|Ich kaufe Brot jeden Morgen.
+bezahlen|платить|Wir bezahlen mit Karte.
+suchen|искать|Ich suche meinen Schlüssel.
+finden|находить|Ich finde den Weg nicht.
+helfen|помогать|Kannst du mir kurz helfen?
+warten|ждать|Warte bitte fünf Minuten.
+verstehen|понимать|Ich verstehe die Frage nicht.
+wissen|знать|Ich weiß die genaue Zahl nicht.
+denken|думать|Ich denke, das ist eine gute Idee.
+hoffen|надеяться|Ich hoffe, das Wetter bleibt gut.
+brauchen|нуждаться|Wir brauchen mehr Zeit.
+beginnen|начинать|Der Kurs beginnt um neun.
+enden|заканчиваться|Der Film endet spät.
+reichen|хватать, подавать|Das Geld reicht für die Woche.
+wechseln|менять|Wir wechseln den Plan nicht.
+prüfen|проверять|Prüfe die Zahlen zweimal.
+erklären|объяснять|Erkläre mir die Regel bitte langsam.
+zeigen|показывать|Zeig mir den Weg auf der Karte.
+geben|давать|Gib mir bitte eine Minute.
+nehmen|брать|Nimm einen Regenschirm mit.
+bringen|приносить|Bring bitte das Brot mit.
+schreiben|писать|Schreib mir eine kurze Nachricht.
+lesen|читать|Lies den Text einmal laut.
+hören|слышать|Ich höre die Musik leise.
+sehen|видеть|Ich sehe das Schild nicht.
+laufen|бежать, ходить|Wir laufen jeden Abend eine Runde.
+wohnen|жить, проживать|Wir wohnen nahe am Bahnhof.
+mieten|арендовать|Wir mieten eine kleine Wohnung.
+die Wohnung|квартира|Die Wohnung hat zwei Zimmer.
+das Haus|дом|Das Haus ist alt und ruhig.
+der Hof|двор|Der Hof ist im Sommer grün.
+der Garten|сад|Der Garten braucht viel Wasser.
+der Baum|дерево|Der Baum gibt im Sommer Schatten.
+die Blume|цветок|Die Blume steht am Fenster.
+der Weg|путь, дорога|Der Weg ist kurz und trocken.
+die Straße|улица|Die Straße ist am Morgen leer.
+die Stadt|город|Die Stadt wächst jedes Jahr.
+das Dorf|деревня|Das Dorf liegt am See.
+das Land|страна, деревня|Das Land ist groß und grün.
+der Fluss|река|Der Fluss ist im Frühling voll.
+der See|озеро|Der See ist im August warm.
+der Berg|гора|Der Berg ist hoch und kalt.
+der Wald|лес|Der Wald ist still am Morgen.
+der Himmel|небо|Der Himmel ist klar und blau.
+die Sonne|солнце|Die Sonne scheint den ganzen Tag.
+der Regen|дождь|Der Regen hört am Abend auf.
+der Schnee|снег|Der Schnee bleibt eine Woche.
+der Wind|ветер|Der Wind kommt aus dem Norden.
+das Wetter|погода|Das Wetter ändert sich schnell.
+die Arbeit|работа|Die Arbeit macht mir Freude.
+der Beruf|профессия|Sein Beruf ist Lehrer.
+der Chef|начальник|Der Chef kommt um zehn Uhr.
+das Büro|офис|Das Büro ist am Freitag leer.
+der Termin|встреча, срок|Der Termin ist am Dienstag.
+die Pause|перерыв|Die Pause dauert fünfzehn Minuten.
+das Problem|проблема|Das Problem ist schnell gelöst.
+die Frage|вопрос|Die Frage ist einfach und klar.
+die Antwort|ответ|Die Antwort kommt heute Abend.
+die Idee|идея|Die Idee ist gut und günstig.
+der Plan|план|Der Plan hat einen Fehler.
+das Ergebnis|результат|Das Ergebnis ist besser als erwartet.
+die Erfahrung|опыт|Erfahrung spart Zeit und Geld.
+die Hilfe|помощь|Die Hilfe kommt sofort.
+der Anfang|начало|Der Anfang ist immer schwer.
+das Ende|конец|Das Ende ist überraschend.
+die Freundschaft|дружба|Freundschaft braucht Zeit.
+der Freund|друг|Mein Freund wohnt in Berlin.
+die Familie|семья|Die Familie trifft sich am Sonntag.
+das Kind|ребёнок|Das Kind schläft schon.
+der Junge|мальчик|Der Junge liest gern.
+das Mädchen|девочка|Das Mädchen singt leise.
+die Frau|женщина|Die Frau wartet an der Tür.
+der Mann|мужчина|Der Mann fragt nach dem Weg.
+die Mutter|мать|Die Mutter kocht die Suppe.
+der Vater|отец|Der Vater arbeitet im Garten.
+die Schule|школа|Die Schule beginnt um acht.
+der Unterricht|урок|Der Unterricht dauert zwei Stunden.
+der Lehrer|учитель|Der Lehrer erklärt die Regel.
+der Schüler|ученик|Der Schüler fragt leise.
+das Wort|слово|Das Wort hat zwei Silben.
+der Satz|предложение|Der Satz ist kurz und klar.
+die Sprache|язык|Die Sprache ist nicht leicht.
+die Zahl|число|Die Zahl steht auf dem Blatt.
+die Farbe|цвет|Die Farbe ist warm und ruhig.
+rot|красный|Der Apfel ist rot und saftig.
+blau|синий|Der Himmel ist hell blau.
+grün|зелёный|Der Wald ist im Sommer grün.
+schwarz|чёрный|Die Tasche ist schwarz.
+weiß|белый|Die Wand ist weiß und sauber.
+grau|серый|Der Tag war grau und still.
