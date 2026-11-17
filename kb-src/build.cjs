@@ -105,6 +105,18 @@ const pack = JSON.parse(html.slice(start, end));
 
 const lower = (s) => String(s || "").toLowerCase().trim();
 const seen = new Set(pack.items.map((x) => lower(x.title)));
+/* id должны быть уникальны: у старых папок те же слаги, что у новых файлов
+   (например, cards/animals.txt и старая папка animals), поэтому при совпадении
+   добавляем числовой хвост — иначе в базе оказываются две темы с одним id. */
+const usedIds = new Set(pack.items.map((x) => String(x.id || "")));
+const uniqueId = (base) => {
+  if (!usedIds.has(base)) { usedIds.add(base); return base; }
+  let n = 2;
+  while (usedIds.has(base + "-" + n)) n++;
+  const id = base + "-" + n;
+  usedIds.add(id);
+  return id;
+};
 const added = [];
 let skipped = 0;
 for (const b of buckets) {
@@ -115,7 +127,7 @@ for (const b of buckets) {
     seen.add(k);
     const tags = String(it.tags || "").split(/\s+/).filter(Boolean);
     while (tags.length < 3) tags.push("справка");
-    added.push({ id: it.id, title: it.title, tags: tags.join(" "), text: it.text });
+    added.push({ id: uniqueId(it.id), title: it.title, tags: tags.join(" "), text: it.text });
   }
 }
 

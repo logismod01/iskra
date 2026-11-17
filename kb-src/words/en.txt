@@ -969,3 +969,919 @@ yesterday|вчера|Yesterday the shop was closed.
 yet|ещё, однако|The report is not ready yet.
 young|молодой|Young trees need water often.
 zone|зона|The quiet zone starts at nine.
+abacus|счёты|He counted on an abacus.
+abroad|за границей|She works abroad.
+absence|отсутствие|His absence was noticed.
+absorb|впитывать|The towel absorbs water.
+abstract|абстрактный|Abstract ideas are hard.
+accent|акцент|He has a slight accent.
+accept|принимать|I accept your offer.
+access|доступ|Access is restricted.
+accident|случай, авария|It was a car accident.
+accompany|сопровождать|I will accompany you.
+accomplish|достигать|We accomplished the task.
+account|счёт, учётная запись|Open an account here.
+accurate|точный|The numbers are accurate.
+accuse|обвинять|They accused him of lying.
+achieve|достигать|She achieved her goal.
+acknowledge|признавать|He acknowledged the mistake.
+acquire|приобретать|They acquired new skills.
+adapt|адаптировать|Adapt the plan to reality.
+adequate|достаточный|The light is adequate.
+adjust|настроить|Adjust the volume.
+admire|восхищаться|I admire her courage.
+admit|признавать|He admitted the error.
+adopt|принимать, усыновлять|They adopted a child.
+advance|продвижение|Pay in advance.
+advantage|преимущество|Speed is an advantage.
+adventure|приключение|It was a real adventure.
+advertise|рекламировать|They advertise online.
+advice|совет|Take my advice.
+affect|влиять|Noise affects sleep.
+afford|позволить себе|We cannot afford it.
+against|против|I am against the plan.
+age|возраст|At his age it is normal.
+agency|агентство|Use a travel agency.
+agenda|повестка|What is on the agenda?
+aggressive|агрессивный|The dog is not aggressive.
+agree|соглашаться|I agree with you.
+ahead|впереди|Go straight ahead.
+aim|цель, целиться|Our aim is quality.
+alarm|тревога, будильник|Set the alarm for six.
+alcohol|алкоголь|No alcohol before driving.
+alert|внимательный|Stay alert on the road.
+alive|живой|The plant is still alive.
+allow|разрешать|Smoking is not allowed.
+almost|почти|It is almost ready.
+alone|один|He lives alone.
+alter|изменять|Alter the size slightly.
+although|хотя|Although it rained, we went.
+altitude|высота|High altitude affects breathing.
+amount|количество|A small amount of salt.
+analyze|анализировать|Analyze the results.
+ancient|древний|An ancient city.
+angle|угол|Measure the angle.
+announce|объявлять|They announced the date.
+annoy|раздражать|The noise annoys me.
+annual|ежегодный|An annual report.
+answer|ответ|Answer the question.
+anxiety|тревога|Anxiety before exams.
+apart|отдельно|Keep them apart.
+apologize|извиняться|I apologize for the delay.
+appear|появляться|A problem appeared.
+appliance|прибор|A kitchen appliance.
+apply|применять, подавать|Apply the rule here.
+appointment|встреча, приём|I have an appointment.
+appreciate|ценить|I appreciate your help.
+approach|подход|Try another approach.
+appropriate|подходящий|Wear appropriate clothes.
+approve|одобрять|The plan was approved.
+area|площадь, область|A quiet area.
+argue|спорить|They argue every day.
+arrange|организовать|Arrange the meeting.
+arrest|задерживать|He was arrested.
+arrive|прибывать|We arrive at noon.
+article|статья|Read the article.
+artificial|искусственный|Artificial light.
+ashamed|пристыженный|He felt ashamed.
+aside|в сторону|Step aside.
+aspect|аспект|Every aspect matters.
+assess|оценивать|Assess the risk.
+assign|назначать|Assign the task.
+assist|помогать|Can you assist me?
+assume|предполагать|I assume it works.
+attach|прикреплять|Attach the file.
+attempt|попытка|A second attempt.
+attend|посещать|Attend the class.
+attention|внимание|Pay attention.
+attitude|отношение|A positive attitude.
+attract|привлекать|The offer attracts buyers.
+audience|аудитория|A large audience.
+author|автор|The author of the book.
+authority|власть, орган|Local authorities.
+available|доступный|Is it available today?
+average|средний|The average price.
+avoid|избегать|Avoid sugar at night.
+awake|бодрствующий|I was awake all night.
+award|награда|She won an award.
+aware|осведомлённый|I am aware of it.
+awkward|неловкий|An awkward silence.
+background|фон|A blurred background.
+balance|равновесие|Keep your balance.
+ban|запрет|A ban on smoking.
+bargain|сделка, торговаться|It was a good bargain.
+barrier|барьер|A language barrier.
+basic|базовый|Basic rules first.
+battle|битва|A long battle.
+bear|терпеть, медведь|I cannot bear the noise.
+beat|бить, побеждать|Our team beat theirs.
+beg|умолять|He begged for help.
+behave|вести себя|Behave calmly.
+belief|убеждение|A strong belief.
+belong|принадлежать|This book belongs to me.
+bend|сгибать|Bend your knees.
+benefit|польза|Walking has benefits.
+bet|ставка, спорить|I bet he is late.
+beyond|за пределами|Beyond the river.
+bill|счёт|Pay the bill.
+bind|связывать|Bind the pages.
+blame|винить|Do not blame yourself.
+blank|пустой|A blank page.
+blend|смешивать|Blend until smooth.
+blink|моргать|The light blinks.
+block|блокировать, квартал|Block the road.
+blow|дуть|The wind blows hard.
+boil|кипятить|Boil the water.
+bold|смелый|A bold decision.
+bond|связь|A strong bond.
+border|граница|Cross the border.
+borrow|занимать|May I borrow a pen?
+bother|беспокоить|Do not bother him.
+bounce|отскакивать|The ball bounces.
+branch|ветка, филиал|A bank branch.
+brand|бренд|A known brand.
+brave|храбрый|A brave soldier.
+break|ломать, перерыв|Take a short break.
+breath|дыхание|Take a deep breath.
+breeze|бриз|A light breeze.
+brief|краткий|A brief answer.
+bright|яркий|A bright room.
+bring|приносить|Bring your documents.
+broad|широкий|A broad street.
+budget|бюджет|A monthly budget.
+build|строить|Build a wall.
+bulk|основная масса|Buy in bulk.
+burden|бремя|A heavy burden.
+burn|гореть|The fire burns.
+burst|лопнуть|The pipe burst.
+bury|хоронить, закапывать|Bury the cable.
+buy|покупать|Buy two get one.
+calculate|вычислять|Calculate the cost.
+cancel|отменять|Cancel the order.
+candidate|кандидат|A strong candidate.
+capable|способный|He is capable of more.
+capacity|вместимость|The stadium capacity.
+capital|столица, капитал|Paris is the capital.
+career|карьера|A career in design.
+careful|осторожный|Be careful with glass.
+carry|нести|Can you carry this?
+case|случай, футляр|In that case, wait.
+cause|причина|The cause is unknown.
+cease|прекращать|The rain ceased.
+celebrate|праздновать|We celebrate today.
+certain|уверенный, определённый|A certain amount.
+chain|цепь|A chain of shops.
+challenge|вызов|A real challenge.
+chance|шанс|Give it a chance.
+change|менять|Change the plan.
+charge|заряжать, плата|Charge the phone.
+cheap|дешёвый|Cheap is not always good.
+check|проверять|Check the answer.
+cheerful|весёлый|A cheerful voice.
+choice|выбор|Make a choice.
+claim|заявлять, требование|He claims it works.
+clarify|уточнять|Clarify the task.
+clean|чистый|A clean table.
+clear|ясный|A clear explanation.
+climb|подниматься|Climb the stairs.
+close|закрывать, близкий|Close the window.
+clue|подсказка|A useful clue.
+coast|побережье|The west coast.
+collect|собирать|Collect the data.
+combine|соединять|Combine the two lists.
+comfort|уют|A comfort zone.
+command|команда, приказ|A simple command.
+comment|комментарий|Leave a comment.
+commit|совершать, обязываться|Commit to the plan.
+common|общий, обычный|A common mistake.
+compare|сравнивать|Compare the prices.
+compete|соревноваться|They compete for speed.
+complain|жаловаться|He complains often.
+complete|завершать, полный|Complete the form.
+complex|сложный|A complex system.
+concern|беспокойство|A real concern.
+conclude|делать вывод|We can conclude that.
+condition|условие|Under these conditions.
+conduct|проводить|Conduct an experiment.
+confident|уверенный|She is confident.
+confirm|подтверждать|Confirm by email.
+confuse|путать|Do not confuse the terms.
+connect|соединять|Connect the cable.
+consider|рассматривать|Consider the options.
+consist|состоять|It consists of three parts.
+constant|постоянный|A constant level.
+contain|содержать|It contains sugar.
+continue|продолжать|Continue reading.
+contract|договор|Sign the contract.
+control|управлять|Control the speed.
+convenient|удобный|A convenient time.
+convert|преобразовывать|Convert the file.
+convince|убеждать|He convinced the boss.
+copy|копия|Make a copy.
+correct|правильный|The correct answer.
+cost|стоить|It costs little.
+cottage|домик|A small cottage.
+country|страна|A warm country.
+couple|пара|A couple of days.
+courage|смелость|It takes courage.
+course|курс|Take the course.
+cover|накрывать|Cover the pan.
+crash|авария, падать|The app crashed.
+create|создавать|Create a folder.
+credit|кредит|Credit is expensive.
+crime|преступление|A serious crime.
+crisis|кризис|An energy crisis.
+crowd|толпа|A large crowd.
+crucial|ключевой|A crucial detail.
+cure|лечить|No cure yet.
+curious|любопытный|A curious child.
+current|текущий|The current version.
+custom|обычай|A local custom.
+damage|ущерб|Water damage.
+danger|опасность|Real danger.
+dark|тёмный|A dark street.
+deal|сделка, иметь дело|We made a deal.
+debate|спор|A long debate.
+decide|решать|Decide tomorrow.
+declare|объявлять|Declare the income.
+decline|снижаться, отказывать|Sales decline.
+deep|глубокий|A deep well.
+defeat|побеждать|They defeated the champion.
+defend|защищать|Defend your position.
+delay|задержка|A short delay.
+deliver|доставлять|Deliver by Friday.
+demand|спрос, требовать|High demand.
+deny|отрицать|He denied it.
+depend|зависеть|It depends on you.
+describe|описывать|Describe the room.
+deserve|заслуживать|You deserve a break.
+design|дизайн|A simple design.
+desire|желание|A strong desire.
+destroy|разрушать|Fire destroyed the barn.
+detail|деталь|One important detail.
+develop|развивать|Develop the habit.
+device|устройство|A small device.
+devote|посвящать|Devote time to family.
+differ|отличаться|Prices differ.
+difficult|трудный|A difficult task.
+direct|прямой, направлять|A direct flight.
+discover|открывать|They discovered a cave.
+discuss|обсуждать|Discuss the plan.
+disease|болезнь|A rare disease.
+display|показывать|The screen displays time.
+distance|расстояние|A long distance.
+divide|делить|Divide into two parts.
+double|двойной|A double dose.
+doubt|сомнение|No doubt about it.
+draw|рисовать, тянуть|Draw a line.
+dream|мечта, сон|A strange dream.
+drop|падать, капля|A drop of water.
+duty|обязанность|A duty to help.
+earn|зарабатывать|Earn trust first.
+ease|легкость|The ease of use.
+edge|край|The edge of the table.
+effect|эффект|A side effect.
+effort|усилие|Worth the effort.
+either|любой из двух|Either option works.
+emergency|чрезвычайная ситуация|Call in an emergency.
+employ|нанимать|They employ ten people.
+empty|пустой|An empty bottle.
+enable|давать возможность|Enable the option.
+encourage|поддерживать|Encourage the child.
+enemy|враг|A common enemy.
+energy|энергия|Save energy at home.
+engage|вовлекать|Engage the audience.
+enough|достаточно|Enough time.
+ensure|обеспечивать|Ensure the door is shut.
+enter|входить|Enter the code.
+entire|целый|The entire day.
+environment|окружающая среда|A clean environment.
+equal|равный|Equal parts.
+error|ошибка|A small error.
+escape|убегать|Escape the fire.
+essential|необходимый|Water is essential.
+establish|основывать|Establish a rule.
+estimate|оценивать|Estimate the cost.
+event|событие|A major event.
+evidence|доказательство|Strong evidence.
+exact|точный|The exact time.
+examine|осматривать|Examine the wound.
+example|пример|A good example.
+except|кроме|Everyone except him.
+exchange|обмен|Exchange the goods.
+excuse|оправдание|A poor excuse.
+exercise|упражнение|Daily exercise.
+exist|существовать|It exists in theory.
+expand|расширять|Expand the business.
+expect|ожидать|I expect a reply.
+experience|опыт|Work experience.
+explain|объяснять|Explain the rule.
+explore|исследовать|Explore the forest.
+express|выражать|Express your opinion.
+extend|продлевать|Extend the deadline.
+extra|дополнительный|An extra day.
+fail|терпеть неудачу|Plans often fail.
+fair|справедливый|A fair price.
+fall|падать, осень|Leaves fall in autumn.
+familiar|знакомый|A familiar face.
+famous|известный|A famous writer.
+fault|вина|It is not your fault.
+favour|услуга|Do me a favour.
+fear|страх|Fear of heights.
+feature|особенность|A useful feature.
+fee|плата|A small fee.
+field|поле|A field of wheat.
+figure|фигура, цифра|Check the figures.
+fill|наполнять|Fill the tank.
+final|последний|The final step.
+find|находить|Find the key.
+firm|твёрдый, фирма|A law firm.
+fit|подходить|Does it fit?
+fix|чинить|Fix the handle.
+flat|плоский, квартира|A flat surface.
+flight|полёт|A late flight.
+floor|пол, этаж|A wooden floor.
+flow|поток|The flow of water.
+focus|сосредоточиться|Focus on one task.
+follow|следовать|Follow the rules.
+force|сила, заставлять|Do not force it.
+foreign|иностранный|A foreign language.
+forget|забывать|Do not forget the keys.
+forgive|прощать|Forgive the mistake.
+form|форма|Fill the form.
+forward|вперёд|Move forward slowly.
+free|свободный, бесплатный|Free entry today.
+fresh|свежий|Fresh bread.
+friendly|дружелюбный|A friendly dog.
+frighten|пугать|The sound frightened me.
+front|передняя часть|The front door.
+fuel|топливо|Fuel is expensive.
+full|полный|A full glass.
+funny|смешной|A funny story.
+future|будущее|The near future.
+gain|получать|Gain experience.
+gather|собирать|Gather the tools.
+general|общий|In general, yes.
+gentle|мягкий|A gentle voice.
+gift|подарок|A small gift.
+give|давать|Give me a minute.
+glad|рад|I am glad to help.
+goal|цель|A clear goal.
+government|правительство|The government acts.
+grade|оценка|A good grade.
+grain|зерно|A grain of sand.
+grant|предоставлять|Grant permission.
+grateful|благодарный|I am grateful.
+grow|расти|Plants grow fast.
+guard|охранять|Guard the entrance.
+guess|догадываться|Guess the answer.
+guide|проводник, руководство|A short guide.
+habit|привычка|A good habit.
+handle|ручка, обращаться|Handle with care.
+hang|вешать|Hang the coat.
+happen|случаться|It happens often.
+harm|вред|No harm done.
+harsh|резкий|Harsh words hurt.
+hate|ненавидеть|I hate waiting.
+health|здоровье|Health first.
+hear|слышать|I hear a noise.
+heat|жара, нагревать|Heat the water.
+heavy|тяжёлый|A heavy box.
+height|высота|The height of the wall.
+help|помогать|Help your neighbour.
+hide|прятать|Hide the key.
+high|высокий|A high price.
+hire|нанимать|Hire a specialist.
+hold|держать|Hold the door.
+hole|отверстие|A hole in the roof.
+hope|надежда|Hope for the best.
+huge|огромный|A huge difference.
+hurry|спешить|Do not hurry.
+hurt|болеть|My back hurts.
+idea|идея|A simple idea.
+identify|определять|Identify the problem.
+ignore|игнорировать|Do not ignore the sign.
+imagine|представлять|Imagine the result.
+immediate|немедленный|An immediate answer.
+impact|влияние|A big impact.
+improve|улучшать|Improve the design.
+include|включать|Include the receipt.
+increase|увеличивать|Increase the dose slowly.
+indeed|действительно|Indeed, it works.
+industry|промышленность|The food industry.
+influence|влияние|A strong influence.
+inform|информировать|Inform the client.
+initial|начальный|The initial cost.
+injury|травма|A knee injury.
+insect|насекомое|A small insect.
+inside|внутри|Stay inside.
+insist|настаивать|He insists on it.
+install|устанавливать|Install the update.
+instead|вместо|Use this instead.
+instruction|инструкция|Read the instructions.
+insurance|страховка|Car insurance.
+intend|намереваться|I intend to go.
+interest|интерес|A real interest.
+interfere|мешать|Do not interfere.
+introduce|представлять|Introduce yourself.
+invest|вкладывать|Invest in skills.
+invite|приглашать|Invite the neighbours.
+involve|вовлекать|It involves risk.
+issue|вопрос, выпускать|A serious issue.
+item|пункт|One item is missing.
+join|присоединяться|Join the group.
+journey|путешествие|A long journey.
+judge|судья, судить|Do not judge quickly.
+jump|прыгать|Jump over the puddle.
+keep|держать, хранить|Keep it dry.
+key|ключ|The key is lost.
+kick|пинать|Kick the ball.
+kind|добрый, вид|A kind word.
+knock|стучать|Knock before entering.
+knowledge|знание|Knowledge grows with practice.
+lack|нехватка|A lack of time.
+land|земля, приземляться|Land safely.
+language|язык|A foreign language.
+large|большой|A large room.
+last|последний, длиться|The last train.
+late|поздний|Too late now.
+laugh|смеяться|We laughed a lot.
+launch|запускать|Launch the app.
+law|закон|The law requires it.
+lazy|ленивый|A lazy afternoon.
+lead|вести|Lead the way.
+learn|учить|Learn from mistakes.
+leave|уходить, оставлять|Leave a message.
+lend|одалживать|Lend me a pen.
+level|уровень|Sea level.
+lie|лгать, лежать|Do not lie to me.
+lift|поднимать|Lift with your legs.
+light|свет, лёгкий|Turn on the light.
+limit|предел|A speed limit.
+line|линия|Draw a straight line.
+list|список|Make a list.
+listen|слушать|Listen carefully.
+little|маленький, немного|A little salt.
+live|жить|Live simply.
+load|груз|A heavy load.
+local|местный|A local shop.
+lock|замок|Lock the door.
+long|длинный, долгий|A long road.
+look|смотреть|Look at the map.
+lose|терять|Do not lose the receipt.
+loud|громкий|Too loud in here.
+love|любить|I love this song.
+low|низкий|A low price.
+luck|удача|Good luck today.
+main|главный|The main reason.
+maintain|поддерживать|Maintain the car.
+major|крупный|A major change.
+make|делать|Make a decision.
+manage|управлять, успевать|Manage the budget.
+manner|манера|A polite manner.
+mark|метка, отмечать|Mark the page.
+match|совпадение, матч|The colours match.
+matter|дело, значение|It does not matter.
+mean|значить|What does it mean?
+measure|измерять|Measure twice.
+meet|встречать|Meet me at six.
+mention|упоминать|Mention the source.
+mess|беспорядок|The room is a mess.
+method|метод|A simple method.
+middle|середина|In the middle.
+mind|ум, возражать|Never mind.
+miss|пропускать, скучать|Do not miss the bus.
+mistake|ошибка|Everyone makes mistakes.
+mix|смешивать|Mix the paint.
+modern|современный|A modern flat.
+moment|момент|Wait a moment.
+mood|настроение|A good mood.
+move|двигать|Move the chair.
+much|много|Not much time.
+narrow|узкий|A narrow street.
+nature|природа|Close to nature.
+near|близко|Very near.
+necessary|необходимый|Sleep is necessary.
+need|нуждаться|I need help.
+notice|замечать|Notice the details.
+obey|подчиняться|Obey the rules.
+object|объект, возражать|A heavy object.
+observe|наблюдать|Observe the reaction.
+obtain|получать|Obtain a permit.
+obvious|очевидный|An obvious mistake.
+occur|происходить|It occurs rarely.
+offer|предлагать|They offered help.
+offset|компенсировать|Offset the cost.
+open|открытый|The shop is open.
+operate|управлять|Operate the machine.
+opinion|мнение|In my opinion, yes.
+opportunity|возможность|A rare opportunity.
+oppose|противодействовать|They oppose the plan.
+order|порядок, заказ|Order two portions.
+ordinary|обычный|An ordinary day.
+organize|организовать|Organize the files.
+origin|происхождение|The origin of the word.
+other|другой|The other side.
+outcome|результат|A good outcome.
+outside|снаружи|Wait outside.
+overcome|преодолевать|Overcome the fear.
+own|собственный|My own room.
+pace|темп|A steady pace.
+pack|упаковывать|Pack the bag.
+pain|боль|Back pain.
+paint|краска|Blue paint.
+pair|пара|A pair of shoes.
+paper|бумага|A sheet of paper.
+part|часть|A large part.
+particular|конкретный|A particular case.
+pass|проходить, передавать|Pass the salt.
+past|прошлое|In the past.
+path|тропа|A narrow path.
+patient|пациент, терпеливый|Be patient.
+pay|платить|Pay in cash.
+peace|мир|Peace and quiet.
+people|люди|Many people came.
+perhaps|возможно|Perhaps tomorrow.
+period|период|A short period.
+permit|разрешать|Permit is required.
+person|человек|A kind person.
+pick|выбирать|Pick a colour.
+piece|кусок|A piece of cake.
+place|место|A quiet place.
+plan|план|A simple plan.
+plant|растение|Water the plant.
+plastic|пластик|A plastic bag.
+play|играть|Play outside.
+please|пожалуйста|Please sit down.
+plenty|достаточно|Plenty of time.
+point|точка, смысл|That is the point.
+polite|вежливый|A polite reply.
+poor|бедный|A poor harvest.
+popular|популярный|A popular song.
+position|положение|A good position.
+possible|возможный|Is it possible?
+postpone|откладывать|Postpone the meeting.
+power|сила, власть|Solar power.
+practice|практика|Practice daily.
+prefer|предпочитать|I prefer tea.
+prepare|готовить|Prepare the tools.
+present|настоящий, подарок|A small present.
+preserve|сохранять|Preserve the food.
+press|нажимать|Press the button.
+prevent|предотвращать|Prevent the damage.
+price|цена|A fair price.
+pride|гордость|Take pride in work.
+primary|начальный, главный|A primary school.
+print|печатать|Print the page.
+private|частный|A private room.
+prize|приз|First prize.
+probable|вероятный|The probable cause.
+problem|проблема|A small problem.
+process|процесс|A slow process.
+produce|производить|This factory produces steel.
+product|продукт|A new product.
+profit|прибыль|Net profit.
+program|программа|A short program.
+progress|прогресс|Slow progress.
+project|проект|A new project.
+promise|обещание|Keep your promise.
+promote|продвигать|Promote the shop.
+proof|доказательство|Proof is needed.
+proper|правильный|Proper clothing.
+propose|предлагать|I propose a break.
+protect|защищать|Protect your skin.
+prove|доказывать|Prove it with facts.
+provide|предоставлять|Provide the data.
+public|общественный|Public transport.
+pull|тянуть|Pull the handle.
+punish|наказывать|Do not punish the dog.
+purchase|покупка|A large purchase.
+pure|чистый|Pure water.
+purpose|цель|The purpose is clear.
+push|толкать|Push the door.
+put|класть|Put it here.
+quality|качество|Good quality.
+quantity|количество|A small quantity.
+question|вопрос|A good question.
+quick|быстрый|A quick answer.
+quiet|тихий|A quiet street.
+quite|довольно|Quite easy.
+race|гонка|A short race.
+raise|поднимать|Raise your hand.
+range|диапазон|A wide range.
+rare|редкий|A rare bird.
+rate|ставка, темп|A low rate.
+reach|достигать|Reach the station.
+react|реагировать|React calmly.
+read|читать|Read aloud.
+ready|готовый|Dinner is ready.
+real|настоящий|A real problem.
+reason|причина|The main reason.
+receive|получать|Receive the parcel.
+recent|недавний|A recent change.
+recognize|узнавать|I recognize you.
+recommend|рекомендовать|I recommend it.
+record|запись, записывать|Keep a record.
+reduce|снижать|Reduce the noise.
+refer|ссылаться|Refer to the manual.
+refuse|отказываться|He refused to help.
+regard|считать|I regard it as important.
+region|регион|A dry region.
+regret|сожалеть|You may regret it.
+regular|регулярный|A regular check.
+reject|отклонять|They rejected the idea.
+relate|связывать|These facts relate.
+relax|расслабляться|Relax your shoulders.
+release|выпускать|Release the button.
+rely|полагаться|Rely on facts.
+remain|оставаться|Only one remains.
+remember|помнить|Remember the password.
+remind|напоминать|Remind me later.
+remove|удалять|Remove the cover.
+repair|ремонт|A quick repair.
+repeat|повторять|Repeat after me.
+replace|заменять|Replace the battery.
+reply|отвечать|Reply soon.
+report|отчёт|Send the report.
+require|требовать|It requires time.
+rescue|спасать|Rescue the cat.
+research|исследование|New research.
+reserve|бронировать|Reserve a table.
+resist|сопротивляться|Resist the urge.
+resolve|решать|Resolve the conflict.
+respect|уважение|Respect the rules.
+respond|отвечать|Respond by Friday.
+rest|отдых|Take a rest.
+result|результат|The result is clear.
+retain|удерживать|Retain the heat.
+return|возвращать|Return the book.
+reveal|раскрывать|The test revealed a problem.
+review|обзор|Read the review.
+reward|награда|A small reward.
+rich|богатый|A rich flavour.
+right|правый, правильный|Turn right.
+rise|подниматься|Prices rise.
+risk|риск|A small risk.
+road|дорога|A wet road.
+role|роль|A key role.
+roll|катить|Roll the dough.
+room|комната|A small room.
+rough|грубый|A rough surface.
+round|круглый|A round table.
+route|маршрут|A short route.
+row|ряд|The front row.
+rule|правило|A simple rule.
+run|бежать|Run every morning.
+safe|безопасный|A safe place.
+salt|соль|A pinch of salt.
+same|такой же|The same thing.
+save|сохранять, экономить|Save the file.
+say|говорить|Say it again.
+scale|масштаб|A large scale.
+scare|пугать|The noise scared him.
+scene|сцена|A quiet scene.
+schedule|расписание|A busy schedule.
+science|наука|Modern science.
+score|счёт|The final score.
+search|искать|Search the web.
+seat|место|Take a seat.
+second|второй, секунда|Just a second.
+secret|секрет|Keep it secret.
+section|раздел|The first section.
+secure|безопасный|A secure password.
+see|видеть|I see the problem.
+seed|семя|Plant the seed.
+seem|казаться|It seems simple.
+select|выбирать|Select one option.
+sell|продавать|They sell bread.
+send|отправлять|Send the file.
+sense|смысл, чувство|A sense of time.
+separate|отдельный|Separate the parts.
+serious|серьёзный|A serious issue.
+serve|обслуживать|Serve the guests.
+service|услуга|Good service.
+set|устанавливать, набор|Set the timer.
+settle|урегулировать|Settle the dispute.
+several|несколько|Several days.
+shake|трясти|Shake the bottle.
+shame|стыд|What a shame.
+shape|форма|A round shape.
+share|делиться|Share the link.
+sharp|острый|A sharp knife.
+shelter|укрытие|Find shelter.
+shift|сдвиг, смена|A night shift.
+shine|светить|The sun shines.
+ship|корабль|A large ship.
+shock|шок|A mild shock.
+shoot|стрелять, снимать|Shoot the scene.
+short|короткий|A short walk.
+should|следует|You should rest.
+shout|кричать|Do not shout.
+show|показывать|Show the example.
+shut|закрывать|Shut the window.
+sick|больной|I feel sick.
+side|сторона|The other side.
+sight|вид, зрение|A lovely sight.
+sign|знак, подписывать|Sign here.
+silence|тишина|Total silence.
+silver|серебро|A silver ring.
+similar|похожий|A similar case.
+simple|простой|A simple rule.
+since|с тех пор|Since Monday.
+sing|петь|Sing along.
+single|один, единственный|A single room.
+sink|раковина, тонуть|The boat sank.
+sit|сидеть|Sit here.
+situation|ситуация|A difficult situation.
+size|размер|What size?
+skill|навык|A useful skill.
+skin|кожа|Dry skin.
+sleep|спать|Sleep well.
+slide|скользить|The door slides.
+slow|медленный|A slow start.
+small|маленький|A small change.
+smell|запах|A nice smell.
+smile|улыбка|A warm smile.
+soft|мягкий|A soft bed.
+solve|решать|Solve the problem.
+some|немного|Some water, please.
+soon|скоро|See you soon.
+sort|вид, сортировать|Sort the boxes.
+sound|звук|A strange sound.
+source|источник|Check the source.
+space|пространство|Little space left.
+speak|говорить|Speak slowly.
+special|особый|A special case.
+speed|скорость|High speed.
+spend|тратить|Spend less.
+split|разделять|Split the bill.
+spread|распространять|Spread the butter.
+spring|весна, пружина|In spring it rains.
+stand|стоять|Stand still.
+star|звезда|A bright star.
+start|начинать|Start today.
+state|состояние, государство|A calm state.
+stay|оставаться|Stay here.
+step|шаг|One step forward.
+stick|палка, приклеивать|Stick it here.
+still|ещё, всё же|Still waiting.
+stop|останавливать|Stop the car.
+store|магазин, хранить|Store it dry.
+storm|буря|A strong storm.
+story|история|A short story.
+straight|прямой|Go straight.
+strange|странный|A strange smell.
+street|улица|A narrow street.
+strength|сила|Inner strength.
+stress|напряжение|Less stress.
+stretch|растягивать|Stretch after work.
+strict|строгий|A strict rule.
+strike|удар|A lightning strike.
+strong|сильный|A strong wind.
+structure|структура|A clear structure.
+struggle|борьба|A daily struggle.
+study|учиться|Study every day.
+stupid|глупый|A stupid mistake.
+subject|тема, предмет|Change the subject.
+succeed|добиваться успеха|Most people succeed slowly.
+sudden|внезапный|A sudden stop.
+suffer|страдать|He suffers from pain.
+suggest|предлагать|I suggest waiting.
+suit|костюм, подходить|It suits you.
+supply|поставлять|Supply the parts.
+support|поддерживать|Support the family.
+suppose|предполагать|I suppose so.
+sure|уверенный|Are you sure?
+surface|поверхность|A smooth surface.
+surprise|сюрприз|A nice surprise.
+surround|окружать|Trees surround the house.
+survive|выживать|Few survive the winter.
+suspect|подозревать|I suspect a trap.
+sweet|сладкий|Too sweet.
+switch|переключать|Switch it off.
+symbol|символ|A simple symbol.
+system|система|A new system.
+table|стол|Sit at the table.
+take|брать|Take your time.
+talk|говорить|Talk later.
+tall|высокий|A tall tree.
+taste|вкус|A sour taste.
+teach|учить|Teach by example.
+team|команда|A strong team.
+tear|слеза, рвать|Do not tear the page.
+tell|рассказывать|Tell the truth.
+temperature|температура|A high temperature.
+tend|иметь склонность|Prices tend to rise.
+term|срок, термин|A short term.
+test|тест|A quick test.
+than|чем|Better than before.
+thank|благодарить|Thank you for coming.
+theory|теория|A working theory.
+thick|толстый|A thick layer.
+thin|тонкий|A thin slice.
+think|думать|Think first.
+thirsty|жаждущий|I am thirsty.
+threat|угроза|A real threat.
+throw|бросать|Throw it away.
+tidy|аккуратный|Keep the desk tidy.
+tight|тугой|A tight lid.
+time|время|No time left.
+tiny|крошечный|A tiny insect.
+tired|уставший|I am tired.
+today|сегодня|Today is quiet.
+tool|инструмент|A useful tool.
+top|верх|On the top shelf.
+total|общий|The total cost.
+touch|трогать|Do not touch.
+tough|жёсткий|A tough day.
+toward|в сторону|Walk toward the park.
+track|след, путь|Keep track of time.
+trade|торговля|Fair trade.
+traffic|движение|Heavy traffic.
+train|поезд, тренировать|Take the train.
+travel|путешествовать|Travel light.
+treat|лечить, обращаться|Treat it gently.
+trial|испытание|A free trial.
+trouble|проблема|Real trouble.
+true|настоящий|A true story.
+trust|доверие|Build trust slowly.
+try|пробовать|Try again.
+turn|поворачивать|Turn left.
+type|тип, печатать|A new type.
+unable|неспособный|Unable to attend.
+under|под|Under the table.
+understand|понимать|I understand you.
+unfair|несправедливый|An unfair rule.
+unhappy|несчастный|She looks unhappy.
+uniform|форма|School uniform.
+unique|уникальный|A unique design.
+unit|единица|A unit of measure.
+universe|вселенная|The whole universe.
+unless|если не|Unless it rains.
+until|до|Wait until six.
+update|обновление|Install the update.
+upset|расстроенный|He was upset.
+urgent|срочный|An urgent call.
+use|использовать|Use less water.
+useful|полезный|A useful habit.
+usual|обычный|The usual time.
+vacation|отпуск|A short vacation.
+valid|действительный|A valid ticket.
+value|ценность|Good value.
+various|различный|Various options.
+vast|обширный|A vast plain.
+vehicle|транспортное средство|A heavy vehicle.
+victim|жертва|A victim of fraud.
+view|вид|A sea view.
+village|деревня|A small village.
+violence|насилие|No violence.
+visible|видимый|Barely visible.
+visit|посещать|Visit us soon.
+voice|голос|A quiet voice.
+volume|объём|Lower the volume.
+vote|голосовать|Vote on Sunday.
+wait|ждать|Wait a minute.
+wake|просыпаться|I wake at seven.
+walk|идти|Walk slowly.
+wall|стена|A brick wall.
+want|хотеть|I want tea.
+war|война|A long war.
+warm|тёплый|Warm clothes.
+warn|предупреждать|Warn the neighbours.
+wash|мыть|Wash your hands.
+waste|тратить зря|Do not waste water.
+watch|смотреть, часы|Watch the road.
+water|вода|Drink water.
+way|путь|The best way.
+weak|слабый|A weak signal.
+wear|носить|Wear a helmet.
+weather|погода|Cold weather.
+week|неделя|Next week.
+weight|вес|A heavy weight.
+welcome|добро пожаловать|Welcome home.
+whole|целый|The whole day.
+wide|широкий|A wide road.
+wild|дикий|Wild animals.
+win|побеждать|Win fairly.
+wind|ветер|A cold wind.
+window|окно|Open the window.
+wise|мудрый|A wise choice.
+wish|желать|I wish you luck.
+withdraw|снимать|Withdraw cash.
+within|в пределах|Within an hour.
+without|без|Without sugar.
+wonder|удивляться, чудо|I wonder why.
+wood|дерево|A piece of wood.
+word|слово|A kind word.
+work|работа|Work steadily.
+world|мир|The whole world.
+worry|беспокоиться|Do not worry.
+worse|хуже|Worse than before.
+worth|стоящий|Worth the price.
+write|писать|Write it down.
+wrong|неправильный|A wrong turn.
+yard|двор|A small yard.
+year|год|Next year.
+yet|ещё|Not yet.
+young|молодой|A young tree.
+zero|ноль|Start from zero.

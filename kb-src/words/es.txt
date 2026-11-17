@@ -192,3 +192,196 @@ verde|зелёный|El bosque es verde en verano.
 negro|чёрный|El bolso es negro.
 blanco|белый|La pared es blanca y limpia.
 gris|серый|El día fue gris y quieto.
+el pan|хлеб|El pan está fresco.
+la leche|молоко|La leche está fría.
+el queso|сыр|El queso es caro.
+el huevo|яйцо|Necesito dos huevos.
+la carne|мясо|La carne está tierna.
+el pescado|рыба|El pescado es fresco.
+la sal|соль|Falta sal en la sopa.
+el azúcar|сахар|Poco azúcar, por favor.
+el aceite|масло|El aceite está caliente.
+el arroz|рис|El arroz se cocina rápido.
+la sopa|суп|La sopa está caliente.
+la ensalada|салат|La ensalada está fresca.
+el plato|тарелка|El plato está sucio.
+la taza|чашка|Una taza de café.
+el vaso|стакан|Un vaso de agua.
+el cuchillo|нож|El cuchillo corta bien.
+el tenedor|вилка|El tenedor está a la izquierda.
+la cuchara|ложка|Falta una cuchara.
+la olla|кастрюля|La olla está en el fuego.
+la sartén|сковорода|La sartén está caliente.
+la cocina|кухня|La cocina es pequeña.
+el horno|печь|El horno está apagado.
+la nevera|холодильник|La nevera está llena.
+la casa|дом|La casa es antigua.
+el piso|квартира|El piso es caro.
+el cuarto|комната|El cuarto es luminoso.
+la puerta|дверь|La puerta está abierta.
+la ventana|окно|La ventana está cerrada.
+la mesa|стол|La mesa es de madera.
+la silla|стул|La silla es cómoda.
+la cama|кровать|La cama es blanda.
+el armario|шкаф|El armario es grande.
+la lámpara|лампа|La lámpara no funciona.
+la pared|стена|La pared es blanca.
+el suelo|пол|El suelo está frío.
+la escalera|лестница|La escalera es estrecha.
+la llave|ключ|La llave no entra.
+el jardín|сад|El jardín es verde.
+el árbol|дерево|El árbol es alto.
+la flor|цветок|La flor huele bien.
+el agua|вода|El agua está fría.
+el aire|воздух|El aire es limpio.
+el fuego|огонь|El fuego está encendido.
+la tierra|земля|La tierra es fértil.
+la piedra|камень|La piedra es pesada.
+la madera|дерево, древесина|La madera está seca.
+el metal|металл|El metal conduce la corriente.
+el papel|бумага|El papel se recicla.
+el plástico|пластик|El plástico flota.
+la luz|свет|La luz está encendida.
+el color|цвет|El color es azul.
+la música|музыка|La música está alta.
+la canción|песня|La canción es conocida.
+el juego|игра|El juego empieza ahora.
+el deporte|спорт|El deporte es salud.
+el equipo|команда|El equipo gana.
+la meta|цель|La meta está cerca.
+el plan|план|El plan es bueno.
+la idea|идея|La idea me gusta.
+la solución|решение|La solución es simple.
+el problema|проблема|El problema es pequeño.
+la opinión|мнение|Tu opinión cuenta.
+la decisión|решение|La decisión es difícil.
+la esperanza|надежда|La esperanza queda.
+el miedo|страх|El miedo es normal.
+la alegría|радость|La alegría es grande.
+la suerte|удача|La suerte no es garantía.
+el éxito|успех|El éxito llega despacio.
+la paciencia|терпение|La paciencia es necesaria.
+la fuerza|сила|La fuerza no basta.
+la calma|спокойствие|Un momento de calma.
+el fin|конец|El fin está lejos.
+el principio|начало|El principio es difícil.
+la mitad|половина|La mitad basta.
+la parte|часть|Falta una parte.
+el tamaño|размер|El tamaño es correcto.
+el peso|вес|El peso es alto.
+la cantidad|количество|Una cantidad pequeña.
+la calidad|качество|La calidad se nota.
+la velocidad|скорость|La velocidad es alta.
+la dirección|направление|La dirección es correcta.
+el lugar|место|Un lugar tranquilo.
+el sitio|место|El sitio está libre.
+el tiempo|время, погода|El tiempo vuela.
+el año|год|El año es nuevo.
+el mes|месяц|El mes termina hoy.
+la semana|неделя|La semana fue larga.
+el día|день|El día es claro.
+la noche|ночь|La noche es tranquila.
+la mañana|утро|La mañana es fresca.
+la tarde|вечер|La tarde es libre.
+la hora|час|Una hora de espera.
+el minuto|минута|Un minuto, por favor.
+la persona|человек|La persona es amable.
+el niño|ребёнок|El niño juega.
+el hombre|мужчина|El hombre lee.
+la mujer|женщина|La mujer trabaja.
+la familia|семья|La familia es grande.
+el amigo|друг|Mi amigo ayuda.
+el trabajo|работа|El trabajo es duro.
+la profesión|профессия|La profesión importa.
+el dinero|деньги|El dinero no basta.
+el precio|цена|El precio es alto.
+la tienda|магазин|La tienda está cerrada.
+el mercado|рынок|El mercado está lleno.
+la calle|улица|La calle está vacía.
+el camino|путь|El camino es corto.
+la ciudad|город|La ciudad es grande.
+el pueblo|деревня, народ|El pueblo es tranquilo.
+el tren|поезд|El tren llega tarde.
+el autobús|автобус|El autobús viene ya.
+el coche|машина|El coche es viejo.
+la bicicleta|велосипед|La bicicleta es nueva.
+el avión|самолёт|El avión sale pronto.
+el billete|билет|El billete es válido.
+el viaje|путешествие|El viaje fue largo.
+el hotel|гостиница|El hotel es sencillo.
+la escuela|школа|La escuela empieza temprano.
+la universidad|университет|La universidad es pública.
+el libro|книга|El libro es interesante.
+el periódico|газета|El periódico es de ayer.
+la carta|письмо|La carta llegó.
+la palabra|слово|No sé esa palabra.
+la lengua|язык|La lengua es fácil.
+la pregunta|вопрос|La pregunta es buena.
+la respuesta|ответ|La respuesta es correcta.
+el error|ошибка|El error es pequeño.
+el ejemplo|пример|Un ejemplo ayuda.
+la tarea|задача|La tarea está clara.
+el examen|экзамен|El examen es mañana.
+el médico|врач|El médico viene ahora.
+la farmacia|аптека|La farmacia está abierta.
+la medicina|лекарство|La medicina ayuda.
+el dolor|боль|El dolor es fuerte.
+la salud|здоровье|La salud es lo primero.
+la cabeza|голова|Me duele la cabeza.
+el brazo|рука|El brazo está roto.
+la pierna|нога|La pierna duele.
+la mano|рука|La mano está fría.
+el pie|нога, стопа|El pie está mojado.
+el corazón|сердце|El corazón late rápido.
+la sangre|кровь|La sangre es roja.
+la piel|кожа|La piel está seca.
+el sol|солнце|El sol brilla.
+la luna|луна|La luna está llena.
+la estrella|звезда|Una estrella brilla.
+el cielo|небо|El cielo está gris.
+la nube|облако|Una nube pasa.
+la lluvia|дождь|La lluvia no para.
+la nieve|снег|La nieve es blanca.
+el viento|ветер|El viento es frío.
+el verano|лето|El verano es caluroso.
+el invierno|зима|El invierno es largo.
+la primavera|весна|La primavera llega.
+el otoño|осень|En otoño llueve.
+hablar|говорить|Habla más despacio.
+comer|есть|Comemos a las dos.
+beber|пить|Bebe más agua.
+vivir|жить|Vivo aquí.
+trabajar|работать|Trabajo por la mañana.
+estudiar|учиться|Estudio español.
+leer|читать|Leo cada día.
+escribir|писать|Escribe tu nombre.
+escuchar|слушать|Escucha con cuidado.
+mirar|смотреть|Mira el mapa.
+ir|идти|Voy a casa.
+venir|приходить|Ven pronto.
+salir|выходить|Salgo a las ocho.
+llegar|прибывать|Llego en tren.
+llevar|нести|Llevo la bolsa.
+traer|приносить|Trae el pan.
+comprar|покупать|Compro fruta.
+vender|продавать|Vende su coche.
+abrir|открывать|Abre la ventana.
+cerrar|закрывать|Cierra la puerta.
+empezar|начинать|Empezamos ahora.
+terminar|заканчивать|Termino a las seis.
+esperar|ждать|Espera un momento.
+ayudar|помогать|Ayuda a tu madre.
+entender|понимать|No entiendo.
+preguntar|спрашивать|Pregunta al médico.
+responder|отвечать|Responde con calma.
+aprender|учить|Aprende despacio.
+recordar|помнить|Recuerda la clave.
+olvidar|забывать|Olvidé las llaves.
+encontrar|находить|No encuentro nada.
+perder|терять|Perdí el billete.
+pagar|платить|Pago en efectivo.
+costar|стоить|¿Cuánto cuesta?
+necesitar|нуждаться|Necesito ayuda.
+querer|хотеть|Quiero agua.
+poder|мочь|No puedo ahora.
+saber|знать|No sé la respuesta.
