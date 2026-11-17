@@ -1209,6 +1209,7 @@ html, body { overflow-x: hidden; }  /* без горизонтального с�
 .conn-result.ok { color: var(--ok); }
 .conn-result.err { color: var(--err); }
 .conn-result.wait { color: var(--text-soft); }
+.conn-hint { color: var(--text-dim); }
 
 /* ===== Поиск по чатам ===== */
 .sb-search-wrap { padding: 0 14px 8px; }
@@ -1778,6 +1779,9 @@ button:active:not(:disabled) { transform: scale(.975); }
 /* Карточка ошибки в чате */
 .fail-actions { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg-soft-2); }
 .fail-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
+.fail-more { margin: 2px 0 10px; font-size: 12.5px; color: var(--text-dim); }
+.fail-more summary { cursor: pointer; color: var(--text-dim); }
+.fail-report { margin-top: 6px; line-height: 1.65; font-size: 12px; opacity: .9; }
 .fail-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .fail-btns button { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 8px 12px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
 .fail-btns button:first-child { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -3404,6 +3408,7 @@ html.no-anim .theme-flash { display: none; }
           </details>
           <div class="modal-row" style="margin-top:8px">
             <button class="btn btn-ghost" id="testConn" type="button">Проверить ключ</button>
+            <button class="btn btn-ghost" id="testEngines" type="button">Проверить бесплатные движки</button>
             <button class="btn btn-ghost" id="keyClear" type="button">Убрать ключ</button>
           </div>
           <div class="key-state" id="keyState"></div>
@@ -5646,15 +5651,19 @@ async function runSelfCheck() {
 /* Порядок = качество ответа. Сначала идут крупные модели, мелкие — только страховка:
    раньше первыми отвечали 20B и 12B, и Искра казалась глупее, чем есть. */
 const ISKRA_ENGINES = [
-  { id: "e1", base: "https://api.kilo.ai/api/gateway", model: "kilo-auto/free", timeout: 25, auth: "anonymous" },
-  { id: "e2", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "gpt-oss-120b", timeout: 25, auth: "none" },
+  { id: "e1", base: "https://api.kilo.ai/api/gateway", model: "kilo-auto/free", timeout: 20, auth: "anonymous" },
+  { id: "e2", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "gpt-oss-120b", timeout: 20, auth: "none" },
   /* Эта модель понимает фото — сюда Искра уходит, когда приложили картинку */
-  { id: "e3", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "Qwen3.5-397B-A17B", timeout: 25, auth: "none", vision: true },
+  { id: "e3", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", model: "Qwen3.5-397B-A17B", timeout: 20, auth: "none", vision: true },
   /* Открытый шлюз, который годами отвечает без ключа: страховка, если сильные заняты */
-  { id: "e4", url: "https://text.pollinations.ai/openai", model: "openai-fast", timeout: 25, auth: "none", small: true },
+  { id: "e4", url: "https://text.pollinations.ai/openai", model: "openai-fast", timeout: 15, auth: "none", small: true, probe: "https://text.pollinations.ai/models" },
   /* Мелкие и быстрые — последняя линия, когда всё остальное молчит */
-  { id: "e5", base: "https://api.llm7.io/v1", model: "gpt-oss:20b", timeout: 20, small: true },
-  { id: "e6", base: "https://api.llm7.io/v1", model: "mistral-Nemo-Instruct-2407", timeout: 20, small: true }
+  { id: "e5", base: "https://api.llm7.io/v1", model: "gpt-oss:20b", timeout: 15, small: true },
+  { id: "e6", base: "https://api.llm7.io/v1", model: "mistral-Nemo-Instruct-2407", timeout: 15, small: true },
+  /* Самый простой путь: обычный GET в адресе, без заголовков и без «предварительного»
+     запроса, который режут блокировщики и строгие прокси. Отвечает текстом, промпт
+     короткий — поэтому стоит последним. Но именно он выручает, когда POST не проходит. */
+  { id: "e7", url: "https://text.pollinations.ai/", model: "openai-fast", timeout: 15, auth: "none", small: true, plain: true, probe: "https://text.pollinations.ai/models" }
 ];
 
 /* Необязательный свой ключ. Если он есть — Искра отвечает через него
@@ -8132,6 +8141,8 @@ function describeFailure(err) {
   if (st >= 500) return "движок занят (ошибка " + st + ")";
   if (st >= 400) return "движок отклонил запрос (ошибка " + st + ")";
   if (kind === "timeout") return "движок не ответил вовремя";
+  /* Все запросы упали мгновенно и без ответа сервера — их режет браузер или сеть */
+  if (kind === "blocked") return "запрос не ушёл из браузера — его режет блокировщик или сеть";
   return "нет связи с движком — интернет, блокировка или фильтр в сети";
 }
 function failureRaw(err) {
@@ -8197,12 +8208,20 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
     scrollToBottom();
     return;
   }
+  /* Честный разбор по шагам: что случилось с каждым движком. Видно в карточке
+     по кнопке «Почему так» — без адресов и названий сервисов. */
+  const reportLines = Array.isArray(err && err.report) && err.report.length ? engineReportText(err.report) : "";
+  /* Запрос не ушёл вовсе — это не «сервер занят», и лечится по-другому */
+  const blockedHint = err && err.kind === "blocked"
+    ? "\n\nПохоже, запрос не дошёл даже до движка: его останавливает блокировщик в браузере или сеть. Что проверить за минуту (по порядку):\n1) выключи блокировщик рекламы на этом сайте или добавь исключение;\n2) открой Искру в другом браузере — станет ясно, в нём ли дело;\n3) впиши свой ключ: он идёт другим путём и обычно проходит."
+    : "";
   const head = baseAnswer
-    ? `Сейчас движки молчат (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}`
+    ? `Сейчас движки молчат (${reason}). Отвечаю из своей базы знаний:\n\n${baseAnswer}` + blockedHint
     : hasKey
-      ? `Не получилось ответить: ${reason}. Я попробовала все движки, включая твой ключ.\n\nНажми «Повторить» — обычно со второго раза получается. Если повторяется, проверь ключ или удали его: без ключа я тоже отвечаю.` +
-        (err && err.keyBlocked ? `\n\nПохоже, этот сервис не пускает запросы прямо из браузера. Такой ключ работает в приложении Sye, а здесь отвечают другие движки.` : "")
-      : `Не получилось ответить: ${reason}. Я попробовала все движки по очереди — сейчас они молчат.\n\nПодожди 15–20 секунд и нажми «Повторить». Если так каждый раз — проверь интернет.`;
+      ? `Не получилось ответить: ${reason}. Я попробовала все движки, включая твой ключ.\n\nНажми «Повторить» — движки оживают со второго раза. Если повторяется, проверь ключ или удали его: без ключа я тоже отвечаю.` +
+        (err && err.keyBlocked ? `\n\nПохоже, этот сервис не пускает запросы прямо из браузера. Такой ключ работает в приложении Sye, а здесь отвечают другие движки.` : "") +
+        blockedHint
+      : `Не получилось ответить: ${reason}. Я попробовала все движки — сейчас они молчат.\n\nПодожди 15–20 секунд и нажми «Повторить». Если так каждый раз — проверь интернет.` + blockedHint;
   aiMsg.content = head;
   aiMsg.failedSoft = true;
   contentEl.innerHTML = renderMarkdown(aiMsg.content);
@@ -8215,6 +8234,7 @@ function showFailCard(contentEl, aiMsg, question, err, images) {
       <button type="button" data-fail="kb" ${baseAnswer ? "" : "hidden"}>Открыть базу знаний</button>
     </div>
     ${raw ? `<div class="fail-note">Ответ движка: ${esc(raw)}</div>` : ""}
+    ${reportLines ? `<details class="fail-more"><summary>Почему так — по шагам</summary><div class="fail-report">${esc(reportLines).replace(/\n/g, "<br>")}</div></details>` : ""}
     <div class="fail-key" id="failKeyBox" style="display:none">
       <textarea id="failKeyInput" rows="2" placeholder="вставь ключ — или два, по одному в строке" autocomplete="off" spellcheck="false"></textarea>
       <button id="failKeySave" type="button">Включить</button>
@@ -10753,9 +10773,85 @@ function engineFinish(j) {
   return fr === "MAX_TOKENS" ? "length" : fr;
 }
 
+/* ---------- Простой GET-движок (последняя линия) ----------
+   Здесь нет ни заголовков, ни тела запроса: только адрес. Такой запрос браузер
+   отправляет без «предварительного» OPTIONS, поэтому он проходит там, где POST
+   режет блокировщик, строгий прокси или фильтр в сети.
+   Плата за простоту — короткий промпт: в адрес больше двух тысяч знаков не влезет. */
+function plainAskText(payload, maxChars) {
+  const msgs = (payload && payload.messages) || [];
+  const lastUser = [...msgs].reverse().find(m => m && m.role === "user");
+  const raw = lastUser && typeof lastUser.content === "string" ? lastUser.content : "";
+  const q = String(raw).replace(/\s+/g, " ").trim();
+  const head = "Ты — Искра, дружелюбный помощник. Отвечай по-русски, кратко и по делу.";
+  const limit = Math.max(120, Number(maxChars) || 700);
+  if (q.length <= limit) return head + "\n\nВопрос: " + q;
+  /* Длинный текст не влезает в адрес: берём начало и конец, середину честно режем */
+  const half = Math.floor((limit - 20) / 2);
+  return head + "\n\nВопрос: " + q.slice(0, half) + " … " + q.slice(-half);
+}
+function plainAskUrl(engine, payload) {
+  const base = String((engine && engine.url) || "https://text.pollinations.ai/").replace(/\/+$/, "/");
+  const text = plainAskText(payload, 620);
+  const model = engine && engine.model ? "?model=" + encodeURIComponent(engine.model) : "";
+  return base + encodeURIComponent(text) + model;
+}
+async function streamPlain(engine, payload, onDelta, signal) {
+  const ctrl = new AbortController();
+  const timeoutSec = engine.timeout || 20;
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; try { ctrl.abort(); } catch (e) {} }, timeoutSec * 1000);
+  const onAbort = () => { try { ctrl.abort(); } catch (e) {} };
+  if (signal) {
+    if (signal.aborted) { clearTimeout(timer); throw new ApiError(0, "остановлено", "abort"); }
+    signal.addEventListener("abort", onAbort);
+  }
+  let acc = "";
+  const take = (d) => { if (!d) return; acc += d; onDelta(d); };
+  try {
+    let res;
+    try {
+      res = await fetch(plainAskUrl(engine, payload), { method: "GET", signal: ctrl.signal, cache: "no-store" });
+    } catch (e) {
+      if (e && e.name === "AbortError") {
+        throw timedOut ? new ApiError(0, "движок не ответил за " + timeoutSec + " с", "timeout") : new ApiError(0, "остановлено", "abort");
+      }
+      throw new ApiError(0, (e && e.message) || "нет связи", "net");
+    }
+    if (!res || !res.ok) {
+      const txt = res ? await res.text().catch(() => "") : "";
+      throw new ApiError(res ? res.status : 0, txt || "движок занят");
+    }
+    if (res.body && typeof res.body.getReader === "function") {
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        take(dec.decode(value, { stream: true }));
+      }
+    } else {
+      take(await res.text());
+    }
+    if (!acc.trim()) throw new ApiError(503, "пустой ответ движка", "empty");
+    return { engine: engine.id, text: acc, truncated: false };
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    if (e && e.name === "AbortError") {
+      if (acc.trim()) return { engine: engine.id, text: acc, truncated: true };
+      throw timedOut ? new ApiError(0, "движок не ответил за " + timeoutSec + " с", "timeout") : new ApiError(0, "остановлено", "abort");
+    }
+    throw new ApiError(0, (e && e.message) || "ошибка связи", "stream");
+  } finally {
+    clearTimeout(timer);
+    if (signal) signal.removeEventListener("abort", onAbort);
+  }
+}
+
 /* Один движок: отправляем запрос, читаем поток, отдаём куски по мере появления.
    Каждый движок ограничен по времени — чтобы зависший сервис не держал человека. */
 async function streamOnce(engine, payload, onDelta, signal) {
+  if (engine && engine.plain) return streamPlain(engine, payload, onDelta, signal);
   const ctrl = new AbortController();
   const timeoutSec = engine.timeout || 25;
   let timedOut = false;
@@ -10883,8 +10979,120 @@ async function streamOnce(engine, payload, onDelta, signal) {
   }
 }
 
-/* Главный ответ Искры: пробуем движки по очереди, пока кто-нибудь не ответит.
-   Человеку не показываем, кто именно ответил — для него это всегда Искра. */
+/* ---------- Отчёт о движках: что именно случилось ----------
+   Человеку не нужны адреса сервисов, но нужна честная причина. Держим последние
+   попытки в памяти: карточка ошибки по ним объясняет, кто и почему молчал. */
+let _engineReport = [];
+function engineReportPush(rec) {
+  _engineReport.push(rec);
+  if (_engineReport.length > 12) _engineReport.shift();
+}
+function engineReportLine(rec, i) {
+  const ms = rec.ms >= 1000 ? (rec.ms / 1000).toFixed(1).replace(".", ",") + " с" : Math.round(rec.ms) + " мс";
+  const why = rec.ok ? "ответил" : describeFailure({ status: rec.status, kind: rec.kind });
+  return "• Движок " + (i + 1) + " — " + why + " (" + ms + ")";
+}
+function engineReportText(report) {
+  const list = Array.isArray(report) ? report : _engineReport;
+  return list.map((r, i) => engineReportLine(r, i)).join("\n");
+}
+/* Все попытки упали почти мгновенно и без ответа сервера — значит, запрос не ушёл:
+   его режет блокировщик в браузере, строгий режим или сеть. Это не «сервер занят». */
+function looksBlockedLocal(report) {
+  if (!Array.isArray(report) || report.length < 2) return false;
+  const silent = report.filter(r => !r.ok && !Number(r.status) && r.ms < 2500);
+  return silent.length >= 2 && silent.length === report.filter(r => !r.ok).length;
+}
+
+/* Один движок с учётом времени и отчёта */
+async function runOneEngine(engine, payload, onDelta, signal) {
+  const t0 = Date.now();
+  try {
+    const r = await streamOnce(engine, payload, onDelta, signal);
+    engineReportPush({ id: engine.id, ok: true, status: 0, kind: "", ms: Date.now() - t0 });
+    return r;
+  } catch (e) {
+    engineReportPush({
+      id: engine.id, ok: false, status: Number(e && e.status) || 0,
+      kind: (e && e.kind) || "net", ms: Date.now() - t0
+    });
+    throw e;
+  }
+}
+
+/* Гонка: несколько движков стартуют одновременно, отвечает первый, остальные глушим.
+   Раньше движки шли строго по очереди: при шести молчащих адресах человек ждал
+   до полутора минут и всё равно видел «нет связи». Теперь ожидание — секунды. */
+function linkAbort(ctrl, outer) {
+  const onAbort = () => { try { ctrl.abort(); } catch (e) {} };
+  if (!outer) return () => {};
+  if (outer.aborted) { onAbort(); return () => {}; }
+  try { outer.addEventListener("abort", onAbort); } catch (e) { return () => {}; }
+  return () => { try { outer.removeEventListener("abort", onAbort); } catch (e) {} };
+}
+async function raceEngines(engines, payload, onDelta, signal) {
+  const runs = [];
+  for (const engine of engines) {
+    const t0 = Date.now();
+    const ctrl = new AbortController();
+    const unlink = linkAbort(ctrl, signal);
+    const st = { engine, ctrl, unlink, buf: "", opened: false, winner: false, flushed: false, error: null, result: null, t0 };
+    st.gate = new Promise((resolve) => {
+      st.open = () => { st.opened = true; resolve({ st, ok: true }); };
+      st.close = () => resolve({ st, ok: false });
+    });
+    st.done = streamOnce(engine, payload, (d) => {
+      st.buf += d;
+      if (!st.opened) st.open();
+      if (st.winner && st.flushed) { try { onDelta(d); } catch (e) {} }
+    }, ctrl.signal).then(
+      (r) => { st.result = r; if (!st.opened) st.close(); return st; },
+      (e) => { st.error = e; if (!st.opened) st.close(); return st; }
+    );
+    runs.push(st);
+  }
+  let winner = null;
+  const queue = new Map(runs.map(st => [st, st.gate]));
+  while (queue.size && !winner) {
+    const { st, ok } = await Promise.race([...queue.values()]);
+    queue.delete(st);
+    if (ok) winner = st;
+  }
+  const settle = (st) => {
+    st.unlink();
+    if (!st.reported) {
+      st.reported = true;
+      engineReportPush({
+        id: st.engine.id, ok: !!st.buf, status: Number(st.error && st.error.status) || 0,
+        kind: st.error ? (st.error.kind || "net") : "", ms: Date.now() - st.t0
+      });
+    }
+  };
+  if (!winner) {
+    for (const st of runs) settle(st);
+    const errs = runs.map(st => st.error).filter(Boolean);
+    const httpErr = errs.find(e => Number(e && e.status) >= 400);
+    throw httpErr || errs[errs.length - 1] || new ApiError(503, "движки молчат", "net");
+  }
+  /* Победитель: остальных глушим, уже собранное сразу отдаём на экран */
+  for (const st of runs) {
+    if (st === winner) continue;
+    st.unlink();
+    try { st.ctrl.abort(); } catch (e) {}
+  }
+  winner.winner = true;
+  const head = winner.buf;
+  winner.flushed = true;
+  if (head) { try { onDelta(head); } catch (e) {} }
+  const done = await winner.done;
+  settle(done);
+  if (done.error && !done.buf) throw done.error;
+  return { engine: winner.engine.id, text: winner.buf, truncated: !!(done.result && done.result.truncated) };
+}
+
+/* Главный ответ Искры: свой ключ пробуем по очереди, бесплатные движки — гонками
+   по три. Кто ответил первым, тот и говорит. Человеку не показываем, кто именно
+   ответил — для него это всегда Искра. */
 async function askIskra(payload, onDelta, signal, onTry) {
   const needVision = (payload.messages || []).some(m => Array.isArray(m.content) && m.content.some(x => x && (x.type === "image_url" || x.image_url)));
   let list = await resolveKeyEngines(orderedEnginesFor(payload, needVision), needVision);
@@ -10892,34 +11100,73 @@ async function askIskra(payload, onDelta, signal, onTry) {
      и мимо — «у меня нет твоих заданий». Лучше честно сказать, что не вижу. */
   if (needVision) list = list.filter(e => e.vision || guessVision(e.model));
   if (needVision && !list.length) throw new ApiError(415, "нет движка, который видит фото", "no-vision");
-  let lastErr = null;
-  let httpErr = null;      // настоящий ответ сервера важнее «нет связи»
+  _engineReport = [];
+  const started = Date.now();
   let keyBlocked = false;  // ключ есть, но сервис не пускает браузер
-  let n = 0;
-  for (const engine of list) {
-    if (signal && signal.aborted) throw new ApiError(0, "остановлено", "abort");
-    n++;
-    if (typeof onTry === "function") { try { onTry(n, list.length); } catch (e) {} }
-    try {
-      const r = await streamOnce(engine, payload, onDelta, signal);
-      if (r && r.text) {
-        _lastGoodEngine = engine.id;
-        _deadBases.delete(baseKeyOf(engine));
-        if (engine.key) markKeyWorking(engine.model);
-        return r;
+  let httpErr = null;      // настоящий ответ сервера важнее «нет связи»
+  let lastErr = null;
+  let tried = 0;
+
+  /* Общий бюджет: сколько человек готов ждать все движки вместе.
+     Раньше шесть молчащих адресов держали его до полутора минут. */
+  const BUDGET_MS = 45e3;
+  const budget = new AbortController();
+  const unlinkBudget = linkAbort(budget, signal);
+  let budgetHit = false;
+  const budgetTimer = setTimeout(() => { budgetHit = true; try { budget.abort(); } catch (e) {} }, BUDGET_MS);
+
+  /* Свой ключ и свой адрес — по одному, по очереди: у них лимиты и своя цена.
+     Бесплатные — гонками по три: они дешёвые, и пусть отвечает самый быстрый. */
+  const own = list.filter(e => e.key || e.id === "own");
+  const free = list.filter(e => !(e.key || e.id === "own"));
+  const groups = own.map(e => [e]);
+  for (let i = 0; i < free.length; i += 3) groups.push(free.slice(i, i + 3));
+
+  try {
+    for (const group of groups) {
+      if (!group.length) continue;
+      if (budget.signal.aborted) break;
+      tried += group.length;
+      if (typeof onTry === "function") { try { onTry(tried, list.length); } catch (e) {} }
+      const repStart = _engineReport.length;
+      try {
+        const r = group.length === 1
+          ? await runOneEngine(group[0], payload, onDelta, budget.signal)
+          : await raceEngines(group, payload, onDelta, budget.signal);
+        if (r && r.text) {
+          _lastGoodEngine = r.engine || group[0].id;
+          for (const e of group) _deadBases.delete(baseKeyOf(e));
+          if (group[0].key) markKeyWorking(group[0].model);
+          return r;
+        }
+      } catch (e) {
+        /* Остановил человек — выходим сразу. Кончился бюджет — идём к общей ошибке. */
+        if (e && e.kind === "abort" && !budgetHit) throw e;
+        lastErr = e;
+        if (group[0].key && !Number(e && e.status)) keyBlocked = true;
+        /* В конец очереди ставим только те адреса, что действительно не ответили */
+        for (const rec of _engineReport.slice(repStart)) {
+          if (rec.ok || (rec.kind !== "net" && rec.kind !== "timeout")) continue;
+          const eng = group.find(x => x.id === rec.id);
+          if (eng) _deadBases.set(baseKeyOf(eng), Date.now());
+        }
+        if (Number(e && e.status) >= 400) httpErr = e;
       }
-    } catch (e) {
-      if (e && e.kind === "abort") throw e;
-      lastErr = e;
-      if (engine.key && !Number(e && e.status)) keyBlocked = true;
-      if (e && (e.kind === "net" || e.kind === "timeout")) _deadBases.set(baseKeyOf(engine), Date.now());
-      if (Number(e && e.status) >= 400) httpErr = e;
     }
+  } finally {
+    clearTimeout(budgetTimer);
+    unlinkBudget();
   }
   const err = httpErr || lastErr || new ApiError(503, "все движки заняты", "all-busy");
   err.kind = err.kind || "all-busy";
-  err.tried = n;
+  if (budgetHit && !Number(err.status)) err.kind = "timeout";
+  err.tried = tried;
   err.keyBlocked = keyBlocked;
+  err.report = _engineReport.slice();
+  err.ms = Date.now() - started;
+  err.blockedLocal = looksBlockedLocal(err.report);
+  if (err.blockedLocal) err.kind = "blocked";
+  if (budgetHit) err.message = "движки молчат дольше " + Math.round(BUDGET_MS / 1000) + " с";
   throw err;
 }
 
@@ -13068,6 +13315,57 @@ function describeProbe(r) {
   if (r.state === "unknown") return "не распознан";
   if (r.state === "cors") return "сервис не пускает браузер — этот ключ работает в приложении Sye";
   return "нет связи — проверить не вышло";
+}
+
+/* ---------- Проверка бесплатных движков (по кнопке, без сети не работает) ----------
+   Человек нажимает кнопку и видит честную картину: кто отвечает, кто молчит.
+   Это и есть ответ на вопрос «почему Искра не отвечает» — без догадок. */
+function engineProbeUrl(e) {
+  if (e && e.probe) return String(e.probe);
+  if (e && e.plain) return String(e.url || "").replace(/\/+$/, "") + "/models";
+  const base = String((e && (e.base || e.url)) || "").replace(/\/+$/, "");
+  if (!base) return "";
+  return /\/v\d+$/.test(base) ? base + "/models" : base + "/v1/models";
+}
+async function probeEngine(e) {
+  const url = engineProbeUrl(e);
+  if (!url) return { ok: false, status: 0, kind: "net", ms: 0 };
+  const t0 = Date.now();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (err) {} }, 8000);
+  try {
+    const res = await fetch(url, { method: "GET", signal: ctrl.signal, cache: "no-store" });
+    return { ok: !!(res && res.ok), status: res ? res.status : 0, kind: "", ms: Date.now() - t0 };
+  } catch (err) {
+    return { ok: false, status: 0, kind: err && err.name === "AbortError" ? "timeout" : "net", ms: Date.now() - t0 };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function checkFreeEngines() {
+  const box = $("#connResult");
+  const list = ISKRA_ENGINES.slice();
+  if (box) { box.className = "conn-result wait"; box.style.display = "block"; box.textContent = "Проверяю бесплатные движки — до 8 секунд…"; }
+  const res = await Promise.all(list.map(e => probeEngine(e)));
+  if (!box) return res;
+  const okCount = res.filter(r => r.ok).length;
+  const lines = res.map((r, i) => {
+    const name = "Движок " + (i + 1);
+    if (r.ok) return `${name} — отвечает (${r.status}, ${(r.ms / 1000).toFixed(1).replace(".", ",")} с)`;
+    if (r.kind === "timeout") return `${name} — не ответил за 8 секунд`;
+    if (r.status) return `${name} — ответил ошибкой ${r.status}`;
+    return `${name} — нет связи: запрос не ушёл (сеть или блокировщик)`;
+  });
+  const head = okCount
+    ? `Отвечают ${okCount} из ${res.length}. Значит, дело не в Искре — повтори вопрос.`
+    : `Не отвечает ни один из ${res.length}. Тогда запросы режет сеть, провайдер или блокировщик в браузере.`;
+  const tail = okCount
+    ? "Если в чате всё равно «нет связи» — проверь, что не включён режим экономии трафика, и попробуй ещё раз."
+    : "Что помогает: выключить блокировщик для этого сайта, открыть в другом браузере или вписать свой ключ — он идёт другим путём.";
+  box.className = "conn-result " + (okCount ? "ok" : "err");
+  box.style.display = "block";
+  box.innerHTML = `<b>${esc(head)}</b><br>` + lines.map(l => esc(l)).join("<br>") + `<br><span class="conn-hint">${esc(tail)}</span>`;
+  return res;
 }
 
 async function testConnection() {
@@ -17344,6 +17642,7 @@ function wire() {
   // Модалка настроек: вкладки, ключ, проверка
   $$("#setTabs button").forEach(b => b.addEventListener("click", () => setSettingsTab(b.dataset.tab)));
   $("#testConn") && $("#testConn").addEventListener("click", testConnection);
+  $("#testEngines") && $("#testEngines").addEventListener("click", checkFreeEngines);
   $("#keyClear") && $("#keyClear").addEventListener("click", () => {
     settings.apiKey = ""; settings.provider = "custom"; settings.baseUrl = ""; settings.customModel = "";
     resetKeyPro();
