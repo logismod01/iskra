@@ -194,3 +194,212 @@ grün|зелёный|Der Wald ist im Sommer grün.
 schwarz|чёрный|Die Tasche ist schwarz.
 weiß|белый|Die Wand ist weiß und sauber.
 grau|серый|Der Tag war grau und still.
+der Apfel|яблоко|Ich esse einen Apfel.
+die Birne|груша|Die Birne ist reif.
+die Banane|банан|Bananen sind billig.
+die Kartoffel|картофель|Kartoffeln kochen im Topf.
+die Zwiebel|лук|Die Zwiebel macht mich weinen.
+der Knoblauch|чеснок|Knoblauch riecht stark.
+das Brot|хлеб|Das Brot ist frisch.
+die Butter|масло|Butter im Kühlschrank lagern.
+der Käse|сыр|Der Käse schmeckt gut.
+die Milch|молоко|Die Milch ist kalt.
+das Ei|яйцо|Ich brauche zwei Eier.
+das Fleisch|мясо|Das Fleisch ist zart.
+der Fisch|рыба|Fisch am Freitag.
+das Salz|соль|Zu viel Salz ist ungesund.
+der Zucker|сахар|Wenig Zucker, bitte.
+der Pfeffer|перец|Salz und Pfeffer fehlen.
+das Öl|масло, нефть|Das Öl ist heiß.
+der Reis|рис|Reis kocht schnell.
+die Suppe|суп|Die Suppe ist warm.
+der Salat|салат|Der Salat ist frisch.
+der Teller|тарелка|Der Teller ist schmutzig.
+die Tasse|чашка|Eine Tasse Kaffee, bitte.
+das Glas|стакан, стекло|Ein Glas Wasser.
+das Messer|нож|Das Messer ist scharf.
+die Gabel|вилка|Die Gabel liegt links.
+der Löffel|ложка|Der Löffel fehlt.
+der Topf|кастрюля|Der Topf steht auf dem Herd.
+die Pfanne|сковорода|Die Pfanne ist heiß.
+der Herd|плита|Der Herd ist aus.
+der Kühlschrank|холодильник|Der Kühlschrank ist voll.
+die Küche|кухня|Die Küche ist klein.
+das Zimmer|комната|Das Zimmer ist hell.
+das Haus|дом|Das Haus ist alt.
+die Wohnung|квартира|Die Wohnung ist teuer.
+die Tür|дверь|Die Tür ist offen.
+das Fenster|окно|Das Fenster ist zu.
+der Tisch|стол|Der Tisch ist aus Holz.
+der Stuhl|стул|Der Stuhl ist bequem.
+das Bett|кровать|Das Bett ist weich.
+der Schrank|шкаф|Der Schrank ist groß.
+die Lampe|лампа|Die Lampe ist kaputt.
+der Teppich|ковёр|Der Teppich ist sauber.
+das Bad|ванная|Das Bad ist klein.
+die Dusche|душ|Die Dusche funktioniert.
+das Klo|туалет|Wo ist das Klo?
+die Wand|стена|Die Wand ist weiß.
+der Boden|пол, земля|Der Boden ist kalt.
+die Treppe|лестница|Die Treppe ist steil.
+der Schlüssel|ключ|Der Schlüssel passt nicht.
+der Garten|сад|Der Garten ist grün.
+der Baum|дерево|Der Baum ist hoch.
+die Blume|цветок|Die Blume duftet.
+das Gras|трава|Das Gras ist nass.
+der Regen|дождь|Der Regen hört nicht auf.
+der Schnee|снег|Der Schnee ist tief.
+der Wind|ветер|Der Wind ist kalt.
+die Sonne|солнце|Die Sonne scheint.
+der Himmel|небо|Der Himmel ist grau.
+die Wolke|облако|Eine Wolke zieht vorbei.
+der Sommer|лето|Der Sommer ist heiß.
+der Winter|зима|Der Winter ist lang.
+der Frühling|весна|Der Frühling kommt bald.
+der Herbst|осень|Im Herbst regnet es.
+die Zeit|время|Die Zeit ist knapp.
+das Jahr|год|Das Jahr ist neu.
+der Monat|месяц|Der Monat ist vorbei.
+die Woche|неделя|Die Woche war lang.
+der Tag|день|Der Tag ist schön.
+die Nacht|ночь|Die Nacht ist ruhig.
+der Morgen|утро|Der Morgen ist kühl.
+der Abend|вечер|Der Abend ist frei.
+die Stunde|час|Eine Stunde Geduld.
+die Minute|минута|Eine Minute bitte.
+der Mensch|человек|Der Mensch ist müde.
+das Kind|ребёнок|Das Kind spielt.
+der Mann|мужчина|Der Mann liest.
+die Frau|женщина|Die Frau arbeitet.
+die Familie|семья|Die Familie ist groß.
+der Freund|друг|Mein Freund hilft mir.
+die Arbeit|работа|Die Arbeit ist schwer.
+der Beruf|профессия|Ein gute Beruf zu haben ist wichtig.
+das Geld|деньги|Das Geld ist knapp.
+der Preis|цена|Der Preis ist hoch.
+der Laden|магазин|Der Laden ist zu.
+der Markt|рынок|Der Markt ist voll.
+die Straße|улица|Die Straße ist leer.
+der Weg|путь|Der Weg ist kurz.
+die Stadt|город|Die Stadt ist laut.
+das Dorf|деревня|Das Dorf liegt ruhig.
+der Zug|поезд|Der Zug ist verspätet.
+der Bus|автобус|Der Bus kommt gleich.
+das Auto|машина|Das Auto ist alt.
+das Fahrrad|велосипед|Das Fahrrad ist neu.
+der Flug|полёт|Der Flug ist lang.
+der Bahnhof|вокзал|Der Bahnhof ist nah.
+der Flughafen|аэропорт|Der Flughafen liegt weit.
+die Fahrkarte|билет|Die Fahrkarte ist gültig.
+die Reise|путешествие|Die Reise war schön.
+das Hotel|гостиница|Das Hotel ist einfach.
+die Schule|школа|Die Schule beginnt früh.
+die Universität|университет|Die Universität ist groß.
+das Buch|книга|Das Buch ist spannend.
+die Zeitung|газета|Die Zeitung ist alt.
+der Brief|письмо|Der Brief ist angekommen.
+das Wort|слово|Das Wort kenne ich nicht.
+die Sprache|язык|Die Sprache ist leicht.
+die Frage|вопрос|Die Frage ist gut.
+die Antwort|ответ|Die Antwort ist richtig.
+der Fehler|ошибка|Der Fehler ist klein.
+das Beispiel|пример|Ein gutes Beispiel hilft.
+die Aufgabe|задача|Die Aufgabe ist klar.
+der Test|тест|Der Test war leicht.
+die Prüfung|экзамен|Die Prüfung ist morgen.
+der Arzt|врач|Der Arzt kommt gleich.
+die Apotheke|аптека|Die Apotheke ist offen.
+die Medizin|лекарство|Die Medizin hilft.
+der Schmerz|боль|Der Schmerz ist stark.
+die Gesundheit|здоровье|Gesundheit ist wichtig.
+der Kopf|голова|Mein Kopf tut weh.
+der Arm|рука|Der Arm ist gebrochen.
+das Bein|нога|Das Bein schmerzt.
+der Bauch|живот|Der Bauch ist voll.
+die Haut|кожа|Die Haut ist trocken.
+das Blut|кровь|Blut ist rot.
+das Herz|сердце|Das Herz schlägt schnell.
+die Hand|рука|Die Hand ist kalt.
+der Fuß|нога, стопа|Der Fuß ist nass.
+der Tag und die Nacht|день и ночь|Tag und Nacht wechseln sich ab.
+das Wasser|вода|Das Wasser ist kalt.
+die Luft|воздух|Die Luft ist frisch.
+das Feuer|огонь|Das Feuer brennt.
+die Erde|земля|Die Erde ist rund.
+der Stein|камень|Der Stein ist schwer.
+das Holz|дерево, древесина|Das Holz ist trocken.
+das Metall|металл|Metall leitet Strom.
+das Papier|бумага|Papier recyceln.
+der Kunststoff|пластик|Kunststoff schwimmt.
+das Licht|свет|Das Licht ist an.
+die Farbe|цвет, краска|Die Farbe ist blau.
+die Musik|музыка|Die Musik ist laut.
+das Lied|песня|Das Lied ist bekannt.
+das Spiel|игра|Das Spiel beginnt.
+der Sport|спорт|Sport hält gesund.
+die Mannschaft|команда|Die Mannschaft gewinnt.
+das Ziel|цель|Das Ziel ist nah.
+der Plan|план|Der Plan ist gut.
+die Idee|идея|Die Idee gefällt mir.
+die Lösung|решение|Die Lösung ist einfach.
+das Problem|проблема|Das Problem ist klein.
+die Meinung|мнение|Deine Meinung zählt.
+die Entscheidung|решение|Die Entscheidung ist schwer.
+die Hoffnung|надежда|Die Hoffnung bleibt.
+die Angst|страх|Die Angst ist normal.
+die Freude|радость|Die Freude ist groß.
+der Zufall|случай|Der Zufall half uns.
+das Glück|счастье|Glück ist keine Garantie.
+der Erfolg|успех|Der Erfolg kommt langsam.
+die Geduld|терпение|Geduld ist nötig.
+die Kraft|сила|Die Kraft reicht nicht.
+die Ruhe|покой|Ein Moment der Ruhe.
+das Ende|конец|Das Ende ist offen.
+der Anfang|начало|Der Anfang ist schwer.
+die Mitte|середина|Die Mitte ist leer.
+der Rand|край|Am Rand der Stadt.
+die Seite|сторона, страница|Die Seite ist voll.
+die Zahl|число|Die Zahl ist falsch.
+die Hälfte|половина|Die Hälfte genügt.
+der Teil|часть|Der Teil fehlt.
+die Größe|размер|Die Größe passt.
+das Gewicht|вес|Das Gewicht ist hoch.
+die Menge|количество|Eine kleine Menge.
+die Qualität|качество|Qualität zahlt sich aus.
+der Druck|давление|Der Druck steigt.
+die Geschwindigkeit|скорость|Die Geschwindigkeit ist hoch.
+die Richtung|направление|Die Richtung stimmt.
+der Ort|место|Ein ruhiger Ort.
+der Platz|место, площадь|Der Platz ist frei.
+die Weite|даль|Die Weite der Steppe.
+arbeiten|работать|Wir arbeiten heute.
+lernen|учиться|Ich lerne Deutsch.
+lesen|читать|Er liest laut.
+schreiben|писать|Sie schreibt kurz.
+hören|слышать|Ich höre nichts.
+sehen|видеть|Ich sehe den Weg.
+sprechen|говорить|Sprich langsamer.
+gehen|идти|Wir gehen nach Hause.
+kommen|приходить|Komm bald zurück.
+fahren|ехать|Er fährt mit dem Bus.
+fliegen|лететь|Wir fliegen morgen.
+kochen|готовить|Ich koche Suppe.
+essen|есть|Wir essen um zwei.
+trinken|пить|Trink genug Wasser.
+schlafen|спать|Er schläft tief.
+wachen|бодрствовать|Sie wacht früh auf.
+suchen|искать|Ich suche den Schlüssel.
+finden|находить|Er findet nichts.
+kaufen|покупать|Wir kaufen Brot.
+verkaufen|продавать|Sie verkauft das Auto.
+geben|давать|Gib mir das Messer.
+nehmen|брать|Nimm den Bus.
+öffnen|открывать|Öffne das Fenster.
+schließen|закрывать|Schließe die Tür.
+beginnen|начинать|Wir beginnen jetzt.
+warten|ждать|Warte kurz.
+helfen|помогать|Er hilft immer.
+danken|благодарить|Ich danke dir.
+fragen|спрашивать|Frage den Arzt.
+antworten|отвечать|Antworte ehrlich.
+verstehen|понимать|Ich verstehe nicht.
