@@ -163,8 +163,8 @@ await test("меню закрывается после выбора телефо
 
 /* ---------- 6. Версия ---------- */
 await test("версия поднята, кэш обновлён", async () => {
-  assert(pkg.version === "1.53.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.53\.0"/.test(sw), "кэш service worker не обновлён");
+  assert(pkg.version === "1.54.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.54\.0"/.test(sw), "кэш service worker не обновлён");
 });
 
 await test("новый тест подключён к npm test", async () => {

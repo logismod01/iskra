@@ -433,9 +433,9 @@ await test("в консоли есть все команды для заявок
   assert(window.eval(`regionProbationDays()`) === 60, "по умолчанию не 60 дней");
 });
 
-await test("версия сайта и кэша — 1.53.0", async () => {
-  assert(pkg.version === "1.53.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.53\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.54.0", async () => {
+  assert(pkg.version === "1.54.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.54\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round28: " + passed + " проверок пройдено");
