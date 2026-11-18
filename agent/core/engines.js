@@ -329,9 +329,19 @@ async function streamOnce(engine, payload, { signal, onDelta } = {}) {
     }
 
     const json = await res.json();
-    const text = json && json.choices && json.choices[0] && json.choices[0].message
-      ? String(json.choices[0].message.content || "")
+    const message = json && json.choices && json.choices[0] && json.choices[0].message ? json.choices[0].message : null;
+    let text = message
+      ? String(message.content || "")
       : (json && typeof json.text === "string" ? json.text : "");
+    /* Часть движков отвечает «нативным» вызовом функции вместо текста.
+       Агент ждёт <action>, поэтому переводим вызов в его формат. */
+    if (!text.trim() && message && Array.isArray(message.tool_calls) && message.tool_calls.length) {
+      const call = message.tool_calls[0] || {};
+      const fn = call.function || call;
+      let args = fn.arguments;
+      if (typeof args === "string") { try { args = JSON.parse(args); } catch (e) { args = {}; } }
+      text = "<action>" + JSON.stringify({ tool: String(fn.name || ""), args: args && typeof args === "object" ? args : {}, why: "вызов функции движком" }) + "</action>";
+    }
     if (!text.trim()) throw new EngineError("пустой ответ", { engine: engine.id });
     if (onDelta) onDelta(text, text);
     return text;

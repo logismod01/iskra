@@ -145,7 +145,10 @@ async function runTool(action, ctx) {
         if (stat.size > MAX_READ) return { ok: false, summary: "Файл слишком большой", output: "Файл " + Math.round(stat.size / 1024) + " КБ — больше 300 КБ не читаю. Попроси конкретный кусок или используй fs.search." };
         const buf = await fsp.readFile(r.path);
         if (isBinary(buf)) return { ok: false, summary: "Это двоичный файл", output: "Файл двоичный (картинка, архив или сборка) — текстом не читается." };
-        const text = buf.toString("utf8");
+        /* Секреты маскируем прямо здесь: файл может попасть в журнал шагов и в память
+           задачи, а ключи и токены оттуда уходить не должны. Правку это не ломает:
+           fs.replace работает с файлом на диске, а не с этим текстом. */
+        const text = guard.redactSecrets(buf.toString("utf8"));
         const numbered = text.split("\n").map((line, i) => String(i + 1).padStart(4, " ") + "│ " + line).join("\n");
         const packed = tooBig(limits, numbered);
         return { ok: true, summary: "Прочитал " + args.path + " (" + text.split("\n").length + " строк)", output: packed.text };
@@ -224,7 +227,7 @@ async function runTool(action, ctx) {
           for (let i = 0; i < lines.length; i++) {
             const match = re ? re.test(lines[i]) : lines[i].toLowerCase().includes(query.toLowerCase());
             if (match) {
-              hits.push(rel + ":" + (i + 1) + "  " + lines[i].trim().slice(0, 180));
+              hits.push(rel + ":" + (i + 1) + "  " + guard.redactSecrets(lines[i].trim()).slice(0, 180));
               if (hits.length >= MAX_SEARCH_RESULTS) return;
             }
           }

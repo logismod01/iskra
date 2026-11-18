@@ -118,6 +118,28 @@ function validateAction(obj) {
   return { ok: true, action: { tool, args, why: String(obj.why || obj.reason || "").slice(0, 300) } };
 }
 
+
+/**
+ * Некоторые движки отвечают не текстом, а «нативным» вызовом функции:
+ *   {"tool_calls":[{"function":{"name":"fs.read","arguments":"{\"path\":\"a.js\"}"}}]}
+ * Формат правильный с точки зрения API, но агент ждёт <action>. Понимаем и это.
+ */
+function actionFromToolCalls(obj) {
+  if (!obj || typeof obj !== "object") return null;
+  const calls = Array.isArray(obj.tool_calls) ? obj.tool_calls
+    : obj.function_call ? [{ function: obj.function_call }]
+      : obj.message && Array.isArray(obj.message.tool_calls) ? obj.message.tool_calls
+        : null;
+  if (!calls || !calls.length) return null;
+  const call = calls[0] || {};
+  const fn = call.function || call;
+  const name = String(fn.name || "").trim();
+  if (!name) return null;
+  let args = fn.arguments;
+  if (typeof args === "string") { try { args = JSON.parse(args); } catch (e) { args = {}; } }
+  return { tool: name, args: args && typeof args === "object" ? args : {} };
+}
+
 /**
  * Разбирает ответ модели.
  * @returns {{kind:"final"|"action"|"text", text?:string, action?:object, error?:string}}
@@ -130,7 +152,8 @@ function parseModelOutput(raw) {
 
   const actionTag = source.match(/<action>([\s\S]*?)<\/action>/i);
   if (actionTag) {
-    const v = validateAction(extractJson(actionTag[1]));
+    const inner = extractJson(actionTag[1]);
+    const v = validateAction(actionFromToolCalls(inner) || inner);
     if (v.ok) return { kind: "action", action: v.action };
     return { kind: "text", error: v.error, text: source.trim() };
   }
@@ -143,7 +166,21 @@ function parseModelOutput(raw) {
   }
 
   // ответ без обёртки: это действие или готовый текст?
-  const obj = extractJson(source);
+  let obj = extractJson(source);
+  /* Модель иногда выдаёт сразу весь план массивом. Взять первый шаг лучше,
+     чем принять массив за готовый ответ и закрыть задачу, ничего не сделав. */
+  if (Array.isArray(obj)) {
+    obj = obj.find((x) => x && typeof x === "object" && (x.tool || x.action || x.name || x.tool_calls || x.function_call)) || null;
+    if (!obj) return { kind: "text", error: "в ответе массив без действий", text: source.trim() };
+  }
+  if (obj) {
+    const fromCalls = actionFromToolCalls(obj);
+    if (fromCalls) {
+      const v = validateAction(fromCalls);
+      if (v.ok) return { kind: "action", action: v.action };
+      return { kind: "text", error: v.error, text: source.trim() };
+    }
+  }
   if (obj && (obj.tool || obj.action || obj.name)) {
     const v = validateAction(obj);
     if (v.ok) return { kind: "action", action: v.action };
@@ -172,4 +209,4 @@ function toolsPrompt() {
   return TOOL_NAMES.map((name) => "- " + name + "(" + TOOLS[name].args.join(", ") + ") — " + TOOLS[name].desc).join("\n");
 }
 
-module.exports = { TOOLS, TOOL_NAMES, OPTIONAL_ARGS, parseModelOutput, validateAction, extractJson, formatCorrection, toolsPrompt, clamp };
+module.exports = { TOOLS, TOOL_NAMES, OPTIONAL_ARGS, parseModelOutput, validateAction, extractJson, actionFromToolCalls, formatCorrection, toolsPrompt, clamp };

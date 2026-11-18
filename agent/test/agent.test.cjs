@@ -253,3 +253,34 @@ test("мелким моделям уходит короткий системны
   assert.match(seen.lite[0].content, /Sye/);
   assert.match(seen.lite[0].content, /Искры/);
 });
+
+test("модель выдала план массивом — агент делает первый шаг, а не закрывает задачу", async () => {
+  const ws = tmpWorkspace("array-plan");
+  fs.writeFileSync(path.join(ws, "a.txt"), "старое", "utf8");
+  const s = scripted([
+    '[{"tool":"fs.read","args":{"path":"a.txt"}},{"tool":"fs.replace","args":{"path":"a.txt","find":"старое","replace":"новое"}}]',
+    '<action>{"tool":"fs.replace","args":{"path":"a.txt","find":"старое","replace":"новое"},"why":"правлю"}</action>',
+    "<final>Заменил текст в a.txt.</final>"
+  ]);
+  const res = await runTask({ task: "Замени «старое» на «новое» в a.txt", ctx: ctxFor(ws), model: s.model });
+  assert.equal(res.ok, true);
+  assert.equal(fs.readFileSync(path.join(ws, "a.txt"), "utf8"), "новое");
+  assert.match(res.final, /a\.txt/);
+});
+
+test("движок ответил нативным вызовом функции — шаг всё равно выполняется", async () => {
+  const ws = tmpWorkspace("toolcall");
+  fs.writeFileSync(path.join(ws, "b.txt"), "строка", "utf8");
+  const native = JSON.stringify({
+    role: "assistant",
+    tool_calls: [{ type: "function", function: { name: "fs.read", arguments: '{"path":"b.txt"}' } }]
+  });
+  const s = scripted([native, "<final>Прочитал b.txt.</final>"]);
+  const events = [];
+  const res = await runTask({ task: "Прочитай b.txt", ctx: ctxFor(ws), model: s.model, onEvent: (e) => events.push(e) });
+  assert.equal(res.ok, true);
+  const obs = events.filter((e) => e.type === "observation");
+  assert.equal(obs.length, 1);
+  assert.equal(obs[0].tool, "fs.read");
+  assert.equal(obs[0].ok, true);
+});

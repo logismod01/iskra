@@ -94,3 +94,56 @@ test("в промпте перечислены все инструменты", (
   for (const name of TOOL_NAMES) assert.ok(text.includes(name), "нет " + name);
   assert.ok(text.includes("screen.look"));
 });
+
+/* --- ответы в формате «нативного вызова функции»: так отвечают некоторые движки --- */
+
+test("нативный tool_calls превращается в действие", () => {
+  const raw = JSON.stringify({
+    role: "assistant",
+    tool_calls: [{ id: "x", type: "function", function: { name: "fs.read", arguments: '{"path":"sum.js"}' } }]
+  });
+  const r = parseModelOutput(raw);
+  assert.equal(r.kind, "action");
+  assert.equal(r.action.tool, "fs.read");
+  assert.equal(r.action.args.path, "sum.js");
+});
+
+test("tool_calls внутри ```json тоже понимаются", () => {
+  const raw = "```json\n{\"tool_calls\":[{\"function\":{\"name\":\"shell.run\",\"arguments\":{\"command\":\"node check.js\"}}}]}\n```";
+  const r = parseModelOutput(raw);
+  assert.equal(r.kind, "action");
+  assert.equal(r.action.tool, "shell.run");
+  assert.equal(r.action.args.command, "node check.js");
+});
+
+test("function_call без обёртки понимается", () => {
+  const r = parseModelOutput('{"function_call":{"name":"fs.list","arguments":"{\\"path\\":\\".\\"}"}}');
+  assert.equal(r.kind, "action");
+  assert.equal(r.action.tool, "fs.list");
+  assert.equal(r.action.args.path, ".");
+});
+
+/* --- некоторые модели отвечают сразу планом массивом --- */
+
+test("массив действий: берём первый шаг, а не закрываем задачу", () => {
+  const raw = '[{"action":"fs.replace","path":"a.js","find":"x","replace":"y"},{"action":"shell.run","command":"npm test"}]';
+  const r = parseModelOutput(raw);
+  assert.equal(r.kind, "action");
+  assert.equal(r.action.tool, "fs.replace");
+  assert.equal(r.action.args.path, "a.js");
+  assert.equal(r.action.args.find, "x");
+  assert.equal(r.action.args.replace, "y");
+});
+
+test("массив без действий — это не готовый ответ", () => {
+  const r = parseModelOutput("[1,2,3]");
+  assert.notEqual(r.kind, "final");
+  assert.match(String(r.error || ""), /массив/);
+});
+
+test("схема {action, path, find, replace} принимается", () => {
+  const v = validateAction({ action: "fs.replace", path: "report.js", find: "a", replace: "b" });
+  assert.equal(v.ok, true);
+  assert.equal(v.action.tool, "fs.replace");
+  assert.equal(v.action.args.find, "a");
+});

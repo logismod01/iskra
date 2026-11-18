@@ -201,3 +201,19 @@ test("локальные адреса распознаются", () => {
   assert.equal(isLocalUrl("https://example.com"), false);
   assert.equal(isLocalUrl("file:///etc/passwd"), true);
 });
+
+test("ключи маскируются уже при чтении файла и при поиске", async () => {
+  const ws = tmpWorkspace("secrets");
+  const ctx = ctxFor(ws);
+  fs.writeFileSync(path.join(ws, "config.env"), "TOKEN=ISKRA-ABCDEF123456\nAPI=sk-abcdefghijklmnopqrstuvwxyz012345\n", "utf8");
+
+  const r = await runTool({ tool: "fs.read", args: { path: "config.env" } }, ctx);
+  assert.equal(r.ok, true);
+  assert.ok(!/ISKRA-ABCDEF123456/.test(r.output), "ключ ISKRA утёк в чтение");
+  assert.ok(!/sk-abcdefghijklmnopqrstuvwxyz012345/.test(r.output), "ключ sk- утёк в чтение");
+  assert.match(r.output, /TOKEN=/); // остальной текст файла на месте
+
+  const s = await runTool({ tool: "fs.search", args: { query: "ISKRA" } }, ctx);
+  assert.equal(s.ok, true);
+  assert.ok(!/ISKRA-ABCDEF123456/.test(s.output), "ключ утёк в поиск");
+});
