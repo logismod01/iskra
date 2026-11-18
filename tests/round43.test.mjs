@@ -28,7 +28,7 @@ const html = read("index.html");
 const pkg = JSON.parse(read("package.json"));
 const sw = read("sw.js");
 
-console.log("round43: движки, гонка и честная причина 1.51.0");
+console.log("round43: движки, гонка и честная причина 1.52.0");
 
 const vc = new VirtualConsole();
 vc.on("jsdomError", () => {});
@@ -226,8 +226,8 @@ await test("проверка показывает и рабочий движок
 /* ---------- 5. Версия ---------- */
 
 await test("версия поднята и кэш обновлён", async () => {
-  assert(pkg.version === "1.51.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.51\.0"/.test(sw), "кэш service worker не обновлён");
+  assert(pkg.version === "1.52.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.52\.0"/.test(sw), "кэш service worker не обновлён");
 });
 
 await test("этот тест подключён к npm test", async () => {
