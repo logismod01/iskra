@@ -238,9 +238,9 @@ await test("выход не теряет страну в аккаунте", asyn
 });
 
 /* ---------- 6. Версия ---------- */
-await test("версия сайта и кэша — 1.49.0", async () => {
-  assert(pkg.version === "1.49.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.49\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.50.0", async () => {
+  assert(pkg.version === "1.50.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.50\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round27: " + passed + " проверок пройдено");
