@@ -11343,10 +11343,22 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     return;
   }
   // Обучение новой теме: «/изучи тема» или «выучи тему»
-  const learnMatch = trimmed.match(/^\/?(?:изучи|выучи|изучить|выучить)\s+(.+)$/i);
+  const learnMatch = trimmed.match(/^\/?(?:изучи|выучи|изучить|выучить)\s+([\s\S]+)$/i);
   if (learnMatch) {
     $("#input").value = ""; autoresize();
-    await learnTopicFlow(learnMatch[1]);
+    /* В одном сообщении может быть и одна тема, и список, и фраза
+       «всю школьную программу» — разбираем и учим всё, что написали. */
+    const raw = learnMatch[1].trim();
+    const single = looksLikeUrl(raw) ? [raw] : (isSchoolRequest(raw) ? schoolTopicsFor(raw) : parseLearnTopics(raw));
+    if (single.length > 1) {
+      const r = learnAnything(raw);
+      addAssistantNote(r.added
+        ? `Взяла ${r.added} тем${r.skipped ? ", " + r.skipped + " уже знала" : ""}. Учу по одной в фоне — можно продолжать спрашивать, я не потеряюсь.`
+        : "Всё из этого списка уже выучено — спроси любую тему.");
+      toast(`Учу ${r.added} тем — обучение идёт фоном`, "ok");
+      return;
+    }
+    await learnTopicFlow(raw);
     return;
   }
 
@@ -15494,14 +15506,106 @@ function addAssistantNote(text) {
 
 /* ---------- Самообучение: Искра запоминает темы навсегда ---------- */
 const LEARNED_KEY = "iskra.learned.v1";
+const LEARNED_IDB = "iskra-learned";
+const LEARNED_MAX_TEXT = 6000;   // сколько знаков конспекта держим на одну тему
+
+/* Раньше хранилось ровно 400 последних тем (list.slice(-400)) и 1 500 знаков
+   на тему. Всё, что выучено раньше, молча пропадало — из-за этого «выучи всю
+   программу школы» давало случайные обрывки. Теперь потолка по числу тем нет:
+   держим всё, что помещается, а при переполнении уводим полную копию в
+   IndexedDB и продолжаем работать. */
+let _learnedRaw = null;       // последняя прочитанная строка localStorage
+let _learnedMem = null;       // разобранный список
+let _learnedStore = "local";  // где лежит полная копия: local | idb
+
+function learnedParse(raw) {
+  try {
+    const a = JSON.parse(raw || "[]");
+    if (!Array.isArray(a)) return [];
+    return a.filter(x => x && x.topic && x.text);
+  } catch (e) { return []; }
+}
 
 function learnedList() {
-  try { return JSON.parse(localStorage.getItem(LEARNED_KEY) || "[]"); } catch (e) { return []; }
+  let raw = "";
+  try { raw = localStorage.getItem(LEARNED_KEY) || ""; } catch (e) {}
+  if (raw !== _learnedRaw || !_learnedMem) { _learnedRaw = raw; _learnedMem = learnedParse(raw); }
+  return _learnedMem;
 }
+
 function learnedSave(list) {
-  localStorage.setItem(LEARNED_KEY, JSON.stringify(list.slice(-400)));
+  const clean = (list || []).filter(x => x && x.topic && x.text);
+  _learnedMem = clean;
+  const raw = JSON.stringify(clean);
+  _learnedRaw = raw;
+  try {
+    localStorage.setItem(LEARNED_KEY, raw);
+    _learnedStore = "local";
+  } catch (e) {
+    /* Место в localStorage кончилось: полный список — в IndexedDB,
+       а в localStorage оставляем свежие темы, чтобы сайт открывался быстро. */
+    learnedIdbPut(clean);
+    _learnedStore = "idb";
+    const recent = JSON.stringify(clean.slice(-120));
+    _learnedRaw = recent;
+    try { localStorage.setItem(LEARNED_KEY, recent); } catch (e2) {}
+  }
+  return clean.length;
 }
 function learnedCount() { return learnedList().length; }
+
+/* IndexedDB — необязательное расширенное хранилище. Если браузер его не даёт
+   (или мы в Node без него), всё работает на localStorage, просто объём меньше. */
+function learnedIdbOpen() {
+  return new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === "undefined" || !indexedDB) { resolve(null); return; }
+      const req = indexedDB.open(LEARNED_IDB, 1);
+      req.onupgradeneeded = () => { try { if (!req.result.objectStoreNames.contains("kv")) req.result.createObjectStore("kv"); } catch (e) {} };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+      req.onblocked = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+function learnedIdbPut(items) {
+  learnedIdbOpen().then((db) => {
+    if (!db) return;
+    try {
+      const tx = db.transaction("kv", "readwrite");
+      tx.objectStore("kv").put(items, "all");
+    } catch (e) {}
+  });
+}
+function learnedIdbGet() {
+  return learnedIdbOpen().then((db) => new Promise((resolve) => {
+    if (!db) { resolve([]); return; }
+    try {
+      const req = db.transaction("kv", "readonly").objectStore("kv").get("all");
+      req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+      req.onerror = () => resolve([]);
+    } catch (e) { resolve([]); }
+  }));
+}
+
+/* На старте склеиваем обе копии: если localStorage пришлось урезать,
+   полный список лежит в IndexedDB и возвращается на место. */
+async function learnedBoot() {
+  const local = learnedList().slice();
+  const idb = await learnedIdbGet();
+  if (!idb.length) return local.length;
+  const seen = new Set(local.map(x => String(x.topic || "").toLowerCase().replace(/ё/g, "е").trim()));
+  const merged = local.slice();
+  idb.forEach((x) => {
+    const k = String(x.topic || "").toLowerCase().replace(/ё/g, "е").trim();
+    if (!seen.has(k)) { seen.add(k); merged.push(x); }
+  });
+  if (merged.length !== local.length) {
+    merged.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    learnedSave(merged);
+  }
+  return merged.length;
+}
 
 /* ---------- Общая база: темы, опубликованные владельцем для всех ----------
    Живёт на сервере (Supabase). Читают все, пишет только владелец по паролю.
@@ -15674,9 +15778,16 @@ function learnedFind(topic) {
 function learnedAdd(topic, text, source) {
   const t = String(topic || "").trim();
   if (!t || !text || text.length < 40) return false;
+  const key = t.toLowerCase().replace(/ё/g, "е");
   const list = learnedList();
-  const old = list.findIndex(x => x.topic.toLowerCase() === t.toLowerCase());
-  const item = { id: "l_" + Date.now().toString(36), topic: t, text: String(text).slice(0, 1500), source: source || "", ts: Date.now() };
+  const old = list.findIndex(x => x.topic.toLowerCase().replace(/ё/g, "е") === key);
+  const item = {
+    id: "l_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    topic: t,
+    text: String(text).slice(0, LEARNED_MAX_TEXT),
+    source: source || "",
+    ts: Date.now()
+  };
   if (old >= 0) list[old] = item; else list.push(item);
   learnedSave(list);
   return true;
@@ -15689,7 +15800,8 @@ function learnedAdd(topic, text, source) {
    и чужих персональных данных. Всё хранится локально. */
 
 const LEARN_MAX_PAGE = 200000;     // больше не читаем — страница и так огромная
-const LEARN_MAX_SUMMARY = 4000;    // столько текста кладём в «свои знания»
+const LEARN_MAX_SUMMARY = 6000;    // столько текста кладём в «свои знания»
+const LEARN_MIN_MATERIAL = 80;     // меньше знаков — это не материал, а огрызок
 
 function looksLikeUrl(text) {
   const t = String(text || "").trim();
@@ -15761,19 +15873,170 @@ async function fetchPageText(url) {
   throw new Error(lastErr || "не удалось открыть страницу");
 }
 
-/* Короткий конспект через модель; если модель недоступна — берём начало текста */
+/* Слова темы, по которым проверяем, что материал вообще про неё.
+   Нужны именно для проверки: раньше Искра сохраняла любой ответ модели,
+   даже если он был совсем про другое, — отсюда «выучила вообще не то». */
+function learnWords(text) {
+  const stop = (typeof KB_LINK_STOP !== "undefined") ? KB_LINK_STOP : new Set();
+  return String(text || "").toLowerCase().replace(/ё/g, "е")
+    .split(/[^a-zа-я0-9]+/i)
+    .filter(w => w.length > 3 && !/^\d+$/.test(w) && !stop.has(w));
+}
+
+/* Насколько текст про эту тему. Считаем, сколько значимых слов темы в нём есть,
+   и отдельно — есть ли главное (первое) слово. Одного совпадения мало:
+   «Счёт до двадцати» и статья «Ревущие двадцатые» совпадают по одному слову,
+   и раньше такая статья сохранялась как выученная тема. */
+function learnStem(w) {
+  return String(w || "").slice(0, Math.max(4, String(w || "").length - 2));
+}
+function learnMatch(text, topic) {
+  const words = learnWords(topic);
+  if (!words.length) return { ratio: 1, hit: 0, total: 0, headOk: true };
+  const hay = String(text || "").toLowerCase().replace(/ё/g, "е");
+  let hit = 0;
+  words.forEach((w) => { if (hay.includes(learnStem(w))) hit++; });
+  return { ratio: hit / words.length, hit, total: words.length, headOk: hay.includes(learnStem(words[0])) };
+}
+/* Строгая проверка источника: короткая тема должна совпасть целиком,
+   длинная — минимум на 60 % и обязательно по главному слову. */
+function learnTopicMentioned(text, topic) {
+  const m = learnMatch(text, topic);
+  if (m.total <= 2) return m.ratio === 1;
+  return m.ratio >= 0.6 && m.headOk;
+}
+/* Мягкая проверка конспекта: главное слово должно быть, остальное может
+   пересказываться своими словами. */
+function learnHeadMentioned(text, topic) {
+  return learnMatch(text, topic).headOk;
+}
+
+/* Полная статья из Википедии: сначала ищем название, потом берём весь текст.
+   Раньше брали только краткое описание (одно-два предложения) — из-за этого
+   конспект получался пустым, и его «дописывала» модель, часто не по теме. */
+let _learnNetOk = false;   // хоть один запрос в интернет прошёл — значит сеть есть
+
+/* Один заход в Википедию: поиск → статья → текст.
+   strictQuery — искать ровно по этим словам; exactTitle — брать статью,
+   только если её название совпало с запросом (для «упрощённого» захода). */
+async function wikiAttempt(query, opts) {
+  const o = { title: "", text: "", url: "", via: "" };
+  const options = opts || {};
+  const q = String(query || "").trim();
+  if (!q) return o;
+  let hits = [];
+  try {
+    const u = "https://ru.wikipedia.org/w/api.php?action=query&list=search&srlimit=6&format=json&origin=*&srsearch=" + encodeURIComponent(q);
+    const r = await fetch(u, { signal: AbortSignal.timeout(8000) });
+    if (r && r.ok) _learnNetOk = true;
+    const j = await r.json();
+    hits = (j && j.query && j.query.search) || [];
+  } catch (e) {}
+  let best = null, bestScore = 0;
+  hits.forEach((h) => {
+    const title = String(h.title || "");
+    const snip = String(h.snippet || "").replace(/<[^>]+>/g, " ");
+    // название статьи — самый надёжный признак: «Дробь» про дроби, а не про ёжика
+    const byTitle = learnMatch(title, q);
+    const byBoth = learnMatch(title + " " + snip, q);
+    let score = 0;
+    if (byTitle.ratio === 1) score = 5;
+    else if (byTitle.ratio >= 0.6 && byTitle.headOk) score = 4;
+    else if (byBoth.ratio === 1) score = 3;
+    else if (byBoth.ratio >= 0.6 && byBoth.headOk) score = 1;
+    if (score > bestScore) { bestScore = score; best = h; }
+  });
+  let title = bestScore >= 3 ? String(best.title) : "";
+  /* Поиск не дал близкого названия — просим подсказку точного названия. */
+  if (!title && !options.exactTitle) {
+    try {
+      const u = "https://ru.wikipedia.org/w/api.php?action=opensearch&limit=3&format=json&origin=*&search=" + encodeURIComponent(q);
+      const r = await fetch(u, { signal: AbortSignal.timeout(6000) });
+      const j = await r.json();
+      if (Array.isArray(j) && Array.isArray(j[1])) {
+        const exact = (j[1] || []).find((t) => learnMatch(t, q).ratio === 1);
+        if (exact) title = String(exact);
+      }
+    } catch (e) {}
+  }
+  if (!title) return o;
+  if (options.exactTitle) {
+    const want = learnTopicKey(q);
+    if (learnTopicKey(title) !== want) return o;
+  }
+  // полный текст статьи
+  try {
+    const u = "https://ru.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&exsectionformat=plain&redirects=1&format=json&origin=*&titles=" + encodeURIComponent(title);
+    const r = await fetch(u, { signal: AbortSignal.timeout(14000) });
+    if (r && r.ok) _learnNetOk = true;
+    const j = await r.json();
+    const pages = (j && j.query && j.query.pages) || {};
+    for (const k of Object.keys(pages)) {
+      const p = pages[k];
+      if (p && p.extract && String(p.extract).length > 200) {
+        o.title = p.title || title;
+        o.text = String(p.extract).slice(0, 40000);
+        o.url = "https://ru.wikipedia.org/wiki/" + encodeURIComponent(p.title || title);
+        o.via = "полная статья Википедии";
+        break;
+      }
+    }
+  } catch (e) {}
+  if (!o.text) {
+    try {
+      const r = await fetch("https://ru.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title), { signal: AbortSignal.timeout(8000) });
+      if (r && r.ok) {
+        _learnNetOk = true;
+        const j = await r.json();
+        if (j && j.extract && j.extract.length > 60) {
+          o.title = j.title || title;
+          o.text = String(j.extract);
+          o.url = (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || ("https://ru.wikipedia.org/wiki/" + encodeURIComponent(j.title || title));
+          o.via = "краткое описание Википедии";
+        }
+      }
+    } catch (e) {}
+  }
+  return o;
+}
+
+/* Материал по теме: сначала точный поиск, потом — по главному слову темы,
+   но только если так называется сама статья («Счёт до двадцати» → «Счёт»).
+   Любой найденный текст проверяется на тему, поэтому случайная статья
+   («Ревущие двадцатые») не сохранится. */
+async function wikiLearnMaterial(topic) {
+  const q = String(topic || "").trim();
+  const empty = { title: "", text: "", url: "", via: "" };
+  if (!q) return empty;
+  const first = await wikiAttempt(q, {});
+  if (first.text && learnTopicMentioned(first.text.slice(0, 1500), q)) return first;
+  const words = learnWords(q);
+  if (words.length > 1) {
+    const head = words[0];
+    const simple = await wikiAttempt(head, { exactTitle: true });
+    if (simple.text && learnHeadMentioned(simple.text.slice(0, 1500), head)) {
+      simple.via = (simple.via || "статья Википедии") + " по слову «" + head + "»";
+      simple.matched = head;   // проверять будем по этому слову, а не по всей фразе
+      return simple;
+    }
+  }
+  return first.text && learnTopicMentioned(first.text.slice(0, 1500), q) ? first : empty;
+}
+
+/* Короткий конспект через модель — только по реальному материалу.
+   Если материала нет или модель молчит, честно возвращаем "", а не выдумку. */
 async function aiLearnSummary(title, sourceText) {
   const src = String(sourceText || "").slice(0, 12000);
+  if (src.length < LEARN_MIN_MATERIAL) return "";
   const body = {
     model: settings.model,
     messages: [
-      { role: "system", content: "Ты делаешь конспект для базы знаний. По материалу напиши по-русски 4–7 коротких предложений: только факты из текста, без воды, без списков, без markdown. Если материала мало — напиши, что удалось понять. Не выдумывай." },
+      { role: "system", content: "Ты делаешь конспект для базы знаний. По материалу напиши по-русски 4–7 коротких предложений: только факты из текста, без воды, без списков, без markdown. Если в тексте нет ответа по теме — ответь ровно НЕТ ДАННЫХ. Не выдумывай." },
       { role: "user", content: (title ? "Тема: " + title + "\n\n" : "") + src }
     ],
-    stream: true, temperature: 0.2, max_tokens: 420
+    stream: true, temperature: 0.2, max_tokens: 480
   };
   let acc = "";
-  let payload = null;
   try {
     await Promise.race([
       streamChat(body, (d) => { acc += d; }),
@@ -15781,10 +16044,85 @@ async function aiLearnSummary(title, sourceText) {
     ]);
   } catch (e) { acc = ""; }
   const clean = String(acc || "").replace(/^```[a-z]*\n?|```$/g, "").trim();
-  if (clean.length >= 80) return clean.slice(0, LEARN_MAX_SUMMARY);
-  // запасной вариант: сами режем текст на абзацы
-  const fallback = String(sourceText || "").split(/\n+/).map(x => x.trim()).filter(x => x.length > 40).join(" ").slice(0, 1200);
-  return fallback;
+  if (/нет данных/i.test(clean.slice(0, 40))) return "";
+  if (clean.length >= LEARN_MIN_MATERIAL) return clean.slice(0, LEARN_MAX_SUMMARY);
+  return "";
+}
+
+/* Конспект собираем в таком порядке: модель по тексту статьи → сами режем
+   статью на абзацы. В любом случае в основе — настоящий текст, не фантазия. */
+async function summarizeMaterial(title, material) {
+  const src = String(material || "").trim();
+  if (!src) return "";
+  if (src.length < 1200) return src.slice(0, 1200);
+  /* Модель зовём, только если у человека есть свой ключ. Без ключа бесплатные
+     движки не выдержат сотни тем подряд — тогда конспект режем сами из текста. */
+  if (settings && settings.apiKey) {
+    const ai = await aiLearnSummary(title, src);
+    if (ai && learnTopicMentioned(ai, title)) return ai;
+  }
+  const parts = src.split(/\n+/).map(x => x.trim()).filter(x => x.length > 60);
+  let local = (parts.slice(0, 3).join(" ") || src).replace(/\s+/g, " ").trim();
+  if (local.length > 1200) {
+    local = local.slice(0, 1200);
+    const cut = Math.max(local.lastIndexOf(". "), local.lastIndexOf("! "), local.lastIndexOf("? "));
+    if (cut > 600) local = local.slice(0, cut + 1);
+  }
+  return local;
+}
+
+/* Свои знания модели — отдельным, честно помеченным путём.
+   Используется только когда ни базы, ни интернета нет. */
+async function aiOwnKnowledge(topic) {
+  const body = {
+    model: settings.model,
+    messages: [
+      { role: "system", content: "Ты пишешь короткую справку по теме. Дай 4–6 предложений проверенных фактов: определения, правила, примеры. Без выдумок. Если темы не знаешь — ответь ровно НЕ ЗНАЮ. Без markdown." },
+      { role: "user", content: String(topic || "").slice(0, 200) }
+    ],
+    stream: true, temperature: 0.1, max_tokens: 420
+  };
+  let acc = "";
+  try {
+    await Promise.race([
+      streamChat(body, (d) => { acc += d; }),
+      wait(15000).then(() => { throw new Error("timeout"); })
+    ]);
+  } catch (e) { acc = ""; }
+  const clean = String(acc || "").replace(/^```[a-z]*\n?|```$/g, "").trim();
+  if (/не знаю/i.test(clean.slice(0, 30))) return "";
+  if (clean.length < 120) return "";
+  if (!learnTopicMentioned(clean, topic)) return "";
+  return clean.slice(0, 1500);
+}
+
+/* Точное совпадение во встроенной базе: 17 тысяч проверенных карточек.
+   Это самый быстрый и самый надёжный материал — берём его раньше интернета. */
+let _kbExactIndex = null;
+function kbExactIndex() {
+  if (_kbExactIndex) return _kbExactIndex;
+  const exact = new Map();
+  const list = [];
+  kbBuiltinPack().forEach((it) => {
+    const t = String(it.title || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+    if (!t) return;
+    if (!exact.has(t)) exact.set(t, it);
+    list.push({ t, it });
+  });
+  _kbExactIndex = { exact, list };
+  return _kbExactIndex;
+}
+function kbExactTopic(topic) {
+  const n = String(topic || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+  if (n.length < 3) return null;
+  const idx = kbExactIndex();
+  if (idx.exact.has(n)) return idx.exact.get(n);
+  if (n.length < 5) return null;
+  let near = null;
+  for (const row of idx.list) {
+    if (row.t.startsWith(n + " ") || row.t.startsWith(n + ":") || row.t.startsWith(n + ",")) { near = row.it; break; }
+  }
+  return near;
 }
 
 /* Общее ядро: разбираемся, тема это или ссылка, и готовим конспект */
@@ -15802,26 +16140,69 @@ async function learnCore(raw) {
     catch (e) { return { ok: false, msg: "Не получилось прочитать страницу: " + (e.message || "нет доступа") + ". Попробуй другую ссылку или назови тему словом." }; }
     const host = (() => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return "сайт"; } })();
     const firstLine = page.text.split(/\n/).map(x => x.trim()).find(x => x.length > 12 && x.length < 120) || host;
-    const summary = await aiLearnSummary(firstLine, page.text);
+    const summary = await summarizeMaterial(firstLine, page.text);
     if (!summary || summary.length < 60) return { ok: false, msg: "На странице не нашлось понятного текста — попробуй другую ссылку." };
     return { ok: true, title: firstLine.slice(0, 90), text: summary, source: url, note: "прочитала страницу " + host + " (" + page.via + ")" };
   }
 
-  // тема: сначала Википедия, потом свои знания модели
-  let snippets = [], sources = [];
+  /* Тема — без ссылки. Порядок проверки:
+     1) точное совпадение в своей базе — мгновенно и проверено,
+     2) полная статья Википедии — самый подробный материал,
+     3) похожая карточка из своей базы,
+     4) короткий поиск Википедии,
+     5) знания модели — с честной пометкой «без источника». */
+  const exact = kbExactTopic(input);
+  const exactIsSame = exact && learnTopicKey(exact.title) === learnTopicKey(input);
+  if (exactIsSame) {
+    // заголовок ставим в начало: карточка из базы самодостаточна, а поиск
+    // по выученному находит её и по названию, и по тексту
+    const text = (String(exact.text).toLowerCase().includes(String(exact.title).toLowerCase().slice(0, 12)))
+      ? exact.text
+      : exact.title + " — " + exact.text;
+    return { ok: true, title: exact.title, text, source: "", note: "из встроенной базы, проверенный текст", trusted: true };
+  }
+
+  const mat = await wikiLearnMaterial(input);
+  const matOk = !!mat.text && (mat.matched
+    ? learnHeadMentioned(mat.text.slice(0, 1500), mat.matched)
+    : learnTopicMentioned(mat.text.slice(0, 1500), input));
+  if (matOk) {
+    const text = await summarizeMaterial(mat.title || input, mat.text);
+    if (text.length >= LEARN_MIN_MATERIAL && learnHeadMentioned(text, input)) {
+      // заголовок статьи бывает про другое («Статья», «Список»): тогда темой
+      // остаётся то, что написал человек — так карточку потом легко найти
+      const title = learnTopicMentioned(mat.title || "", input) ? mat.title : input;
+      return {
+        ok: true, title, text: text.slice(0, LEARN_MAX_SUMMARY),
+        source: mat.url, note: mat.via + " — материал по теме", trusted: true
+      };
+    }
+  }
+
+  // интернета нет или статьи не нашлось — берём похожую карточку своей базы
+  if (exact && learnTopicMentioned(exact.title, input)) {
+    const text = String(exact.text).toLowerCase().includes(String(exact.title).toLowerCase().slice(0, 12))
+      ? exact.text
+      : exact.title + " — " + exact.text;
+    return { ok: true, title: exact.title, text, source: "", note: "похожая карточка из встроенной базы", trusted: true };
+  }
+
+  // короткий поиск: у части статей нет полного текста, но есть описание
   try {
     const r = await wikiSearch(input);
-    snippets = r.snippets || []; sources = r.sources || [];
+    const snippets = r.snippets || [];
+    const text = snippets.map(x => x.title + ": " + x.text).join("\n\n").trim();
+    if (text.length >= LEARN_MIN_MATERIAL && learnTopicMentioned(text, input)) {
+      return { ok: true, title: snippets[0].title || input, text: text.slice(0, LEARN_MAX_SUMMARY), source: (r.sources && r.sources[0] && r.sources[0].url) || "", note: "нашла в Википедии", trusted: true };
+    }
   } catch (e) {}
-  let text = snippets.map(x => x.title + ": " + x.text).join("\n\n").trim();
-  if (text.length >= 120) {
-    return { ok: true, title: snippets[0].title || input, text: text.slice(0, LEARN_MAX_SUMMARY), source: sources[0]?.url || "", note: "нашла в Википедии" };
-  }
-  const own = await aiLearnSummary(input, "");
-  if (own && own.length >= 60) return { ok: true, title: input, text: own, source: "", note: "по своим знаниям, без интернета" };
-  const known = kbSearch(input, 1)[0];
-  if (known) return { ok: true, title: known.title, text: known.text, source: "", note: "уже было во встроенной базе" };
-  return { ok: false, msg: "Не нашла материал по теме «" + input + "». Напиши тему точнее или дай ссылку." };
+
+  /* Свои знания модели — помечаем честно. Без сети и без ключа не зовём:
+     это всё равно не сработает, а ждать по 15 секунд на каждой теме глупо. */
+  const own = (_learnNetOk || (settings && settings.apiKey)) ? await aiOwnKnowledge(input) : "";
+  if (own) return { ok: true, title: input, text: own, source: "", note: "по памяти модели, без источника — проверь", trusted: false };
+
+  return { ok: false, msg: "Не нашла материал по теме «" + input + "». Проверь название — или задай вопрос словами, я поищу иначе." };
 }
 
 async function learnAndSave(raw) {
@@ -15830,6 +16211,455 @@ async function learnAndSave(raw) {
   if (!learnedAdd(r.title, r.text, r.source)) return { ok: false, msg: "Слишком мало материала, чтобы запомнить. Попробуй другую ссылку." };
   return r;
 }
+
+/* =====================================================================
+   ШКОЛЬНАЯ ПРОГРАММА И ОБУЧЕНИЕ «ВСЁ, ЧТО НАПИШУТ»
+
+   Раньше кнопка «Школьная программа» учила 60 случайных тем из короткого
+   списка: часть из них не входила в программу, часть находилась в интернете
+   не по теме, а память обрезалась до 400 карточек. Из-за этого выходило
+   «выучила вообще не то».
+
+   Теперь так:
+   • программа школы — настоящий список по предметам и классам (ниже);
+   • можно написать что угодно: слово, список, целую программу текстом —
+     Искра разберёт это на темы и выучит все по очереди;
+   • ссылки не нужны: материал ищется сам (своя база, Википедия, модель);
+   • очередь живёт в браузере, продолжается после перезагрузки;
+   • потолка по числу выученных тем нет.
+   ===================================================================== */
+
+/* Программа школы: предмет → класс → темы. Темы настоящие, по учебникам. */
+const SCHOOL_CURRICULUM = {
+  "Математика": {
+    "1": ["Счёт до двадцати", "Сложение и вычитание в пределах двадцати", "Задача в одно действие", "Сравнение чисел"],
+    "2": ["Сложение и вычитание в пределах ста", "Умножение и деление", "Порядок действий", "Задачи на нахождение неизвестного"],
+    "3": ["Таблица умножения", "Деление с остатком", "Площадь и периметр прямоугольника", "Задачи на цену и количество"],
+    "4": ["Многозначные числа", "Скорость, время, расстояние", "Дроби в начальной школе", "Уравнение и его корень"],
+    "5": ["Натуральные числа", "Обыкновенные дроби", "Десятичные дроби", "Проценты", "Уравнения", "Площади и объёмы", "Среднее арифметическое"],
+    "6": ["Делимость чисел", "Наибольший общий делитель и наименьшее общее кратное", "Отрицательные числа", "Рациональные числа", "Пропорции", "Масштаб", "Координатная плоскость"],
+    "7": ["Линейное уравнение", "Линейная функция", "Степень с натуральным показателем", "Одночлены и многочлены", "Формулы сокращённого умножения", "Системы линейных уравнений", "Статистика и вероятность"],
+    "8": ["Квадратные корни", "Квадратное уравнение", "Теорема Виета", "Дробно-рациональные уравнения", "Неравенства", "Квадратичная функция"],
+    "9": ["Функции и их графики", "Арифметическая прогрессия", "Геометрическая прогрессия", "Элементы комбинаторики", "Системы уравнений", "Неравенства с двумя переменными"],
+    "10": ["Предел функции", "Производная", "Применение производной", "Тригонометрические функции", "Логарифмы", "Показательная функция"],
+    "11": ["Первообразная и интеграл", "Вероятность и статистика", "Уравнения и неравенства с параметром", "Повторение курса алгебры"]
+  },
+  "Геометрия": {
+    "5": ["Геометрические фигуры", "Углы и их измерение", "Прямоугольник и квадрат"],
+    "6": ["Окружность и круг", "Симметрия фигур", "Координаты на плоскости"],
+    "7": ["Начальные геометрические сведения", "Признаки равенства треугольников", "Равнобедренный треугольник", "Параллельные прямые", "Сумма углов треугольника"],
+    "8": ["Четырёхугольники", "Параллелограмм и трапеция", "Площадь фигур", "Теорема Пифагора", "Подобие треугольников", "Теорема синусов и косинусов"],
+    "9": ["Векторы", "Метод координат", "Длина окружности и площадь круга", "Движения фигур"],
+    "10": ["Аксиомы стереометрии", "Параллельность в пространстве", "Перпендикулярность прямых и плоскостей", "Многогранники"],
+    "11": ["Тела вращения", "Объёмы тел", "Площадь поверхности", "Векторы в пространстве"]
+  },
+  "Русский язык": {
+    "1": ["Звуки и буквы", "Слово и слог", "Ударение", "Заглавная буква"],
+    "2": ["Жи-ши, ча-ща, чу-щу", "Парные согласные", "Безударные гласные", "Части речи"],
+    "3": ["Состав слова", "Части речи", "Предложение", "Правописание приставок"],
+    "4": ["Склонение существительных", "Спряжение глаголов", "Падежи", "Однородные члены предложения"],
+    "5": ["Фонетика", "Морфемика", "Лексика", "Синтаксис и пунктуация", "Имя существительное", "Имя прилагательное", "Глагол"],
+    "6": ["Причастие", "Деепричастие", "Имя числительное", "Местоимение", "Словообразование", "Орфография"],
+    "7": ["Наречие", "Предлог", "Союз", "Частица", "Причастный оборот", "Деепричастный оборот", "Пунктуация"],
+    "8": ["Односоставные предложения", "Однородные члены", "Обособленные члены", "Вводные слова", "Прямая речь"],
+    "9": ["Сложносочинённое предложение", "Сложноподчинённое предложение", "Бессоюзное сложное предложение", "Сжатое изложение", "Сочинение-рассуждение"],
+    "10": ["Лексика и фразеология", "Морфология", "Синтаксис", "Стили речи"],
+    "11": ["Нормы литературного языка", "Средства художественной выразительности", "Текст и его строение", "Подготовка к экзамену по русскому"]
+  },
+  "Литература": {
+    "1": ["Русские народные сказки", "Стихи о природе", "Рассказы о детях"],
+    "2": ["Сказки Пушкина", "Басни", "Загадки и пословицы"],
+    "3": ["Басни Крылова", "Сказки Андерсена", "Рассказы о животных"],
+    "4": ["Летописи", "Былины", "Сказки народов мира"],
+    "5": ["Русские народные сказки", "Басни Крылова", "Сказки Пушкина", "Муму", "Кавказский пленник"],
+    "6": ["Дубровский", "Левша", "Уроки французского", "Мифы Древней Греции"],
+    "7": ["Тарас Бульба", "Станционный смотритель", "Песня про купца Калашникова"],
+    "8": ["Капитанская дочка", "Ревизор", "Мцыри", "Шинель"],
+    "9": ["Слово о полку Игореве", "Горе от ума", "Евгений Онегин", "Герой нашего времени", "Мёртвые души"],
+    "10": ["Война и мир", "Преступление и наказание", "Отцы и дети", "Обломов", "Гроза"],
+    "11": ["Мастер и Маргарита", "Тихий Дон", "Серебряный век русской поэзии", "Поэзия двадцатого века", "Деревенская проза"]
+  },
+  "История": {
+    "5": ["Первобытное общество", "Древний Египет", "Древняя Греция", "Древний Рим"],
+    "6": ["Средние века", "Крестовые походы", "Древняя Русь", "Монгольское нашествие"],
+    "7": ["Новое время", "Реформация", "Иван Грозный", "Смутное время"],
+    "8": ["Пётр Первый", "Екатерина Вторая", "Великая французская революция", "Промышленный переворот"],
+    "9": ["Отечественная война 1812 года", "Отмена крепостного права", "Реформы Александра Второго", "Первая мировая война"],
+    "10": ["Революция 1917 года", "Гражданская война", "Индустриализация", "Великая Отечественная война"],
+    "11": ["Холодная война", "Оттепель", "Перестройка", "Распад СССР", "Современная Россия"]
+  },
+  "Обществознание": {
+    "6": ["Общество и человек", "Деятельность человека", "Экономика семьи", "Права ребёнка"],
+    "7": ["Право и его роль в жизни", "Экономика", "Социальные нормы"],
+    "8": ["Рыночная экономика", "Собственность", "Социальные группы", "Межличностные отношения"],
+    "9": ["Политика и власть", "Государство и его функции", "Конституция России", "Правонарушения и ответственность"],
+    "10": ["Человек и общество", "Познание", "Духовная культура", "Экономика как наука"],
+    "11": ["Рыночный механизм", "Государство в экономике", "Политическая система", "Право и правоотношения"]
+  },
+  "География": {
+    "5": ["Земля как планета", "Литосфера", "Атмосфера", "Гидросфера", "Биосфера"],
+    "6": ["Географическая карта", "Масштаб и координаты", "Погода и климат", "Природные зоны"],
+    "7": ["Материки и океаны", "Климатические пояса", "Население Земли", "Природные ресурсы"],
+    "8": ["Географическое положение России", "Рельеф России", "Климат России", "Внутренние воды России"],
+    "9": ["Хозяйство России", "Население России", "Топливно-энергетический комплекс", "Транспорт России"],
+    "10": ["Мировое хозяйство", "Регионы мира", "Глобальные проблемы человечества"],
+    "11": ["Политическая карта мира", "Международное разделение труда", "Урбанизация"]
+  },
+  "Биология": {
+    "5": ["Царства живой природы", "Клетка", "Бактерии", "Грибы"],
+    "6": ["Растения", "Органы растений", "Фотосинтез", "Размножение растений"],
+    "7": ["Животные", "Позвоночные и беспозвоночные", "Поведение животных"],
+    "8": ["Человек и его здоровье", "Кровообращение", "Дыхание", "Пищеварение", "Нервная система"],
+    "9": ["Генетика", "Наследственность", "Обмен веществ", "Клеточное строение организма"],
+    "10": ["Эволюция", "Естественный отбор", "Экология", "Биосфера"],
+    "11": ["Селекция", "Биотехнология", "Экосистемы", "Охрана природы"]
+  },
+  "Физика": {
+    "7": ["Механическое движение", "Плотность вещества", "Сила", "Давление", "Архимедова сила", "Работа и мощность"],
+    "8": ["Тепловые явления", "Количество теплоты", "Электрический ток", "Закон Ома", "Магнитное поле", "Оптика"],
+    "9": ["Законы Ньютона", "Импульс тела", "Механические колебания", "Электромагнитное поле", "Строение атома"],
+    "10": ["Молекулярно-кинетическая теория", "Термодинамика", "Электростатика", "Постоянный ток"],
+    "11": ["Электромагнитная индукция", "Колебания и волны", "Атомная физика", "Ядерная физика"]
+  },
+  "Химия": {
+    "8": ["Атом и молекула", "Периодический закон", "Химическая связь", "Кислоты и основания", "Соли", "Реакции ионного обмена"],
+    "9": ["Окислительно-восстановительные реакции", "Моль и молярная масса", "Металлы", "Неметаллы", "Электролиз"],
+    "10": ["Органические вещества", "Углеводороды", "Алканы и алкены", "Спирты"],
+    "11": ["Карбоновые кислоты", "Полимеры", "Химия в жизни человека", "Химическое производство"]
+  },
+  "Информатика": {
+    "7": ["Информация и её измерение", "Файлы и папки", "Алгоритмы"],
+    "8": ["Основы программирования", "Условия и циклы", "Массивы"],
+    "9": ["Обработка числовых данных", "Алгоритмы сортировки", "Моделирование"],
+    "10": ["Базы данных", "Сети и интернет", "Основы логики"],
+    "11": ["Программирование на Python", "Веб-технологии", "Информационная безопасность"]
+  },
+  "Английский язык": {
+    "2": ["Алфавит", "Числа до двадцати", "Цвета"],
+    "3": ["Глагол to be", "Множественное число", "Притяжательные местоимения"],
+    "4": ["Present Simple", "Артикли", "Предлоги места"],
+    "5": ["Present Continuous", "Past Simple", "Степени сравнения прилагательных"],
+    "6": ["Present Perfect", "Модальные глаголы", "Исчисляемые и неисчисляемые существительные"],
+    "7": ["Past Continuous", "Условные предложения", "Фразовые глаголы"],
+    "8": ["Пассивный залог", "Косвенная речь", "Времена группы Perfect"],
+    "9": ["Сложное дополнение", "Причастия", "Словообразование в английском"],
+    "10": ["Правила согласования времён", "Инфинитив и герундий", "Формальное письмо на английском"],
+    "11": ["Эссе на английском", "Идиомы английского языка", "Академический английский"]
+  },
+  "Окружающий мир": {
+    "1": ["Времена года", "Живая и неживая природа", "Семья и дом"],
+    "2": ["Растения и животные", "Тело человека", "Родной край"],
+    "3": ["Правила дорожного движения", "Солнечная система", "Полезные ископаемые"],
+    "4": ["Природные зоны России", "История Отечества", "Организм человека"]
+  },
+  "Основы безопасности": {
+    "5": ["Безопасность в быту", "Пожарная безопасность", "Безопасность на дороге"],
+    "6": ["Первая помощь", "Безопасность на воде", "Правила поведения при ЧС"],
+    "7": ["Безопасность в интернете", "Ориентирование на местности", "Здоровый образ жизни"],
+    "8": ["Правила дорожного движения", "Безопасность в толпе", "Первая помощь при кровотечении"]
+  }
+};
+
+/* Сколько тем в каждом предмете и во всей программе — считаем по факту. */
+const SCHOOL_SUBJECTS = Object.keys(SCHOOL_CURRICULUM);
+
+function schoolSubjectTopics(subject, grades) {
+  const book = SCHOOL_CURRICULUM[subject] || {};
+  const out = [];
+  Object.keys(book).forEach((g) => {
+    if (grades && grades.length && !grades.includes(Number(g))) return;
+    book[g].forEach((t) => out.push(t));
+  });
+  return out;
+}
+
+/* Все темы программы без повторов: «Проценты» из 5 и 6 класса — одна тема. */
+function schoolTopicsFor(query) {
+  const q = String(query || "").toLowerCase().replace(/ё/g, "е");
+  const grades = parseSchoolGrades(q);
+  let subjects = SCHOOL_SUBJECTS.filter((s) => q.includes(s.toLowerCase().slice(0, 4)));
+  // «математика» в быту часто значит и алгебру с геометрией — не сужаем
+  if (!subjects.length) subjects = SCHOOL_SUBJECTS.slice();
+  const seen = new Set();
+  const out = [];
+  subjects.forEach((s) => {
+    schoolSubjectTopics(s, grades).forEach((t) => {
+      const k = learnTopicKey(t);
+      if (!k || seen.has(k)) return;
+      seen.add(k);
+      out.push(t);
+    });
+  });
+  return out;
+}
+
+function parseSchoolGrades(q) {
+  const out = new Set();
+  const text = String(q || "");
+  // «5-9 класс», «10–11»
+  const ranges = text.match(/(\d{1,2})\s*[-–—]\s*(\d{1,2})/g) || [];
+  ranges.forEach((r) => {
+    const [a, b] = r.split(/[-–—]/).map((x) => Number(x.trim()));
+    if (!a || !b || b < a) return;
+    for (let g = a; g <= b && g <= 11; g++) out.add(g);
+  });
+  // «7 класс», «9 кл»
+  const singles = text.match(/(\d{1,2})\s*(?:класс|кл\.?\b)/g) || [];
+  singles.forEach((s) => {
+    const g = Number(s.replace(/[^\d]/g, ""));
+    if (g >= 1 && g <= 11) out.add(g);
+  });
+  return [...out].sort((a, b) => a - b);
+}
+
+/* Это просьба выучить программу, а не отдельную тему? */
+function isSchoolRequest(text) {
+  const t = String(text || "").toLowerCase().replace(/ё/g, "е");
+  if (!t) return false;
+  if (/(школ|учебн[а-я]*\s+программ|программ[а-я]*\s+(школ|обучен|класс))/.test(t)) return true;
+  if (/(^|\s)программа(\s|$)/.test(t) && /(класс|предмет|урок)/.test(t)) return true;
+  if (/(все|всю|весь)\s+(класс|программ)/.test(t)) return true;
+  // «выучи все темы по физике» — это тоже программа, только по одному предмету
+  if (/(все|всю|весь|всё)\s+(темы|предмет)/.test(t) &&
+      SCHOOL_SUBJECTS.some((s) => t.includes(s.toLowerCase().slice(0, 4)))) return true;
+  return false;
+}
+
+/* Разбор любого текста на темы: строки, списки через запятую, нумерация.
+   Именно это позволяет написать «выучи: дроби, проценты, теорема Виета»
+   или вставить целую программу и не думать о ссылках. */
+function learnTopicKey(s) {
+  return String(s || "").toLowerCase().replace(/ё/g, "е")
+    .replace(/[«»"'`]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/[.;,]+$/, "")
+    .trim();
+}
+
+const LEARN_TOPIC_MAXLEN = 160;   // тема длиннее — это уже не тема, а абзац
+
+function parseLearnTopics(raw) {
+  const text = String(raw || "").replace(/\r/g, "");
+  if (!text.trim()) return [];
+  const out = [];
+  const seen = new Set();
+  const push = (s) => {
+    let t = String(s || "").trim();
+    t = t.replace(/^[\s\-–—•·*+]+/, "");
+    t = t.replace(/^\d{1,3}[).:]\s*/, "");
+    t = t.replace(/^#+\s*/, "");
+    t = t.replace(/^(выучи|изучи|научи|выучить|изучить|научить)\s*[:\-]?\s*/i, "");
+    t = t.replace(/\s+/g, " ").replace(/[;,.]+$/, "").trim();
+    if (t.length < 2) return;
+    if (/^(и|или|а|но|это|все|всё|темы|список)$/i.test(t)) return;
+    if (t.length > LEARN_TOPIC_MAXLEN) {
+      // абзац: режем на фразы по точкам, чтобы не терять хвост
+      t.replace(/([.!?])\s+/g, "$1\n").split("\n").forEach((part) => push(part));
+      return;
+    }
+    const k = learnTopicKey(t);
+    if (!k || seen.has(k)) return;
+    seen.add(k);
+    out.push(t);
+  };
+  text.split(/\n+/).forEach((lineRaw) => {
+    const line = lineRaw.trim();
+    if (!line) return;
+    const isListed = /[;]/.test(line) || (/,/.test(line) && !/[.!?]\s/.test(line) && line.length <= 400);
+    if (isListed) { line.split(/[;,]/).forEach(push); return; }
+    push(line);
+  });
+  return out;
+}
+
+/* ---------- Очередь обучения: живёт в браузере и не боится перезагрузки ---------- */
+const LEARN_Q_KEY = "iskra.learnq.v1";
+const LEARN_Q_HARD = 20000;   // страховка от случайной вставки мегабайта текста
+let _learnQ = null;
+let _learnTimer = null;
+let _learnBusy = false;
+
+function learnQueueLoad() {
+  if (_learnQ) return _learnQ;
+  try {
+    const o = JSON.parse(localStorage.getItem(LEARN_Q_KEY) || "null");
+    if (o && Array.isArray(o.items)) _learnQ = o;
+  } catch (e) {}
+  if (!_learnQ) _learnQ = { items: [], paused: false, at: 0, label: "" };
+  return _learnQ;
+}
+function learnQueueSave() {
+  const q = learnQueueLoad();
+  q.at = Date.now();
+  try { localStorage.setItem(LEARN_Q_KEY, JSON.stringify(q)); } catch (e) {}
+}
+function learnQueueStats(items) {
+  const list = items || learnQueueLoad().items;
+  const st = { total: list.length, done: 0, fail: 0, queued: 0, work: 0 };
+  list.forEach((x) => {
+    if (x.state === "done") st.done++;
+    else if (x.state === "fail") st.fail++;
+    else if (x.state === "work") st.work++;
+    else st.queued++;
+  });
+  return st;
+}
+function learnQueueAdd(topics) {
+  const q = learnQueueLoad();
+  // новый набор — старый список закрытых тем не мешает
+  if (q.items.length && q.items.every((x) => x.state === "done" || x.state === "fail")) q.items = [];
+  const known = new Set(learnedList().map((x) => learnTopicKey(x.topic)));
+  q.items.forEach((x) => known.add(learnTopicKey(x.topic)));
+  const seen = new Set();
+  let added = 0, skipped = 0;
+  (topics || []).forEach((t) => {
+    const topic = String(t || "").trim();
+    const k = learnTopicKey(topic);
+    if (!k || seen.has(k) || known.has(k)) { skipped++; return; }
+    if (q.items.length >= LEARN_Q_HARD) { skipped++; return; }
+    seen.add(k);
+    q.items.push({ topic, state: "queued", tries: 0, err: "" });
+    added++;
+  });
+  q.paused = false;
+  learnQueueSave();
+  return { added, skipped };
+}
+
+function learnQueueRenderStatus() {
+  const el = $("#learnQueueInfo");
+  if (!el) return;
+  const q = learnQueueLoad();
+  const st = learnQueueStats();
+  if (!st.total) { el.textContent = ""; return; }
+  const parts = [];
+  if (st.queued || st.work) parts.push("в очереди " + (st.queued + st.work));
+  parts.push("выучено " + st.done + " из " + st.total);
+  if (st.fail) parts.push("не нашла материал: " + st.fail);
+  if (q.paused) parts.push("остановлено");
+  el.textContent = parts.join(" · ");
+  el.className = "learn-status " + (q.paused ? "bad" : (st.queued ? "" : "ok"));
+}
+
+async function learnQueueTick() {
+  const q = learnQueueLoad();
+  if (q.paused || _learnBusy) return;
+  const item = q.items.find((x) => x.state === "queued");
+  if (!item) { learnQueueRenderStatus(); return; }
+  _learnBusy = true;
+  item.state = "work";
+  item.tries = (item.tries || 0) + 1;
+  item.at = Date.now();
+  learnQueueSave();
+  let ok = false, msg = "";
+  try {
+    const r = await learnAndSave(item.topic);
+    ok = !!r.ok;
+    msg = r.ok ? "" : (r.msg || "");
+  } catch (e) {
+    msg = (e && e.message) || "ошибка";
+  }
+  item.state = ok ? "done" : (item.tries >= 2 ? "fail" : "queued");
+  item.err = ok ? "" : msg;
+  _learnBusy = false;
+  learnQueueSave();
+  learnQueueUiRefresh();
+  const st = learnQueueStats();
+  if (!q.paused && (st.queued || st.work)) learnQueueSchedule(400);
+  else if (!st.queued && !st.work) learnQueueFinishText();
+  return ok;
+}
+function learnQueueSchedule(ms) {
+  clearTimeout(_learnTimer);
+  _learnTimer = setTimeout(() => { learnQueueTick().catch(() => {}); }, Math.max(50, ms || 400));
+}
+
+/* Обновление картинки. Полная перерисовка панели на каждой теме — дорого
+   (в базе 17 тысяч карточек, а тем в программе сотни), поэтому перерисовываем
+   не чаще раза в полторы секунды и только когда окно «Мои знания» открыто. */
+let _learnUiAt = 0;
+function learnQueueUiRefresh() {
+  learnQueueRenderStatus();
+  const modal = $("#knowModal");
+  const open = !!(modal && modal.classList.contains("open"));
+  if (open) {
+    if (Date.now() - _learnUiAt > 1500) {
+      _learnUiAt = Date.now();
+      try { renderKnowledgePanelSafe(); } catch (e) {}
+    }
+  } else {
+    try { updateKnowledgeChip(); } catch (e) {}
+  }
+}
+function learnQueueFinishText() {
+  const st = learnQueueStats();
+  if (!st.total) return;
+  setLearnStatus("Готово: выучено " + st.done + " из " + st.total + (st.fail ? ", без материала: " + st.fail : "") + ". Спроси любую из них — отвечу сразу.", st.fail ? "" : "ok");
+  learnQueueRenderStatus();
+}
+function learnQueuePause() {
+  const q = learnQueueLoad();
+  q.paused = true;
+  q.items.forEach((x) => { if (x.state === "work") x.state = "queued"; });
+  learnQueueSave();
+  clearTimeout(_learnTimer);
+  learnQueueRenderStatus();
+  setLearnStatus("Остановила обучение. Уже выученное осталось, очередь никуда не делась — нажми «Продолжить», чтобы дойти до конца.", "");
+}
+function learnQueueResume(force) {
+  const q = learnQueueLoad();
+  /* После перезагрузки продолжаем только то, что не остановил человек:
+     «Стоп» — это его решение, и оно должно переживать перезапуск.
+     Кнопка «Продолжить» зовёт с force=true — это уже решение продолжить. */
+  const stopped = !!q.paused && !force;
+  q.paused = false;
+  // подвисшие после закрытия вкладки задачи возвращаем в очередь
+  q.items.forEach((x) => {
+    if (x.state === "work" && Date.now() - (x.at || 0) > 120000) x.state = "queued";
+  });
+  if (stopped) { q.paused = true; learnQueueSave(); learnQueueRenderStatus(); return false; }
+  learnQueueSave();
+  const st = learnQueueStats();
+  if (st.queued || st.work) {
+    learnQueueRenderStatus();
+    learnQueueSchedule(300);
+    return true;
+  }
+  return false;
+}
+function learnQueueClear() {
+  _learnQ = { items: [], paused: false, at: Date.now(), label: "" };
+  learnQueueSave();
+  clearTimeout(_learnTimer);
+  learnQueueRenderStatus();
+}
+
+/* Запустить обучение по любому тексту: список, программа, одна тема. */
+function learnAnything(raw, opts) {
+  const text = String(raw || "").trim();
+  if (text.length < 2) return { added: 0, skipped: 0, topics: [], label: "" };
+  let topics = [];
+  let label = "";
+  if (looksLikeUrl(text)) {
+    topics = [text];
+  } else if (isSchoolRequest(text)) {
+    topics = schoolTopicsFor(text);
+    const g = parseSchoolGrades(text.toLowerCase().replace(/ё/g, "е"));
+    label = "школьная программа" + (g.length ? " (" + g[0] + "–" + g[g.length - 1] + " класс)" : "");
+  } else {
+    topics = parseLearnTopics(text);
+  }
+  const r = learnQueueAdd(topics);
+  const q = learnQueueLoad();
+  if (label) q.label = label;
+  learnQueueSave();
+  if (r.added) learnQueueSchedule(50);
+  learnQueueRenderStatus();
+  return { added: r.added, skipped: r.skipped, topics, label: q.label };
+}
+
+/* Сколько тем в школьной программе — для кнопки и для ответа в чате. */
+const SCHOOL_PLAN = schoolTopicsFor("");
 
 /* Учим тему в чате: «/изучи фотосинтез» или «/изучи https://…» */
 async function learnTopicFlow(rawTopic) {
@@ -16193,15 +17023,18 @@ function renderKnowledgePanel() {
       </label>
       <div class="acct-note">Когда Искра ищет ответ в интернете, она сохраняет конспект у тебя в браузере и в следующий раз отвечает из него без поиска.</div>
       <div class="auth-field" style="margin-top:12px">
-        <label>Выучить что угодно — слово или ссылка</label>
-        <input id="learnTopicInput" placeholder="фотосинтез или https://ru.wikipedia.org/wiki/Фотосинтез" autocomplete="off" spellcheck="false">
+        <label>Выучить что угодно — слово, список тем или целая программа</label>
+        <textarea id="learnTopicInput" rows="3" placeholder="фотосинтез&#10;или списком: дроби, проценты, теорема Виета&#10;или просто: выучи всю школьную программу" autocomplete="off" spellcheck="false"></textarea>
       </div>
       <div class="pay-row">
         <button class="auth-btn" id="learnTopicGo" style="flex:1">Выучить</button>
-        <button class="auth-btn ghost" id="learnPlan" style="flex:1">Школьная программа (${SCHOOL_PLAN.length})</button>
+        <button class="auth-btn ghost" id="learnPlan" style="flex:1">Вся школа (${SCHOOL_PLAN.length})</button>
+        <button class="auth-btn ghost" id="learnStop" style="flex:0 0 auto">${learnQueueLoad().paused ? "Продолжить" : "Стоп"}</button>
       </div>
+      <div class="learn-status" id="learnQueueInfo"></div>
       <div class="learn-status ${learnStatus.kind || ""}" id="learnStatus">${esc(learnStatus.text || "")}</div>
-      <div class="acct-note">Кинь ссылку на статью или просто слово — прочитаю и запомню навсегда, в браузере, без интернета потом.
+      <div class="acct-note">Ссылка не нужна: напиши слово, список тем или целую программу — найду материал сама и выучу всё по очереди.
+        Очередь продолжается после перезагрузки, число тем не ограничено. В чате то же самое: «выучи дроби, проценты, теорема Виета».
         Читаю только открытые страницы: 18+, оружие, наркотики и чужие персональные данные не учу. Ссылки из локальной сети не открываю.</div>
     </div>
     <div class="acct-sec">
@@ -16233,13 +17066,22 @@ function renderKnowledgePanel() {
     </div>
     <div class="acct-sec">
       <div class="acct-h">Выученные темы (${list.length})</div>
-      ${list.length ? list.map(x => `<div class="acct-dev">
+      ${list.length ? (() => {
+        /* Список листаем порциями: выученных тем может быть тысяча, а рисовать
+           тысячу кнопок при каждом обновлении — тяжело и незачем. */
+        const sharedSet = new Set(sharedTopicsLower());
+        const show = Math.max(30, Number(kbView.learnedShow) || 30);
+        const part = list.slice(0, show);
+        return part.map(x => `<div class="acct-dev" data-learned-row="1">
         <div><b>${esc(x.topic)}</b><div class="acct-dim">${new Date(x.ts).toLocaleDateString("ru-RU")} · ${x.text.length} символов</div></div>
-        ${sharedTopicsLower().includes(String(x.topic || "").toLowerCase().replace(/ё/g, "е").trim())
+        ${sharedSet.has(String(x.topic || "").toLowerCase().replace(/ё/g, "е").trim())
           ? '<span class="acct-dim">уже для всех</span>'
           : `<button data-publish="${esc(x.id)}" title="Опубликовать для всех пользователей">Опубликовать</button>`}
         <button data-forget="${esc(x.id)}">Забыть</button>
-      </div>`).join("") : "<div class='acct-dim'>Пока пусто. Напиши тему выше или спроси что-нибудь новое — я запомню.</div>"}
+      </div>`).join("") + (list.length > part.length
+          ? `<div class="acct-dim" style="margin-top:8px">Показаны ${part.length} из ${list.length} — <button type="button" data-learn-more="1">показать ещё 50</button></div>`
+          : "");
+      })() : "<div class='acct-dim'>Пока пусто. Напиши тему выше или спроси что-нибудь новое — я запомню.</div>"}
     </div>
     <div class="acct-sec">
       <div class="acct-h">Общая база — для всех пользователей (${shared.length})</div>
@@ -16306,21 +17148,42 @@ function renderKnowledgePanel() {
   const chk = box.querySelector("#autoLearnChk");
   if (chk) chk.onchange = () => { settings.autoLearn = chk.checked; saveSettings(); };
   const plan = box.querySelector("#learnPlan");
-  if (plan) plan.onclick = startSchoolPlan;
+  if (plan) plan.onclick = () => startSchoolPlan();
+  const stop = box.querySelector("#learnStop");
+  if (stop) stop.onclick = () => {
+    const q = learnQueueLoad();
+    if (q.paused) learnQueueResume(true); else learnQueuePause();
+    renderKnowledgePanel();
+  };
+  learnQueueRenderStatus();
   const go = box.querySelector("#learnTopicGo");
   const learnInput = box.querySelector("#learnTopicInput");
   if (learnInput && learnInput.dataset.wired !== "1") {
     learnInput.dataset.wired = "1";
-    learnInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go && go.click(); } });
+    // в поле теперь можно писать списком и с новой строки: Enter — новая тема
+    learnInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); go && go.click(); }
+    });
   }
   if (go) go.onclick = async () => {
-    const t = (($("#learnTopicInput") || {}).value || "").trim();
-    if (t.length < 2) { setLearnStatus("Напиши тему или вставь ссылку", "bad"); return; }
+    const raw = (($("#learnTopicInput") || {}).value || "").trim();
+    if (raw.length < 2) { setLearnStatus("Напиши тему, список тем или программу", "bad"); return; }
+    /* Одна тема или ссылка — учим сразу и показываем результат.
+       Список или программа — в очередь, чтобы не ждать в открытом окне. */
+    const single = looksLikeUrl(raw) ? [raw] : (isSchoolRequest(raw) ? schoolTopicsFor(raw) : parseLearnTopics(raw));
+    if (single.length > 1) {
+      const r = learnAnything(raw);
+      setLearnStatus(r.added
+        ? "Взяла " + r.added + " тем" + (r.skipped ? ", " + r.skipped + " уже знала" : "") + ". Учу по одной — можно закрыть окно, продолжу."
+        : "Всё из этого списка уже выучено.", "ok");
+      renderKnowledgePanel();
+      return;
+    }
     go.disabled = true;
-    setLearnStatus(looksLikeUrl(t) ? "Читаю страницу… это до 20 секунд" : "Ищу материал и делаю конспект…", "");
+    setLearnStatus(looksLikeUrl(raw) ? "Читаю страницу… это до 20 секунд" : "Ищу материал и делаю конспект…", "");
     const old = go.textContent;
     go.textContent = "Учу…";
-    const r = await learnAndSave(t);
+    const r = await learnAndSave(raw);
     go.disabled = false;
     go.textContent = old;
     if (!r.ok) { setLearnStatus(r.msg, "bad"); return; }
@@ -16328,6 +17191,10 @@ function renderKnowledgePanel() {
     toast("Запомнила: " + r.title, "ok");
     renderKnowledgePanel();
   };
+  box.querySelectorAll("[data-learn-more]").forEach(b => b.onclick = () => {
+    kbView.learnedShow = (Number(kbView.learnedShow) || 30) + 50;
+    renderKnowledgePanel();
+  });
   box.querySelectorAll("[data-forget]").forEach(b => b.onclick = () => {
     learnedSave(learnedList().filter(x => x.id !== b.dataset.forget));
     renderKnowledgePanel();
@@ -16841,9 +17708,11 @@ async function consoleRun(raw) {
     return "Тема: " + arg;
   }
   if (c === "learn") {
-    if (!arg) return "Формат: learn фотосинтез";
-    learnTopicFlow(arg);
-    return "Запустила изучение темы «" + arg + "».";
+    if (!arg) return "Формат: learn фотосинтез — или learn фотосинтез, генетика, оптика";
+    const many = learnAnything(arg);
+    if (!many.added) return "Всё это уже выучено.";
+    learnQueueSchedule(50);
+    return "Взяла в работу " + many.added + " тем" + (many.skipped ? ", " + many.skipped + " уже знала" : "") + ". Учу по одной, прогресс — в разделе «Мои знания».";
   }
   if (c === "kb" || c === "know" || c === "знания") {
     if (!arg) return "Формат: kb пифагор\nВ базе " + kbBuiltinPack().length + " тем.";
@@ -16880,11 +17749,11 @@ async function consoleRun(raw) {
     return before === learnedCount() ? "Такой темы нет." : "Забыла тему «" + arg + "».";
   }
   if (c === "learn-many") {
-    const topics = arg.split(/[,;]/).map(t => t.trim()).filter(Boolean);
-    if (!topics.length) return "Формат: learn-many фотосинтез, генетика, оптика";
-    addAssistantNote("Учу " + topics.length + " тем: " + topics.join(", "));
-    topics.forEach((t, i) => setTimeout(() => learnTopicFlow(t), i * 2500));
-    return "В очереди: " + topics.length + " тем. Идут одна за другой, прогресс — в чате.";
+    const topics = parseLearnTopics(arg);
+    if (!topics.length) return "Формат: learn-many фотосинтез, генетика, оптика — или целая программа текстом";
+    const r = learnQueueAdd(topics);
+    learnQueueSchedule(50);
+    return "В очереди: " + r.added + " тем" + (r.skipped ? ", пропущено " + r.skipped : "") + ". Идут одна за другой, прогресс — в разделе «Мои знания».";
   }
   if (c === "regions" || c === "заявки") {
     return conRegions();
@@ -17079,37 +17948,20 @@ async function consoleSubmit(raw) {
 }
 
 
-/* ---------- Школьная программа: Искра учит темы сама ---------- */
-const SCHOOL_PLAN = [
-  "фотосинтез", "клетка", "генетика", "кровообращение человека",
-  "закон Ома", "электрический ток", "термодинамика", "оптика",
-  "квадратное уравнение", "производная", "тригонометрия", "логарифм",
-  "кислоты и основания", "периодическая таблица", "химическая связь",
-  "Древний Египет", "Древняя Греция", "Средние века", "Реформация",
-  "Великая французская революция", "Первая мировая война", "Вторая мировая война",
-  "климатические пояса", "литосферные плиты", "мировой океан",
-  "литературные направления", "средства художественной выразительности",
-  "времена в английском языке", "фразовые глаголы",
-  "алгоритмы сортировки", "базы данных",
-  // вторая волна: то, что чаще всего спрашивают на экзаменах и в жизни
-  "законы Ньютона", "сила Архимеда", "теорема Виета", "теорема синусов и косинусов",
-  "производная и интеграл", "моль и молярная масса", "степень окисления",
-  "ДНК и РНК", "митоз и мейоз", "гормоны человека", "круговорот веществ в природе",
-  "Пётр I", "Отечественная война 1812 года", "отмена крепостного права", "блокада Ленинграда",
-  "Конституция РФ", "права ребёнка", "спрос и предложение",
-  "Солнечная система", "строение атмосферы", "реки и озёра",
-  "стихосложение", "правила дорожного движения", "первая помощь при кровотечении",
-  "стресс и тревога", "как писать промпты", "нейросети"
-];
-
-function startSchoolPlan() {
-  const done = new Set(learnedList().map(x => x.topic.toLowerCase()));
-  const queue = SCHOOL_PLAN.filter(t => !done.has(t.toLowerCase()));
+/* ---------- Школьная программа: Искра учит темы сама ----------
+   Список программы теперь настоящий (предмет × класс), а не 60 случайных тем.
+   Учим через очередь: по одной, с продолжением после перезагрузки. */
+function startSchoolPlan(filter) {
+  const topics = filter ? schoolTopicsFor(filter) : SCHOOL_PLAN;
+  const done = new Set(learnedList().map(x => learnTopicKey(x.topic)));
+  const queue = topics.filter(t => !done.has(learnTopicKey(t)));
   if (!queue.length) { toast("Вся программа уже выучена", "ok"); return; }
+  const r = learnQueueAdd(queue);
   $("#knowModal").classList.remove("open");
-  addAssistantNote(`Запускаю обучение: ${queue.length} тем по школьной программе. Буду учить их по одной — можно продолжать спрашивать, я не потеряюсь.`);
-  queue.forEach((topic, i) => setTimeout(() => learnTopicFlow(topic), i * 4000));
-  toast(`Учу ${queue.length} тем — можно закрыть окно, обучение идёт фоном`, "ok");
+  addAssistantNote(`Запускаю обучение: ${r.added} тем (программа школы, ${SCHOOL_PLAN.length} всего). Учу по одной — можно продолжать спрашивать, я не потеряюсь.`);
+  toast(`Учу ${r.added} тем — можно закрыть окно, обучение идёт фоном`, "ok");
+  learnQueueSchedule(50);
+  learnQueueRenderStatus();
 }
 
 /* ---------- Секретная команда Pro: /de_nuke ---------- */
@@ -17693,6 +18545,19 @@ function wire() {
     const res = $("#teachResult");
     if (topic.length < 2) {
       if (res) { res.className = "conn-result err"; res.textContent = "Напиши тему или вставь ссылку."; }
+      return;
+    }
+    const many = looksLikeUrl(topic) ? [topic] : (isSchoolRequest(topic) ? schoolTopicsFor(topic) : parseLearnTopics(topic));
+    if (many.length > 1) {
+      const q = learnAnything(topic);
+      if (res) {
+        res.className = "conn-result ok";
+        res.textContent = q.added
+          ? "Взяла " + q.added + " тем" + (q.skipped ? ", " + q.skipped + " уже знала" : "") + ". Учу по одной — прогресс в «Моих знаниях»."
+          : "Всё из этого списка уже выучено.";
+      }
+      if (q.added && $("#teachTopic")) $("#teachTopic").value = "";
+      renderKnowledgePanelSafe();
       return;
     }
     if (res) { res.className = "conn-result wait"; res.textContent = "Читаю материалы…"; }
@@ -18486,6 +19351,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.documentElement.classList.add("booted");
   /* Общая база подтягивается в фоне: если сервер молчит, работаем по сохранённой копии */
   try { sharedKbRefresh(); } catch (e) {}
+  /* Свои выученные темы: если localStorage пришлось урезать, полная копия
+     приходит из IndexedDB. Очередь обучения продолжается после перезагрузки. */
+  try { learnedBoot().catch(() => {}); } catch (e) {}
+  try { learnQueueResume(); } catch (e) {}
   const bar = document.getElementById("crashBar");
   if (bar) bar.hidden = true;   // запустилось — убираем предупреждение, если оно успело появиться
   // возврат после входа через Google/GitHub приходит в адресе — обрабатываем сразу
