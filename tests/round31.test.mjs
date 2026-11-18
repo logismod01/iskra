@@ -141,9 +141,9 @@ await test("ответ Искры лежит карточкой, заголов�
   assert(/\.msg\.ai \.content h1[^{]*\{[^}]*Georgia/.test(html), "засечек нет");
 });
 
-await test("версия сайта и кэша — 1.50.0", async () => {
-  assert(pkg.version === "1.50.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.50\.0";/.test(read("sw.js")), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.51.0", async () => {
+  assert(pkg.version === "1.51.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.51\.0";/.test(read("sw.js")), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round31: " + passed + " проверок пройдено");
