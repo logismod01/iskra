@@ -185,9 +185,9 @@ await test("разговор сохраняется файлом .md", async () 
 });
 
 /* ---------- 8. Версия ---------- */
-await test("версия сайта и кэша — 1.54.0", async () => {
-  assert(pkg.version === "1.54.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.54\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.55.0", async () => {
+  assert(pkg.version === "1.55.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.55\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round22: " + passed + " проверок пройдено");

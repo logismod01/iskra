@@ -25,7 +25,7 @@ const read = (p) => fs.readFileSync(new URL("../" + p, import.meta.url), "utf8")
 const html = read("index.html");
 const pkg = JSON.parse(read("package.json"));
 
-console.log("round32: тренажёр, расчёты, озвучка, печать, папки — 1.54.0");
+console.log("round32: тренажёр, расчёты, озвучка, печать, папки — 1.55.0");
 
 const spoken = [];
 const vc = new VirtualConsole();
@@ -305,9 +305,9 @@ await test("у чата одна кнопка действий вместо тр
 
 /* ---------- Версия ---------- */
 
-await test("версия сайта и кэша — 1.54.0", async () => {
-  assert(pkg.version === "1.54.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.54\.0";/.test(read("sw.js")), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.55.0", async () => {
+  assert(pkg.version === "1.55.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.55\.0";/.test(read("sw.js")), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round32: " + passed + " проверок пройдено");
