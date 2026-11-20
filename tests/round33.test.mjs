@@ -226,7 +226,7 @@ await test("версии агента совпадают в трёх места�
 
 /* ---------- 5. Версии ---------- */
 await test("версии подняты", async () => {
-  assert(pkg.version === "1.56.0", "версия сайта: " + pkg.version);
+  assert(pkg.version === "1.57.0", "версия сайта: " + pkg.version);
   assert(agentPkg.version === "0.11.0", "версия агента: " + agentPkg.version);
 });
 

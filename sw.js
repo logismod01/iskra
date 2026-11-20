@@ -3,10 +3,11 @@
    а обновления подтягиваются, когда сеть есть.
    Стратегия: навигация — сеть, при обрыве кэш; статика — кэш, потом сеть. */
 
-const VERSION = "iskra-1.56.0";
+const VERSION = "iskra-1.57.0";
 const SHELL = [
   "./",
   "./index.html",
+  "./topic-index.json",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

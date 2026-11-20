@@ -7600,6 +7600,9 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
   if (kb.block) {
     sys += "\n\nСПРАВКА ИЗ ВСТРОЕННОЙ БАЗЫ ИСКРЫ (пользуйся ею как главным источником, если она подходит):\n" + kb.block;
   }
+  /* Индекс тем: точное совпадение по стране, городу, языку или элементу */
+  const ixLine = (() => { try { return topicIndexContext(userText); } catch (e) { return ""; } })();
+  if (ixLine) sys += "\n\nСПРАВКА ИЗ ИНДЕКСА ТЕМ (открытые данные, факты проверяемые — числа бери отсюда):\n" + ixLine;
 
   /* сила ответа: от «Молнии» до «Ультры» — одним уровнем задаётся и манера, и проверка */
   const lv = powerLevel();
@@ -11535,7 +11538,7 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
     const need = fmtTokens(gate.cost), left = fmtTokens(gate.left);
     aiMsg.pending = false;
     aiMsg.content = "Токены закончились: на это сообщение нужно **" + need + "**, а осталось **" + left + "**.\n\n" +
-      "Открой «⋯ → Тарифы и токены»: там бесплатные 10 000 возвращаются раз в 5 дней, есть тарифы и пакеты от 20 ₽. " +
+      "Открой «⋯ → Тарифы и токены»: там бесплатные 10 000 возвращаются каждый день, есть тарифы и пакеты от 20 ₽. " +
       "Либо вставь свой ключ в настройках — тогда токены Искры не тратятся вовсе.";
     aiMsg.blocked = true;
     contentEl.innerHTML = renderMarkdown(aiMsg.content);
@@ -16216,6 +16219,23 @@ function kbExactTopic(topic) {
 }
 
 /* Общее ядро: разбираемся, тема это или ссылка, и готовим конспект */
+/* Материал для обучения из индекса тем. Если строка короткая — добираем
+   статью Википедии по точному названию, чтобы конспект был не из одной фразы. */
+async function topicIndexLearn(input) {
+  let hit = topicIndexFind(input);
+  if (!hit) { await topicIndexLoad(); hit = topicIndexFind(input); }
+  if (!hit) return null;
+  let text = hit.text;
+  if (text.length < LEARN_MIN_MATERIAL) {
+    try {
+      const w = await wikiAttempt(hit.wiki || hit.title, { exactTitle: true });
+      if (w && w.text) text = hit.text + " " + String(w.text).slice(0, 1500);
+    } catch (e) {}
+  }
+  if (String(text).length < LEARN_MIN_MATERIAL) return null;
+  return { title: hit.title + " · " + hit.kind, text, kind: hit.kind };
+}
+
 async function learnCore(raw) {
   const input = String(raw || "").trim();
   if (input.length < 2) return { ok: false, msg: "Напиши тему или вставь ссылку — например «фотосинтез» или https://ru.wikipedia.org/wiki/Фотосинтез" };
@@ -16251,6 +16271,14 @@ async function learnCore(raw) {
       : exact.title + " — " + exact.text;
     return { ok: true, title: exact.title, text, source: "", note: "из встроенной базы, проверенный текст", trusted: true };
   }
+
+  /* Индекс тем: страна, город, язык, химический элемент. Факты с открытых
+     наборов данных — их не надо искать в интернете, они проверяемы. */
+  try {
+    const ix = await topicIndexLearn(input);
+    if (ix) return { ok: true, title: ix.title, text: ix.text, source: "", trusted: true,
+      note: "из индекса тем: открытые данные (GeoNames, ISO 639-3, world-countries)" };
+  } catch (e) {}
 
   const mat = await wikiLearnMaterial(input);
   const matOk = !!mat.text && (mat.matched
@@ -17099,9 +17127,12 @@ function renderKnowledgePanel() {
   /* Сколько всего тем и из чего они сложились — чтобы не гадать по числам */
   const kbBuilt = kbBuiltinPack().length;
   const kbShared = shared.length;
-  const kbTotal = kbBuilt + kbShared + list.length;
+  const ixCount = topicIndexCount();
+  const kbTotal = kbBuilt + kbShared + list.length + ixCount;
   const box = $("#knowBody");
   if (!box) return;
+  /* Индекс грузится отдельным файлом — просим его здесь, чтобы число было настоящим */
+  if (!ixCount) { try { topicIndexLoad(); } catch (e) {} }
   box.innerHTML = `
     <div class="acct-sec">
       <div class="acct-h">Самообучение</div>
@@ -17131,8 +17162,10 @@ function renderKnowledgePanel() {
       <div class="acct-h">База знаний — ${kbTotal} ${plural(kbTotal, "тема", "темы", "тем")}</div>
       <div class="acct-row"><span>Внутри Искры — работает без интернета</span><b data-kbcount="built">${kbBuilt}</b></div>
       <div class="acct-row"><span>Из общей базы — с сервера</span><b data-kbcount="shared">${kbShared}${kbShared ? "" : " (ещё не загружена)"}</b></div>
+      <div class="acct-row"><span>Индекс тем — страны, города, языки, элементы (открытые данные)</span><b><span data-ixcount>${ixCount.toLocaleString("ru-RU")}</span></b></div>
       <div class="acct-row"><span>Выучено самой</span><b data-kbcount="learned">${list.length}</b></div>
-      <div class="acct-note" style="margin:8px 0 10px">Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже.</div>
+      <div class="acct-note" style="margin:8px 0 10px">Всё вместе — <b><span data-ixtotalcount>${kbTotal.toLocaleString("ru-RU")}</span></b> тем: конспекты Искры плюс индекс открытых данных.
+        Нажми на тему — раскроется текст, можно спросить подробнее или выучить глубже.</div>
       <div class="acct-note" id="kbFreshNote" style="margin:0 0 10px">Общая база: ${sharedKbAgeText()}. Если число меньше, чем ждёшь, — нажми «Обновить базу» ниже.</div>
       <div class="auth-field">
         <input id="kbSearchInput" placeholder="Поиск: пифагор, моль, стресс…" autocomplete="off">
@@ -19466,7 +19499,7 @@ document.addEventListener("DOMContentLoaded", () => {
    • память всего, что ему пишут (не только «факты о тебе»);
    • сначала поиск в открытых источниках, ключ и токены — потом;
    • несколько ключей и автопереключение, когда кончился лимит;
-   • токены: бесплатные 10 000 на 5 дней, покупка от 10 000 до триллиона;
+   • токены: бесплатные 10 000 каждый день, покупка от 10 000 до триллиона;
    • тарифы отдельно от токенов.
    ===================================================================== */
 
@@ -19475,15 +19508,22 @@ document.addEventListener("DOMContentLoaded", () => {
    --------------------------------------------------------------------- */
 const WALLET_KEY = "iskra.wallet.v1";
 const FREE_TOKENS = 10000;                 // бесплатная норма
-const FREE_PERIOD_MS = 5 * 864e5;          // раз в 5 дней
+const FREE_PERIOD_MS = 864e5;              // каждый день (решение пользователя 29.10)
+/* Сброс — в полночь по местному времени: так «завтра» наступает предсказуемо,
+   а не через 24 часа после последнего захода. */
+function freeResetAt(ts) {
+  const d = new Date(Number(ts) || Date.now());
+  d.setHours(24, 0, 0, 0);
+  return d.getTime();
+}
 const TOKEN_COST_MIN = 1500;               // простое сообщение
 const TOKEN_COST_MAX = 5000;               // самое дорогое
 
 /* Тарифы: токены на срок + что открывается сверх бесплатного. */
 const TOKEN_PLANS = [
   {
-    id: "free", name: "Бесплатная", price: 0, tokens: FREE_TOKENS, days: 5,
-    short: "10 000 токенов на 5 дней",
+    id: "free", name: "Бесплатная", price: 0, tokens: FREE_TOKENS, days: 1,
+    short: "10 000 токенов каждый день",
     what: ["Чат и учёба", "Ответы из своей базы и открытых источников", "2 языка интерфейса"]
   },
   {
@@ -19532,7 +19572,7 @@ function walletPersist(all) {
 function walletBlank() {
   return {
     plan: "free", planUntil: 0,
-    freeLeft: FREE_TOKENS, freeReset: Date.now() + FREE_PERIOD_MS,
+    freeLeft: FREE_TOKENS, freeReset: freeResetAt(),
     paid: 0, orders: [], log: [], spent: 0, planHistory: []
   };
 }
@@ -19548,10 +19588,11 @@ function walletState() {
   if (!Number.isFinite(Number(w.paid))) w.paid = 0;
   if (!Number.isFinite(Number(w.spent))) w.spent = 0;
   if (!w.plan) w.plan = "free";
-  // бесплатная норма возвращается сама раз в 5 дней
+  /* Бесплатная норма возвращается каждый день. Остаток не сгорает:
+     доливаем до 10 000, а если человек не тратил — больше не станет. */
   if (!w.freeReset || Date.now() >= Number(w.freeReset)) {
-    w.freeLeft = FREE_TOKENS;
-    w.freeReset = Date.now() + FREE_PERIOD_MS;
+    w.freeLeft = Math.max(Number(w.freeLeft) || 0, FREE_TOKENS);
+    w.freeReset = freeResetAt();
   }
   // срок тарифа кончился — возвращаемся на бесплатный
   if (w.plan !== "free" && Number(w.planUntil || 0) < Date.now()) {
@@ -20290,7 +20331,7 @@ function renderPayPanel() {
       <div class="acct-row"><span>Купленные токены</span><b>${fmtTokens(w.paid)}</b></div>
       <div class="acct-row"><span>Одно сообщение</span><b>1 500 – 5 000 токенов</b></div>
       ${own ? `<div class="acct-note" style="color:var(--ok,#2e8b57)">У тебя свой ключ — токены Искры не тратятся, ограничения не действуют.</div>`
-        : `<div class="acct-note">Бесплатно: 10 000 токенов раз в 5 дней. Это 2–6 сообщений: сложные стоят дороже. Дальше — пакет токенов или тариф.</div>`}
+        : `<div class="acct-note">Бесплатно: 10 000 токенов каждый день. Это 2–6 сообщений в день: сложные стоят дороже. Дальше — пакет токенов или тариф.</div>`}
     </div>
     <div class="acct-sec">
       <div class="acct-h">Тарифы — на 30 дней, токены уже внутри</div>
@@ -20443,6 +20484,165 @@ function renderMemListInto(l) {
     });
     l.appendChild(it);
   });
+}
+
+
+/* =====================================================================
+   1.57 — ИНДЕКС ТЕМ (второй слой базы знаний)
+
+   Конспекты в index.html — это готовые карточки. Индекс — отдельный файл
+   topic-index.json: десятки тысяч реальных объектов (страны, города, языки,
+   химические элементы) с проверяемыми фактами из открытых наборов данных.
+   Файл грузится по требованию, поэтому сама страница не растёт.
+   ===================================================================== */
+const TOPIC_INDEX_FILE = "topic-index.json";
+let _topicIndex = null, _topicIndexLoading = null, _topicIndexTried = false;
+
+async function topicIndexLoad() {
+  if (_topicIndex) return _topicIndex;
+  if (_topicIndexLoading) return _topicIndexLoading;
+  _topicIndexLoading = (async () => {
+    _topicIndexTried = true;
+    try {
+      const r = await fetch(TOPIC_INDEX_FILE + "?v=1", { signal: AbortSignal.timeout(9000) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      if (!j || !Array.isArray(j.cities) || !Array.isArray(j.countries)) throw new Error("битый индекс");
+      _topicIndex = j;
+      try { updateTopicIndexCounts(); } catch (e) {}
+      return _topicIndex;
+    } catch (e) {
+      _topicIndex = null;
+      /* не запоминаем неудачу навсегда: связь могла пропасть на минуту */
+      _topicIndexLoading = null;
+      return null;
+    }
+  })();
+  return _topicIndexLoading;
+}
+/* индекс мог быть уже загружен раньше — тогда отдаём сразу, без сети */
+function topicIndexQuick() {
+  if (_topicIndex) return _topicIndex;
+  if (!_topicIndexTried) { topicIndexLoad(); }  // грузим в фоне, ответ не ждём
+  return _topicIndex;
+}
+function topicIndexCount() {
+  const ix = _topicIndex;
+  if (!ix) return 0;
+  const c = ix.counts || {};
+  return (c.countries || 0) + (c.cities || 0) + (c.langs || 0) + (c.elements || 0);
+}
+function topicIndexTotal() {
+  const kb = (typeof KNOWLEDGE_PACK !== "undefined" && KNOWLEDGE_PACK.items) ? KNOWLEDGE_PACK.items.length : 0;
+  return kb + topicIndexCount();
+}
+function updateTopicIndexCounts() {
+  const n = topicIndexCount();
+  document.querySelectorAll("[data-ixcount]").forEach((el) => { el.textContent = n.toLocaleString("ru-RU"); });
+  document.querySelectorAll("[data-ixtotalcount]").forEach((el) => { el.textContent = topicIndexTotal().toLocaleString("ru-RU"); });
+}
+
+/* Нормализация: «Шанхай!» и «шанхай» — одно и то же */
+function topicNorm(s) {
+  return String(s || "").toLowerCase().replace(/ё/g, "е")
+    .replace(/[^a-zа-я0-9 ]+/gi, " ").replace(/\s+/g, " ").trim();
+}
+function topicNum(n) {
+  const x = Math.round(Number(n) || 0);
+  return x.toLocaleString("ru-RU").replace(/,/g, " ");
+}
+
+/* Подписи для стран: где столица и что за валюта — по-русски */
+function topicCountryRow(ix, iso) {
+  return (ix.countries || []).find((c) => c[0] === iso) || null;
+}
+
+/* Перевод города в строку: «Шанхай (Shanghai) — город в Китае…» */
+function topicCityText(ix, row) {
+  const [name, iso, pop, ru] = row;
+  const country = topicCountryRow(ix, iso);
+  const where = country ? country[1] : iso;
+  const title = ru || name;
+  let text = title + (ru && ru !== name ? " (" + name + ")" : "") + " — город в " + where +
+    ", население около " + topicNum(pop) + " человек.";
+  if (country && country[2]) text += " Столица страны — " + country[2] + ".";
+  return { title, text, kind: "город", wiki: name, country: where };
+}
+
+function topicIndexFind(query) {
+  const ix = _topicIndex;
+  if (!ix) return null;
+  const q = topicNorm(query);
+  if (q.length < 3) return null;
+  const words = q.split(" ").filter((w) => w.length > 2);
+
+  /* 1) элементы: «железо», «fe», «железа» */
+  for (const e of ix.elements || []) {
+    const [num, sym, ru, en, mass, cat] = e;
+    const forms = [topicNorm(ru), topicNorm(en), topicNorm(sym)];
+    if (forms.includes(q) || words.some((w) => w === topicNorm(ru) || w === topicNorm(en))) {
+      const text = ru.charAt(0).toUpperCase() + ru.slice(1) + " (" + sym + ") — химический элемент №" + num +
+        ", атомная масса " + String(mass).replace(".", ",") + (cat ? ", " + cat : "") + ". Английское название — " + en + ".";
+      return { kind: "элемент", title: ru.charAt(0).toUpperCase() + ru.slice(1), text, wiki: ru, key: topicNorm(ru) };
+    }
+  }
+
+  /* 2) страны: «Россия», «столица Японии» */
+  for (const c of ix.countries || []) {
+    const [iso, ru, capital, region, area, cur, curRu, phone, langs] = c;
+    const n = topicNorm(ru);
+    if (n === q || words.some((w) => w === n) || (n.length > 4 && q.includes(n))) {
+      let text = ru + " — государство" + (region ? " в регионе " + region : "") + ".";
+      if (capital) text += " Столица — " + capital + ".";
+      if (area) text += " Площадь — " + topicNum(area) + " км².";
+      if (cur) text += " Валюта — " + (curRu || cur) + " (" + cur + ").";
+      if (langs) text += " Языки: " + langs + ".";
+      if (phone) text += " Телефонный код: " + phone + ".";
+      return { kind: "страна", title: ru, text, wiki: ru, key: n };
+    }
+  }
+
+  /* 3) города: сначала русские названия, потом латинские */
+  const cities = ix.cities || [];
+  let best = null;
+  for (const row of cities) {
+    const [name, , , ru] = row;
+    const forms = ru ? [topicNorm(ru), topicNorm(name)] : [topicNorm(name)];
+    if (forms.includes(q)) { best = row; break; }
+    if (!best && words.some((w) => forms.includes(w))) best = row;
+  }
+  if (best) {
+    const d = topicCityText(ix, best);
+    return { kind: "город", title: d.title, text: d.text, wiki: d.wiki, key: topicNorm(d.title) };
+  }
+
+  /* 4) языки: «русский язык», «язык Swahili» */
+  const m = q.match(/^(?:язык\s+)?(.+?)(?:\s+язык)?$/);
+  const langQ = m ? m[1].trim() : q;
+  if (langQ.length >= 3) {
+    const types = { living: "действующий", historical: "исторический", ancient: "древний", constructed: "искусственный" };
+    for (const l of ix.langs || []) {
+      const [name, code, type] = l;
+      /* «Swahili (macrolanguage)» и «Swahili (individual language)» — один запрос */
+      const short = topicNorm(String(name).replace(/\s*\([^)]*\)\s*/g, " "));
+      if (topicNorm(name) === langQ || short === langQ) {
+        return {
+          kind: "язык", title: name + " (язык)",
+          text: name + " — " + (types[type] || type) + " язык. Код ISO 639-3: " + code + ".",
+          wiki: name, key: topicNorm(name)
+        };
+      }
+    }
+  }
+  return null;
+}
+
+/* Справка в системный промпт: только когда совпадение точное */
+function topicIndexContext(text) {
+  try {
+    const hit = topicIndexFind(text);
+    return hit ? "• " + hit.title + ": " + hit.text : "";
+  } catch (e) { return ""; }
 }
 
 /* ---------------------------------------------------------------------
