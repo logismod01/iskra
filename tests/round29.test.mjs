@@ -149,9 +149,9 @@ await test("текст, распознанный с фото, тоже пров�
   assert(sys.includes("H2 + Br2 → 2HBr"), "распознанный с фото текст не попал в проверку уравнений");
 });
 
-await test("версия сайта и кэша — 1.57.0", async () => {
-  assert(pkg.version === "1.57.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.57\.0";/.test(sw), "версия кэша не совпадает");
+await test("версия сайта и кэша — 1.58.0", async () => {
+  assert(pkg.version === "1.58.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.58\.0";/.test(sw), "версия кэша не совпадает");
 });
 
 if (!process.exitCode) console.log("round29: " + passed + " проверок пройдено");

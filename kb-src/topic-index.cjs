@@ -168,8 +168,127 @@ const CITY_RU = {
   Blagoveshchensk: "Благовещенск", "Petropavlovsk-Kamchatskiy": "Петропавловск-Камчатский",
   "Yuzhno-Sakhalinsk": "Южно-Сахалинск", Abakan: "Абакан", Maykop: "Майкоп",
   Elista: "Элиста", Kyzyl: "Кызыл", Magadan: "Магадан", Salekhard: "Салехард",
-  "Khanty-Mansiysk": "Ханты-Мансийск", "Nar'yan-Mar": "Нарьян-Мар", Birobidzhan: "Биробиджан"
+  "Khanty-Mansiysk": "Ханты-Мансийск", "Nar'yan-Mar": "Нарьян-Мар", Birobidzhan: "Биробиджан",
+  /* Иркутская область и соседи — родные места первого пользователя */
+  Angarsk: "Ангарск", "Usol'ye-Sibirskoye": "Усолье-Сибирское", Cheremkhovo: "Черемхово",
+  "Ust'-Ilimsk": "Усть-Илимск", "Ust-Ilimsk": "Усть-Илимск", Sayansk: "Саянск", Zima: "Зима",
+  Tulun: "Тулун", "Ust'-Kut": "Усть-Кут", "Ust-Kut": "Усть-Кут", Bodaybo: "Бодайбо",
+  "Zheleznogorsk-Ilimskiy": "Железногорск-Илимский", "Nizhneudinsk": "Нижнеудинск",
+  Vikhorevka: "Вихоревка", Slyudyanka: "Слюдянка", "Baykal'sk": "Байкальск", Shelekhov: "Шелехов",
+  "Ulan-Ude": "Улан-Удэ", "Ulan Ude": "Улан-Удэ", Kyakhta: "Кяхта", Gusinoozersk: "Гусиноозёрск",
+  "Gusinoozërsk": "Гусиноозёрск", "Severobaykal'sk": "Северобайкальск",
+  /* остальные крупные города России — те, где простая транслитерация ошибается */
+  "Elektrostal'": "Электросталь", "Engel's": "Энгельс", Elista: "Элиста", Elektrougli: "Электроугли",
+  "Naberezhnyye Chelny": "Набережные Челны", "Naberezhnye Chelny": "Набережные Челны",
+  "Zelënodol'sk": "Зеленодольск", "Zelenodol'sk": "Зеленодольск", "Al'met'yevsk": "Альметьевск",
+  Nizhnekamsk: "Нижнекамск", Yelabuga: "Елабуга",
+  "Chistopol'": "Чистополь", "Bugul'ma": "Бугульма", "Yoshkar-Ola": "Йошкар-Ола",
+  Novocheboksarsk: "Новочебоксарск", Cheboksary: "Чебоксары", Kanash: "Канаш",
+  Sarapul: "Сарапул", Votkinsk: "Воткинск", Glazov: "Глазов", Izhevsk: "Ижевск",
+  "Tol'yatti": "Тольятти", "Tol'yatti": "Тольятти", "Syzran'": "Сызрань", Novokuybyshevsk: "Новокуйбышевск",
+  Chapayevsk: "Чапаевск", Zhigulevsk: "Жигулёвск", "Al'met": "Альметьевск",
+  "Staryy Oskol": "Старый Оскол", Gubkin: "Губкин", Shebekino: "Шебекино",
+  Novomoskovsk: "Новомосковск", Aleksin: "Алексин", Serpukhov: "Серпухов", Kolomna: "Коломна",
+  Lyubertsy: "Люберцы", Mytishchi: "Мытищи", Khimki: "Химки", Balashikha: "Балашиха",
+  "Podol'sk": "Подольск", Podolsk: "Подольск", "Korolëv": "Королёв", Korolev: "Королёв",
+  Odintsovo: "Одинцово", Krasnogorsk: "Красногорск", Noginsk: "Ногинск",
+  "Orekhovo-Zuyevo": "Орехово-Зуево", "Orekhovo-Zuevo": "Орехово-Зуево", Gatchina: "Гатчина",
+  Vyborg: "Выборг", Vsevolozhsk: "Всеволожск", "Sosnovyy Bor": "Сосновый Бор",
+  "Velikiy Novgorod": "Великий Новгород", Pskov: "Псков", "Staraya Russa": "Старая Русса",
+  "Vyaz'ma": "Вязьма", Obninsk: "Обнинск", "Naro-Fominsk": "Наро-Фоминск", Rybinsk: "Рыбинск",
+  "Yaroslavl'": "Ярославль", Shuya: "Шуя", Kineshma: "Кинешма", Kovrov: "Ковров",
+  Murom: "Муром", Aleksandrov: "Александров", "Kamensk-Ural'skiy": "Каменск-Уральский",
+  "Pervoural'sk": "Первоуральск", Serov: "Серов", "Novoural'sk": "Новоуральск", Asbest: "Асбест",
+  Irbit: "Ирбит", "Tobol'sk": "Тобольск", Nizhnevartovsk: "Нижневартовск",
+  Nefteyugansk: "Нефтеюганск", "Noyabr'sk": "Ноябрьск", "Novyy Urengoy": "Новый Уренгой",
+  Nadym: "Надым", Kogalym: "Когалым", Apatity: "Апатиты", Severomorsk: "Североморск",
+  Severodvinsk: "Северодвинск", Kotlas: "Котлас", Syktyvkar: "Сыктывкар", Ukhta: "Ухта",
+  Vorkuta: "Воркута", "Cherepovets": "Череповец", "Velikiye Luki": "Великие Луки",
+  Novokuznetsk: "Новокузнецк", "Prokop'yevsk": "Прокопьевск", Mezhdurechensk: "Междуреченск",
+  "Leninsk-Kuznetskiy": "Ленинск-Кузнецкий", Kiselevsk: "Киселёвск", Yurga: "Юрга",
+  "Anzhero-Sudzhensk": "Анжеро-Судженск", Belovo: "Белово", Berezovskiy: "Берёзовский",
+  Achinsk: "Ачинск", Kansk: "Канск", Zelenogorsk: "Зеленогорск", Minusinsk: "Минусинск",
+  Chernogorsk: "Черногорск", Sayanogorsk: "Саяногорск", Zlatoust: "Златоуст", Miass: "Миасс",
+  Kopeysk: "Копейск", "Troitsk": "Троицк", "Novoshakhtinsk": "Новошахтинск", Shakhty: "Шахты",
+  Volzhskiy: "Волжский", Kamyshin: "Камышин", Balakovo: "Балаково", Balashov: "Балашов",
+  "Dimitrovgrad": "Димитровград", "Novocherkassk": "Новочеркасск", "Bataysk": "Батайск",
+  "Azov": "Азов", "Novorossiysk": "Новороссийск", "Armavir": "Армавир", "Yeysk": "Ейск",
+  "Kislovodsk": "Кисловодск", "Pyatigorsk": "Пятигорск", "Essentuki": "Ессентуки",
+  "Yessentuki": "Ессентуки", "Zheleznovodsk": "Железноводск", "Nevinnomyssk": "Невинномысск",
+  "Cherkessk": "Черкесск", "Makhachkala": "Махачкала", "Derbent": "Дербент",
+  "Khasavyurt": "Хасавюрт", "Kaspiysk": "Каспийск", "Buynaksk": "Буйнакск",
+  "Ordzhonikidzevskaya": "Орджоникидзевская", "Nazran'": "Назрань", "Magas": "Магас",
+  "Beslan": "Беслан", "Vladikavkaz2": "", "Kyzyl2": "", "Noril'sk": "Норильск",
+  "Novosibirsk2": "", "Kemerovo2": "", "Krasnoyarsk2": "", "Perm2": "",
+  /* ближнее зарубежье — те, где GeoNames пишет по-своему */
+  Brest: "Брест", Hrodna: "Гродно", Grodno: "Гродно", "Homyel'": "Гомель", Gomel: "Гомель",
+  Mahilyow: "Могилёв", Mogilev: "Могилёв", Vitebsk: "Витебск", Babruysk: "Бобруйск",
+  Baranovichi: "Барановичи", Borisov: "Борисов", Orsha: "Орша", "Salihorsk": "Солигорск",
+  Karaganda: "Караганда", Qaraghandy: "Караганда", Shymkent: "Шымкент", Chimkent: "Шымкент",
+  Aktobe: "Актобе", Aqtobe: "Актобе", Atyrau: "Атырау", Pavlodar: "Павлодар",
+  Semey: "Семей", Oskemen: "Усть-Каменогорск", "Ust-Kamenogorsk": "Усть-Каменогорск",
+  Kostanay: "Костанай", Qyzylorda: "Кызылорда", Taraz: "Тараз", Turkestan: "Туркестан",
+  "Oral": "Уральск", Aqtau: "Актау", Aktau: "Актау", Temirtau: "Темиртау",
+  Namangan: "Наманган", Samarkand: "Самарканд", Bukhara: "Бухара", Andijon: "Андижан",
+  Nukus: "Нукус", Fergana: "Фергана", Qarshi: "Карши", "Bishkek": "Бишкек", Osh: "Ош",
+  "Jalal-Abad": "Джалал-Абад", Dushanbe: "Душанбе", Khujand: "Худжанд", Ashgabat: "Ашхабад",
+  "L'viv": "Львов", Lviv: "Львов", Dnipro: "Днепр", "Dnipropetrovs'k": "Днепропетровск",
+  Zaporizhzhya: "Запорожье", "Odesa2": "", Donetsk: "Донецк", Luhansk: "Луганск",
+  "Kryvyy Rih": "Кривой Рог", Mykolayiv: "Николаев", Kherson: "Херсон", Poltava: "Полтава",
+  Chernihiv: "Чернигов", "Vinnytsya": "Винница", Zhytomyr: "Житомир", Sumy: "Сумы",
+  Rivne: "Ровно", Ternopil: "Тернополь", Lutsk: "Луцк", Uzhhorod: "Ужгород", Chernivtsi: "Черновцы",
+  "Ivano-Frankivs'k": "Иваново-Франковск", Kremenchuk: "Кременчуг", Cherkasy: "Черкассы"
 };
+
+/* ---------- обратная транслитерация ----------
+   GeoNames пишет города латиницей. Для России и СНГ это стандартная
+   транслитерация, поэтому её можно развернуть обратно: «Angarsk» → «Ангарск».
+   Так русские названия появляются у всех городов страны, а не только у тех,
+   что вписаны руками выше. Для остальных стран это не делаем: «Paris» → «Парис»
+   было бы хуже, чем ничего. */
+const RU_LIKE = new Set(["RU"]);
+const VOWELS = "аеиоуыэюяё";
+function translitRu(name) {
+  let s = String(name || "");
+  /* убираем диакритику: Korolëv → Korolev (в поиске ё и е всё равно одно) */
+  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’`]/g, "'");
+  if (!/^[A-Za-z' .-]+$/.test(s)) return "";
+  const low = s.toLowerCase();
+  const out = [];
+  const push = (ch) => out.push(ch);
+  for (let i = 0; i < low.length; i++) {
+    const c = low[i];
+    const rest = low.slice(i);
+    if (rest.startsWith("shch")) { push("щ"); i += 3; continue; }
+    if (rest.startsWith("sch")) { push("щ"); i += 2; continue; }
+    if (rest.startsWith("zh")) { push("ж"); i += 1; continue; }
+    if (rest.startsWith("kh")) { push("х"); i += 1; continue; }
+    if (rest.startsWith("tsk")) { push("тск"); i += 2; continue; }  /* Якутск, Советск */
+    if (rest.startsWith("ts")) { push("ц"); i += 1; continue; }
+    if (rest.startsWith("ch")) { push("ч"); i += 1; continue; }
+    if (rest.startsWith("sh")) { push("ш"); i += 1; continue; }
+    if (rest.startsWith("yo")) { push("е"); i += 1; continue; }
+    if (rest.startsWith("ya")) { push("я"); i += 1; continue; }
+    if (rest.startsWith("yu")) { push("ю"); i += 1; continue; }
+    if (rest.startsWith("ye")) { push("е"); i += 1; continue; }
+    if (rest.startsWith("yi")) { push("и"); i += 1; continue; }
+    if (rest.startsWith("yy")) { push("ый"); i += 1; continue; }
+    if (c === "y") {
+      const prev = out[out.length - 1] || "";
+      push(VOWELS.includes(prev) ? "й" : (prev && prev !== "-" && prev !== " " ? "ы" : "й"));
+      continue;
+    }
+    const map = {
+      a: "а", b: "б", c: "к", d: "д", e: "е", f: "ф", g: "г", h: "х", i: "и",
+      j: "й", k: "к", l: "л", m: "м", n: "н", o: "о", p: "п", q: "к", r: "р",
+      s: "с", t: "т", u: "у", v: "в", w: "в", x: "кс", z: "з", "'": "ь", "-": "-", " ": " "
+    };
+    push(map[c] || "");
+  }
+  let res = out.join("").replace(/(^|[\s-])([а-я])/g, (m, a, b) => a + b.toUpperCase());
+  if (!/[А-Яа-я]/.test(res)) return "";
+  return res;
+}
 
 /* ---------- сборка ---------- */
 const wc = JSON.parse(fs.readFileSync(path.join(ensure("world-countries"), "countries.json"), "utf8"));
@@ -186,23 +305,111 @@ const CUR_RU = {
   VND: "донг", IRR: "иранский риал", ILS: "шекель", AED: "дирхам ОАЭ",
   SAR: "саудовский риял", QAR: "катарский риал", KWD: "кувейтский динар"
 };
+/* Столицы world-countries даёт латиницей («Moscow», «Warsaw»). Для русской
+   страницы это плохо, поэтому держим свой словарь по коду страны. */
+const CAPITAL_RU = {
+  AU: "Канберра", AT: "Вена", AZ: "Баку", AX: "Мариехамн", AL: "Тирана", DZ: "Алжир",
+  AS: "Паго-Паго", AI: "Валли", AO: "Луанда", AD: "Андорра-ла-Велья", AG: "Сент-Джонс",
+  AR: "Буэнос-Айрес", AM: "Ереван", AW: "Ораньестад", AF: "Кабул", BS: "Нассау",
+  BD: "Дакка", BB: "Бриджтаун", BH: "Манама", BY: "Минск", BZ: "Бельмопан",
+  BE: "Брюссель", BJ: "Порто-Ново", BM: "Гамильтон", BG: "София", BO: "Сукре",
+  BA: "Сараево", BW: "Габороне", BR: "Бразилиа", IO: "Диего-Гарсия", VG: "Род-Таун",
+  BN: "Бандар-Сери-Бегаван", BF: "Уагадугу", BI: "Гитега", BT: "Тхимпху", VU: "Порт-Вила",
+  VA: "Ватикан", GB: "Лондон", HU: "Будапешт", VE: "Каракас", VI: "Шарлотта-Амалия",
+  TL: "Дили", VN: "Ханой", GA: "Либревиль", HT: "Порт-о-Пренс", GY: "Джорджтаун",
+  GM: "Банжул", GH: "Аккра", GP: "Бас-Тер", GT: "Гватемала", GN: "Конакри", GW: "Бисау",
+  DE: "Берлин", GG: "Сент-Питер-Порт", GI: "Гибралтар", HN: "Тегусигальпа", HK: "Гонконг",
+  GD: "Сент-Джорджес", GL: "Нуук", GR: "Афины", GE: "Тбилиси", GU: "Хагатна",
+  DK: "Копенгаген", CD: "Киншаса", JE: "Сент-Хелиер", DJ: "Джибути", DM: "Розо",
+  DO: "Санто-Доминго", EG: "Каир", ZM: "Лусака", EH: "Эль-Аюн", ZW: "Хараре",
+  IL: "Иерусалим", IN: "Нью-Дели", ID: "Джакарта", JO: "Амман", IQ: "Багдад", IR: "Тегеран",
+  IE: "Дублин", IS: "Рейкьявик", ES: "Мадрид", IT: "Рим", YE: "Сана", CV: "Прая",
+  KZ: "Астана", KY: "Джорджтаун", KH: "Пномпень", CM: "Яунде", CA: "Оттава",
+  BQ: "Кралендейк", QA: "Доха", KE: "Найроби", CY: "Никосия", KG: "Бишкек",
+  KI: "Южная Тарава", CN: "Пекин", CC: "Уэст-Айленд", CO: "Богота", KM: "Морони",
+  CR: "Сан-Хосе", CI: "Ямусукро", CU: "Гавана", KW: "Эль-Кувейт", CW: "Виллемстад",
+  LA: "Вьентьян", LV: "Рига", LS: "Масеру", LR: "Монровия", LB: "Бейрут", LY: "Триполи",
+  LT: "Вильнюс", LI: "Вадуц", LU: "Люксембург", MU: "Порт-Луи", MR: "Нуакшот",
+  MG: "Антананариву", YT: "Мамудзу", MW: "Лилонгве", MY: "Куала-Лумпур", ML: "Бамако",
+  MV: "Мале", MT: "Валлетта", MA: "Рабат", MQ: "Форт-де-Франс", MH: "Маджуро",
+  MX: "Мехико", MZ: "Мапуту", MD: "Кишинёв", MC: "Монако", MN: "Улан-Батор",
+  MS: "Плимут", MM: "Нейпьидо", NA: "Виндхук", NR: "Ярен", NP: "Катманду", NE: "Ниамей",
+  NG: "Абуджа", NL: "Амстердам", NI: "Манагуа", NU: "Алофи", NZ: "Веллингтон",
+  NC: "Нумеа", NO: "Осло", NF: "Кингстон", AE: "Абу-Даби", OM: "Маскат", IM: "Дуглас",
+  CX: "Флайинг-Фиш-Коув", CK: "Аваруа", PN: "Адамстаун", SH: "Джеймстаун",
+  PK: "Исламабад", PW: "Нгерулмуд", PS: "Рамалла", PA: "Панама", PG: "Порт-Морсби",
+  PY: "Асунсьон", PE: "Лима", PL: "Варшава", PT: "Лиссабон", PR: "Сан-Хуан",
+  CG: "Браззавиль", XK: "Приштина", RE: "Сен-Дени", RU: "Москва", RW: "Кигали",
+  RO: "Бухарест", SV: "Сан-Сальвадор", WS: "Апиа", SM: "Сан-Марино", ST: "Сан-Томе",
+  SA: "Эр-Рияд", SZ: "Лобамба", KP: "Пхеньян", MK: "Скопье", MP: "Сайпан", SC: "Виктория",
+  BL: "Густавия", MF: "Мариго", PM: "Сен-Пьер", SN: "Дакар", VC: "Кингстаун", KN: "Бастер",
+  LC: "Кастри", RS: "Белград", SG: "Сингапур", SX: "Филипсбург", SY: "Дамаск",
+  SK: "Братислава", SI: "Любляна", US: "Вашингтон", SB: "Хониара", SO: "Могадишо",
+  SD: "Хартум", SR: "Парамарибо", SL: "Фритаун", TJ: "Душанбе", TH: "Бангкок",
+  TW: "Тайбэй", TZ: "Додома", TC: "Коберн-Таун", TG: "Ломе", TK: "Факаофо",
+  TO: "Нукуалофа", TT: "Порт-оф-Спейн", TV: "Фунафути", TN: "Тунис", TM: "Ашхабад",
+  TR: "Анкара", UG: "Кампала", UZ: "Ташкент", UA: "Киев", WF: "Мата-Уту",
+  UY: "Монтевидео", FO: "Торсхавн", FM: "Паликир", FJ: "Сува", PH: "Манила",
+  FI: "Хельсинки", FK: "Стенли", FR: "Париж", GF: "Кайенна", PF: "Папеэте",
+  TF: "Порт-о-Франсэ", HR: "Загреб", CF: "Банги", TD: "Нджамена", ME: "Подгорица",
+  CZ: "Прага", CL: "Сантьяго", CH: "Берн", SE: "Стокгольм", SJ: "Лонгйир", LK: "Коломбо",
+  EC: "Кито", GQ: "Малабо", ER: "Асмара", EE: "Таллин", ET: "Аддис-Абеба",
+  GS: "Кинг-Эдвард-Пойнт", KR: "Сеул", ZA: "Претория", SS: "Джуба", JM: "Кингстон",
+  JP: "Токио"
+};
 const REGION_RU = {
   Africa: "Африка", Americas: "Америка", Asia: "Азия", Europe: "Европа",
   Oceania: "Океания", Antarctic: "Антарктика"
 };
 
+/* Языки world-countries тоже латиницей. Переводим частые, остальные оставляем
+   как есть — лучше английское название, чем выдуманное русское. */
+const LANG_RU = {
+  English: "английский", French: "французский", Arabic: "арабский", Spanish: "испанский",
+  Portuguese: "португальский", Russian: "русский", Dutch: "нидерландский", German: "немецкий",
+  Chinese: "китайский", Mandarin: "китайский", Italian: "итальянский", Swahili: "суахили",
+  Swedish: "шведский", Samoan: "самоанский", "Guaraní": "гуарани", Papiamento: "папьяменто",
+  Serbian: "сербский", Malay: "малайский", Tamil: "тамильский", Albanian: "албанский",
+  Turkmen: "туркменский", Aymara: "аймара", Quechua: "кечуа", Croatian: "хорватский",
+  Greek: "греческий", Chamorro: "чаморро", Danish: "датский", Kikongo: "киконго",
+  Lingala: "лингала", Berber: "берберский", Chewa: "чева", Sotho: "сото", Tsonga: "тсонга",
+  Venda: "венда", Xhosa: "коса", Turkish: "турецкий", Afrikaans: "африкаанс",
+  Norwegian: "норвежский", Swazi: "свати", Korean: "корейский", Slovak: "словацкий",
+  Azerbaijani: "азербайджанский", Catalan: "каталанский", Armenian: "армянский",
+  Dari: "дари", Pashto: "пушту", Bengali: "бенгальский", Belarusian: "белорусский",
+  Bulgarian: "болгарский", Bosnian: "боснийский", Kirundi: "кирунди", Dzongkha: "дзонг-кэ",
+  Bislama: "бислама", Latin: "латинский", Hungarian: "венгерский", Tetum: "тетум",
+  Vietnamese: "вьетнамский", "Haitian Creole": "гаитянский креольский", Tswana: "тсвана",
+  Japanese: "японский", Hindi: "хинди", Urdu: "урду", Persian: "персидский",
+  Ukrainian: "украинский", Polish: "польский", Czech: "чешский", Romanian: "румынский",
+  Finnish: "финский", Estonian: "эстонский", Latvian: "латышский", Lithuanian: "литовский",
+  Georgian: "грузинский", Kazakh: "казахский", Uzbek: "узбекский", Kyrgyz: "киргизский",
+  Tajik: "таджикский", Mongolian: "монгольский", Nepali: "непальский", Sinhala: "сингальский",
+  Thai: "тайский", Lao: "лаосский", Khmer: "кхмерский", Burmese: "бирманский",
+  Indonesian: "индонезийский", Tagalog: "тагальский", Hebrew: "иврит", Amharic: "амхарский",
+  Somali: "сомалийский", Hausa: "хауса", Yoruba: "йоруба", Igbo: "игбо", Zulu: "зулу",
+  Malagasy: "малагасийский", Wolof: "волоф", Bambara: "бамбара", Fula: "фула",
+  Icelandic: "исландский", Irish: "ирландский", Welsh: "валлийский", Maltese: "мальтийский",
+  Luxembourgish: "люксембургский", Slovenian: "словенский", Macedonian: "македонский",
+  Moldavian: "молдавский", "Sango": "санго", Comorian: "коморский", Tetum2: ""
+};
+const LANG_LIST_RU = (s) => String(s || "").split(",").map((x) => x.trim()).filter(Boolean)
+  .map((x) => LANG_RU[x] || x).join(", ");
+
 const countries = wc.map((c) => {
   const ru = (c.translations && c.translations.rus && c.translations.rus.common) || c.name.common;
   const cur = Object.keys(c.currencies || {})[0] || "";
-  const langs = Object.values(c.languages || {}).join(", ");
+  const langs = LANG_LIST_RU(Object.values(c.languages || {}).join(", "));
   return [
     c.cca2, ru,
-    (c.capital && c.capital[0]) || "",
+    CAPITAL_RU[c.cca2] || (c.capital && c.capital[0]) || "",
     REGION_RU[c.region] || c.region || "",
     Math.round(Number(c.area) || 0),
     cur,
     cur ? (CUR_RU[cur] || "") : "",
-    (c.idd && c.idd.root ? c.idd.root + ((c.idd.suffixes && c.idd.suffixes[0]) || "") : ""),
+    /* телефонный код: хвост добавляем только если он единственный (+351),
+       иначе получалось «+73» вместо «+7» у России */
+    (c.idd && c.idd.root ? c.idd.root + ((c.idd.suffixes && c.idd.suffixes.length === 1 ? c.idd.suffixes[0] : "") || "") : ""),
     langs
   ];
 }).sort((a, b) => a[1].localeCompare(b[1], "ru"));
@@ -219,7 +426,12 @@ for (const c of rawCities) {
   if (seen.has(key)) continue;
   seen.add(key);
   const row = [c.name, c.country, c.population];
-  const ru = CITY_RU[c.name];
+  let ru = CITY_RU[c.name];
+  if (!ru && RU_LIKE.has(String(c.country || "").toUpperCase())) {
+    const t = translitRu(c.name);
+    /* очень короткие и странные названия не трогаем: лучше латиница, чем мусор */
+    if (t && t.length > 3) ru = t;
+  }
   if (ru) row.push(ru);
   cities.push(row);
 }
