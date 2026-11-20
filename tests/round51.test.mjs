@@ -156,6 +156,9 @@ await test("языки страны названы по-русски", () => {
   assert(/русский/.test(ru[8]), "языки России: " + ru[8]);
   const kz = indexJson.countries.find((c) => c[0] === "KZ");
   assert(/казахский/.test(kz[8]), "языки Казахстана: " + kz[8]);
+  /* все 250 стран, а не только Россия: латиницы в языках быть не должно */
+  const latin = indexJson.countries.filter((c) => /[A-Za-z]/.test(String(c[8] || "")));
+  assert(latin.length === 0, "языки латиницей: " + latin.slice(0, 2).map((c) => c[0] + ": " + c[8]).join("; "));
 });
 
 await test("страна в ответе: столица, площадь, валюта, население столицы", () => {

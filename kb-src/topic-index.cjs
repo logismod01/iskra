@@ -391,7 +391,29 @@ const LANG_RU = {
   Malagasy: "малагасийский", Wolof: "волоф", Bambara: "бамбара", Fula: "фула",
   Icelandic: "исландский", Irish: "ирландский", Welsh: "валлийский", Maltese: "мальтийский",
   Luxembourgish: "люксембургский", Slovenian: "словенский", Macedonian: "македонский",
-  Moldavian: "молдавский", "Sango": "санго", Comorian: "коморский", Tetum2: ""
+  Moldavian: "молдавский", "Sango": "санго", Comorian: "коморский",
+  /* редкие, но они реально стоят в карточках стран */
+  "Austro-Bavarian German": "австро-баварский немецкий", "Belizean Creole": "белизский креольский",
+  "Upper Guinea Creole": "верхнегвинейский креольский", "Guernésiais": "гернсийский",
+  Greenlandic: "гренландский", Tshiluba: "чилуба", "Jèrriais": "джерсийский",
+  Hassaniya: "хассания", Chibarwe: "чибарве", Kalanga: "каланга", Khoisan: "койсанские",
+  Ndau: "ндау", "Northern Ndebele": "северный ндебеле", Shona: "шона", Tonga: "тонга",
+  "Zimbabwean Sign Language": "зимбабвийский жестовый", Aramaic: "арамейский",
+  Sorani: "сорани", "Persian (Farsi)": "персидский", Gilbertese: "гилбертский",
+  "Mauritian Creole": "маврикийский креольский", Maldivian: "мальдивский",
+  Marshallese: "маршалльский", Herero: "гереро", Khoekhoe: "кхойкхой",
+  Kwangali: "квангали", Lozi: "лози", Ndonga: "ндонга", Nauru: "науруанский",
+  Niuean: "ниуэ", "Māori": "маори", "New Zealand Sign Language": "новозеландский жестовый",
+  "Norwegian Nynorsk": "норвежский нюношк", "Norwegian Bokmål": "норвежский букмол",
+  Sami: "саамский", Norfuk: "норфук", Manx: "мэнский",
+  "Cook Islands Māori": "маори островов Кука", Palauan: "палау", "Hiri Motu": "хири-моту",
+  "Tok Pisin": "ток-писин", Kinyarwanda: "киньяруанда", Carolinian: "каролинский",
+  "Seychellois Creole": "сейшельский креольский", Slovene: "словенский",
+  Tokelauan: "токелау", Tongan: "тонганский", Tuvaluan: "тувалу",
+  Faroese: "фарерский", Fijian: "фиджийский", "Fiji Hindi": "фиджи-хинди",
+  Filipino: "филиппинский", Montenegrin: "черногорский", "Swiss German": "швейцарский немецкий",
+  Romansh: "романшский", Tigrinya: "тигринья", "Southern Ndebele": "южный ндебеле",
+  "Northern Sotho": "северный сото", "Southern Sotho": "южный сото", "Jamaican Patois": "ямайский креольский"
 };
 const LANG_LIST_RU = (s) => String(s || "").split(",").map((x) => x.trim()).filter(Boolean)
   .map((x) => LANG_RU[x] || x).join(", ");
