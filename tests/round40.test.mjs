@@ -171,8 +171,8 @@ await test("в настройках нет чужих названий серв�
   assert(!/gemini|google|openai/i.test(box), "название сервиса попало в настройки");
 });
 
-await test("версия поднята до 1.56.0", async () => {
-  assert(pkg.version === "1.56.0", "версия не поднята: " + pkg.version);
+await test("версия поднята до 1.57.0", async () => {
+  assert(pkg.version === "1.57.0", "версия не поднята: " + pkg.version);
 });
 
 if (!process.exitCode) console.log("round40: " + passed + " проверок пройдено");

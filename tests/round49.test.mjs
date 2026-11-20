@@ -57,13 +57,14 @@ function assert(cond, msg) {
 }
 
 /* ------------------------- 1. Токены и лимиты ------------------------- */
-await test("бесплатный тариф: 10 000 токенов на 5 дней", () => {
+await test("бесплатный тариф: 10 000 токенов каждый день", () => {
   ev(`localStorage.clear(); _memoCache = null;`);
   const w = j("walletState()");
   assert(w.freeLeft === 10000, "бесплатных токенов: " + w.freeLeft);
   assert(w.plan === "free", "тариф по умолчанию: " + w.plan);
-  const days = (w.freeReset - Date.now()) / 864e5;
-  assert(days > 4.9 && days <= 5.01, "срок бесплатных: " + days);
+  /* с 1.57 норма возвращается каждый день, а не раз в 5 дней */
+  const hours = (w.freeReset - Date.now()) / 36e5;
+  assert(hours > 0 && hours <= 24.1, "срок бесплатных: " + hours + " ч");
 });
 
 await test("сообщение стоит от 1 500 до 5 000 токенов по сложности", () => {
