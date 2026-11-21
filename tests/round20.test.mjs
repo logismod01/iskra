@@ -70,7 +70,19 @@ await test("фон-узоры на телефоне выключены", async (
 /* ---------- 3. Поле ввода ---------- */
 await test("кнопки под полем ввода в один ряд и не переносятся", async () => {
   assert(/\.comp-tools \{[^}]*flex-wrap: nowrap/.test(mobileCss), "кнопки всё ещё переносятся");
-  assert(/\.comp-tools \.tool-btn \{[^}]*width: 34px/.test(mobileCss), "кнопки не уменьшены");
+  /* С 1.59 кнопки не «уменьшены до 34 px», а наоборот — крупные и с
+     подписями: палец должен попадать без промаха. Поэтому проверяем норму
+     «не мельче 44 px» в мобильном блоке, а не старое 34 px. */
+  const btns = [...mobileCss.matchAll(/\.comp-tools \.tool-btn \{([^}]*)\}/g)].map((m) => m[1]);
+  assert(btns.length > 0, "в мобильных правилах нет кнопок инструментов");
+  for (const b of btns) {
+    const h = /(?:min-height|height):\s*(\d+)px/.exec(b);
+    if (h) assert(Number(h[1]) >= 44, "кнопка мельче 44 px: " + h[1] + "px");
+    /* На самых узких экранах (330–360 px) кнопки стоят в один ряд и потому
+       заданы через min-width — это не «сжатие в квадрат», а тот же размер с
+       подписью под иконкой. */
+    assert(/flex: 0 0 auto|width: auto|min-width: \d+px/.test(b), "кнопки сжаты в один размер вместо подписи");
+  }
 });
 
 await test("поле ввода 16 px — иначе iPhone зумит страницу", async () => {
@@ -163,8 +175,8 @@ await test("меню закрывается после выбора телефо
 
 /* ---------- 6. Версия ---------- */
 await test("версия поднята, кэш обновлён", async () => {
-  assert(pkg.version === "1.58.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.58\.0"/.test(sw), "кэш service worker не обновлён");
+  assert(pkg.version === "1.59.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.59\.0"/.test(sw), "кэш service worker не обновлён");
 });
 
 await test("новый тест подключён к npm test", async () => {
