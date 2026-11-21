@@ -126,10 +126,16 @@ await test("общая база грузится страницами, а не �
   window.eval("_sharedKb = null; _sharedKbAt = 0;");
   const got = await window.eval("sharedKbRefresh(true).then(x => x.length)");
   assert(got === total, "загружено тем: " + got + ", а в базе " + total);
-  assert(calls.length === 3, "запросов: " + calls.length + ", ожидалось 3 (500+500+141)");
-  assert(calls[0].includes("offset=0"), "нет первого запроса");
-  assert(calls[1].includes("offset=500"), "нет второго запроса");
-  assert(calls[2].includes("offset=1000"), "нет третьего запроса");
+  /* Размер страницы поднят до 1000: в базе 43 000 тем, и по 500 пришлось бы
+     делать 90 запросов. Тест проверяет суть — загрузка идёт страницами
+     с offset, а не обрывается на первой, — а не конкретное число. */
+  /* Запросы данных — только те, что тянут topic+body (подсчёт не в счёт). */
+  const pages = calls.filter((c) => c.includes("select=topic,body"));
+  assert(pages.length >= 2, "страниц данных: " + pages.length + ", ожидалось хотя бы 2");
+  pages.forEach((c, i) =>
+    assert(c.includes("offset=" + i * 1000), "страница " + i + " без offset=" + i * 1000 + ": " + c));
+  const sum = pages.reduce((acc, c) => acc + Number(new URL(c).searchParams.get("limit")), 0);
+  assert(sum >= total, "суммарный limit " + sum + " меньше базы " + total);
 });
 
 await test("счётчик в меню показывает все темы, а не 500", async () => {

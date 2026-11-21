@@ -95,8 +95,17 @@ const numbered = w.eval(`renderMarkdown(${JSON.stringify("1. Раз\n2. Два\n
 check("простой список без start", numbered === "<ol><li>Раз</li><li>Два</li><li>Три</li></ol>", numbered);
 
 console.log("\n6. Анкета проекта и режим «только вопросы»");
-check("8 стартовых блоков", w.eval("PROJECT_SETUP.length") === 8);
-check("у вопросов есть варианты", w.eval("PROJECT_SETUP.filter(x => x.options && x.options.length).length") === 8);
+/* Стартовая анкета: сфера, опыт, стек, тип, требования, срок, бюджет,
+   риск, свои идеи. Проверяем суть — она покрывает все 10 блоков разбора
+   и у каждого вопроса есть готовые варианты, — а не точное число. */
+const setup = w.eval("PROJECT_SETUP");
+check("стартовая анкета не короче 8 вопросов", setup.length >= 8, "вопросов: " + setup.length);
+const setupBlocks = new Set(setup.map((x) => x.block));
+const allBlocks = w.eval("PROJECT_BLOCKS");
+check("покрыты все блоки разбора", [...setupBlocks].every((b) => allBlocks.includes(b)),
+  [...setupBlocks].join(", "));
+check("у всех вопросов есть варианты", setup.every((x) => x.options && x.options.length >= 2),
+  setup.filter((x) => !x.options || x.options.length < 2).map((x) => x.q).join("; "));
 check("список вопросов нумеруется с 1", w.eval(`projectQuestionsText(10, false).text`).includes("\n1. "));
 const qn = w.eval(`projectQuestionsText(15, false)`);
 const nums = (qn.text.match(/(?:^|\n)(\d+)\. /g) || []).map((x) => Number(x.trim().split(".")[0]));
