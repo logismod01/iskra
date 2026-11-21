@@ -15,3 +15,7 @@ kb-src/raw/
 
 # временные проверки, не в репозиторий
 probe*.tmp.mjs
+
+# мусор Python
+__pycache__/
+*.pyc
