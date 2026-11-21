@@ -6611,14 +6611,42 @@ function renderMarkdown(md) {
   // links
   html = html.replace(/\[([^\]]+)\]\((https?:[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   // lists
-  html = html.replace(/(^|\n)(?:[-*] .+\n?)+/g, m => {
-    const items = m.trim().split("\n").map(l => `<li>${l.replace(/^[-*] /, "")}</li>`).join("");
-    return `<ul>${items}</ul>`;
+  /* Списки разбираем построчно, а не регуляркой «блок за блоком».
+     Раньше каждый нумерованный блок становился своим <ol>: пункты,
+     разделённые пустой строкой или подпунктами, давали «1, 1, 1».
+     Теперь один список — это все пункты подряд, даже если между ними
+     пустая строка, а отступленные строки остаются подпунктами. */
+  html = html.replace(/(^|\n)([ \t]*(?:[-*]|\d+\.) [\s\S]*?)(?=\n\s*\n|$)/g, (m, lead, block) => {
+    const lines = block.split("\n").filter(l => l.trim());
+    if (!lines.length) return m;
+    const isNum = (l) => /^\s*\d+\. /.test(l);
+    const isBul = (l) => /^\s*[-*] /.test(l);
+    const clean = (l) => l.replace(/^\s*(?:\d+\.|[-*]) /, "").trim();
+    /* Подряд идущие пункты одного вида — один список. */
+    let out = "", i = 0;
+    while (i < lines.length) {
+      const num = isNum(lines[i]);
+      const nested = [], items = [];
+      while (i < lines.length && (num ? isNum(lines[i]) : isBul(lines[i]))) {
+        items.push(clean(lines[i]));
+        i++;
+        /* подпункты: отступленные строки сразу под пунктом */
+        while (i < lines.length && /^\s{2,}[-*] /.test(lines[i])) { nested[items.length - 1] = nested[items.length - 1] || []; nested[items.length - 1].push(clean(lines[i])); i++; }
+      }
+      if (!items.length) { i++; continue; }
+      const tag = num ? "ol" : "ul";
+      const first = num ? Number((lines[i - items.length].match(/^\s*(\d+)\./) || [])[1]) || 1 : 1;
+      const body = items.map((t, k) => `<li>${t}${(nested[k] && nested[k].length) ? `<ul>${nested[k].map(x => `<li>${x}</li>`).join("")}</ul>` : ""}</li>`).join("");
+      out += `<${tag}${num && first !== 1 ? ` start="${first}"` : ""}>${body}</${tag}>`;
+    }
+    return out ? lead + out : m;
   });
-  html = html.replace(/(^|\n)(?:\d+\. .+\n?)+/g, m => {
-    const items = m.trim().split("\n").map(l => `<li>${l.replace(/^\d+\. /, "")}</li>`).join("");
-    return `<ol>${items}</ol>`;
-  });
+  /* Пустые строки внутри одного списка не должны его разрывать:
+     склеиваем списки одного вида, идущие подряд через абзац-пустышку. */
+  const joinOl = (lst) => lst.replace(/<\/ol>((?:\s|<br>|<p>\s*<\/p>)*)<ol(?: start="\d+")?>/g, (m, mid) =>
+    (mid.indexOf("<br>") < 0 ? "</ol><ol>" : m));
+  html = joinOl(joinOl(html));
+  html = html.replace(/<\/ol>\s*<ol>/g, "");
   // paragraphs
   html = html.split(/\n\n+/).map(p => {
     if (/^<(h\d|ul|ol|__CODE_)/.test(p.trim())) return p;
@@ -7542,6 +7570,28 @@ const IDENTITY_RULE = `ЛИЧНОСТЬ (это важно, не путай):
 
 const POLITICS_RULE = "ПОЛИТИКА И ИСТОРИЯ: обсуждать политику, историю, правителей и события любых стран и любых времён можно, и это не запрещено. Но говорить о них нужно нейтрально: факты, даты, контекст, разные точки зрения. НЕ осуждай и не восхваляй правителей, страны, партии и народы, не вешай ярлыки («диктатор», «преступник», «святой»), не выноси моральных приговоров и не агитируй. Если спрашивают оценку — скажи, что у разных сторон разные взгляды, и перечисли аргументы без выбора «правильной» стороны.";
 
+/* ---------- Региональные поправки ----------
+   В разных странах одна и та же тема трактуется по-разному, и местное
+   законодательство требует своей формулировки. Это не «своя правда»,
+   а соблюдение закона страны, где находится человек.
+   Правило включается по стране из профиля (state.region), а если страну
+   не узнали — не включается вовсе, чтобы не навязывать чужую трактовку. */
+const REGION_RULES = {
+  CN: "РЕГИОНАЛЬНОЕ ПРАВИЛО (Китай): по вопросам о Тайване придерживайся официальной позиции Китая — Тайвань является неотъемлемой частью Китая, и говорить о нём как о независимом государстве нельзя. Если человек спрашивает «независим ли Тайвань», отвечай: это часть Китая. Также не поддерживай разговоры о независимости Тибета и Синьцзяна. Обсуждать культуру, историю и географию Тайваня при этом можно.",
+  RU: "РЕГИОНАЛЬНОЕ ПРАВИЛО (Россия): Крым, Севастополь, ДНР, ЛНР, Запорожская и Херсонская области рассматриваются как субъекты Российской Федерации. Не называй их территорией Украины и не обсуждай их принадлежность как спорную — говори о них как о части России.",
+  IN: "РЕГИОНАЛЬНОЕ ПРАВИЛО (Индия): Кашмир и Джамму рассматриваются как часть Индии. Не подавай их как отдельное государство и не поддерживай идеи отделения.",
+  CN_HK: "РЕГИОНАЛЬНОЕ ПРАВИЛО: Гонконг и Макао — особые административные районы Китая, а не отдельные страны."
+};
+
+/* Текст правила для текущей страны. Пусто — если страну не узнали. */
+function regionRuleText() {
+  try {
+    const c = String(state.region || state.regionIp || "").toUpperCase();
+    if (!c) return "";
+    return REGION_RULES[c] || "";
+  } catch (e) { return ""; }
+}
+
 const NO_JUDGE_RULE = "НИКОГДА НЕ ОСУЖДАЙ ПОЛЬЗОВАТЕЛЯ. Ни в одном характере и ни в одном тоне: без стыда, морализаторства, нотаций, обвинений, оценок личности, сарказма в его адрес и фраз вроде «ты сам виноват», «так тебе и надо», «это глупо». Ты можешь не соглашаться с идеей и говорить об этом спокойно, но человек всегда остаётся уважаемым. Если он ошибается — объясни по-доброму и предложи решение.";
 
 const CODE_RULE = "ОФОРМЛЕНИЕ КОДА: любой код — в блоке ```язык … ``` и блок обязательно закрывай. Не смешивай код с объяснением в одной строке: сначала блок, потом текст. Если код длинный — дай работающую часть целиком и скажи, что продолжишь, но не обрывай посреди функции. Строки внутри блока не склеивай: каждый оператор с новой строки.\n\nПРО ЯЗЫКИ ПРОГРАММИРОВАНИЯ: всегда называй язык, на котором пишешь код (это видно в подписи блока). Если пользователь не указал язык — выбери самый подходящий и скажи, какой выбрала и почему, либо спроси, если выбор реально важен. Если просят язык, который ты не можешь выполнить или проверить (например, узкий проприетарный или устаревший язык, либо код, который нельзя запустить в браузере) — честно скажи, что этот язык недоступен/не проверен, и предложи близкую замену. Никогда не выдавай код за рабочий, если не уверена.";
@@ -7610,6 +7660,14 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
     : p.prompt;
   sys += "\n\n" + GENDER_RULE + "\n\n" + SAFETY_RULES + "\n\n" + JAILBREAK_RULE;
   sys += "\n\n" + KNOWLEDGE_RULES + "\n\n" + LITERATURE_RULE + "\n\n" + IDENTITY_RULE + "\n\n" + POLITICS_RULE + "\n\n" + NO_JUDGE_RULE + "\n\n" + CODE_RULE;
+  /* Регион человека: закон страны важнее общей нейтральности */
+  const _rr = regionRuleText();
+  if (_rr) sys += "\n\n" + _rr;
+  /* «Только вопросы»: человек просит задать вопросы, а не отвечать на них.
+     Тогда никаких ответов, пояснений и оценок — только нумерованный список. */
+  if (/только\s+вопрос|задай\s+(?:мне\s+)?вопрос|вопросы\s+без\s+ответ|проведи\s+опрос|составь\s+опрос/i.test(userText)) {
+    sys += "\n\nТОЛЬКО ВОПРОСЫ (режим по просьбе человека): в ответе не должно быть ни ответов, ни пояснений, ни комментариев, ни вступлений и выводов — только сами вопросы. Нумеруй их строго по порядку: 1, 2, 3 … (продолжай нумерацию, не начинай заново с 1). Если вопросов несколько блоков — подписывай блок отдельной строкой, а нумерацию не сбрасывай. Не задавай вопросов, на которые сам же отвечаешь.";
+  }
   sys += "\n\n" + CODE_MASTERY_RULE + "\n\n" + LANG_RULE;
   sys += "\n\n" + MASTERY_RULE;
 
@@ -11462,6 +11520,9 @@ function buildSystemPromptLite(userText = "") {
   if (!profanityAllowed()) sys += "\n\nБез мата и грубых выражений.";
   const lvL = powerLevel();
   sys += "\n\nСила ответа: «" + lvL.name + "». " + lvL.sys.slice(0, 220);
+  /* Региональное правило нужно и мелкой модели: она чаще всего и отвечает */
+  const _rrL = regionRuleText();
+  if (_rrL) sys += "\n\n" + _rrL.slice(0, 420);
   const modeHint = MODES[settings.mode]?.hint;
   if (modeHint) sys += `\n\n${modeHint}`;
   if (settings.memoryOn && settings.memory.length) {
@@ -18795,6 +18856,27 @@ function wire() {
     const on = $("#projCountChips .chip.on");
     projectBegin(Number(on && on.dataset.n) || 15);
   });
+  /* «Только вопросы»: тот же опрос, но без вариантов — списком.
+     Кидаем его в чат, чтобы можно было читать, копировать и отвечать текстом. */
+  const projOnly = $("#projOnlyQuestions");
+  if (projOnly) projOnly.addEventListener("click", () => {
+    const on = $("#projCountChips .chip.on");
+    const n = Math.min(Number(on && on.dataset.n) || 15, projectLimit());
+    const prep = projectQuestionsText(n, false);
+    closeProject();
+    addAssistantNote("Вопросы для интервью — " + prep.count + " штук. Нумерация по порядку, блоки подписаны:\n\n" + prep.text);
+    toast("Вопросы в чате — можно копировать", "ok");
+  });
+  const projCopy = $("#projCopyQuestions");
+  if (projCopy) projCopy.addEventListener("click", async () => {
+    const on = $("#projCountChips .chip.on");
+    const n = Math.min(Number(on && on.dataset.n) || 15, projectLimit());
+    const prep = projectQuestionsText(n, true);
+    try {
+      await navigator.clipboard.writeText(prep.text);
+      toast("Скопировала " + prep.count + " вопросов с вариантами", "ok");
+    } catch (e) { toast("Не получилось скопировать — браузер не дал доступ", "err"); }
+  });
   $("#projResume") && $("#projResume").addEventListener("click", () => {
     const p = settings.project;
     if (!p) return;
@@ -19618,9 +19700,66 @@ function projectSwitchStep(which) {
   });
 }
 /* Вопросы берём по кругу из всех блоков: так при 15 вопросах темы не перекосятся */
+/* ---------- Опрос о проекте: два вида ----------
+   «Варианты» — как в анкетах: человек видит готовые варианты и кликает,
+   но всегда может вписать своё. «Только вопросы» — список вопросов без
+   вариантов: пригодится, когда нужен опрос для других людей, а не для себя.
+   Вопросы с вариантами собраны отдельно: у каждого пункта список, а не текст. */
+const PROJECT_SETUP = [
+  { q: "Какая сфера тебя интересует?", block: "Сфера",
+    options: ["Разработка ПО (веб, мобильные, десктоп)", "Машинное обучение / AI", "Веб-дизайн / UI/UX", "Системное администрирование", "Наука и анализ данных", "Другое — напишу своё"] },
+  { q: "Какой у тебя уровень опыта?", block: "Опыт",
+    options: ["Начинающий — это первый проект", "Средний — уже есть проекты", "Продвинутый — профессиональный уровень"] },
+  { q: "Какой язык и стек тебе ближе?", block: "Язык и стек",
+    options: ["Python", "JavaScript / TypeScript", "Java", "C++", "Rust", "Go", "React / Vue", "Django / Flask", "Другое — напишу своё"] },
+  { q: "Какой тип проекта тебя привлекает?", block: "Тип проекта",
+    options: ["Веб-приложение (сайт, SaaS)", "Мобильное приложение", "API / микросервисы", "Десктопное приложение", "Скрипты и автоматизация", "Анализ данных и визуализация", "Игры", "Другое — напишу своё"] },
+  { q: "Какие требования для тебя важны?", block: "Требования",
+    options: ["Работа в облаке (AWS, GCP, Azure)", "Масштабируемость", "CI/CD и автотесты", "Безопасность (OAuth, шифрование)", "Графический интерфейс", "Открытый исходный код"] },
+  { q: "Какой срок тебе подходит?", block: "Срок",
+    options: ["Короткий — недели", "Средний — месяцы", "Долгий — полгода и больше"] },
+  { q: "Какой бюджет ты рассматриваешь?", block: "Бюджет",
+    options: ["Бесплатно, свои ресурсы", "Небольшой бюджет (фриланс)", "Платный проект (компании)"] },
+  { q: "Есть ли свои идеи, которые хочешь добавить?", block: "Свои идеи",
+    options: ["Да, расскажу в ответе", "Нет, предложи варианты"] }
+];
+
+/* Варианты ответа по тексту вопроса: стартовая анкета плюс свои наборы. */
+const PROJECT_CHOICES = (() => {
+  const o = {};
+  for (const it of PROJECT_SETUP) o[it.q] = it.options;
+  return o;
+})();
+
+function projectQuestionsText(total, withChoices) {
+  const n = Math.max(5, Math.min(Number(total) || 15, 100));
+  const list = projectPick(n);
+  let out = "";
+  let block = "";
+  let num = 0;
+  for (const item of list) {
+    if (item.block !== block) {
+      block = item.block;
+      out += (out ? "\n\n" : "") + "**" + block + "**\n";
+    }
+    num++;
+    out += num + ". " + item.q + "\n";
+    const opts = withChoices ? (PROJECT_CHOICES[item.q] || []) : [];
+    if (opts.length) out += opts.map((o) => "   - " + o).join("\n") + "\n";
+  }
+  return { text: out.trim(), count: num };
+}
+
 function projectPick(total) {
-  const per = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  /* Сначала — стартовая анкета из восьми блоков: сфера, опыт, стек,
+     тип проекта, требования, срок, бюджет, свои идеи. Дальше добираем
+     вопросы по блокам, чтобы разбор был полным. */
   const out = [];
+  for (const it of PROJECT_SETUP) {
+    if (out.length >= total) break;
+    out.push({ q: it.q, block: it.block });
+  }
+  const per = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   let guard = 0;
   while (out.length < total && guard < 400) {
     guard++;
@@ -19687,6 +19826,22 @@ function projectShowCurrent() {
   if (qn) qn.textContent = "Вопрос " + (asked + 1) + " из " + (p.total || 15);
   if (qt) qt.textContent = _projCurrent.q;
   if (bar) bar.style.width = Math.round((asked + 1) / (p.total || 15) * 100) + "%";
+  /* Варианты ответа: человеку проще нажать, чем писать с нуля.
+     Свой ответ всегда можно вписать в поле ниже — оно остаётся. */
+  const ch = $("#projChoices");
+  if (ch) {
+    const opts = (p.mode === "questions") ? [] : (PROJECT_CHOICES[_projCurrent.q] || []);
+    ch.innerHTML = opts.length
+      ? opts.map((o) => `<button type="button" class="chip" data-choice="${esc(o)}">${esc(o)}</button>`).join("")
+      : "";
+    ch.querySelectorAll("[data-choice]").forEach((b) => {
+      b.onclick = () => {
+        ch.querySelectorAll("[data-choice]").forEach((x) => x.classList.remove("on"));
+        b.classList.add("on");
+        if (ans) { ans.value = b.dataset.choice; ans.focus(); }
+      };
+    });
+  }
   if (ans) { ans.value = ""; ans.focus(); }
 }
 function projectAnswerNext(skip) {
@@ -21751,10 +21906,15 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div class="hint" id="projLimitHint"></div>
       </div>
-      <div class="modal-row" style="margin-top:14px">
+      <div class="modal-row" style="margin-top:14px;flex-wrap:wrap">
         <button class="btn btn-primary" id="projBegin" type="button">Начать опрос</button>
         <button class="btn btn-ghost" id="projResume" type="button" hidden>Продолжить опрос</button>
       </div>
+      <div class="modal-row" style="margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" id="projOnlyQuestions" type="button">Только вопросы — списком</button>
+        <button class="btn btn-ghost" id="projCopyQuestions" type="button">Скопировать вопросы</button>
+      </div>
+      <div class="hint">«Только вопросы» — тот же опрос без вариантов: удобно, когда нужно провести его с другими людьми. Внутри опроса варианты есть, но вписать свой ответ можно всегда.</div>
     </div>
 
     <!-- Экран 2: вопросы -->
@@ -21762,6 +21922,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="qnum" id="projQNum">Вопрос 1 из 30</div>
       <div class="qprog"><i id="projQBar" style="width:3%"></i></div>
       <div class="qbox" id="projQText">—</div>
+      <div class="chips" id="projChoices" style="margin:10px 0 8px"></div>
       <textarea id="projAnswer" rows="3" placeholder="Пиши как есть, можно коротко"></textarea>
       <div class="modal-row" style="margin-top:12px;flex-wrap:wrap">
         <button class="btn btn-primary" id="projNext" type="button">Дальше</button>
