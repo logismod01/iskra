@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const knowledge = require("../core/knowledge.js");
-const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ERRORS, TASKS, SCRIPTS, ALL } = knowledge;
+const { pickKnowledge, search, promptBlock, METHOD, LANGUAGES, BUGS, TOOLS, RECIPES, ERRORS, TASKS, JOBS, SCRIPTS, ALL } = knowledge;
 const { systemPrompt } = require("../core/agent.js");
 const { LIMITS } = require("../core/license.js");
 const { TOOL_NAMES } = require("../core/protocol.js");
@@ -114,7 +114,9 @@ test("справка выросла: языки, баги, инструмент�
   assert.ok(RECIPES.length >= 8, "мало порядков действий: " + RECIPES.length);
   assert.ok(ERRORS.length >= 10, "мало карточек про сообщения ошибок: " + ERRORS.length);
   assert.ok(TASKS.length >= 10, "мало карточек про рабочие задачи: " + TASKS.length);
-  assert.equal(ALL.length, LANGUAGES.length + BUGS.length + TOOLS.length + RECIPES.length + ERRORS.length + TASKS.length + SCRIPTS.length);
+  /* 1.59: практические дела, которые агент ведёт до результата */
+  assert.ok(JOBS.length >= 10, "мало карточек про дела: " + JOBS.length);
+  assert.equal(ALL.length, LANGUAGES.length + BUGS.length + TOOLS.length + RECIPES.length + ERRORS.length + TASKS.length + JOBS.length + SCRIPTS.length);
   const ids = ALL.map((x) => x.id);
   assert.equal(new Set(ids).size, ids.length, "есть повторяющиеся id");
 });
@@ -157,7 +159,7 @@ test("порядок действий попадает в промпт цели�
 });
 
 test("каждая карточка находится по своему названию", () => {
-  for (const card of TOOLS.concat(RECIPES, ERRORS, TASKS)) {
+  for (const card of TOOLS.concat(RECIPES, ERRORS, TASKS, JOBS)) {
     const found = search(card.title, 3).map((x) => x.id);
     assert.ok(found.includes(card.id), card.id + " не находится по названию: " + found.join(","));
   }
@@ -202,6 +204,26 @@ test("просьба написать скрипт подтягивает кар
 
   const powershell = kb.pickKnowledge("напиши powershell скрипт и запусти его").items.map((x) => x.id);
   assert.ok(powershell.includes("script-powershell"), "нет карточки про PowerShell: " + powershell.join(", "));
+});
+
+test("просьбы «сделай мне» находят практическую карточку, а не пустоту", () => {
+  const kb = require("../core/knowledge.js");
+  const want = [
+    ["переименуй все файлы в папке по дате", "job-files-rename"],
+    ["хватит ли денег до зарплаты, посчитай бюджет", "job-budget-home"],
+    ["помоги с домашкой по математике", "job-school-task"],
+    ["мало памяти на телефоне, почистить", "job-phone-clean"],
+    ["как запустить python скрипт на windows", null],
+    ["сделай копию файла, чтобы не сломать", "job-git-help"],
+  ];
+  for (const [ask, id] of want) {
+    const found = kb.search(ask, 3).map((x) => x.id);
+    assert.ok(found.length > 0, "ничего не нашла на «" + ask + "»");
+    if (id) assert.ok(found.includes(id), "на «" + ask + "» пришло " + found.join(", "));
+  }
+  /* дела попадают в промпт и не рвут его */
+  const block = kb.promptBlock("переименуй файлы в папке", 2200);
+  assert.match(block, /Переименовать|переимен/i);
 });
 
 test("карточки про скрипты такие же короткие, как остальные", () => {

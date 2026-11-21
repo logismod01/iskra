@@ -221,8 +221,8 @@ await test("карточка страны подставляет вопрос в
 await test("версия 1.58 в файлах, кэше и npm test", () => {
   const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   const sw = fs.readFileSync(new URL("../sw.js", import.meta.url), "utf8");
-  assert(pkg.version === "1.58.0", "версия сайта: " + pkg.version);
-  assert(/const VERSION = "iskra-1\.58\.0"/.test(sw), "кэш не обновлён");
+  assert(pkg.version === "1.59.0", "версия сайта: " + pkg.version);
+  assert(/const VERSION = "iskra-1\.59\.0"/.test(sw), "кэш не обновлён");
   assert(/topic-index\.json/.test(sw), "индекс не кэшируется офлайн");
   assert(pkg.scripts.test.includes("tests/round51.test.mjs"), "тест не подключён к npm test");
 });
