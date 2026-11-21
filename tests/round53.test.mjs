@@ -133,6 +133,15 @@ const beforeN = ev("learnedList().length");
 const addedN = await ev(`learnNeighbours("Фотосинтез")`);
 check("соседи легли в базу", ev("learnedList().length") > beforeN, `добавлено ${addedN}`);
 
+console.log("\n5в. Пачка: 20 статей за один запрос");
+const batch = await ev(`wikiBatch(${JSON.stringify(["Хлорофилл", "Хлоропласт", "Углекислый газ", "Кислород"])})`);
+check("вернулось пачкой", batch.length >= 3, `статей: ${batch.length}`);
+check("у каждой есть текст", batch.every(a => a.text && a.text.length >= 120));
+const fresh = await ev(`wikiNewNeighbours("Фотосинтез", 20)`);
+check("берёт только новые", Array.isArray(fresh), `новых названий: ${fresh.length}`);
+const addedB = await ev(`learnBatch("Фотосинтез")`);
+check("пачка пополнила базу", addedB >= 0, `добавлено: ${addedB}`);
+
 console.log("\n6. Повтор не дублирует");
 const n1 = ev("learnedList().length");
 await ev(`(autoLearn("что такое фотосинтез", ${JSON.stringify(search.snippets)}), 0)`);

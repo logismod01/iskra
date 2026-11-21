@@ -11904,11 +11904,12 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       if (_lastSearch && _lastSearch.snippets && _lastSearch.snippets.length) {
         try { autoLearn(trimmed, _lastSearch.snippets); } catch (e) {}
         /* Докопать соседей первой статьи — в фоне, после ответа.
-           Один вопрос = 1–2 свои статьи, а соседи дают ещё до 20.
-           Человек этого не ждёт: справка у него уже есть. */
+           Один вопрос даёт 1–2 свои статьи; соседи добавляют ещё до 20,
+           причём пачкой за один запрос. Человек этого не ждёт: справка
+           у него уже есть, база догоняет сама. */
         try {
           const head = _lastSearch.snippets[0].title;
-          setTimeout(() => { learnNeighbours(head).catch(() => {}); }, 1500);
+          setTimeout(() => { learnBatch(head).catch(() => {}); }, 1500);
         } catch (e) {}
       }
       streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
@@ -17314,6 +17315,67 @@ async function learnNeighbours(title) {
   const list = await wikiNeighbours(title);
   let added = 0;
   for (const a of list) {
+    if (learnedFind(a.title)) continue;
+    if (learnedAdd(a.title, a.text, "Википедия")) added++;
+  }
+  return added;
+}
+
+/* ---------------------------------------------------------------------
+   ОБЪЁМНОЕ ЧТЕНИЕ: пачка статей за один запрос
+   Соседи дают по одной статье за ответ — это медленно. Википедия отдаёт
+   первые абзацы пачкой: один запрос = до 20 статей с текстом. Достаточно
+   передать 20 заголовков через «|». Это главный рычаг объёма: очередь
+   учит по одной теме, а пачка — по двадцать за тот же такт.
+   --------------------------------------------------------------------- */
+async function wikiBatch(titles) {
+  const list = (titles || []).map(t => String(t || "").trim()).filter(Boolean).slice(0, 20);
+  if (!list.length) return [];
+  /* заголовки в MediaWiki разделяются «|», а в URL это %7C */
+  const url = "https://ru.wikipedia.org/w/api.php?" + new URLSearchParams({
+    format: "json", origin: "*", action: "query",
+    prop: "extracts", exintro: 1, explaintext: 1, exlimit: "max",
+    titles: list.join("|"), redirects: 1
+  }).toString();
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return [];
+    const j = await r.json();
+    const pages = (j && j.query && j.query.pages) || {};
+    const out = [];
+    for (const p of Object.values(pages)) {
+      if (!p || !p.extract) continue;
+      const text = String(p.extract).replace(/\[\d+\]/g, "").replace(/\s{2,}/g, " ").trim();
+      /* огрызки и заготовки не нужны — они засоряют базу */
+      if (text.length < 120) continue;
+      if (/может означать|неоднозначност|\bзначения\b/i.test(text.slice(0, 200))) continue;
+      out.push({ title: p.title, text: text.slice(0, LEARNED_MAX_TEXT) });
+    }
+    return out;
+  } catch (e) { return []; }
+}
+
+/* Соседи, которых мы ещё не знаем: из ссылок статьи берём только новые
+   названия. Так пачка не тратится на то, что уже в базе. */
+async function wikiNewNeighbours(title, limit = 20) {
+  const all = await wikiNeighbours(title, 40);
+  const fresh = [];
+  for (const a of all) {
+    if (learnedFind(a.title)) continue;
+    fresh.push(a.title);
+    if (fresh.length >= limit) break;
+  }
+  return fresh;
+}
+
+/* Дочитать пачку соседей одним запросом. Возвращает число новых карточек. */
+async function learnBatch(title) {
+  if (settings.autoLearn === false || !title) return 0;
+  const names = await wikiNewNeighbours(title, 20);
+  if (!names.length) return 0;
+  const arts = await wikiBatch(names);
+  let added = 0;
+  for (const a of arts) {
     if (learnedFind(a.title)) continue;
     if (learnedAdd(a.title, a.text, "Википедия")) added++;
   }
