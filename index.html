@@ -15940,6 +15940,94 @@ const SHARED_KB_KEY = "iskra.sharedkb.v1";
 /* Раньше копию не трогали шесть часов — и человек видел старое число тем
    (1302 вместо 2139), хотя база уже выросла. Теперь проверяем чаще. */
 const SHARED_KB_TTL = 30 * 60e3;
+/* Сколько тем на сервере — узнаём одним дешёвым запросом.
+   Раньше это число бралось из локальной копии, и после роста базы
+   человек видел старое, пока не скачает всё заново. */
+const SHARED_KB_COUNT_KEY = "iskra.sharedkb.count.v1";
+let _sharedKbCount = 0;
+let _sharedKbCountAt = 0;
+function sharedKbCount() {
+  try {
+    if (!_sharedKbCount) {
+      const o = JSON.parse(localStorage.getItem(SHARED_KB_COUNT_KEY) || "null");
+      if (o && o.n) { _sharedKbCount = Number(o.n); _sharedKbCountAt = Number(o.at) || 0; }
+    }
+  } catch (e) {}
+  return _sharedKbCount || sharedKbList().length;
+}
+async function sharedKbCountRefresh() {
+  if (!supabaseConfigured()) return sharedKbCount();
+  if (_sharedKbCountAt && Date.now() - _sharedKbCountAt < SHARED_KB_TTL) return sharedKbCount();
+  try {
+    const r = await fetch(SB() + "/rest/v1/iskra_shared_kb?select=topic_norm&active=eq.true", {
+      method: "HEAD",
+      headers: {
+        apikey: SUPABASE_CONFIG.anonKey,
+        Authorization: "Bearer " + SUPABASE_CONFIG.anonKey,
+        Prefer: "count=exact",
+        "Range-Unit": "items",
+        Range: "0-0"
+      },
+      signal: AbortSignal.timeout(8000)
+    });
+    const cr = r.headers.get("content-range") || "";
+    const n = Number(String(cr).split("/")[1]);
+    if (Number.isFinite(n) && n > 0) {
+      _sharedKbCount = n; _sharedKbCountAt = Date.now();
+      try { localStorage.setItem(SHARED_KB_COUNT_KEY, JSON.stringify({ n, at: _sharedKbCountAt })); } catch (e) {}
+      try { if (typeof renderKnowledgePanel === "function") renderKnowledgePanel(); } catch (e) {}
+    }
+  } catch (e) {}
+  return sharedKbCount();
+}
+
+/* Поиск в общей базе на сервере. Нужен, когда тем десятки тысяч:
+   скачивать всё целиком в браузер уже дорого. Спрашиваем только совпадения
+   по названию и тегам, поэтому ответ приходит быстро и весит килобайты. */
+let _sharedSearchAt = 0;
+function sharedKbSearchCache() {
+  try { return JSON.parse(localStorage.getItem("iskra.sharedkb.search.v1") || "{}") || {}; } catch (e) { return {}; }
+}
+function sharedKbSearchPut(q, rows) {
+  try {
+    const all = sharedKbSearchCache();
+    all[q] = { at: Date.now(), rows: rows.slice(0, 60) };
+    const keys = Object.keys(all);
+    if (keys.length > 80) keys.sort((a, b) => all[a].at - all[b].at).slice(0, keys.length - 80).forEach((k) => delete all[k]);
+    localStorage.setItem("iskra.sharedkb.search.v1", JSON.stringify(all));
+  } catch (e) {}
+}
+async function sharedKbSearch(query, limit) {
+  const q = String(query || "").trim();
+  if (q.length < 2 || !supabaseConfigured()) return [];
+  const cached = sharedKbSearchCache()[q];
+  if (cached && Date.now() - cached.at < 6 * 3600e3) return cached.rows;
+  /* PostgREST: поиск по двум колонкам сразу и без учёта регистра.
+     Кавычки и запятые в запросе ломают синтаксис фильтра — вычищаем. */
+  const safe = q.replace(/[",()*\\]/g, " ").replace(/\s+/g, " ").trim();
+  if (safe.length < 2) return [];
+  const like = "*" + safe.split(" ").join("*") + "*";
+  const url = SB() + "/rest/v1/iskra_shared_kb?select=topic,body,source,tags" +
+    "&active=eq.true&or=(topic.ilike." + encodeURIComponent(like) + ",tags.ilike." + encodeURIComponent(like) + ")" +
+    "&order=updated_at.desc&limit=" + (limit || 30);
+  try {
+    const r = await fetch(url, {
+      headers: { apikey: SUPABASE_CONFIG.anonKey, Authorization: "Bearer " + SUPABASE_CONFIG.anonKey },
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!r.ok) return [];
+    const rows = await r.json();
+    if (!Array.isArray(rows)) return [];
+    const out = rows.map(x => ({
+      topic: String(x.topic || ""), text: String(x.body || ""),
+      source: String(x.source || ""), tags: String(x.tags || "")
+    }));
+    sharedKbSearchPut(q, out);
+    _sharedSearchAt = Date.now();
+    return out;
+  } catch (e) { return []; }
+}
+
 let _sharedKb = null;
 let _sharedKbAt = 0;
 
@@ -15951,15 +16039,30 @@ function sharedKbList() {
     if (o && Array.isArray(o.items)) {
       _sharedKb = o.items.filter(x => x && x.topic && x.text);
       _sharedKbAt = Number(o.at) || 0;
+      /* Сколько тем на сервере, знает копия: локально лежит только часть. */
+      if (o.total) { _sharedKbCount = Number(o.total) || 0; _sharedKbCountAt = _sharedKbAt; }
     }
   } catch (e) {}
   return _sharedKb;
 }
 
 function sharedKbSave(items) {
-  _sharedKb = (items || []).filter(x => x && x.topic && x.text);
+  const all = (items || []).filter(x => x && x.topic && x.text);
+  _sharedKb = all;
   _sharedKbAt = Date.now();
-  try { localStorage.setItem(SHARED_KB_KEY, JSON.stringify({ at: _sharedKbAt, items: _sharedKb })); } catch (e) {}
+  /* В браузере держим не всё: 23 тысячи тем — это около 5 МБ, а хранилище
+     браузера обычно меньше. Держим свежую часть для офлайна, остальное
+     приходит поиском с сервера. */
+  const KEEP = 4000;
+  const keep = all.slice(0, KEEP);
+  try {
+    localStorage.setItem(SHARED_KB_KEY, JSON.stringify({ at: _sharedKbAt, items: keep, total: all.length }));
+  } catch (e) {
+    /* Не влезло даже это — уменьшаем вдвое, но не теряем счётчик тем. */
+    try {
+      localStorage.setItem(SHARED_KB_KEY, JSON.stringify({ at: _sharedKbAt, items: keep.slice(0, Math.floor(KEEP / 2)), total: all.length }));
+    } catch (e2) {}
+  }
 }
 
 /* Забрать общую базу с сервера. Ошибка, офлайн или ещё не созданная таблица
@@ -15968,10 +16071,12 @@ async function sharedKbRefresh(force) {
   if (!supabaseConfigured()) return sharedKbList();
   if (!force && _sharedKbAt && Date.now() - _sharedKbAt < SHARED_KB_TTL) return sharedKbList();
   /* Раньше забирали ровно 500 тем — и всё, что дальше, до человека не доезжало.
-     Теперь берём страницами, пока сервер отдаёт полные страницы. */
-  const PAGE = 500, MAX_PAGES = 12;
+     Теперь берём страницами, пока сервер отдаёт полные страницы.
+     Потолок поднят: в базе уже больше 23 тысяч тем, и старый лимит 6000
+     молча срезал всё, что новее. */
+  const PAGE = 1000, MAX_PAGES = 40;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 20000);
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 45000);
   try {
     const all = [];
     let complete = false;                 // дошли до конца списка, а не оборвались
@@ -16007,6 +16112,7 @@ async function sharedKbRefresh(force) {
   }
   /* База приехала уже после того, как панель нарисовалась: без перерисовки
      человек видел старое число и думал, что тем не прибавилось. */
+  try { sharedKbCountRefresh(); } catch (e) {}
   try { if (typeof renderKnowledgePanel === "function") renderKnowledgePanel(); } catch (e) {}
   try { if (typeof updateMoreCounts === "function") updateMoreCounts(); } catch (e) {}
   return sharedKbList();
@@ -17248,7 +17354,35 @@ function kbCountByCat(cat) {
 function renderKbCards() {
   const box = $("#kbCards");
   if (!box) return;
+  /* Поиск по общей базе идёт на сервере: тем больше 23 тысяч, и держать
+     их все в браузере незачем — спрашиваем только совпадения.
+     Совпадения с сервера встают первыми, остальное — из локальной копии. */
   const found = kbBrowse(kbView.q, kbView.cat, kbView.q ? 30 : 20);
+  const q = String(kbView.q || "").trim();
+  if (q.length >= 2 && !kbView.cat) {
+    const key = "srv:" + q.toLowerCase();
+    if (!kbView._srv || kbView._srvKey !== key) {
+      if (kbView._srvKey !== key) {
+        kbView._srvKey = key;
+        kbView._srv = null;
+        sharedKbSearch(q, 30).then(rows => {
+          if (!rows.length) return;
+          const seenT = new Set(found.map(x => String(x.title || "").toLowerCase()));
+          const extra = rows
+            .filter(r => !seenT.has(String(r.topic || "").toLowerCase()))
+            .map((r, i) => ({ id: "srv-" + i, title: r.topic, tags: r.tags || "", text: r.text || "", shared: true, learned: false, cat: "shared" }));
+          if (!extra.length) return;
+          kbView._srv = extra;
+          try { renderKbCards(); } catch (e) {}
+        });
+      }
+    }
+  }
+  const merged = (kbView._srv && String(kbView.q || "").trim().length >= 2)
+    ? kbView._srv.concat(found).slice(0, 30) : found;
+  return renderKbCardsPaint(box, merged);
+}
+function renderKbCardsPaint(box, found) {
   if (!found.length) {
     box.innerHTML = kbView.cat === "mine"
       ? `<div class="kb-empty">Тут пока пусто. Напиши тему или вставь ссылку выше — выучу и запомню.</div>`
@@ -17357,9 +17491,12 @@ function kbCheckRun(query) {
 function renderKnowledgePanel() {
   const list = learnedList().sort((a, b) => b.ts - a.ts);
   const shared = sharedKbList();
-  /* Сколько всего тем и из чего они сложились — чтобы не гадать по числам */
+  /* Сколько всего тем и из чего они сложились — чтобы не гадать по числам.
+     Число общей базы берём с сервера: локальная копия может быть неполной
+     или старой, а человеку нужно видеть настоящий размер базы. */
   const kbBuilt = kbBuiltinPack().length;
-  const kbShared = shared.length;
+  const kbShared = Math.max(shared.length, sharedKbCount());
+  try { sharedKbCountRefresh(); } catch (e) {}
   const ixCount = topicIndexCount();
   const kbTotal = kbBuilt + kbShared + list.length + ixCount;
   const box = $("#knowBody");
@@ -19787,8 +19924,12 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("hashchange", showAccess);
   window.__iskraBoot = true;
   document.documentElement.classList.add("booted");
-  /* Общая база подтягивается в фоне: если сервер молчит, работаем по сохранённой копии */
-  try { sharedKbRefresh(); } catch (e) {}
+  /* Общая база: при старте узнаём только число тем — это один лёгкий запрос.
+     Сами темы качаем, когда человек открыл знания или спросил что-то новое:
+     в базе уже больше 23 тысяч тем, и тянуть их все при каждом заходе дорого.
+     Поиск по общей базе при этом всегда идёт на сервере и находит любую тему. */
+  try { sharedKbCountRefresh(); } catch (e) {}
+  if (!sharedKbList().length) { try { sharedKbRefresh(); } catch (e) {} }
   /* Свои выученные темы: если localStorage пришлось урезать, полная копия
      приходит из IndexedDB. Очередь обучения продолжается после перезагрузки. */
   try { learnedBoot().catch(() => {}); } catch (e) {}
