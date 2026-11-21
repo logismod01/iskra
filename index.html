@@ -16068,9 +16068,13 @@ async function sharedKbSearch(query, limit) {
   const safe = q.replace(/[",()*\\]/g, " ").replace(/\s+/g, " ").trim();
   if (safe.length < 2) return [];
   const like = "*" + safe.split(" ").join("*") + "*";
+  /* Сортировка в базе — по дате, но при 43 тысячах тем это плохо:
+     свежая тема бьёт точную. Берём с запасом и ранжируем сами:
+     точное имя → тема начинается с запроса → тема содержит → теги/текст. */
+  const want = Math.max(30, Number(limit) || 30);
   const url = SB() + "/rest/v1/iskra_shared_kb?select=topic,body,source,tags" +
     "&active=eq.true&or=(topic.ilike." + encodeURIComponent(like) + ",tags.ilike." + encodeURIComponent(like) + ")" +
-    "&order=updated_at.desc&limit=" + (limit || 30);
+    "&order=updated_at.desc&limit=" + Math.min(want * 4, 200);
   try {
     const r = await fetch(url, {
       headers: { apikey: SUPABASE_CONFIG.anonKey, Authorization: "Bearer " + SUPABASE_CONFIG.anonKey },
@@ -16083,6 +16087,19 @@ async function sharedKbSearch(query, limit) {
       topic: String(x.topic || ""), text: String(x.body || ""),
       source: String(x.source || ""), tags: String(x.tags || "")
     }));
+    const ql = q.toLowerCase();
+    const score = (o) => {
+      const t = o.topic.toLowerCase(), g = o.tags.toLowerCase();
+      if (t === ql) return 100;
+      if (t.startsWith(ql)) return 80;
+      if (t.includes(ql)) return 60;
+      if (g.split(/,\s*/).some((x) => x === ql)) return 50;
+      if (g.includes(ql)) return 35;
+      if (o.text.toLowerCase().includes(ql)) return 20;
+      return 10;
+    };
+    out.sort((a, b) => score(b) - score(a));
+    out.length = Math.min(out.length, want);
     sharedKbSearchPut(q, out);
     _sharedSearchAt = Date.now();
     return out;
