@@ -322,6 +322,34 @@ async function runTool(action, ctx) {
         return { ok: true, summary: "Справка: " + all.map((x) => x.title).join(", "), output: packed.text };
       }
 
+      /* Общие знания: страны, города, языки, химия. Это не справка о коде
+         (для кода — kb.search), а фактические карточки: «какая столица у
+         Австралии», «сколько людей в Ишимбае», «какая валюта в Китае».
+         Берём из общей базы, которую владелец публикует для всех. */
+      case "facts.ask": {
+        const query = String(args.query || "").trim();
+        if (!query) {
+          return { ok: false, summary: "Пустой запрос", output: "Что найти? Например: столица Австралии, город Ишимбай, валюта Китая." };
+        }
+        const rows = shared.search(query, 5);
+        const good = rows.filter((x) => x && x.topic && x.text);
+        if (!good.length) {
+          return {
+            ok: false,
+            summary: "В общей базе нет такой карточки",
+            output: "По запросу «" + query + "» ничего не нашлось. Попробуй назвать объект прямо: «столица Японии», «город Казань», «элемент водород»." +
+              (shared.isEmpty() ? " Общая база ещё не загружена — попробуй позже." : "")
+          };
+        }
+        const body = good.map((x, i) => (i + 1) + ". " + x.topic + "\n" + x.text).join("\n\n");
+        const packed = tooBig(limits, body);
+        return {
+          ok: true,
+          summary: "Знания: " + good.map((x) => x.topic).join(" · "),
+          output: packed.text + "\n\nЕсли этого мало — скажи, что именно уточнить."
+        };
+      }
+
       case "math.solve": {
         /* Числа считает код, а не модель: модель путает знаки и теряет корни. */
         const task = String(args.task || args.expression || "").trim();
