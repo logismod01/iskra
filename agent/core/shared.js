@@ -35,7 +35,10 @@ const TTL = 6 * 3600e3;
    половины базы (в ней уже 1300+ тем), потому что запрос шёл одной страницей.
    Теперь страницы по 1000 и потолок 30000: в базе уже больше 12000 тем,
    а волна новых карточек идёт к 23000. */
-const MAX_ITEMS = 30000;
+/* Потолок поднят: в базе уже 43 000+ тем, а стоял 30 000 — агент
+   не видел последнюю волну и отвечал «такой темы нет» на то,
+   что в базе есть. 60 000 даёт запас на следующую волну. */
+const MAX_ITEMS = 60000;
 const PAGE_SIZE = 1000;
 
 let items = [];
@@ -293,7 +296,7 @@ function reset() {
 }
 
 module.exports = {
-  CONFIG, CACHE_FILE, PACK_FILE, TTL,
+  CONFIG, CACHE_FILE, PACK_FILE, TTL, MAX_ITEMS, PAGE_SIZE,
   parseRows, setItems, list, isEmpty, error, age, isFresh,
   refresh, loadCache, saveCache, loadPack, boot, search, miss, promptBlock, reset
 };
