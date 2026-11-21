@@ -6347,7 +6347,11 @@ function loadSettings() {
     memory: [],
     knowledge: [],
     knowledgeOn: true,
-    webSearch: false,
+    /* Википедия бесплатна и не требует ключа, поэтому поиск включён
+       по умолчанию. Раньше здесь стояло false — и справочный контур
+       не включался ни у кого, а вместе с ним молчал и авторазбор. */
+    webSearch: true,
+    autoLearn: true,
     edition: "free",
     tone: "neutral",
     mat: false,
@@ -7716,7 +7720,9 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
     sys += "\n\nСПРАВКА ИЗ ВСТРОЕННОЙ БАЗЫ ИСКРЫ (пользуйся ею как главным источником, если она подходит):\n" + kb.block;
   }
   /* Индекс тем: точное совпадение по стране, городу, языку или элементу */
-  const ixLine = (() => { try { return topicIndexContext(userText); } catch (e) { return ""; } })();
+  /* Если справочника ещё нет в памяти, topicIndexQuick запустит его загрузку
+     в фоне. Первый такой вопрос ответит без него, второй — уже с фактами. */
+  const ixLine = (() => { try { topicIndexQuick(); return topicIndexContext(userText); } catch (e) { return ""; } })();
   if (ixLine) sys += "\n\nСПРАВКА ИЗ ИНДЕКСА ТЕМ (открытые данные, факты проверяемые — числа бери отсюда):\n" + ixLine;
 
   /* сила ответа: от «Молнии» до «Ультры» — одним уровнем задаётся и манера, и проверка */
@@ -10680,7 +10686,9 @@ async function wikiSearch(query) {
     if (!hits.length) { _searchCache.set(key, out); return out; }
 
     // берём краткие содержания статей параллельно
-    const titles = hits.slice(0, 2).map(h => h.title);
+    /* Раньше брали 2 статьи. Каждая статья — отдельная карточка в базе,
+       поэтому 4 дают вдвое больше выученного за тот же вопрос. */
+    const titles = hits.slice(0, 4).map(h => h.title);
     const results = await Promise.all(titles.map(async (title) => {
       try {
         const r = await fetch("https://ru.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title), { signal: AbortSignal.timeout(6000) });
@@ -11895,6 +11903,13 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       try { _lastSearch = await wikiSearch(trimmed); } catch (e) {}
       if (_lastSearch && _lastSearch.snippets && _lastSearch.snippets.length) {
         try { autoLearn(trimmed, _lastSearch.snippets); } catch (e) {}
+        /* Докопать соседей первой статьи — в фоне, после ответа.
+           Один вопрос = 1–2 свои статьи, а соседи дают ещё до 20.
+           Человек этого не ждёт: справка у него уже есть. */
+        try {
+          const head = _lastSearch.snippets[0].title;
+          setTimeout(() => { learnNeighbours(head).catch(() => {}); }, 1500);
+        } catch (e) {}
       }
       streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
     }
@@ -17227,11 +17242,89 @@ async function learnTopicFlow(rawTopic) {
 
 /* Автоматически запоминаем то, что нашли в интернете — Искра умнеет сама */
 function autoLearn(topic, snippets) {
-  if (!settings.autoLearn) return;
-  const text = (snippets || []).map(x => x.text).join("\n\n").trim();
-  if (text.length < 120) return;
-  if (learnedFind(topic)) return;
-  learnedAdd(topic, text, "");
+  /* Настройки autoLearn раньше не существовало: проверка читала undefined,
+     условие всегда было истинным и обучение обрывалось на первой строке.
+     Теперь по умолчанию включено, а выключить можно в настройках. */
+  if (settings.autoLearn === false) return;
+  const list = (snippets || []).filter(x => x && x.text);
+
+  /* Каждая статья запоминается ПОД СВОИМ названием. Раньше весь текст
+     сваливался в одну карточку с темой = вопрос пользователя («что такое
+     фотосинтез?»), и такая карточка не находилась поиском по слову
+     «фотосинтез». Теперь база растёт по темам, как настоящая энциклопедия. */
+  let added = 0;
+  for (const snip of list) {
+    const title = String(snip.title || "").trim();
+    const text = String(snip.text || "").trim();
+    if (!title || text.length < 80) continue;
+    if (learnedFind(title)) continue;            // уже знаем — не дублируем
+    if (learnedAdd(title, text, "Википедия")) added++;
+  }
+  /* Раньше здесь был «запасной» вариант: свалить весь текст под тему
+     вопроса. Именно он и мешал базе расти — карточка «что такое
+     фотосинтез?» не находилась поиском по слову «фотосинтез».
+     Теперь не подошло — значит просто ничего не добавляем. */
+  return added;
+}
+
+/* ---------------------------------------------------------------------
+   КОПАТЬ ГЛУБЖЕ: соседние статьи
+   Один вопрос обычно даёт 1–2 релевантные статьи — фильтр отсекает
+   случайные. Но у каждой статьи есть внутренние ссылки на родственные
+   темы (у «Фотосинтеза» — хлорофилл, хлоропласт, углекислый газ).
+   Это готовый список того, что стоит знать рядом. Берём его и читаем
+   пачкой: один запрос на ссылки, один на тексты, до 20 статей сразу.
+   --------------------------------------------------------------------- */
+async function wikiNeighbours(title, limit = 20) {
+  const WIKI_API = "https://ru.wikipedia.org/w/api.php";
+  const ask = async (params) => {
+    const url = WIKI_API + "?" + new URLSearchParams(Object.assign({ format: "json", origin: "*" }, params)).toString();
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) { return null; }
+  };
+  /* 1) какие статьи linked на эту */
+  const links = await ask({ action: "query", prop: "links", titles: title, plnamespace: 0, pllimit: 40 });
+  const page = links && links.query && links.query.pages && Object.values(links.query.pages)[0];
+  const names = ((page && page.links) || []).map(l => l.title).filter(Boolean);
+  if (!names.length) return [];
+  /* отбрасываем служебное: годы, списки, «Международные отношения» и т. п. */
+  const good = names.filter(t => /^[А-ЯЁA-Z]/.test(t)
+    && !/^\d|список|Список|значения|См\.|категория:/i.test(t)
+    && t.length <= 40).slice(0, limit);
+  if (!good.length) return [];
+  /* 2) первые абзацы пачкой — до 20 за запрос, это предел MediaWiki */
+  const pages = await ask({ action: "query", prop: "extracts", exintro: 1, explaintext: 1, exlimit: "max", titles: good.slice(0, 20).join("|"), redirects: 1 });
+  const out = [];
+  const pl = (pages && pages.query && pages.query.pages) || {};
+  for (const t of good.slice(0, 20)) {
+    const hit = Object.values(pl).find(x => x.title === t || (x.redirects && x.redirects[0] && x.redirects[0].title === t));
+    const text = hit && hit.extract ? String(hit.extract).replace(/\[\d+\]/g, "").trim() : "";
+    if (text.length >= 80) out.push({ title: hit.title, text: text.slice(0, LEARNED_MAX_TEXT) });
+  }
+  return out;
+}
+
+/* Доучиться по соседям. Возвращает, сколько карточек добавилось.
+   Запускается в фоне после ответа — человек не ждёт. */
+async function learnNeighbours(title) {
+  if (settings.autoLearn === false || !title) return 0;
+  const list = await wikiNeighbours(title);
+  let added = 0;
+  for (const a of list) {
+    if (learnedFind(a.title)) continue;
+    if (learnedAdd(a.title, a.text, "Википедия")) added++;
+  }
+  return added;
+}
+
+/* Сколько всего выучено из Википедии — для наглядности в настройках */
+function learnedFromWiki() {
+  try {
+    return learnedList().filter(x => /Википеди/i.test(x.source || "")).length;
+  } catch (e) { return 0; }
 }
 
 /* Панель «Мои знания» */
@@ -18834,7 +18927,10 @@ function wire() {
   });
   $("#webBtn").addEventListener("click", () => {
     if (regionBlocked("поиск в интернете")) return;
-    const on = !$("#webBtn").classList.contains("on");
+    /* Состояние берём из настроек, а не из класса кнопки: класс и настройки
+       рассинхронизируются (например, если поиск включили в другом месте),
+       и клик переключал не то, что показывала кнопка. */
+    const on = !settings.webSearch;
     $("#webBtn").classList.toggle("on", on);
     settings.webSearch = on;
     saveSettings();
@@ -20107,6 +20203,10 @@ document.addEventListener("DOMContentLoaded", () => {
      Поиск по общей базе при этом всегда идёт на сервере и находит любую тему. */
   try { sharedKbCountRefresh(); } catch (e) {}
   if (!sharedKbList().length) { try { sharedKbRefresh(); } catch (e) {} }
+  /* Индекс тем (страны, города, языки, элементы) раньше грузился только когда
+     человек открывал раздел «Страны». Из-за этого на обычный вопрос «сколько
+     живёт в Шанхае» справки не было никогда. Теперь подтягиваем в фоне сразу. */
+  try { topicIndexQuick(); } catch (e) {}
   /* Свои выученные темы: если localStorage пришлось урезать, полная копия
      приходит из IndexedDB. Очередь обучения продолжается после перезагрузки. */
   try { learnedBoot().catch(() => {}); } catch (e) {}
@@ -21376,6 +21476,42 @@ function topicNorm(s) {
   return String(s || "").toLowerCase().replace(/ё/g, "е")
     .replace(/[^a-zа-я0-9 ]+/gi, " ").replace(/\s+/g, " ").trim();
 }
+
+/* ---------------------------------------------------------------------
+   ПАДЕЖИ В ПОИСКЕ ПО ИНДЕКСУ
+   Человек спрашивает «сколько людей живёт в Шанхае?», а в индексе запись
+   «Шанхай». Раньше сравнение шло по точной форме, падежи не совпадали,
+   и справки о городе не было ни на один живой вопрос. Отсекаем окончания:
+   Шанхае→шанха, Шанхая→шанха, Шанхай→шанха.
+
+   Правило осторожное: режем не больше двух букв и не трогаем короткие
+   слова, чтобы «язык» не превратился в «яз», а «Китай» — в «кит».
+   --------------------------------------------------------------------- */
+/* Общая основа двух слов: сколько первых букв у них совпадает.
+   Это надёжнее списка окончаний — в русском падежи меняют только хвост
+   (Шанхай/Шанхая/Шанхае, Москва/Москвы/Москве, Китай/Китая/Китае),
+   а начало слова остаётся. */
+function topicStem(w) {
+  return String(w || "");
+}
+function topicCommon(a, b) {
+  const x = topicNorm(a), y = topicNorm(b);
+  let i = 0;
+  while (i < x.length && i < y.length && x[i] === y[i]) i++;
+  return i;
+}
+
+/* Совпадает ли слово с названием с учётом падежа.
+   Требуем общее начало не короче 4 букв и не меньше 70 % длины названия:
+   «шанхае»/«шанхай» — 6 из 6, да; «языке»/«язык» — 4 из 4, да;
+   «людей»/«люди» — 4 из 4, да; а «пара»/«Париж» — 2 из 5, нет. */
+function topicMatchWord(word, name) {
+  const w = topicNorm(word), n = topicNorm(name);
+  if (!w || !n) return false;
+  if (w === n) return true;
+  const common = topicCommon(w, n);
+  return common >= Math.max(4, Math.ceil(n.length * 0.7));
+}
 function topicNum(n) {
   const x = Math.round(Number(n) || 0);
   return x.toLocaleString("ru-RU").replace(/,/g, " ");
@@ -21550,6 +21686,10 @@ function topicIndexFind(query) {
     const forms = ru ? [topicNorm(ru), topicNorm(name)] : [topicNorm(name)];
     if (forms.includes(q)) { best = row; break; }
     if (!best && words.some((w) => forms.includes(w))) best = row;
+    /* падежная форма: «в Шанхае» → «Шанхай». Проверяем только когда
+       строк ещё немного не нашли, иначе перебор 30 000 городов
+       на каждом слове заметно тормозит поиск. */
+    if (!best && words.some((w) => w.length >= 5 && forms.some((f) => topicMatchWord(w, f)))) best = row;
   }
   if (best) {
     const d = topicCityText(ix, best);
