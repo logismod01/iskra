@@ -5765,6 +5765,22 @@ const KEY_PROVIDERS = {
     base: "https://router.huggingface.co/v1", keyed: true, list: true,
     models: ["meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct"]
   },
+  /* Mistral: бесплатный тариф без карты, ключ из консоли за минуту.
+     Отдаёт стандартный OpenAI-протокол — отдельный код не нужен. */
+  mistral: {
+    base: "https://api.mistral.ai/v1", keyed: true, list: true,
+    models: ["mistral-small-latest", "open-mistral-nemo", "mistral-large-latest"]
+  },
+  /* Together: $25 стартовых, много открытых моделей (Llama, Qwen, DeepSeek) */
+  together: {
+    base: "https://api.together.xyz/v1", keyed: true, list: true,
+    models: ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "Qwen/Qwen2.5-72B-Instruct-Turbo", "deepseek-ai/DeepSeek-V3"]
+  },
+  /* DeepSeek: дешёвый прямой доступ, бесплатных токенов хватает на пробу */
+  deepseek: {
+    base: "https://api.deepseek.com/v1", keyed: true, list: true,
+    models: ["deepseek-chat", "deepseek-reasoner"]
+  },
   // бесплатные модели здесь меняются постоянно: имя подбираем у самого сервиса,
   // а эти — страховка, если список получить не удалось
   openrouter: {
@@ -5789,6 +5805,9 @@ function detectKeyKind(key) {
      Живут они только на родном адресе, поэтому сразу помечаем их как родные. */
   if (/^AQ\.[A-Za-z0-9_.~\-]{10,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.nativeBase, models: KEY_PROVIDERS.gemini.models, native: "gemini", proModels: KEY_PROVIDERS.gemini.proModels };
   if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", base: KEY_PROVIDERS.huggingface.base, models: KEY_PROVIDERS.huggingface.models };
+  /* Mistral выдаёт ключ без префикса — 32 символа из букв и цифр.
+     Проверяем последним, чтобы не перехватить чужие форматы. */
+  if (/^[A-Za-z0-9]{32}$/.test(k)) return { provider: "mistral", base: KEY_PROVIDERS.mistral.base, models: KEY_PROVIDERS.mistral.models };
   if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", base: KEY_PROVIDERS.openrouter.base, models: KEY_PROVIDERS.openrouter.models };
   return null;
 }
@@ -6347,7 +6366,11 @@ function loadSettings() {
     memory: [],
     knowledge: [],
     knowledgeOn: true,
-    webSearch: false,
+    /* Википедия бесплатна и не требует ключа, поэтому поиск включён
+       по умолчанию. Раньше здесь стояло false — и справочный контур
+       не включался ни у кого, а вместе с ним молчал и авторазбор. */
+    webSearch: true,
+    autoLearn: true,
     edition: "free",
     tone: "neutral",
     mat: false,
@@ -7716,7 +7739,9 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
     sys += "\n\nСПРАВКА ИЗ ВСТРОЕННОЙ БАЗЫ ИСКРЫ (пользуйся ею как главным источником, если она подходит):\n" + kb.block;
   }
   /* Индекс тем: точное совпадение по стране, городу, языку или элементу */
-  const ixLine = (() => { try { return topicIndexContext(userText); } catch (e) { return ""; } })();
+  /* Если справочника ещё нет в памяти, topicIndexQuick запустит его загрузку
+     в фоне. Первый такой вопрос ответит без него, второй — уже с фактами. */
+  const ixLine = (() => { try { topicIndexQuick(); return topicIndexContext(userText); } catch (e) { return ""; } })();
   if (ixLine) sys += "\n\nСПРАВКА ИЗ ИНДЕКСА ТЕМ (открытые данные, факты проверяемые — числа бери отсюда):\n" + ixLine;
 
   /* сила ответа: от «Молнии» до «Ультры» — одним уровнем задаётся и манера, и проверка */
@@ -10680,7 +10705,9 @@ async function wikiSearch(query) {
     if (!hits.length) { _searchCache.set(key, out); return out; }
 
     // берём краткие содержания статей параллельно
-    const titles = hits.slice(0, 2).map(h => h.title);
+    /* Раньше брали 2 статьи. Каждая статья — отдельная карточка в базе,
+       поэтому 4 дают вдвое больше выученного за тот же вопрос. */
+    const titles = hits.slice(0, 4).map(h => h.title);
     const results = await Promise.all(titles.map(async (title) => {
       try {
         const r = await fetch("https://ru.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title), { signal: AbortSignal.timeout(6000) });
@@ -11895,6 +11922,14 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       try { _lastSearch = await wikiSearch(trimmed); } catch (e) {}
       if (_lastSearch && _lastSearch.snippets && _lastSearch.snippets.length) {
         try { autoLearn(trimmed, _lastSearch.snippets); } catch (e) {}
+        /* Докопать соседей первой статьи — в фоне, после ответа.
+           Один вопрос даёт 1–2 свои статьи; соседи добавляют ещё до 20,
+           причём пачкой за один запрос. Человек этого не ждёт: справка
+           у него уже есть, база догоняет сама. */
+        try {
+          const head = _lastSearch.snippets[0].title;
+          setTimeout(() => { learnBatch(head).catch(() => {}); }, 1500);
+        } catch (e) {}
       }
       streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
     }
@@ -17227,11 +17262,150 @@ async function learnTopicFlow(rawTopic) {
 
 /* Автоматически запоминаем то, что нашли в интернете — Искра умнеет сама */
 function autoLearn(topic, snippets) {
-  if (!settings.autoLearn) return;
-  const text = (snippets || []).map(x => x.text).join("\n\n").trim();
-  if (text.length < 120) return;
-  if (learnedFind(topic)) return;
-  learnedAdd(topic, text, "");
+  /* Настройки autoLearn раньше не существовало: проверка читала undefined,
+     условие всегда было истинным и обучение обрывалось на первой строке.
+     Теперь по умолчанию включено, а выключить можно в настройках. */
+  if (settings.autoLearn === false) return;
+  const list = (snippets || []).filter(x => x && x.text);
+
+  /* Каждая статья запоминается ПОД СВОИМ названием. Раньше весь текст
+     сваливался в одну карточку с темой = вопрос пользователя («что такое
+     фотосинтез?»), и такая карточка не находилась поиском по слову
+     «фотосинтез». Теперь база растёт по темам, как настоящая энциклопедия. */
+  let added = 0;
+  for (const snip of list) {
+    const title = String(snip.title || "").trim();
+    const text = String(snip.text || "").trim();
+    if (!title || text.length < 80) continue;
+    if (learnedFind(title)) continue;            // уже знаем — не дублируем
+    if (learnedAdd(title, text, "Википедия")) added++;
+  }
+  /* Раньше здесь был «запасной» вариант: свалить весь текст под тему
+     вопроса. Именно он и мешал базе расти — карточка «что такое
+     фотосинтез?» не находилась поиском по слову «фотосинтез».
+     Теперь не подошло — значит просто ничего не добавляем. */
+  return added;
+}
+
+/* ---------------------------------------------------------------------
+   КОПАТЬ ГЛУБЖЕ: соседние статьи
+   Один вопрос обычно даёт 1–2 релевантные статьи — фильтр отсекает
+   случайные. Но у каждой статьи есть внутренние ссылки на родственные
+   темы (у «Фотосинтеза» — хлорофилл, хлоропласт, углекислый газ).
+   Это готовый список того, что стоит знать рядом. Берём его и читаем
+   пачкой: один запрос на ссылки, один на тексты, до 20 статей сразу.
+   --------------------------------------------------------------------- */
+async function wikiNeighbours(title, limit = 20) {
+  const WIKI_API = "https://ru.wikipedia.org/w/api.php";
+  const ask = async (params) => {
+    const url = WIKI_API + "?" + new URLSearchParams(Object.assign({ format: "json", origin: "*" }, params)).toString();
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) { return null; }
+  };
+  /* 1) какие статьи linked на эту */
+  const links = await ask({ action: "query", prop: "links", titles: title, plnamespace: 0, pllimit: 40 });
+  const page = links && links.query && links.query.pages && Object.values(links.query.pages)[0];
+  const names = ((page && page.links) || []).map(l => l.title).filter(Boolean);
+  if (!names.length) return [];
+  /* отбрасываем служебное: годы, списки, «Международные отношения» и т. п. */
+  const good = names.filter(t => /^[А-ЯЁA-Z]/.test(t)
+    && !/^\d|список|Список|значения|См\.|категория:/i.test(t)
+    && t.length <= 40).slice(0, limit);
+  if (!good.length) return [];
+  /* 2) первые абзацы пачкой — до 20 за запрос, это предел MediaWiki */
+  const pages = await ask({ action: "query", prop: "extracts", exintro: 1, explaintext: 1, exlimit: "max", titles: good.slice(0, 20).join("|"), redirects: 1 });
+  const out = [];
+  const pl = (pages && pages.query && pages.query.pages) || {};
+  for (const t of good.slice(0, 20)) {
+    const hit = Object.values(pl).find(x => x.title === t || (x.redirects && x.redirects[0] && x.redirects[0].title === t));
+    const text = hit && hit.extract ? String(hit.extract).replace(/\[\d+\]/g, "").trim() : "";
+    if (text.length >= 80) out.push({ title: hit.title, text: text.slice(0, LEARNED_MAX_TEXT) });
+  }
+  return out;
+}
+
+/* Доучиться по соседям. Возвращает, сколько карточек добавилось.
+   Запускается в фоне после ответа — человек не ждёт. */
+async function learnNeighbours(title) {
+  if (settings.autoLearn === false || !title) return 0;
+  const list = await wikiNeighbours(title);
+  let added = 0;
+  for (const a of list) {
+    if (learnedFind(a.title)) continue;
+    if (learnedAdd(a.title, a.text, "Википедия")) added++;
+  }
+  return added;
+}
+
+/* ---------------------------------------------------------------------
+   ОБЪЁМНОЕ ЧТЕНИЕ: пачка статей за один запрос
+   Соседи дают по одной статье за ответ — это медленно. Википедия отдаёт
+   первые абзацы пачкой: один запрос = до 20 статей с текстом. Достаточно
+   передать 20 заголовков через «|». Это главный рычаг объёма: очередь
+   учит по одной теме, а пачка — по двадцать за тот же такт.
+   --------------------------------------------------------------------- */
+async function wikiBatch(titles) {
+  const list = (titles || []).map(t => String(t || "").trim()).filter(Boolean).slice(0, 20);
+  if (!list.length) return [];
+  /* заголовки в MediaWiki разделяются «|», а в URL это %7C */
+  const url = "https://ru.wikipedia.org/w/api.php?" + new URLSearchParams({
+    format: "json", origin: "*", action: "query",
+    prop: "extracts", exintro: 1, explaintext: 1, exlimit: "max",
+    titles: list.join("|"), redirects: 1
+  }).toString();
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return [];
+    const j = await r.json();
+    const pages = (j && j.query && j.query.pages) || {};
+    const out = [];
+    for (const p of Object.values(pages)) {
+      if (!p || !p.extract) continue;
+      const text = String(p.extract).replace(/\[\d+\]/g, "").replace(/\s{2,}/g, " ").trim();
+      /* огрызки и заготовки не нужны — они засоряют базу */
+      if (text.length < 120) continue;
+      if (/может означать|неоднозначност|\bзначения\b/i.test(text.slice(0, 200))) continue;
+      out.push({ title: p.title, text: text.slice(0, LEARNED_MAX_TEXT) });
+    }
+    return out;
+  } catch (e) { return []; }
+}
+
+/* Соседи, которых мы ещё не знаем: из ссылок статьи берём только новые
+   названия. Так пачка не тратится на то, что уже в базе. */
+async function wikiNewNeighbours(title, limit = 20) {
+  const all = await wikiNeighbours(title, 40);
+  const fresh = [];
+  for (const a of all) {
+    if (learnedFind(a.title)) continue;
+    fresh.push(a.title);
+    if (fresh.length >= limit) break;
+  }
+  return fresh;
+}
+
+/* Дочитать пачку соседей одним запросом. Возвращает число новых карточек. */
+async function learnBatch(title) {
+  if (settings.autoLearn === false || !title) return 0;
+  const names = await wikiNewNeighbours(title, 20);
+  if (!names.length) return 0;
+  const arts = await wikiBatch(names);
+  let added = 0;
+  for (const a of arts) {
+    if (learnedFind(a.title)) continue;
+    if (learnedAdd(a.title, a.text, "Википедия")) added++;
+  }
+  return added;
+}
+
+/* Сколько всего выучено из Википедии — для наглядности в настройках */
+function learnedFromWiki() {
+  try {
+    return learnedList().filter(x => /Википеди/i.test(x.source || "")).length;
+  } catch (e) { return 0; }
 }
 
 /* Панель «Мои знания» */
@@ -18834,7 +19008,10 @@ function wire() {
   });
   $("#webBtn").addEventListener("click", () => {
     if (regionBlocked("поиск в интернете")) return;
-    const on = !$("#webBtn").classList.contains("on");
+    /* Состояние берём из настроек, а не из класса кнопки: класс и настройки
+       рассинхронизируются (например, если поиск включили в другом месте),
+       и клик переключал не то, что показывала кнопка. */
+    const on = !settings.webSearch;
     $("#webBtn").classList.toggle("on", on);
     settings.webSearch = on;
     saveSettings();
@@ -20107,6 +20284,10 @@ document.addEventListener("DOMContentLoaded", () => {
      Поиск по общей базе при этом всегда идёт на сервере и находит любую тему. */
   try { sharedKbCountRefresh(); } catch (e) {}
   if (!sharedKbList().length) { try { sharedKbRefresh(); } catch (e) {} }
+  /* Индекс тем (страны, города, языки, элементы) раньше грузился только когда
+     человек открывал раздел «Страны». Из-за этого на обычный вопрос «сколько
+     живёт в Шанхае» справки не было никогда. Теперь подтягиваем в фоне сразу. */
+  try { topicIndexQuick(); } catch (e) {}
   /* Свои выученные темы: если localStorage пришлось урезать, полная копия
      приходит из IndexedDB. Очередь обучения продолжается после перезагрузки. */
   try { learnedBoot().catch(() => {}); } catch (e) {}
@@ -20546,9 +20727,55 @@ function freeFirstOn() { return settings.freeFirst !== false; }
 /* Ответ из открытого источника без ключа и без токенов.
    Берём только когда статья действительно про этот вопрос: заголовок
    должен совпасть с ним по словам. Иначе — обычный путь через движки. */
+/* ---------------------------------------------------------------------
+   ОТВЕТ БЕЗ КЛЮЧА
+   Порядок источников — от самого дешёвого к самому свежему:
+     1) своя база (43 000 карточек + выученное + общая база) — 0 мс, 0 токенов;
+     2) база стран/городов — 0 мс, точные числа;
+     3) Википедия — бесплатно, но нужна сеть.
+   Раньше здесь была только Википедия, поэтому на «сколько живёт в Шанхае»
+   без интернета ответа не было вовсе, хотя число лежало в индексе.
+   --------------------------------------------------------------------- */
+function freeFromOwnBase(q) {
+  /* 1. точный факт из индекса: город, страна, язык, элемент */
+  try {
+    const hit = topicIndexFind(q);
+    if (hit && hit.text && hit.text.length > 40) {
+      return { title: hit.title, text: hit.text, sources: [{ title: hit.title, url: "" }], note: "Ответ из своей базы — ключ и токены не тратились." };
+    }
+  } catch (e) {}
+  /* 2. статья из своей базы: берём самую близкую карточку */
+  try {
+    const hits = kbSearch(q, 3);
+    if (hits.length) {
+      const top = hits[0];
+      /* проверяем, что карточка действительно про вопрос, а не про слово
+         «как» из служебных */
+      const qWords = memoWords(q).filter(w => w.length > 3);
+      const hay = (String(top.title || "") + " " + String(top.text || "").slice(0, 300)).toLowerCase();
+      const hitCount = qWords.filter(w => hay.includes(w.slice(0, Math.max(4, w.length - 2)))).length;
+      const ratio = qWords.length ? hitCount / qWords.length : 0;
+      if (ratio >= 0.5 && String(top.text || "").length >= 160) {
+        return {
+          title: top.title,
+          text: String(top.text).slice(0, 1400),
+          sources: [{ title: top.title, url: "" }],
+          note: "Ответ из своей базы — ключ и токены не тратились."
+        };
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 async function freeAnswerFor(text) {
   const q = String(text || "").trim();
   if (q.length < 6 || q.length > 220) return null;
+
+  /* Сначала своя база: она мгновенная и работает без сети */
+  const own = freeFromOwnBase(q);
+  if (own) return own;
+
   if (typeof shouldSearch !== "function" || !shouldSearch(q)) return null;
   let found = null;
   try { found = await wikiSearch(q); } catch (e) { return null; }
@@ -21376,6 +21603,56 @@ function topicNorm(s) {
   return String(s || "").toLowerCase().replace(/ё/g, "е")
     .replace(/[^a-zа-я0-9 ]+/gi, " ").replace(/\s+/g, " ").trim();
 }
+
+/* ---------------------------------------------------------------------
+   ПАДЕЖИ В ПОИСКЕ ПО ИНДЕКСУ
+   Человек спрашивает «сколько людей живёт в Шанхае?», а в индексе запись
+   «Шанхай». Раньше сравнение шло по точной форме, падежи не совпадали,
+   и справки о городе не было ни на один живой вопрос. Отсекаем окончания:
+   Шанхае→шанха, Шанхая→шанха, Шанхай→шанха.
+
+   Правило осторожное: режем не больше двух букв и не трогаем короткие
+   слова, чтобы «язык» не превратился в «яз», а «Китай» — в «кит».
+   --------------------------------------------------------------------- */
+/* Общая основа двух слов: сколько первых букв у них совпадает.
+   Это надёжнее списка окончаний — в русском падежи меняют только хвост
+   (Шанхай/Шанхая/Шанхае, Москва/Москвы/Москве, Китай/Китая/Китае),
+   а начало слова остаётся. */
+function topicStem(w) {
+  return String(w || "");
+}
+function topicCommon(a, b) {
+  const x = topicNorm(a), y = topicNorm(b);
+  let i = 0;
+  while (i < x.length && i < y.length && x[i] === y[i]) i++;
+  return i;
+}
+
+/* Совпадает ли слово с названием с учётом падежа.
+   Требуем общее начало не короче 4 букв и не меньше 70 % длины названия:
+   «шанхае»/«шанхай» — 6 из 6, да; «языке»/«язык» — 4 из 4, да;
+   «людей»/«люди» — 4 из 4, да; а «пара»/«Париж» — 2 из 5, нет. */
+function topicMatchWord(word, name) {
+  const w = topicNorm(word), n = topicNorm(name);
+  if (!w || !n) return false;
+  if (w === n) return true;
+
+  /* 1) по общему началу: «шанхае»/«шанхай», «москве»/«москва» */
+  const common = topicCommon(w, n);
+  if (common >= Math.max(4, Math.ceil(n.length * 0.7))) return true;
+
+  /* 2) по основе без окончания: «японии»/«япония» → «япони»,
+     «китая»/«китай» → «кита». Русские падежи меняют только хвост,
+     поэтому основа должна совпасть почти целиком (не меньше 4 букв). */
+  const cut = (s) => s.replace(/(иями|ями|ами|ов|ев|ах|ях|ам|ям|ии|ия|ию|ей|ой|ом|ем|ую|ая|ое|ые|ый|ий|а|я|у|ю|е|ы|и|о|й|ь)$/i, "");
+  const sw = cut(w), sn = cut(n);
+  if (sw.length >= 4 && sn.length >= 4 && sw === sn) return true;
+
+  /* 3) одно слово целиком входит в другое: «китай»/«китайский» */
+  if (n.length >= 4 && (w.startsWith(n) || n.startsWith(w)) && Math.min(w.length, n.length) >= 4) return true;
+
+  return false;
+}
 function topicNum(n) {
   const x = Math.round(Number(n) || 0);
   return x.toLocaleString("ru-RU").replace(/,/g, " ");
@@ -21525,11 +21802,16 @@ function topicIndexFind(query) {
     }
   }
 
-  /* 2) страны: «Россия», «столица Японии» */
+  /* 2) страны: «Россия», «столица Японии», «валюта Китая» */
   for (const c of ix.countries || []) {
     const [iso, ru, capital, region, area, cur, curRu, phone, langs] = c;
     const n = topicNorm(ru);
-    if (n === q || words.some((w) => w === n) || (n.length > 4 && q.includes(n))) {
+    /* раньше здесь было сравнение только по точной форме — падежи
+       («Японии», «Китая») не находились вовсе, и вопросы «какая столица
+       Японии», «валюта Китая» оставались без ответа. */
+    if (n === q || words.some((w) => w === n)
+        || (n.length > 4 && q.includes(n))
+        || words.some((w) => w.length >= 4 && topicMatchWord(w, n))) {
       let text = ru + " — государство" + (region ? " в регионе " + region : "") + ".";
       if (capital) text += " Столица — " + capital + ".";
       if (area) text += " Площадь — " + topicNum(area) + " км².";
@@ -21550,6 +21832,10 @@ function topicIndexFind(query) {
     const forms = ru ? [topicNorm(ru), topicNorm(name)] : [topicNorm(name)];
     if (forms.includes(q)) { best = row; break; }
     if (!best && words.some((w) => forms.includes(w))) best = row;
+    /* падежная форма: «в Шанхае» → «Шанхай». Проверяем только когда
+       строк ещё немного не нашли, иначе перебор 30 000 городов
+       на каждом слове заметно тормозит поиск. */
+    if (!best && words.some((w) => w.length >= 5 && forms.some((f) => topicMatchWord(w, f)))) best = row;
   }
   if (best) {
     const d = topicCityText(ix, best);
