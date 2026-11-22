@@ -21651,8 +21651,7 @@ function topicMatchWord(word, name) {
   /* 3) одно слово целиком входит в другое: «китай»/«китайский» */
   if (n.length >= 4 && (w.startsWith(n) || n.startsWith(w)) && Math.min(w.length, n.length) >= 4) return true;
 
-  return false;
-}
+  return false;}
 function topicNum(n) {
   const x = Math.round(Number(n) || 0);
   return x.toLocaleString("ru-RU").replace(/,/g, " ");
