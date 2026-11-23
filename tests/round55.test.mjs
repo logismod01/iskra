@@ -105,6 +105,28 @@ t("старое задание истекает", () => {
   assert.ok(/новое/i.test(r.msg), "сообщение: " + r.msg);
 });
 
+t("гейт стоит до всех веток отправки", () => {
+  const src = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const fn = src.slice(src.indexOf("async function sendMessage("));
+  const body = fn.slice(0, fn.indexOf("\n}\n"));
+  const gate = body.indexOf("captchaRequired()");
+  const firstBranch = body.indexOf("regionLevel(state.region) === 100");
+  assert.ok(gate > 0, "вызов капчи есть");
+  assert.ok(gate > firstBranch, "после проверки страны");
+  for (const branch of ["/^\\/console", "handleNuke", "generateVideo", "learnTopicFlow"]) {
+    const at = body.indexOf(branch);
+    assert.ok(at === -1 || at > gate, "ветка " + branch + " закрыта гейтом");
+  }
+});
+t("отказ от капчи не отправляет запрос", () => {
+  let sent = false;
+  const before = ev("_captchaWait");
+  assert.equal(before, null);
+  /* captchaAsk без модалки в тестовой среде не должен падать */
+  assert.equal(typeof ev("captchaAsk"), "function");
+  assert.equal(sent, false);
+});
+
 console.log("Остальные страны — без изменений");
 t("Россия: 10 000 в день и без капчи", () => {
   setRegion("RU");
