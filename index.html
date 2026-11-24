@@ -5910,6 +5910,9 @@ function keyEngines() {
     });
   }
   let n = 0;
+  /* Свой ключ OpenRouter = человек готов платить, значит разрешаем и
+     платные модели (Claude, GPT). Без ключа — только бесплатные. */
+  try { _openRouterPaid = keys.some((k) => detectKeyKind(k)?.provider === "openrouter"); } catch (e) { _openRouterPaid = false; }
   for (const key of keys) {
     const kind = detectKeyKind(key);
     if (!kind || !kind.base) continue;
@@ -5949,6 +5952,10 @@ function keyEngines() {
    список и берём самые крупные бесплатные; если не вышло — работают запасные имена. */
 let _freeModelsCache = null;
 let _freeModelsAt = 0;
+/* Платные модели OpenRouter разрешаем только когда ключ действительно есть:
+   иначе бесплатные движки получат 402 на первом же запросе. */
+let _openRouterPaid = false;
+
 async function discoverFreeModels(needVision) {
   const fresh = _freeModelsCache && Date.now() - _freeModelsAt < 6 * 3600e3;
   if (fresh) return _freeModelsCache;
@@ -5960,8 +5967,14 @@ async function discoverFreeModels(needVision) {
     if (!res || !res.ok) return _freeModelsCache || [];
     const json = await res.json();
     const all = (json && Array.isArray(json.data)) ? json.data : [];
+    /* Раньше брали ТОЛЬКО бесплатные (:free). Из-за этого человек со своим
+       ключом OpenRouter не мог получить Claude или GPT — они платные и
+       отбрасывались. Теперь при живом ключе берём и их: у кого ключ, тот
+       сознательно платит и хочет ум. */
+    const paid = _openRouterPaid === true;
+    const cls = (id) => /claude/i.test(id) ? 0 : (/gpt-5|gpt-4o|o3|o4/i.test(id) ? 1 : 2);
     const free = all
-      .filter(m => m && typeof m.id === "string" && /:free$/.test(m.id))
+      .filter(m => m && typeof m.id === "string" && (/:free$/.test(m.id) || (paid && !/:free$/.test(m.id))))
       .map(m => ({
         id: m.id,
         ctx: Number((m.top_provider && m.top_provider.context_length) || m.context_length || 0),
@@ -5969,8 +5982,10 @@ async function discoverFreeModels(needVision) {
           && m.architecture.input_modalities.includes("image")
       }))
       .filter(m => m.ctx >= 8000)
-      .sort((a, b) => b.ctx - a.ctx)
-      .slice(0, 6);
+      /* Умные первыми: Claude, потом GPT, потом остальные. Внутри класса —
+         большой контекст вперёд. */
+      .sort((a, b) => (cls(a.id) - cls(b.id)) || (b.ctx - a.ctx))
+      .slice(0, paid ? 8 : 6);
     if (free.length) {
       _freeModelsCache = free;
       _freeModelsAt = Date.now();
@@ -6041,7 +6056,11 @@ async function resolveKeyEngines(list, needVision) {
     let names = [];
     if (e0.discovery === "openrouter") {
       const free = (found || []).filter(m => !needVision || m.vision).map(m => m.id);
-      names = free.length ? free : (e0.models || []);
+      /* Со своим ключом список содержит и платных гигантов: Claude и GPT.
+         Без ключа — только бесплатные, иначе первый же запрос даст 402. */
+      const wantPaid = _openRouterPaid === true;
+      const usable = free.filter(id => wantPaid || /:free$/.test(id));
+      names = usable.length ? usable : (e0.models || []);
     } else {
       const avail = await discoverChatModels(e0.provider, e0.key, e0.base);
       /* У Gemini в списке десятки моделей. Берём быстрые flash: они видят фото
@@ -11583,6 +11602,16 @@ async function streamOnce(engine, payload, onDelta, signal) {
       const ra = Number(res.headers.get("retry-after")) || 0;
       err.retryAfter = ra;
       if (!txt && res.status >= 500) err.message = "движок занят";
+      /* Понятные подсказки вместо сухого кода: человек должен знать, что делать */
+      if (res.status === 401 || res.status === 403) {
+        if (/anthropic|claude/i.test(String(engine.provider || engine.model || ""))) {
+          err.message = "Claude не принял ключ: он живёт только на нашем сервере";
+        } else if (engine.key) {
+          err.message = "ключ не подошёл или кончился";
+        }
+      }
+      if (res.status === 402) err.message = "на этом ключе кончились деньги";
+      if (res.status === 404) err.message = "такой модели у сервиса нет";
       throw err;
     }
     const ctype = (res.headers.get("content-type") || "").toLowerCase();
