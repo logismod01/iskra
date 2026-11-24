@@ -5783,7 +5783,9 @@ const ISKRA_ENGINES = [
      (402 кончились деньги, 429 лимит) Искра молча уходит на бесплатные.
      proxied: true — признак, что ключ не наш, а серверный: в интерфейсе
      такой движок ничем не отличается от остальных. */
-  { id: "sk", base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", model: "deepseek-chat", timeout: 30, auth: "none", proxied: true, pro: true, vision: false }
+  /* deepseek-flash — живое имя на ноябрь 2026 (старое deepseek-chat отключено
+     24 июля 2026, прокси переводит старое имя в новое, если браузер помнит его) */
+  { id: "sk", base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", model: "deepseek-flash", timeout: 30, auth: "none", proxied: true, pro: true, vision: false }
 ];
 
 /* Необязательный свой ключ. Если он есть — Искра отвечает через него
@@ -5823,7 +5825,8 @@ const KEY_PROVIDERS = {
   /* DeepSeek: дешёвый прямой доступ, бесплатных токенов хватает на пробу */
   deepseek: {
     base: "https://api.deepseek.com/v1", keyed: true, list: true,
-    models: ["deepseek-chat", "deepseek-reasoner"]
+    /* имена на ноябрь 2026: старые deepseek-chat / deepseek-reasoner отключены */
+    models: ["deepseek-flash", "deepseek-v4-pro"]
   },
   // бесплатные модели здесь меняются постоянно: имя подбираем у самого сервиса,
   // а эти — страховка, если список получить не удалось

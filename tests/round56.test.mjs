@@ -50,6 +50,17 @@ t("движок sk есть в списке и помечен proxied", () => {
   assert.equal(eng.auth, "none", "у браузера нет ключа — авторизация не нужна");
   assert.ok(/iskra-ai$/.test(eng.base), "адрес: " + eng.base);
 });
+t("имя модели живое (не отключённое 24.07.2026)", () => {
+  const eng = ev(`ISKRA_ENGINES.find(e => e.id === "sk")`);
+  assert.equal(eng.model, "deepseek-flash", "модель: " + eng.model);
+  /* старое имя не должно использоваться нигде, кроме карты в прокси на сервере */
+  /* ISKRA_ENGINES стоит в файле РАНЬШЕ KEY_PROVIDERS — берём от ISKRA_ENGINES до custom-провайдера */
+  const from = html.indexOf("const ISKRA_ENGINES");
+  const body = html.slice(from, html.indexOf("function guessVision", from));
+  assert.ok(body.length > 2000, "блок движков и провайдеров найден");
+  assert.equal(/models: \["deepseek-chat"/.test(body), false, "в конфиге осталось отключённое имя");
+  assert.ok(/models: \["deepseek-flash"/.test(body), "в конфиге должно быть deepseek-flash");
+});
 t("в движке нет поля key (ключ не должен уезжать в браузер)", () => {
   const eng = ev(`ISKRA_ENGINES.find(e => e.id === "sk")`);
   assert.equal(eng.key, undefined);
