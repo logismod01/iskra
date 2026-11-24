@@ -84,6 +84,26 @@ t("кап 768 px у свободного движка не притворяет�
   assert.ok(/const cap = 768;/.test(html), "потолок бесплатного движка на месте");
 });
 
+console.log("7. Свой ключ рисует напрямую, без сервера");
+t("картинки идут своим ключом первыми", () => {
+  const src = html.slice(html.indexOf("async function proxyImage"));
+  const body = src.slice(0, 400);
+  assert.ok(/if \(ownOpenRouterKey\(\)\) return ownKeyImage/.test(body),
+    "свой ключ должен быть первым путём");
+});
+t("свой ключ берётся из настроек человека", () => {
+  const src = html.slice(html.indexOf("function ownOpenRouterKey"));
+  const body = src.slice(0, 500);
+  assert.ok(/parseKeys\(settings\.apiKey\)/.test(body));
+  assert.ok(/provider === "openrouter"/.test(body));
+});
+t("нет денег на своём ключе — честная причина", () => {
+  const src = html.slice(html.indexOf("async function ownKeyImage"));
+  const body = src.slice(0, 3000);
+  assert.ok(/on the счёте|на счёте OpenRouter нет денег/.test(body) || /kind = "img-limit"/.test(body));
+  assert.ok(/kind = "no-quality"/.test(body), "неизвестная модель — тоже не приговор");
+});
+
 console.log(`\nИТОГ: ${pass} из ${pass + fail}`);
 try { w.close(); } catch (e) {}
 process.exit(fail ? 1 : 0);
