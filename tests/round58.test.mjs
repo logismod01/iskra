@@ -74,8 +74,10 @@ t("на «Обычно» черновик только на сложном", () 
   assert.equal(ev(`scratchNeeded(${JSON.stringify(easy)})`), false, "простое — без черновика");
 });
 t("черновик идёт в системное сообщение, а не в историю чата", () => {
+  /* Между черновиком и его вставкой теперь стоит блок памяти,
+     поэтому окно среза шире — иначе тест проверял не то место. */
   const src = html.slice(html.indexOf("let scratch = \"\""));
-  const body = src.slice(0, 1600);
+  const body = src.slice(0, 2600);
   assert.ok(/payload\.messages\[0\]\.content \+=/.test(body), "должен дописываться в system");
   assert.ok(/ТВОЙ РАЗБОР ЗАДАЧИ/.test(body), "должна быть пометка про черновик");
 });
