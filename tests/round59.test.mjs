@@ -105,7 +105,7 @@ console.log("5. Без сети — очередь");
 ev("localStorage.removeItem('iskra.learn.queue')");
 await ev(`learnRemember("Столица Австралии", "Столица Австралии — Канберра, а не Сидней, город основан в 1913 году.", "fact", "тест")`);
 t("знание уходит в очередь, когда сети нет", () => {
-  const q = ev("learnQueueLoad()");
+  const q = ev("memoQueueLoad()");
   assert.equal(q.length, 1, "в очереди должно быть одно знание: " + q.length);
   assert.equal(q[0].t, "Столица Австралии");
   ev("localStorage.removeItem('iskra.learn.queue')");
@@ -113,9 +113,9 @@ t("знание уходит в очередь, когда сети нет", () 
 t("очередь не растёт бесконечно", () => {
   ev("localStorage.removeItem('iskra.learn.queue')");
   for (let i = 0; i < 60; i++) {
-    ev(`learnQueueSave(learnQueueLoad().concat([{t:"Тема ${i}",b:"Тело знания номер ${i}, достаточно длинное для записи в базу",k:"fact"}]))`);
+    ev(`memoQueueSave(memoQueueLoad().concat([{t:"Тема ${i}",b:"Тело знания номер ${i}, достаточно длинное для записи в базу",k:"fact"}]))`);
   }
-  assert.ok(ev("learnQueueLoad().length") <= 40, "очередь должна ограничиваться: " + ev("learnQueueLoad().length"));
+  assert.ok(ev("memoQueueLoad().length") <= 40, "очередь должна ограничиваться: " + ev("memoQueueLoad().length"));
   ev("localStorage.removeItem('iskra.learn.queue')");
 });
 

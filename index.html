@@ -5785,7 +5785,11 @@ const ISKRA_ENGINES = [
      такой движок ничем не отличается от остальных. */
   /* deepseek-flash — живое имя на ноябрь 2026 (старое deepseek-chat отключено
      24 июля 2026, прокси переводит старое имя в новое, если браузер помнит его) */
-  { id: "sk", base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", model: "deepseek-flash", timeout: 30, auth: "none", proxied: true, pro: true, vision: false }
+  { id: "sk", base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", model: "deepseek-flash", timeout: 30, auth: "none", proxied: true, pro: true, vision: false },
+  /* Claude — самый умный движок, когда ключ подключён на сервере. Тоже через
+     прокси: Anthropic не пускает браузер напрямую (CORS). Идёт первым на
+     сложном, потому что на «привет» он лишний — дороже и медленнее. */
+  { id: "cl", base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", model: "claude-sonnet-5", timeout: 45, auth: "none", proxied: true, pro: true, vision: true }
 ];
 
 /* Необязательный свой ключ. Если он есть — Искра отвечает через него
@@ -5834,6 +5838,15 @@ const KEY_PROVIDERS = {
     base: "https://openrouter.ai/api/v1", keyed: true, vision: true, discovery: "openrouter",
     models: ["deepseek/deepseek-chat-v3.1:free", "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen3-235b-a22b:free"]
   },
+  /* Claude (Anthropic): в браузере напрямую не работает — Anthropic запрещает
+     CORS с чужим источника. Поэтому тем же путём, что и DeepSeek: через наш
+     прокси, ключ в секретах Supabase. Для человека это просто «Искра умнее». */
+  anthropic: {
+    base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", keyed: true, proxied: true,
+    /* первая — младшая и дешёвая, вторая — старшая, её зовём на сложном */
+    models: ["claude-sonnet-5", "claude-opus-4-5"],
+    proModels: ["claude-opus-4-5"], vision: true
+  },
   custom:      { base: "", model: "", keyed: false }
 };
 
@@ -5847,6 +5860,8 @@ function guessVision(id) {
 function detectKeyKind(key) {
   const k = String(key || "").trim();
   if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", base: KEY_PROVIDERS.groq.base, models: KEY_PROVIDERS.groq.models };
+  /* Claude: старые ключи sk-ant-…, новые sk-ant-api03-… */
+  if (/^sk-ant-[A-Za-z0-9_\-]{20,}$/.test(k)) return { provider: "anthropic", base: KEY_PROVIDERS.anthropic.base, models: KEY_PROVIDERS.anthropic.models, proModels: KEY_PROVIDERS.anthropic.proModels };
   if (/^AIza[A-Za-z0-9_\-]{30,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.base, models: KEY_PROVIDERS.gemini.models, native: "gemini", proModels: KEY_PROVIDERS.gemini.proModels };
   /* Новые ключи Google начинаются на AQ.… — их выдаёт тот же кабинет, что и старые.
      Живут они только на родном адресе, поэтому сразу помечаем их как родные. */
@@ -20154,7 +20169,7 @@ async function runAnswerCheck(question, answer, signal) {
    предмете, а не в рассуждениях. Рассуждения даёт модель — её веса мы
    не трогаем, это невозможно из браузера.
    ===================================================================== */
-const LEARN_QUEUE_KEY = "iskra.learn.queue";
+const MEMO_QUEUE_KEY = "iskra.learn.queue";
 const LEARN_PROMPT = `Ты — Искра, которая учится. Тебе дают разговор: вопрос человека и твой ответ.
 Выдели ОДИН факт, который стоит запомнить на будущее.
 
@@ -20167,11 +20182,11 @@ const LEARN_PROMPT = `Ты — Искра, которая учится. Тебе
 ТЕМА: <короткое название, до 80 знаков>
 ФАКТ: <то, что надо запомнить, 1–3 предложения, до 500 знаков>`;
 
-function learnQueueLoad() {
-  try { const a = JSON.parse(localStorage.getItem(LEARN_QUEUE_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+function memoQueueLoad() {
+  try { const a = JSON.parse(localStorage.getItem(MEMO_QUEUE_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; }
 }
-function learnQueueSave(a) {
-  try { localStorage.setItem(LEARN_QUEUE_KEY, JSON.stringify((a || []).slice(-40))); } catch (e) {}
+function memoQueueSave(a) {
+  try { localStorage.setItem(MEMO_QUEUE_KEY, JSON.stringify((a || []).slice(-40))); } catch (e) {}
 }
 
 /* Запись знания на сервер. Без сети — в очередь, отправится позже. */
@@ -20179,7 +20194,7 @@ async function learnRemember(topic, body, kind, source) {
   const t = String(topic || "").trim();
   const b = String(body || "").trim();
   if (t.length < 3 || b.length < 40) return false;
-  if (!supabaseConfigured()) { const q = learnQueueLoad(); q.push({ t, b, k: kind || "fact", s: source || "чат" }); learnQueueSave(q); return false; }
+  if (!supabaseConfigured()) { const q = memoQueueLoad(); q.push({ t, b, k: kind || "fact", s: source || "чат" }); memoQueueSave(q); return false; }
   try {
     const r = await fetch(SB() + "/rest/v1/rpc/iskra_learn", {
       method: "POST",
@@ -20195,14 +20210,14 @@ async function learnRemember(topic, body, kind, source) {
     if (j && j.ok) { try { localStorage.setItem("iskra.learnedAt", String(Date.now())); } catch (e) {} return true; }
     return false;
   } catch (e) {
-    const q = learnQueueLoad(); q.push({ t, b, k: kind || "fact", s: source || "чат" }); learnQueueSave(q);
+    const q = memoQueueLoad(); q.push({ t, b, k: kind || "fact", s: source || "чат" }); memoQueueSave(q);
     return false;
   }
 }
 
 /* Отправить накопленное, когда сеть появилась */
-async function learnQueueFlush() {
-  const q = learnQueueLoad();
+async function memoQueueFlush() {
+  const q = memoQueueLoad();
   if (!q.length) return 0;
   const left = [];
   let sent = 0;
@@ -20210,7 +20225,7 @@ async function learnQueueFlush() {
     const ok = await learnRemember(it.t, it.b, it.k, it.s);
     if (ok) sent++; else left.push(it);
   }
-  learnQueueSave(left);
+  memoQueueSave(left);
   return sent;
 }
 
