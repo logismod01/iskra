@@ -6211,18 +6211,19 @@ const POWER_LEVELS = [
     sys: "Отвечай обычно: понятно и достаточно подробно, структурируй ответ, если он длинный. На сложных задачах рассуждай по шагам."
   },
   {
-    id: "deep", name: "Умно", ico: "🧠", desc: "думает, разбирает по шагам",
+    id: "deep", name: "Умно", ico: "🧠", desc: "черновик разбора, потом ответ",
     speed: 3, precision: 5, pro: "hard", checks: 0, maxTokens: 4096, temp: 0.5, effort: "high",
     sys: "Думай перед ответом. Сначала разбери задачу по шагам, проверь условие и крайние случаи, потом дай ответ. Показывай ход решения, но без воды."
   },
   {
     id: "strong", name: "Сильно", ico: "💪", desc: "сильная модель и самопроверка",
     speed: 2, precision: 6, pro: "always", checks: 1, maxTokens: 4096, temp: 0.45, effort: "high",
+    /* «Сильно» — с черновиком, самопроверкой и сверкой фактов одновременно */
     sys: "Работай как на важном проекте: разбери условие, назови допущения, дай ответ, проверь его. Если в задаче есть подвох или неоднозначность — скажи об этом. В конце коротко: что может пойти не так."
   },
   {
     id: "ultra", name: "Ультра", ico: "🔥", desc: "максимум: всегда сильная, сверяет себя",
-    speed: 1, precision: 6, pro: "always", checks: 2, maxTokens: 6000, temp: 0.35, effort: "high",
+    speed: 1, precision: 6, pro: "always", checks: 2, maxTokens: 6000, temp: 0.35, effort: "max",
     proOnly: true,
     sys: "Это самая ответственная работа. План → решение → проверка → ответ. Проверь каждый факт и число, назови риски и что стоит перепроверить человеку. Не выдумывай источники и цифры: не знаешь — так и скажи."
   }
@@ -8056,7 +8057,11 @@ function apiPayload(chatMessages, opts = {}) {
   body.temperature = lvP.temp;
   body.max_tokens = lvP.maxTokens;
   /* без ключа и без Про длину урезаем: бесплатные движки рвут длинные ответы */
-  if (settings.edition !== "pro" && !String(settings.apiKey || "").trim()) {
+  /* Без ключа длину режем: бесплатные движки рвут длинные ответы.
+     Но если работает наш прокси (ключ серверный), резать нечего — он держит
+     до 4000. Раньше проверяли только свой ключ и резали всем подряд. */
+  const proxyReady = typeof proxyPaused === "function" && !proxyPaused();
+  if (settings.edition !== "pro" && !String(settings.apiKey || "").trim() && !proxyReady) {
     body.max_tokens = Math.min(body.max_tokens, 2000);
   }
   return body;
@@ -11465,8 +11470,14 @@ async function streamOnce(engine, payload, onDelta, signal) {
   } else {
     const msgsForEngine = engine.small ? liteMessages(payload.messages) : payload.messages;
     body = { ...payload, model: engine.model, stream: true, messages: sanitizeMessages(msgsForEngine) };
-    // бесплатные движки не понимают половину настроек — лишнее убираем, иначе 400
-    delete body.reasoning_effort;
+    /* Бесплатные шлюзы не понимают половину настроек — лишнее убираем, иначе 400.
+       НО reasoning_effort понимают те, кто умеет думать (наш прокси, DeepSeek,
+       OpenRouter): раньше его вырезали у ВСЕХ подряд, и уровень «Умно»
+       не включал размышление ни у кого — настройка была мёртвой. */
+    const thinks = !!engine.proxied || engine.provider === "deepseek" ||
+                   engine.provider === "openrouter" || engine.native === "gemini" ||
+                   /reason|o[1-9]|deepseek-v4|deepseek-flash/i.test(String(engine.model || ""));
+    if (!thinks) delete body.reasoning_effort;
     delete body.reasoning;
     delete body.verbosity;
     delete body.service_tier;
@@ -12186,8 +12197,32 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
     }
 
+    /* Черновик: сначала разбор задачи для себя, потом ответ по нему.
+       Уровни «Умно» и выше — всегда, «Обычно» — на сложном. */
+    let scratch = "";
+    if (!images.length && !signal.aborted && scratchNeeded(trimmed)) {
+      const t = streamEl();
+      if (t && t.isConnected) {
+        t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
+          `<p class="gen-note">Сначала разберу задачу для себя…</p>`;
+      }
+      scratch = await makeScratch(trimmed, signal);
+      if (scratch) {
+        aiMsg.scratch = true;
+        if (t && t.isConnected) {
+          t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
+            `<p class="gen-note">Разобралась — теперь пишу ответ.</p>`;
+        }
+      }
+    }
+
     const recent = chat.messages.slice(-20);
     payload = apiPayload(recent);
+    /* Разбор кладём в системное сообщение: модель отвечает уже по нему,
+       а не импровизирует. В историю чата он не попадает — человеку он не нужен. */
+    if (scratch && payload && Array.isArray(payload.messages) && payload.messages[0]) {
+      payload.messages[0].content += "\n\nТВОЙ РАЗБОР ЗАДАЧИ (черновик, человеку его не показывай — отвечай по нему):\n" + scratch;
+    }
     let triedNote = false;
     const onTry = (n) => {
       if (n <= 1) return;
@@ -20029,6 +20064,59 @@ async function runAnswerCheck(question, answer, signal) {
 }
 
 /* Нужна ли проверка: только на уровнях с checks и не на мусорных коротких ответах */
+/* ---------- Цепочка размышления ----------
+   Самый дешёвый способ поднять интеллект без новой модели: заставить Искру
+   сначала решить задачу «на черновике», потом ответить по черновику.
+   Ошибка на этом шаге в разы меньше: модель не импровизирует по ходу ответа,
+   а уже держит разбор перед глазами.
+
+   Стоит один лишний вызов — поэтому только там, где это окупается:
+   сложные задачи и уровни «Умно», «Сильно», «Ультра». */
+
+const SCRATCH_PROMPT = `Ты — Искра на черновике. Тебе дают задачу. НЕ пиши ответ для человека.
+
+Разбери задачу вчерне, коротко и по делу:
+1. Что именно спрашивают — своими словами.
+2. Какие данные, условия и ограничения есть. Чего не хватает.
+3. План решения: шаги по порядку.
+4. Промежуточные результаты — числа посчитай здесь.
+5. Где можно ошибиться и как это проверить.
+
+Пиши для себя, кратко, без вступлений и без обращений к человеку. Больше 700 слов не надо.`;
+
+/* Нужен ли черновик: уровень просит думать и задача не пустяк */
+function scratchNeeded(question) {
+  const lv = powerLevel();
+  if (String(question || "").trim().length < 40) return false;
+  const hard = requestComplexity({ messages: [{ role: "user", content: String(question || "") }] }) === "hard";
+  /* «Обычно» тоже думает, но только на сложном. Раньше здесь стояла проверка
+     effort === "low" и отсекала «Обычно» сразу — до расчёта сложности,
+     и черновик на этом уровне не включался никогда. */
+  if (lv.id === "norm") return hard;
+  /* Ниже «Обычно» (Молния, Быстро) не думаем: они про скорость */
+  if (!lv.effort || lv.effort === "low") return false;
+  /* «Умно» и выше — думают всегда, и тем более на сложном */
+  return lv.precision >= 5 || hard;
+}
+
+/* Черновик. Возвращает текст или пустую строку (тогда отвечаем как обычно). */
+async function makeScratch(question, signal) {
+  const payload = {
+    messages: [
+      { role: "system", content: SCRATCH_PROMPT },
+      { role: "user", content: "Задача:\n" + String(question || "") }
+    ],
+    stream: true,
+    temperature: 0.3,
+    max_tokens: 1200
+  };
+  let out = "";
+  try { await askIskra(payload, (d) => { out += d; }, signal); } catch (e) { return ""; }
+  const t = String(out || "").trim();
+  if (t.length < 80) return "";
+  return t.slice(0, 3500);
+}
+
 /* ---------- Проверка фактов по базе (а не по памяти модели) ----------
    Главная причина «глупости» Искры была не в модели: она отвечала по памяти,
    а память у неё — чужие бесплатные шлюзы, которые врут на числах и датах.
