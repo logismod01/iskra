@@ -47,6 +47,17 @@ const SECRET_PATTERNS = [
   /gsk_[A-Za-z0-9]{16,}/g,
   /hf_[A-Za-z0-9]{16,}/g,
   /ISKRA-[A-Z0-9-]{6,}/g,
+  /AKIA[0-9A-Z]{16}/g,                       // ключи AWS
+  /gh[pousr]_[A-Za-z0-9]{20,}/g,             // токены GitHub
+  /xox[baprs]-[A-Za-z0-9-]{10,}/g,           // токены Slack
+  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{6,}/g, // JWT
+  /* Пары «слово: значение» — раньше не маскировались совсем, и пароль
+     из файла уходил в журнал шагов и в ответ модели открытым текстом. */
+  /* Имя ключа оставляем, значение прячем: строка «TOKEN=…•» понятна,
+     а «TOK…•» непонятна и ломает разбор файла. */
+  /((?:password|passwd|pwd|пароль|пароля)\s*[:=]\s*)(\S{3,})/gi,
+  /((?:api[_-]?key|apikey|secret|token|токен|секрет|auth)\s*[:=]\s*["']?)([^\s"']{6,})/gi,
+  /(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----)/g,
   /\b[A-Za-z0-9_-]{32,}\b/g   // длинные токены
 ];
 
@@ -61,6 +72,19 @@ function resolveInWorkspace(workspace, target, level) {
   const raw = String(target == null ? "" : target).trim();
   if (!ws) return { ok: false, error: "не выбрана рабочая папка" };
   if (!raw) return { ok: false, error: "пустой путь" };
+  /* Абсолютный путь чужой ОС — не «файл внутри папки». На Linux строка
+     C:\\Windows\\System32 склеивалась с рабочей папкой и удаление
+     системного каталога Windows проходило проверку. */
+  const foreignAbs = /^[a-zA-Z]:[\\/]/.test(raw) || /^(\\\\|\/\/)/.test(raw) || /^%[A-Za-z_]+%/.test(raw);
+  if (foreignAbs && process.platform !== "win32") {
+    return { ok: false, error: "путь другой операционной системы: " + raw };
+  }
+  if (foreignAbs && process.platform === "win32") {
+    /* На Windows это настоящий абсолютный путь — он обязан быть внутри папки. */
+    const t = path.resolve(raw).toLowerCase();
+    if (!t.startsWith(ws.toLowerCase())) return { ok: false, error: "путь выходит за рабочую папку: " + raw };
+    return { ok: true, path: path.resolve(raw) };
+  }
   // запрещаем явные попытки выйти наружу, даже если путь «выглядит» внутренним
   if (/^([a-z]:[\\/]|\\\\|\/)/i.test(raw) === false && raw.split(/[\\/]+/).includes("..")) {
     const resolved = path.resolve(ws, raw);
@@ -113,7 +137,13 @@ function checkWrite(filePath, settings) {
 /** Убирает секреты из текста, который показываем в логах. */
 function redactSecrets(text) {
   let out = String(text == null ? "" : text);
-  for (const re of SECRET_PATTERNS) out = out.replace(re, (m) => (m.length > 8 ? m.slice(0, 3) + "…" + "•".repeat(6) : "•".repeat(6)));
+  for (const re of SECRET_PATTERNS) {
+    out = out.replace(re, (m, g1, g2) => {
+      /* Если шаблон с группой «имя = значение» — оставляем имя на месте. */
+      if (typeof g1 === "string" && typeof g2 === "string") return g1 + "…" + "•".repeat(6);
+      return m.length > 8 ? m.slice(0, 3) + "…" + "•".repeat(6) : "•".repeat(6);
+    });
+  }
   return out;
 }
 

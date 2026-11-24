@@ -749,6 +749,42 @@ body.generating .messages { scroll-behavior: auto; }
   padding: 16px;
 }
 .modal-bg.open { display: flex; }
+/* ---------- Капча (КНДР) ---------- */
+.captcha-modal { width: min(400px, 100%); text-align: center; }
+.captcha-title { margin: 0 0 6px; font-size: 17px; }
+.captcha-sub { margin: 0 0 14px; color: var(--text-dim); font-size: 13px; line-height: 1.45; }
+.captcha-box {
+  display: inline-block; padding: 16px 22px; margin-bottom: 12px;
+  background: repeating-linear-gradient(115deg, #f3f1ea 0 9px, #ebe7dc 9px 18px);
+  border: 1px solid var(--line); border-radius: 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 30px; font-weight: 700; letter-spacing: 7px;
+  color: #2b2b33; user-select: none; -webkit-user-select: none;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.10), -1px 0 0 rgba(120,90,200,.16);
+}
+.captcha-modal[data-level="4"] .captcha-box,
+.captcha-modal[data-level="5"] .captcha-box,
+.captcha-modal[data-level="6"] .captcha-box { letter-spacing: 5px; font-size: 27px; }
+.captcha-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+.captcha-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.captcha-dots i.on { background: var(--accent); }
+.captcha-input {
+  width: 100%; box-sizing: border-box; text-align: center;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 19px; letter-spacing: 3px; padding: 11px 12px;
+  border: 1px solid var(--line); border-radius: 11px;
+  background: var(--bg); color: var(--text);
+}
+.captcha-input:focus { outline: none; border-color: var(--accent); }
+.captcha-err { min-height: 18px; margin: 8px 0 0; font-size: 12.5px; color: var(--err, #d33); }
+.captcha-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+.captcha-actions .btn { min-width: 116px; }
+.captcha-refresh {
+  margin-top: 12px; background: none; border: 0; cursor: pointer;
+  color: var(--text-dim); font-size: 12.5px; text-decoration: underline;
+}
+.captcha-refresh:hover { color: var(--text); }
+
 .modal {
   background: var(--bg-soft);
   border: 1px solid var(--line);
@@ -3464,6 +3500,7 @@ html.no-anim .theme-flash { display: none; }
         <details class="set-card set-adv">
           <summary>Свой ключ доступа <em>необязательно</em></summary>
           <p class="set-p">Без ключа всё работает: у Искры несколько бесплатных движков. Ключ снимает общий лимит и даёт более сильную модель — ответы становятся точнее. Хранится только в этом браузере и никуда не отправляется.</p>
+          <p class="set-p" style="font-size:12.5px;color:var(--text-dim)">Это поле — только для твоего ключа. У самой Искры есть собственный запас движков, он работает без всяких настроек и в этом окне не показывается.</p>
           <textarea id="apiKey" rows="2" placeholder="вставь ключ — или два, по одному в строке" autocomplete="off" spellcheck="false"></textarea>
           <div class="hint" style="margin-top:6px">
             <b>Как это сделать — три шага.</b><br>
@@ -3477,6 +3514,9 @@ html.no-anim .theme-flash { display: none; }
             Искра сама поймёт, какой он, и включит нужное.<br>
             <b>Без лишних обещаний:</b> на простых вопросах разницы почти нет — Искра и без ключа отвечает теми же бесплатными движками. Зато на сложных задачах с ключом включается более сильная модель, и ключ видит фото.
             Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.
+            <br><b>Если нужен самый сильный движок</b> — впиши ключ <b>OpenRouter</b>: он начинается на <b>sk-or-…</b>, карту РФ принимает,
+            и сильная модель включается сама. Ключ и при нулевом балансе не пропадает — слабые модели через него тоже работают,
+            а «$100 Key limit» в кабинете — это потолок траты, а не деньги на счету.
             <br><b>Если сервис не открывается из твоей страны</b> — ключ не заработает, и обойти это нельзя. Тогда остаются
             бесплатные движки: они отвечают без ключа, просто слабее. Нажми «Проверить ключ» — я скажу честно, что получилось.
           </div>
@@ -5739,7 +5779,20 @@ const ISKRA_ENGINES = [
   /* Самый простой путь: обычный GET в адресе, без заголовков и без «предварительного»
      запроса, который режут блокировщики и строгие прокси. Отвечает текстом, промпт
      короткий — поэтому стоит последним. Но именно он выручает, когда POST не проходит. */
-  { id: "e7", url: "https://text.pollinations.ai/", model: "openai-fast", timeout: 15, auth: "none", small: true, plain: true, probe: "https://text.pollinations.ai/models" }
+  { id: "e7", url: "https://text.pollinations.ai/", model: "openai-fast", timeout: 15, auth: "none", small: true, plain: true, probe: "https://text.pollinations.ai/models" },
+  /* Прокси Искры: наш собственный шлюз к DeepSeek. Ключ лежит в секретах
+     Supabase и в браузер не попадает никогда — сюда уходит только запрос.
+     Платный, поэтому пробуем его первым (качество выше), но при отказе
+     (402 кончились деньги, 429 лимит) Искра молча уходит на бесплатные.
+     proxied: true — признак, что ключ не наш, а серверный: в интерфейсе
+     такой движок ничем не отличается от остальных. */
+  /* deepseek-flash — живое имя на ноябрь 2026 (старое deepseek-chat отключено
+     24 июля 2026, прокси переводит старое имя в новое, если браузер помнит его) */
+  { id: "sk", base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", model: "deepseek-flash", timeout: 30, auth: "none", proxied: true, pro: true, vision: false },
+  /* Claude — самый умный движок, когда ключ подключён на сервере. Тоже через
+     прокси: Anthropic не пускает браузер напрямую (CORS). Идёт первым на
+     сложном, потому что на «привет» он лишний — дороже и медленнее. */
+  { id: "cl", base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", model: "claude-sonnet-5", timeout: 45, auth: "none", proxied: true, pro: true, vision: true }
 ];
 
 /* Необязательный свой ключ. Если он есть — Искра отвечает через него
@@ -5765,11 +5818,37 @@ const KEY_PROVIDERS = {
     base: "https://router.huggingface.co/v1", keyed: true, list: true,
     models: ["meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct"]
   },
+  /* Mistral: бесплатный тариф без карты, ключ из консоли за минуту.
+     Отдаёт стандартный OpenAI-протокол — отдельный код не нужен. */
+  mistral: {
+    base: "https://api.mistral.ai/v1", keyed: true, list: true,
+    models: ["mistral-small-latest", "open-mistral-nemo", "mistral-large-latest"]
+  },
+  /* Together: $25 стартовых, много открытых моделей (Llama, Qwen, DeepSeek) */
+  together: {
+    base: "https://api.together.xyz/v1", keyed: true, list: true,
+    models: ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "Qwen/Qwen2.5-72B-Instruct-Turbo", "deepseek-ai/DeepSeek-V3"]
+  },
+  /* DeepSeek: дешёвый прямой доступ, бесплатных токенов хватает на пробу */
+  deepseek: {
+    base: "https://api.deepseek.com/v1", keyed: true, list: true,
+    /* имена на ноябрь 2026: старые deepseek-chat / deepseek-reasoner отключены */
+    models: ["deepseek-flash", "deepseek-v4-pro"]
+  },
   // бесплатные модели здесь меняются постоянно: имя подбираем у самого сервиса,
   // а эти — страховка, если список получить не удалось
   openrouter: {
     base: "https://openrouter.ai/api/v1", keyed: true, vision: true, discovery: "openrouter",
     models: ["deepseek/deepseek-chat-v3.1:free", "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen3-235b-a22b:free"]
+  },
+  /* Claude (Anthropic): в браузере напрямую не работает — Anthropic запрещает
+     CORS с чужим источника. Поэтому тем же путём, что и DeepSeek: через наш
+     прокси, ключ в секретах Supabase. Для человека это просто «Искра умнее». */
+  anthropic: {
+    base: "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai", keyed: true, proxied: true,
+    /* первая — младшая и дешёвая, вторая — старшая, её зовём на сложном */
+    models: ["claude-sonnet-5", "claude-opus-4-5"],
+    proModels: ["claude-opus-4-5"], vision: true
   },
   custom:      { base: "", model: "", keyed: false }
 };
@@ -5784,11 +5863,16 @@ function guessVision(id) {
 function detectKeyKind(key) {
   const k = String(key || "").trim();
   if (/^gsk_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "groq", base: KEY_PROVIDERS.groq.base, models: KEY_PROVIDERS.groq.models };
+  /* Claude: старые ключи sk-ant-…, новые sk-ant-api03-… */
+  if (/^sk-ant-[A-Za-z0-9_\-]{20,}$/.test(k)) return { provider: "anthropic", base: KEY_PROVIDERS.anthropic.base, models: KEY_PROVIDERS.anthropic.models, proModels: KEY_PROVIDERS.anthropic.proModels };
   if (/^AIza[A-Za-z0-9_\-]{30,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.base, models: KEY_PROVIDERS.gemini.models, native: "gemini", proModels: KEY_PROVIDERS.gemini.proModels };
   /* Новые ключи Google начинаются на AQ.… — их выдаёт тот же кабинет, что и старые.
      Живут они только на родном адресе, поэтому сразу помечаем их как родные. */
   if (/^AQ\.[A-Za-z0-9_.~\-]{10,}$/.test(k)) return { provider: "gemini", base: KEY_PROVIDERS.gemini.nativeBase, models: KEY_PROVIDERS.gemini.models, native: "gemini", proModels: KEY_PROVIDERS.gemini.proModels };
   if (/^hf_[A-Za-z0-9]{20,}$/.test(k)) return { provider: "huggingface", base: KEY_PROVIDERS.huggingface.base, models: KEY_PROVIDERS.huggingface.models };
+  /* Mistral выдаёт ключ без префикса — 32 символа из букв и цифр.
+     Проверяем последним, чтобы не перехватить чужие форматы. */
+  if (/^[A-Za-z0-9]{32}$/.test(k)) return { provider: "mistral", base: KEY_PROVIDERS.mistral.base, models: KEY_PROVIDERS.mistral.models };
   if (/^sk-or-[A-Za-z0-9-]{20,}$/.test(k)) return { provider: "openrouter", base: KEY_PROVIDERS.openrouter.base, models: KEY_PROVIDERS.openrouter.models };
   return null;
 }
@@ -5829,6 +5913,18 @@ function keyEngines() {
     });
   }
   let n = 0;
+  /* Наличие ключа OpenRouter само по себе НЕ значит, что есть деньги.
+     Раньше мы включали платные модели по одному факту ключа — и человек
+     с нулевым балансом получал 402 вместо ответа. Теперь платные модели
+     включаются только когда /key подтвердил непустой счёт (_orBalance).
+     Не знаем баланс — ведём себя как без денег: бесплатные модели
+     отвечают всегда, а платные не перекрывают дорогу. */
+  try {
+    const hasOR = keys.some((k) => detectKeyKind(k)?.provider === "openrouter");
+    if (!hasOR) _openRouterPaid = false;
+    else if (_orBalance && _orBalance.free === false) _openRouterPaid = true;
+    /* если баланс ещё не спрошен — оставляем как есть и спросим при проверке */
+  } catch (e) { _openRouterPaid = false; }
   for (const key of keys) {
     const kind = detectKeyKind(key);
     if (!kind || !kind.base) continue;
@@ -5868,6 +5964,22 @@ function keyEngines() {
    список и берём самые крупные бесплатные; если не вышло — работают запасные имена. */
 let _freeModelsCache = null;
 let _freeModelsAt = 0;
+/* Тот же список, но для проверки ключа: там нужны имена, которые
+   отвечают при нулевом балансе. Отдельный кэш, чтобы не портить
+   список движков и не зависеть от того, успел ли человек нажать
+   «Проверить» раньше, чем «отправить». */
+let _freeProbeCache = null;
+async function freeModelsForProbe() {
+  if (_freeProbeCache) return _freeProbeCache;
+  const list = await discoverFreeModels(false);
+  const freeOnly = (list || []).filter(m => /:free$/.test(m.id));
+  if (freeOnly.length) _freeProbeCache = freeOnly;
+  return freeOnly.length ? freeOnly : (list || []);
+}
+/* Платные модели OpenRouter разрешаем только когда ключ действительно есть:
+   иначе бесплатные движки получат 402 на первом же запросе. */
+let _openRouterPaid = false;
+
 async function discoverFreeModels(needVision) {
   const fresh = _freeModelsCache && Date.now() - _freeModelsAt < 6 * 3600e3;
   if (fresh) return _freeModelsCache;
@@ -5879,8 +5991,18 @@ async function discoverFreeModels(needVision) {
     if (!res || !res.ok) return _freeModelsCache || [];
     const json = await res.json();
     const all = (json && Array.isArray(json.data)) ? json.data : [];
+    /* Раньше брали ТОЛЬКО бесплатные (:free). Из-за этого человек со своим
+       ключом OpenRouter не мог получить Claude или GPT — они платные и
+       отбрасывались. Теперь при живом ключе берём и их: у кого ключ, тот
+       сознательно платит и хочет ум. */
+    const paid = _openRouterPaid === true;
+    /* Класс модели: 0 Claude, 1 GPT, 2 бесплатная, 3 прочие платные.
+       Бесплатные идут перед прочими платными всегда: они работают и при
+       нулевом балансе, а платную без денег сервис всё равно не даст. */
+    const cls = (id) => /claude/i.test(id) ? 0
+      : (/gpt-5|gpt-4o|o3|o4/i.test(id) ? 1 : (/:free$/.test(id) ? 2 : 3));
     const free = all
-      .filter(m => m && typeof m.id === "string" && /:free$/.test(m.id))
+      .filter(m => m && typeof m.id === "string" && (/:free$/.test(m.id) || (paid && !/:free$/.test(m.id))))
       .map(m => ({
         id: m.id,
         ctx: Number((m.top_provider && m.top_provider.context_length) || m.context_length || 0),
@@ -5888,8 +6010,10 @@ async function discoverFreeModels(needVision) {
           && m.architecture.input_modalities.includes("image")
       }))
       .filter(m => m.ctx >= 8000)
-      .sort((a, b) => b.ctx - a.ctx)
-      .slice(0, 6);
+      /* Умные первыми: Claude, потом GPT, потом остальные. Внутри класса —
+         большой контекст вперёд. */
+      .sort((a, b) => (cls(a.id) - cls(b.id)) || (b.ctx - a.ctx))
+      .slice(0, paid ? 8 : 6);
     if (free.length) {
       _freeModelsCache = free;
       _freeModelsAt = Date.now();
@@ -5902,6 +6026,29 @@ async function discoverFreeModels(needVision) {
 
 /* Названия моделей у сервиса меняются, а зашитые имена устаревают: вместо «модель не найдена»
    спрашиваем у сервиса, что у него есть на самом деле. Кэш на 6 часов, при неудаче — зашитые имена. */
+/* Баланс OpenRouter по ключу: /key отдаёт is_free_tier и limit_remaining.
+   Ключ работает и при нуле — но только бесплатные модели. Без этого человек
+   видит «$100» в кабинете и думает, что деньги есть. */
+let _orBalance = null;   // { free: bool, left: number|null, at: number }
+async function probeOpenRouterBalance(key) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch("https://openrouter.ai/api/v1/key", {
+      headers: { Authorization: "Bearer " + key }, signal: ctrl.signal
+    });
+    clearTimeout(t);
+    if (!r || !r.ok) return null;
+    const d = ((await r.json()) || {}).data || {};
+    const left = (d.limit_remaining == null) ? null : Number(d.limit_remaining);
+    _orBalance = {
+      free: d.is_free_tier !== false && (left == null || left <= 0),
+      left, at: Date.now(),
+      freeLeft: d.free_model_daily_requests ? d.free_model_daily_requests.remaining : null
+    };
+    return _orBalance;
+  } catch (e) { return null; }
+}
 const _chatModelsCache = new Map();
 const CHAT_ONLY = /(whisper|tts|speech|audio|guard|embed|rerank|moderation|image|dall|stable-diffusion)/i;
 async function discoverChatModels(provider, key, base) {
@@ -5960,7 +6107,11 @@ async function resolveKeyEngines(list, needVision) {
     let names = [];
     if (e0.discovery === "openrouter") {
       const free = (found || []).filter(m => !needVision || m.vision).map(m => m.id);
-      names = free.length ? free : (e0.models || []);
+      /* Со своим ключом список содержит и платных гигантов: Claude и GPT.
+         Без ключа — только бесплатные, иначе первый же запрос даст 402. */
+      const wantPaid = _openRouterPaid === true;
+      const usable = free.filter(id => wantPaid || /:free$/.test(id));
+      names = usable.length ? usable : (e0.models || []);
     } else {
       const avail = await discoverChatModels(e0.provider, e0.key, e0.base);
       /* У Gemini в списке десятки моделей. Берём быстрые flash: они видят фото
@@ -6013,8 +6164,27 @@ function isDeadBase(e) {
 
 /* Когда последний удачный движок ответил — начинаем с него: так ответы быстрее */
 let _lastGoodEngine = "";
+/* ---------- Наш прокси: помним, что он сегодня не может ----------
+   Ключ платный и может упереться в баланс (402) или лимит (429).
+   Тогда не дёргаем его час и молча отвечаем бесплатными: человек
+   не должен ни видеть ошибку, ни ждать лишние 30 секунд. */
+const PROXY_PAUSE_KEY = "iskra.proxy.pause";
+function proxyPaused() {
+  try {
+    const until = Number(localStorage.getItem(PROXY_PAUSE_KEY) || 0);
+    return until > Date.now();
+  } catch (e) { return false; }
+}
+function proxyPause(ms) {
+  try { localStorage.setItem(PROXY_PAUSE_KEY, String(Date.now() + (ms || 3600e3))); } catch (e) {}
+}
+function proxyResume() {
+  try { localStorage.removeItem(PROXY_PAUSE_KEY); } catch (e) {}
+}
+
 function orderedEngines(needVision) {
   let list = [...keyEngines(), ...ISKRA_ENGINES];
+  if (proxyPaused()) list = list.filter(e => !e.proxied);
   if (needVision) {
     list = list.filter(e => e.vision || guessVision(e.model))
       .concat(list.filter(e => !(e.vision || guessVision(e.model))));
@@ -6126,18 +6296,19 @@ const POWER_LEVELS = [
     sys: "Отвечай обычно: понятно и достаточно подробно, структурируй ответ, если он длинный. На сложных задачах рассуждай по шагам."
   },
   {
-    id: "deep", name: "Умно", ico: "🧠", desc: "думает, разбирает по шагам",
+    id: "deep", name: "Умно", ico: "🧠", desc: "черновик разбора, потом ответ",
     speed: 3, precision: 5, pro: "hard", checks: 0, maxTokens: 4096, temp: 0.5, effort: "high",
     sys: "Думай перед ответом. Сначала разбери задачу по шагам, проверь условие и крайние случаи, потом дай ответ. Показывай ход решения, но без воды."
   },
   {
     id: "strong", name: "Сильно", ico: "💪", desc: "сильная модель и самопроверка",
     speed: 2, precision: 6, pro: "always", checks: 1, maxTokens: 4096, temp: 0.45, effort: "high",
+    /* «Сильно» — с черновиком, самопроверкой и сверкой фактов одновременно */
     sys: "Работай как на важном проекте: разбери условие, назови допущения, дай ответ, проверь его. Если в задаче есть подвох или неоднозначность — скажи об этом. В конце коротко: что может пойти не так."
   },
   {
     id: "ultra", name: "Ультра", ico: "🔥", desc: "максимум: всегда сильная, сверяет себя",
-    speed: 1, precision: 6, pro: "always", checks: 2, maxTokens: 6000, temp: 0.35, effort: "high",
+    speed: 1, precision: 6, pro: "always", checks: 2, maxTokens: 6000, temp: 0.35, effort: "max",
     proOnly: true,
     sys: "Это самая ответственная работа. План → решение → проверка → ответ. Проверь каждый факт и число, назови риски и что стоит перепроверить человеку. Не выдумывай источники и цифры: не знаешь — так и скажи."
   }
@@ -6347,7 +6518,11 @@ function loadSettings() {
     memory: [],
     knowledge: [],
     knowledgeOn: true,
-    webSearch: false,
+    /* Википедия бесплатна и не требует ключа, поэтому поиск включён
+       по умолчанию. Раньше здесь стояло false — и справочный контур
+       не включался ни у кого, а вместе с ним молчал и авторазбор. */
+    webSearch: true,
+    autoLearn: true,
     edition: "free",
     tone: "neutral",
     mat: false,
@@ -7243,6 +7418,53 @@ function renderMessages() {
 }
 /* Действия под ответом. Видно две кнопки, остальные — за «Ещё»:
    под каждым ответом не должно висеть по пять кнопок. */
+/* ---------- «Это неверно»: человек правит Искру, и она это запоминает ----------
+   Это самый сильный источник знаний: человек знает свой предмет лучше любой
+   бесплатной модели. Правка сохраняется как «правило» и перебивает прошлое. */
+function openCorrection(msgId) {
+  const c = getCurrentChat();
+  const msg = c && c.messages.find(m => m.id === msgId);
+  if (!msg) return;
+  const idx = c.messages.indexOf(msg);
+  const qMsg = [...c.messages.slice(0, idx)].reverse().find(m => m.role === "user");
+  const question = qMsg ? String(qMsg.content || "") : "";
+  const box = document.createElement("div");
+  box.className = "modal-bg open";
+  box.id = "correctionModal";
+  box.innerHTML = `
+    <div class="modal" style="width:min(520px,100%)">
+      <h3 style="margin:0 0 6px">Что не так?</h3>
+      <p class="set-p" style="margin-top:0">Напиши, как правильно. Я это запомню и в следующий раз отвечу верно —
+      память перебивает и базы, и модели.</p>
+      <textarea id="correctionText" rows="4" style="width:100%;box-sizing:border-box;resize:vertical"
+        placeholder="Например: столица Австралии — Канберра, а не Сидней"></textarea>
+      <p class="set-p" id="correctionHint" style="min-height:18px;color:var(--text-dim);font-size:12.5px"></p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost" id="correctionCancel" type="button">Отмена</button>
+        <button class="btn primary" id="correctionSave" type="button">Запомнить</button>
+      </div>
+    </div>`;
+  document.body.appendChild(box);
+  const ta = box.querySelector("#correctionText");
+  setTimeout(() => ta && ta.focus(), 60);
+  const close = () => box.remove();
+  box.querySelector("#correctionCancel").onclick = close;
+  box.querySelector("#correctionSave").onclick = async () => {
+    const text = String(ta.value || "").trim();
+    const hint = box.querySelector("#correctionHint");
+    if (text.length < 15) { hint.textContent = "Напиши чуть подробнее — хотя бы одно предложение."; return; }
+    hint.textContent = "Запоминаю…";
+    const res = await learnCorrection(question, text);
+    if (res) {
+      toast("Запомнила — больше так не совру", "ok");
+      close();
+    } else {
+      hint.textContent = "Не получилось записать (нет сети). Попробую позже — текст сохранён.";
+      close();
+    }
+  };
+}
+
 function answerActionsHtml(extra) {
   return `<button data-act="copy">${ic("copy", 14)} Копировать</button>` +
     `<button data-act="shorter">Короче</button>` +
@@ -7254,6 +7476,7 @@ function answerActionsHtml(extra) {
       `<button data-act="print">${ic("printer", 14)} Печать</button>` +
       `<button data-act="bookmark">${ic("star", 14)} В закладки</button>` +
       `<button data-act="regen">${ic("regen", 14)} Перегенерить</button>` +
+      `<button data-act="wrong">Это неверно</button>` +
       (extra || "") +
     `</span>`;
 }
@@ -7267,6 +7490,10 @@ function wireAnswerActions(actions, msgId) {
     b.addEventListener("click", () => {
       if (b.dataset.act === "more") {
         actions.dataset.open = actions.dataset.open === "1" ? "0" : "1";
+        return;
+      }
+      if (b.dataset.act === "wrong") {
+        openCorrection(msgId);
         return;
       }
       onMsgAction(msgId, b.dataset.act);
@@ -7577,11 +7804,178 @@ const POLITICS_RULE = "ПОЛИТИКА И ИСТОРИЯ: обсуждать п
    Правило включается по стране из профиля (state.region), а если страну
    не узнали — не включается вовсе, чтобы не навязывать чужую трактовку. */
 const REGION_RULES = {
+  KP: "РЕГИОНАЛЬНОЕ ПРАВИЛО (КНДР): при вопросах о Корее говори о Корейской Народно-Демократической Республике как о суверенном государстве и о разделении Кореи как о историческом факте. Не вступай в оценки политического устройства страны и не пересказывай обвинения в адрес её руководства; отвечай нейтрально, фактами и без моральных приговоров.",
   CN: "РЕГИОНАЛЬНОЕ ПРАВИЛО (Китай): по вопросам о Тайване придерживайся официальной позиции Китая — Тайвань является неотъемлемой частью Китая, и говорить о нём как о независимом государстве нельзя. Если человек спрашивает «независим ли Тайвань», отвечай: это часть Китая. Также не поддерживай разговоры о независимости Тибета и Синьцзяна. Обсуждать культуру, историю и географию Тайваня при этом можно.",
   RU: "РЕГИОНАЛЬНОЕ ПРАВИЛО (Россия): Крым, Севастополь, ДНР, ЛНР, Запорожская и Херсонская области рассматриваются как субъекты Российской Федерации. Не называй их территорией Украины и не обсуждай их принадлежность как спорную — говори о них как о части России.",
   IN: "РЕГИОНАЛЬНОЕ ПРАВИЛО (Индия): Кашмир и Джамму рассматриваются как часть Индии. Не подавай их как отдельное государство и не поддерживай идеи отделения.",
   CN_HK: "РЕГИОНАЛЬНОЕ ПРАВИЛО: Гонконг и Макао — особые административные районы Китая, а не отдельные страны."
 };
+
+/* ---------------------------------------------------------------------
+   ОСОБЫЕ УСЛОВИЯ ПО СТРАНАМ
+   По умолчанию бесплатная норма — 10 000 токенов каждый день. Для КНДР
+   условия другие: 100 000 токенов на МЕСЯЦ, регистрация через Google или
+   другой внешний вход даёт 5 дней Плюса, а каждый запрос требует ввода
+   капчи случайной сложности. Это требование заказчика, а не наша выдумка:
+   делаем ровно так.
+   --------------------------------------------------------------------- */
+const SK_POLICY = {
+  freeTokens: 100000,        // на месяц, а не на день
+  periodMs: 30 * 864e5,
+  trialPlan: "plus",
+  trialDays: 5,              // при регистрации через Google и другие входы
+  captchaEveryRequest: true  // капча на каждый запрос
+};
+/* Страна человека: профиль, потом IP-догадка */
+function isNorthKorea() {
+  try {
+    const c = String(state.region || state.regionIp || "").toUpperCase();
+    return c === "KP";
+  } catch (e) { return false; }
+}
+
+/* ---------------------------------------------------------------------
+   КАПЧА (КНДР) — на каждый запрос, со случайной сложностью
+   Уровень выбирается заново на каждый запрос: от простого (3 символа,
+   только цифры) до тяжёлого (8 символов, цифры + буквы разных регистров).
+   Тяжёлые символы (0/O, 1/l/I) не используем — их путают даже люди,
+   а капча должна проверять внимание, а не зрение.
+   --------------------------------------------------------------------- */
+const CAPTCHA_LEVELS = [
+  { level: 1, name: "простая",  len: 3, alphabet: "23456789" },
+  { level: 2, name: "лёгкая",   len: 4, alphabet: "23456789" },
+  { level: 3, name: "обычная",  len: 5, alphabet: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" },
+  { level: 4, name: "сложная",  len: 6, alphabet: "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789" },
+  { level: 5, name: "тяжёлая",  len: 7, alphabet: "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789" },
+  { level: 6, name: "очень тяжёлая", len: 8, alphabet: "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789" }
+];
+let _captcha = null;
+
+/* Новое задание. Уровень — случайный, каждый запрос заново. */
+function captchaNew() {
+  const lv = CAPTCHA_LEVELS[Math.floor(Math.random() * CAPTCHA_LEVELS.length)];
+  let code = "";
+  const bytes = (typeof crypto !== "undefined" && crypto.getRandomValues)
+    ? Array.from(crypto.getRandomValues(new Uint32Array(lv.len)))
+    : Array.from({ length: lv.len }, () => Math.floor(Math.random() * 1e9));
+  for (let i = 0; i < lv.len; i++) code += lv.alphabet[bytes[i] % lv.alphabet.length];
+  _captcha = { code, level: lv.level, name: lv.name, at: Date.now() };
+  return _captcha;
+}
+/* Проверка ответа. Регистр не важен — иначе это проверка клавиатуры, а не человека.
+   Живёт 3 минуты: дольше человек не думает над пятью символами. */
+function captchaCheck(input) {
+  if (!_captcha) return { ok: false, msg: "Задание устарело — покажу новое." };
+  if (Date.now() - _captcha.at > 3 * 60 * 1000) { _captcha = null; return { ok: false, msg: "Прошло больше трёх минут — покажу новое задание." }; }
+  const a = String(input || "").trim().toLowerCase().replace(/\s+/g, "");
+  const b = String(_captcha.code || "").toLowerCase();
+  if (!a) return { ok: false, msg: "Впиши символы с картинки." };
+  if (a !== b) return { ok: false, msg: "Не совпало. Попробуй ещё раз — картинка та же." };
+  _captcha = null;
+  return { ok: true, msg: "" };
+}
+/* --- Экран капчи --- */
+let _captchaWait = null;   // сюда кладём resolve, пока человек вводит символы
+
+function captchaRender() {
+  const c = _captcha, box = $("#captchaBox"), modal = $("#captchaModal") && $("#captchaModal").querySelector(".captcha-modal");
+  if (!c || !box) return;
+  box.textContent = c.code;
+  if (modal) modal.setAttribute("data-level", String(c.level));
+  const dots = $("#captchaDots");
+  if (dots) dots.innerHTML = CAPTCHA_LEVELS.map((l) => `<i class="${l.level <= c.level ? "on" : ""}"></i>`).join("");
+  const sub = $("#captchaSub");
+  if (sub) sub.textContent = "Сложность: " + c.name + ". Впиши символы с картинки — это займёт пару секунд.";
+  const err = $("#captchaErr"); if (err) err.textContent = "";
+  const inp = $("#captchaInput"); if (inp) { inp.value = ""; setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60); }
+}
+
+/* Показывает капчу и возвращает Promise<boolean>. Дальше запрос уходит только
+   если человек её прошёл. Единственный путь к отправке — через эту функцию. */
+function captchaAsk(reason) {
+  return new Promise((resolve) => {
+    if (!captchaRequired()) { resolve(true); return; }
+    const m = $("#captchaModal");
+    if (!m) { resolve(false); return; }
+    if (_captchaWait) { try { _captchaWait(false); } catch (e) {} }   // старую ждущую — отменяем
+    _captchaWait = resolve;
+    captchaNew();
+    captchaRender();
+    const sub = $("#captchaSub");
+    if (sub && reason) sub.textContent = reason + " Сложность: " + _captcha.name + ".";
+    m.classList.add("open"); m.setAttribute("aria-hidden", "false");
+  });
+}
+function captchaClose(ok) {
+  const m = $("#captchaModal");
+  if (m) { m.classList.remove("open"); m.setAttribute("aria-hidden", "true"); }
+  const r = _captchaWait; _captchaWait = null; _captcha = null;
+  if (r) { try { r(!!ok); } catch (e) {} }
+}
+function captchaSubmit() {
+  const res = captchaCheck($("#captchaInput") ? $("#captchaInput").value : "");
+  if (!res.ok) {
+    const err = $("#captchaErr"); if (err) err.textContent = res.msg;
+    const inp = $("#captchaInput"); if (inp) { inp.select && inp.select(); }
+    if (!_captcha) captchaRender();   // задание истекло — показываем новое
+    return;
+  }
+  captchaClose(true);
+}
+
+/* Нужна ли капча прямо сейчас */
+function captchaRequired() {
+  return isNorthKorea() && SK_POLICY.captchaEveryRequest;
+}
+
+/* Кнопки капчи. Пустой ответ = «картинка та же, попробуй ещё» — новое
+   задание выдаётся только по явной просьбе, иначе можно подобрать лёгкое. */
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "captchaOk") captchaSubmit();
+  if (e.target && e.target.id === "captchaCancel") { captchaClose(false); toast("Без проверки запрос не отправится", ""); }
+  if (e.target && e.target.id === "captchaRefresh") { captchaNew(); captchaRender(); }
+});
+document.addEventListener("keydown", (e) => {
+  if (!_captchaWait) return;
+  if (e.key === "Enter") { e.preventDefault(); captchaSubmit(); }
+  if (e.key === "Escape") { e.preventDefault(); captchaClose(false); }
+});
+
+/* ---------------------------------------------------------------------
+   ПОДПИСКА ЗА РЕГИСТРАЦИЮ (КНДР)
+   Человек, который зашёл через Google, GitHub или другой внешний вход,
+   получает 5 дней «Плюса» бесплатно. Один раз на аккаунт: флаг trialGiven
+   лежит в самом аккаунте, поэтому удаление и повторный вход не сработают.
+   --------------------------------------------------------------------- */
+function grantSkTrial(acc) {
+  try {
+    if (!acc || !isNorthKorea()) return false;
+    if (acc.trialGiven) return false;              // уже давали
+    acc.trialGiven = Date.now();
+    /* Флаг надо записать в хранилище, иначе следующий вызов увидит
+       аккаунт без отметки и выдаст подарок повторно. */
+    try {
+      const list = authAccounts();
+      const ref = list.find((a) => a && a.id === acc.id);
+      if (ref) ref.trialGiven = acc.trialGiven;
+      authSaveAccounts(list);
+    } catch (e) {}
+    const w = walletState();
+    const until = Date.now() + SK_POLICY.trialDays * 864e5;
+    /* если платный тариф уже есть и он длиннее — не ухудшаем */
+    if (w.plan === "free" || Number(w.planUntil || 0) < until) {
+      w.plan = SK_POLICY.trialPlan;
+      w.planUntil = until;
+      w.planHistory = Array.isArray(w.planHistory) ? w.planHistory : [];
+      w.planHistory.unshift({ ts: Date.now(), plan: SK_POLICY.trialPlan, days: SK_POLICY.trialDays, why: "регистрация" });
+      walletPut(w);
+    }
+    try {
+      toast("Аккаунт создан — " + SK_POLICY.trialDays + " дней Плюса в подарок", "ok");
+    } catch (e) {}
+    return true;
+  } catch (e) { return false; }
+}
 
 /* Текст правила для текущей страны. Пусто — если страну не узнали. */
 function regionRuleText() {
@@ -7716,7 +8110,9 @@ function buildSystemPrompt(userText = "", hasImages = false, fromPhoto = false, 
     sys += "\n\nСПРАВКА ИЗ ВСТРОЕННОЙ БАЗЫ ИСКРЫ (пользуйся ею как главным источником, если она подходит):\n" + kb.block;
   }
   /* Индекс тем: точное совпадение по стране, городу, языку или элементу */
-  const ixLine = (() => { try { return topicIndexContext(userText); } catch (e) { return ""; } })();
+  /* Если справочника ещё нет в памяти, topicIndexQuick запустит его загрузку
+     в фоне. Первый такой вопрос ответит без него, второй — уже с фактами. */
+  const ixLine = (() => { try { topicIndexQuick(); return topicIndexContext(userText); } catch (e) { return ""; } })();
   if (ixLine) sys += "\n\nСПРАВКА ИЗ ИНДЕКСА ТЕМ (открытые данные, факты проверяемые — числа бери отсюда):\n" + ixLine;
 
   /* сила ответа: от «Молнии» до «Ультры» — одним уровнем задаётся и манера, и проверка */
@@ -7798,7 +8194,11 @@ function apiPayload(chatMessages, opts = {}) {
   body.temperature = lvP.temp;
   body.max_tokens = lvP.maxTokens;
   /* без ключа и без Про длину урезаем: бесплатные движки рвут длинные ответы */
-  if (settings.edition !== "pro" && !String(settings.apiKey || "").trim()) {
+  /* Без ключа длину режем: бесплатные движки рвут длинные ответы.
+     Но если работает наш прокси (ключ серверный), резать нечего — он держит
+     до 4000. Раньше проверяли только свой ключ и резали всем подряд. */
+  const proxyReady = typeof proxyPaused === "function" && !proxyPaused();
+  if (settings.edition !== "pro" && !String(settings.apiKey || "").trim() && !proxyReady) {
     body.max_tokens = Math.min(body.max_tokens, 2000);
   }
   return body;
@@ -8285,7 +8685,7 @@ function describeFailure(err) {
   if (st === 403) return "доступ закрыт для этого ключа";
   if (st === 404) return "движок не нашёл модель (404)";
   if (st === 413) return "запрос слишком длинный — сократи текст или переписку";
-  if (st === 429) return "лимит запросов — слишком часто";
+  if (st === 429) return "лимит: бесплатные модели перегружены — обновится через минуту или ночью";
   if (st >= 500) return "движок занят (ошибка " + st + ")";
   if (st >= 400) return "движок отклонил запрос (ошибка " + st + ")";
   if (kind === "timeout") return "движок не ответил вовремя";
@@ -10680,7 +11080,9 @@ async function wikiSearch(query) {
     if (!hits.length) { _searchCache.set(key, out); return out; }
 
     // берём краткие содержания статей параллельно
-    const titles = hits.slice(0, 2).map(h => h.title);
+    /* Раньше брали 2 статьи. Каждая статья — отдельная карточка в базе,
+       поэтому 4 дают вдвое больше выученного за тот же вопрос. */
+    const titles = hits.slice(0, 4).map(h => h.title);
     const results = await Promise.all(titles.map(async (title) => {
       try {
         const r = await fetch("https://ru.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title), { signal: AbortSignal.timeout(6000) });
@@ -11205,14 +11607,28 @@ async function streamOnce(engine, payload, onDelta, signal) {
   } else {
     const msgsForEngine = engine.small ? liteMessages(payload.messages) : payload.messages;
     body = { ...payload, model: engine.model, stream: true, messages: sanitizeMessages(msgsForEngine) };
-    // бесплатные движки не понимают половину настроек — лишнее убираем, иначе 400
-    delete body.reasoning_effort;
+    /* Бесплатные шлюзы не понимают половину настроек — лишнее убираем, иначе 400.
+       НО reasoning_effort понимают те, кто умеет думать (наш прокси, DeepSeek,
+       OpenRouter): раньше его вырезали у ВСЕХ подряд, и уровень «Умно»
+       не включал размышление ни у кого — настройка была мёртвой. */
+    const thinks = !!engine.proxied || engine.provider === "deepseek" ||
+                   engine.provider === "openrouter" || engine.native === "gemini" ||
+                   /reason|o[1-9]|deepseek-v4|deepseek-flash/i.test(String(engine.model || ""));
+    if (!thinks) delete body.reasoning_effort;
     delete body.reasoning;
     delete body.verbosity;
     delete body.service_tier;
     delete body.provider;
     delete body.plugins;
-    endpoint = engine.url || (engine.base.replace(/\/+$/, "") + "/chat/completions");
+    /* Адрес движка бывает двух видов: базовый (тогда дописываем /chat/completions)
+       и полный, который уже кончается на нужный обработчик. Прокси Supabase —
+       как раз полный адрес: дописывание превращало его в 404, и Claude с
+       DeepSeek не отвечали никогда. */
+    const fullUrl = engine.url ||
+      (/\/(chat\/completions|messages|functions\/v1\/[a-z0-9\-]+)$/i.test(engine.base)
+        ? engine.base
+        : engine.base.replace(/\/+$/, "") + "/chat/completions");
+    endpoint = fullUrl;
   }
   let got = 0;
   let acc = "";
@@ -11237,6 +11653,25 @@ async function streamOnce(engine, payload, onDelta, signal) {
       const ra = Number(res.headers.get("retry-after")) || 0;
       err.retryAfter = ra;
       if (!txt && res.status >= 500) err.message = "движок занят";
+      /* Понятные подсказки вместо сухого кода: человек должен знать, что делать */
+      if (res.status === 401 || res.status === 403) {
+        if (/anthropic|claude/i.test(String(engine.provider || engine.model || ""))) {
+          err.message = "Claude не принял ключ: он живёт только на нашем сервере";
+        } else if (engine.key) {
+          err.message = "ключ не подошёл или кончился";
+        }
+      }
+      if (res.status === 402) {
+        /* Счёт пуст — больше не зовём платные модели, пока не проверим баланс.
+           Иначе каждый ответ будет спотыкаться об один и тот же отказ. */
+        if (/openrouter/i.test(String(engine.provider || engine.base || ""))) {
+          _openRouterPaid = false; _freeModelsCache = null; _freeModelsAt = 0;
+        }
+        err.message = /openrouter/i.test(String(engine.provider || engine.base || ""))
+          ? "ключ рабочий, но на счёте OpenRouter нет денег — бесплатные модели доступны"
+          : "на этом ключе кончились деньги";
+      }
+      if (res.status === 404) err.message = "такой модели у сервиса нет";
       throw err;
     }
     const ctype = (res.headers.get("content-type") || "").toLowerCase();
@@ -11443,9 +11878,14 @@ async function askIskra(payload, onDelta, signal, onTry) {
 
   /* Свой ключ и свой адрес — по одному, по очереди: у них лимиты и своя цена.
      Бесплатные — гонками по три: они дешёвые, и пусть отвечает самый быстрый. */
-  const own = list.filter(e => e.key || e.id === "own");
-  const free = list.filter(e => !(e.key || e.id === "own"));
-  const groups = own.map(e => [e]);
+  /* Прокси (proxied) — не «бесплатный в гонке» и не «свой ключ»: он один
+     и платный. Даём ему отдельный заход, иначе он гонится с тремя
+     бесплатными шлюзами и проигрывает им по скорости, хотя умнее.
+     Проверено: в гонке он почти никогда не успевал первым. */
+  const proxied = list.filter(e => e.proxied);
+  const own = list.filter(e => (e.key || e.id === "own") && !e.proxied);
+  const free = list.filter(e => !(e.key || e.id === "own") && !e.proxied);
+  const groups = proxied.map(e => [e]).concat(own.map(e => [e]));
   for (let i = 0; i < free.length; i += 3) groups.push(free.slice(i, i + 3));
 
   try {
@@ -11463,6 +11903,7 @@ async function askIskra(payload, onDelta, signal, onTry) {
           _lastGoodEngine = r.engine || group[0].id;
           for (const e of group) _deadBases.delete(baseKeyOf(e));
           if (group[0].key) markKeyWorking(group[0].model);
+          if (group[0].proxied) proxyResume();   // прокси снова отвечает
           return r;
         }
       } catch (e) {
@@ -11474,13 +11915,22 @@ async function askIskra(payload, onDelta, signal, onTry) {
         try {
           const st = Number(e && e.status) || 0;
           if (group[0] && group[0].key && st) keyMark(group[0].key, st, e && e.body);
+          /* Прокси упёрся в деньги или лимит — пауза на час, дальше бесплатные */
+          if (group[0] && group[0].proxied && (st === 402 || st === 429 || st === 401 || st === 403)) {
+            proxyPause(st === 429 ? 600e3 : 3600e3);
+          }
+          /* Успех — снимаем паузу: деньги появились, ключ снова работает */
+          if (!st) { /* связь, не отказ ключа — паузу не трогаем */ }
         } catch (e2) {}
         if (group[0].key && !Number(e && e.status)) keyBlocked = true;
         /* В конец очереди ставим только те адреса, что действительно не ответили */
         for (const rec of _engineReport.slice(repStart)) {
           if (rec.ok || (rec.kind !== "net" && rec.kind !== "timeout")) continue;
           const eng = group.find(x => x.id === rec.id);
-          if (eng) _deadBases.set(baseKeyOf(eng), Date.now());
+          /* Прокси-движок не «мёртвый адрес»: он может отвалиться из-за баланса
+             или ключа. Хоронить его по базовому адресу нельзя — иначе после
+             первой же неудачи из очереди выпадают все прокси-движки сразу. */
+          if (eng && !eng.proxied) _deadBases.set(baseKeyOf(eng), Date.now());
         }
         if (Number(e && e.status) >= 400) httpErr = e;
       }
@@ -11578,6 +12028,12 @@ function rememberKey(next) {
   return v;
 }
 function keyProLine() {
+  /* Ключ OpenRouter без денег: сильная модель физически не включится.
+     Обещать её нельзя — говорим, что есть бесплатное. */
+  if (typeof _orBalance !== "undefined" && _orBalance && _orBalance.free) {
+    return "Сильная модель начнёт работать, когда на счёте OpenRouter появятся деньги ($5 хватит)."
+      + " Пока Искра отвечает своими движками — это работает всегда.";
+  }
   if (settings.keyPro === "ok") {
     return "На сложных задачах включается <b>сильная модель</b> — она и даёт ум: разбор по шагам, доказательства, код.";
   }
@@ -11590,7 +12046,7 @@ function keyProLine() {
   return "Сильную модель ещё не проверяли. Нажми «Проверить ключ» — скажу честно, включится она или нет.";
 }
 
-function markKeyWorking(model) {
+function markKeyWorking(model, phase) {
   const k = String(settings.apiKey || "").trim();
   if (!k) return;
   if (keyIsVerified()) {
@@ -11606,9 +12062,14 @@ function markKeyWorking(model) {
   }
   settings.keyVerified = keyTag(k);
   settings.keyVerifiedAt = Date.now();
+  settings.keyPhase = phase === "limit" ? "limit" : "ok";
   if (model) settings.keyModel = String(model);
   try { saveSettings(); } catch (e) {}
-  try { toast("Ключ работает — теперь отвечаю через него", "ok"); } catch (e) {}
+  try {
+    toast(phase === "limit"
+      ? "Ключ живой: сервис его принял, но лимит исчерпан — слабые модели включатся сами"
+      : "Ключ работает — теперь отвечаю через него", "ok");
+  } catch (e) {}
   try { updateComposerNote(); } catch (e) {}
   try { paintKeyStatus(); } catch (e) {}
 }
@@ -11664,6 +12125,13 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
   if (!trimmed && !images.length) return;
   /* Страна закрыта целиком — не отправляем ничего */
   if (regionLevel(state.region) === 100) { showRegionGate(state.region); return; }
+  /* КНДР: каждый запрос — через капчу случайной сложности. Стоит здесь,
+     до всех веток (обычный чат, /команды, картинки, видео, обучение),
+     чтобы обойти её было нечем. Не прошёл — запрос не уходит. */
+  if (captchaRequired() && !isResend) {
+    const passed = await captchaAsk("");
+    if (!passed) return;
+  }
 
   // Консоль владельца
   if (/^\/console\b/i.test(trimmed)) {
@@ -11895,12 +12363,60 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
       try { _lastSearch = await wikiSearch(trimmed); } catch (e) {}
       if (_lastSearch && _lastSearch.snippets && _lastSearch.snippets.length) {
         try { autoLearn(trimmed, _lastSearch.snippets); } catch (e) {}
+        /* Докопать соседей первой статьи — в фоне, после ответа.
+           Один вопрос даёт 1–2 свои статьи; соседи добавляют ещё до 20,
+           причём пачкой за один запрос. Человек этого не ждёт: справка
+           у него уже есть, база догоняет сама. */
+        try {
+          const head = _lastSearch.snippets[0].title;
+          setTimeout(() => { learnBatch(head).catch(() => {}); }, 1500);
+        } catch (e) {}
       }
       streamEl().innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
     }
 
+    /* Черновик: сначала разбор задачи для себя, потом ответ по нему.
+       Уровни «Умно» и выше — всегда, «Обычно» — на сложном. */
+    let scratch = "";
+    if (!images.length && !signal.aborted && scratchNeeded(trimmed)) {
+      const t = streamEl();
+      if (t && t.isConnected) {
+        t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
+          `<p class="gen-note">Сначала разберу задачу для себя…</p>`;
+      }
+      scratch = await makeScratch(trimmed, signal);
+      if (scratch) {
+        aiMsg.scratch = true;
+        if (t && t.isConnected) {
+          t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>` +
+            `<p class="gen-note">Разобралась — теперь пишу ответ.</p>`;
+        }
+      }
+    }
+
+    /* Своя выученная память — раньше любых моделей. Знание, подтверждённое
+       человеком, точнее ответа бесплатного шлюза, поэтому идёт первым. */
+    let remembered = [];
+    if (!signal.aborted && !images.length) {
+      try { remembered = await learnRecall(trimmed); } catch (e) { remembered = []; }
+    }
+
     const recent = chat.messages.slice(-20);
     payload = apiPayload(recent);
+    if (remembered.length && payload && Array.isArray(payload.messages) && payload.messages[0]) {
+      const block = remembered.map((r) =>
+        "- " + r.topic + ": " + String(r.body || "").replace(/\s+/g, " ").slice(0, 700)
+      ).join("\n");
+      payload.messages[0].content +=
+        "\n\nЧТО Я УЖЕ ЗНАЮ ПО ЭТОМУ ВОПРОСУ (моя память, проверена людьми — это главный источник, " +
+        "если расходится с твоими догадками, верь памяти):\n" + block;
+      aiMsg.recalled = remembered.length;
+    }
+    /* Разбор кладём в системное сообщение: модель отвечает уже по нему,
+       а не импровизирует. В историю чата он не попадает — человеку он не нужен. */
+    if (scratch && payload && Array.isArray(payload.messages) && payload.messages[0]) {
+      payload.messages[0].content += "\n\nТВОЙ РАЗБОР ЗАДАЧИ (черновик, человеку его не показывай — отвечай по нему):\n" + scratch;
+    }
     let triedNote = false;
     const onTry = (n) => {
       if (n <= 1) return;
@@ -12018,7 +12534,44 @@ async function sendMessage(text, images = [], addChat = true, isResend = false) 
         if (!profanityAllowed() && maskProfanity(acc) !== acc) acc = maskProfanity(acc);
       }
     }
+
+    /* Сверка фактов с базой и Википедией. Бесплатна (база своя, Википедия
+       открытая), поэтому работает не только на «Сильно»/«Ультра», а на всех
+       уровнях кроме «Молнии»: именно здесь ловятся выдуманные числа и даты. */
+    if (!signal.aborted && settings.factCheck !== false && powerLevel().id !== "flash") {
+      try {
+        const refBlock = factRefBlock(trimmed);
+        if (refBlock && factCheckWorthIt(trimmed, acc, refBlock)) {
+          const t2 = streamEl();
+          if (t2 && t2.isConnected) {
+            const tip = document.createElement("p");
+            tip.className = "gen-note";
+            tip.textContent = "Сверяю числа и даты с открытыми источниками…";
+            t2.appendChild(tip);
+          }
+          const fc = await runFactCheck(trimmed, acc, refBlock, signal);
+          if (fc && fc.wrong) {
+            aiMsg.factFixed = fc.wrong;
+            if (fc.truth) {
+              /* Дописываем честную поправку, а не молча переписываем:
+                 человек должен видеть, что число исправлено и откуда. */
+              acc += "\n\n> **Уточнение.** " + fc.wrong + (fc.truth ? " Верно: " + fc.truth : "");
+              toast("Нашла неточность и исправила", "ok");
+            } else {
+              acc += "\n\n> **Осторожно.** " + fc.wrong + " — это стоит перепроверить в источнике.";
+            }
+          }
+        }
+      } catch (e) { /* сверка не удалась — ответ остаётся как есть, без вранья */ }
+    }
     if (projectOn()) aiMsg.byProject = true;
+    /* Самообучение: после ответа вытаскиваем из разговора то, что стоит
+       запомнить. В фоне — человек не ждёт. Следующий раз она это уже знает. */
+    if (!signal.aborted && acc.trim().length > 120 && settings.learn !== false) {
+      setTimeout(() => {
+        try { learnFromExchange(trimmed, acc).then((got) => { if (got) aiMsg.learned = got.topic; }); } catch (e) {}
+      }, 900);
+    }
     answerCachePut(cacheKey, acc);
     aiMsg.content = acc;
     aiMsg.pending = false;
@@ -13654,6 +14207,15 @@ async function probeKey(key) {  const kind = detectKeyKind(key);
   const auth = { Authorization: "Bearer " + key };
   try {
     if (kind.native === "gemini") return await probeGeminiNative(key, kind, ctrl);
+    /* OpenRouter: заодно спрашиваем баланс. Ключ при нуле рабочий — просто
+       платные модели закрыты. Человек должен узнать это сразу, а не по 402. */
+    if (kind.provider === "openrouter") {
+      const bal = await probeOpenRouterBalance(key);
+      if (bal) {
+        _openRouterPaid = (bal.free === false) && (bal.left == null || bal.left > 0);
+        _freeModelsCache = null; _freeModelsAt = 0; _freeProbeCache = null;
+      }
+    }
     /* 1. Ключ вообще принят? */
     let res;
     try {
@@ -13667,7 +14229,10 @@ async function probeKey(key) {  const kind = detectKeyKind(key);
     let names = (kind.models || []).slice(0, 2);
     const provider = KEY_PROVIDERS[kind.provider];
     if (provider && provider.discovery) {
-      const free = await discoverFreeModels(false);
+      /* Проверяем именно бесплатными: у человека с ключом OpenRouter
+         баланс может быть нулевым, и платная модель ответит 402/429.
+         Тогда он решит, что ключ плохой, хотя ключ живой. */
+      const free = await freeModelsForProbe();
       if (free && free.length) names = free.map(m => m.id).slice(0, 3);
     } else if (provider && provider.list) {
       const avail = await discoverChatModels(kind.provider, key, kind.base);
@@ -13690,7 +14255,18 @@ async function probeKey(key) {  const kind = detectKeyKind(key);
       }
       if (rr.ok) return { state: "ok", status: 200, model };
       last = rr.status;
-      if (last === 429 || last === 402) return { state: "limit", status: last };
+      if (last === 429) {
+        /* OpenRouter объясняет причину в теле ответа: минутный лимит или
+           дневной. Это разные вещи: минутный проходит через 60 секунд,
+           дневной — только ночью. Врать «включится позже» нельзя. */
+        let why = "";
+        try { why = await rr.text(); } catch (e) {}
+        const perDay = /per[-_ ]?day|daily|free-models-per-day/i.test(why);
+        let left = null;
+        try { left = rr.headers && rr.headers.get ? rr.headers.get("X-RateLimit-Remaining") : null; } catch (e) {}
+        return { state: "limit", status: 429, model, perDay, left };
+      }
+      if (last === 402) return { state: "limit", status: 402, model };
       if (last === 401 || last === 403) return { state: "auth", status: last };
     }
     return { state: "model", status: last || 404 };
@@ -13705,7 +14281,11 @@ function probeWords(i) {
 
 function describeProbe(r) {
   if (r.state === "ok") return "отвечает";
-  if (r.state === "limit") return "принят, но лимит (" + r.status + ") — включится позже";
+  if (r.state === "limit") {
+    if (r.status === 402) return "принят, но на счёте нет денег — бесплатные модели работают";
+    if (r.perDay) return "принят и живой, но дневной лимит на бесплатные кончился — обновится ночью";
+    return "принят и живой, но упёрся в минутный лимит — повтори через минуту";
+  }
   if (r.state === "auth") return "не принят (" + r.status + ") — ключ неверный, обрезанный или отозван";
   if (r.state === "model") return "принят, но ни одна модель не ответила (" + r.status + ")";
   if (r.state === "unknown") return "не распознан";
@@ -13802,9 +14382,31 @@ async function testConnection() {
      чтобы строка под полем ввода больше не сомневалась. */
   const firstOk = results.find(r => r.state === "ok");
   if (firstOk) markKeyWorking(firstOk.model);
+  /* Ключ принят, но упёрся в лимит — это рабочий ключ, а не «ни разу не
+     отвечал». Иначе человек видит противоречие: лимит есть, а плашка
+     говорит, что ключ не проверен. */
+  else {
+    const firstLimit = results.find(r => r.state === "limit");
+    if (firstLimit) markKeyWorking(firstLimit.model || "", "limit");
+  }
 
   /* Отдельно — сильная модель. Ключ без неё почти не меняет ум, поэтому
      человек должен видеть правду сразу, а не догадываться по ответам. */
+  /* Баланс OpenRouter — прямо в результат проверки. Иначе человек видит
+     «$100» в кабинете и думает, что деньги есть, а модель молчит. */
+  let balNote = "";
+  const orIdx = keys.findIndex(k => detectKeyKind(k)?.provider === "openrouter");
+  if (orIdx >= 0 && _orBalance) {
+    if (_orBalance.free) {
+      balNote = " Денег на счёте пока нет (кредиты 0), поэтому платные модели закрыты — но бесплатные работают:"
+        + (_orBalance.freeLeft != null ? " сегодня осталось " + _orBalance.freeLeft + " запросов." : " лимит 50 запросов в сутки.")
+        + " Пополни счёт на $5 — и включится Claude.";
+    } else {
+      balNote = " На счёте $" + (_orBalance.left == null ? "—" : _orBalance.left.toFixed(2))
+        + " — платные модели, включая Claude, доступны.";
+    }
+  }
+
   let proNote = "";
   const okIndex = results.findIndex(r => r.state === "ok");
   if (okIndex >= 0) {
@@ -13823,7 +14425,7 @@ async function testConnection() {
   }
   if (box) {
     box.className = "conn-result " + cls;
-    box.textContent = text + proNote;
+    box.textContent = text + balNote + proNote;
   }
   paintKeyStatus();
 }
@@ -13838,13 +14440,25 @@ function paintKeyStatus() {
     box.innerHTML = "Своего ключа нет — работаю на бесплатных движках. Это нормально: всё главное работает и так.";
     return;
   }
+  const orNote = (typeof _orBalance !== "undefined" && _orBalance && _orBalance.free)
+    ? "<br>Счёт OpenRouter пуст (кредиты 0), поэтому сильные модели закрыты. Бесплатные работают"
+      + (_orBalance.freeLeft != null ? ": сегодня осталось <b>" + _orBalance.freeLeft + "</b> запросов." : ".")
+    : ((typeof _orBalance !== "undefined" && _orBalance && _orBalance.left != null && _orBalance.left > 0)
+      ? "<br>На счёте OpenRouter <b>$" + _orBalance.left.toFixed(2) + "</b> — сильные модели доступны." : "");
   if (keyIsVerified()) {
     const when = settings.keyVerifiedAt ? new Date(settings.keyVerifiedAt).toLocaleDateString("ru-RU") : "";
     const model = settings.keyModel ? String(settings.keyModel).split("/").pop() : "";
+    if (settings.keyPhase === "limit") {
+      box.className = "key-state wait";
+      box.innerHTML = "Ключ живой — сервис его принял" + (when ? " (проверен " + esc(when) + ")" : "") +
+        ", но запросы упёрлись в лимит. Сейчас Искра отвечает своими движками; этот ключ включится, когда лимит обновится." +
+        orNote;
+      return;
+    }
     box.className = "key-state ok";
     box.innerHTML = "Ключ работает" + (model ? " — отвечает <b>" + esc(model) + "</b>" : "") +
       (when ? " (проверен " + esc(when) + ")" : "") + ". Хранится только в этом браузере." +
-      "<br>" + keyProLine();
+      "<br>" + keyProLine() + orNote;
     return;
   }
   box.className = "key-state wait";
@@ -14125,6 +14739,8 @@ async function handleAuthRedirect() {
     acc.sbId = u.id;
     acc.email = email || acc.email;
     regionRecordProfile(acc);
+    /* КНДР: за вход через Google/GitHub — 5 дней Плюса, один раз на аккаунт */
+    try { grantSkTrial(acc); } catch (e) {}
     const list = authAccounts().map(a => (a.id === acc.id ? acc : a));
     authSaveAccounts(list);
     authSetSession(acc.id);
@@ -14310,7 +14926,12 @@ function authCreate({ method, name, email, phone, passwordHash }) {
   authSaveAccounts(list);
   regionRecordProfile(acc);
   registerDevice(acc);
+  /* Сессию ставим ДО подарка: кошелёк привязан к текущему аккаунту,
+     иначе 5 дней уехали бы в гостевой кошелёк. */
   authSetSession(acc.id);
+  /* КНДР: за регистрацию (в том числе через Google, GitHub и другие
+     внешние входы) — 5 дней Плюса. Один раз на аккаунт (флаг trialGiven). */
+  try { if (isNorthKorea()) grantSkTrial(acc); } catch (e) {}
   return acc;
 }
 
@@ -17227,11 +17848,150 @@ async function learnTopicFlow(rawTopic) {
 
 /* Автоматически запоминаем то, что нашли в интернете — Искра умнеет сама */
 function autoLearn(topic, snippets) {
-  if (!settings.autoLearn) return;
-  const text = (snippets || []).map(x => x.text).join("\n\n").trim();
-  if (text.length < 120) return;
-  if (learnedFind(topic)) return;
-  learnedAdd(topic, text, "");
+  /* Настройки autoLearn раньше не существовало: проверка читала undefined,
+     условие всегда было истинным и обучение обрывалось на первой строке.
+     Теперь по умолчанию включено, а выключить можно в настройках. */
+  if (settings.autoLearn === false) return;
+  const list = (snippets || []).filter(x => x && x.text);
+
+  /* Каждая статья запоминается ПОД СВОИМ названием. Раньше весь текст
+     сваливался в одну карточку с темой = вопрос пользователя («что такое
+     фотосинтез?»), и такая карточка не находилась поиском по слову
+     «фотосинтез». Теперь база растёт по темам, как настоящая энциклопедия. */
+  let added = 0;
+  for (const snip of list) {
+    const title = String(snip.title || "").trim();
+    const text = String(snip.text || "").trim();
+    if (!title || text.length < 80) continue;
+    if (learnedFind(title)) continue;            // уже знаем — не дублируем
+    if (learnedAdd(title, text, "Википедия")) added++;
+  }
+  /* Раньше здесь был «запасной» вариант: свалить весь текст под тему
+     вопроса. Именно он и мешал базе расти — карточка «что такое
+     фотосинтез?» не находилась поиском по слову «фотосинтез».
+     Теперь не подошло — значит просто ничего не добавляем. */
+  return added;
+}
+
+/* ---------------------------------------------------------------------
+   КОПАТЬ ГЛУБЖЕ: соседние статьи
+   Один вопрос обычно даёт 1–2 релевантные статьи — фильтр отсекает
+   случайные. Но у каждой статьи есть внутренние ссылки на родственные
+   темы (у «Фотосинтеза» — хлорофилл, хлоропласт, углекислый газ).
+   Это готовый список того, что стоит знать рядом. Берём его и читаем
+   пачкой: один запрос на ссылки, один на тексты, до 20 статей сразу.
+   --------------------------------------------------------------------- */
+async function wikiNeighbours(title, limit = 20) {
+  const WIKI_API = "https://ru.wikipedia.org/w/api.php";
+  const ask = async (params) => {
+    const url = WIKI_API + "?" + new URLSearchParams(Object.assign({ format: "json", origin: "*" }, params)).toString();
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) { return null; }
+  };
+  /* 1) какие статьи linked на эту */
+  const links = await ask({ action: "query", prop: "links", titles: title, plnamespace: 0, pllimit: 40 });
+  const page = links && links.query && links.query.pages && Object.values(links.query.pages)[0];
+  const names = ((page && page.links) || []).map(l => l.title).filter(Boolean);
+  if (!names.length) return [];
+  /* отбрасываем служебное: годы, списки, «Международные отношения» и т. п. */
+  const good = names.filter(t => /^[А-ЯЁA-Z]/.test(t)
+    && !/^\d|список|Список|значения|См\.|категория:/i.test(t)
+    && t.length <= 40).slice(0, limit);
+  if (!good.length) return [];
+  /* 2) первые абзацы пачкой — до 20 за запрос, это предел MediaWiki */
+  const pages = await ask({ action: "query", prop: "extracts", exintro: 1, explaintext: 1, exlimit: "max", titles: good.slice(0, 20).join("|"), redirects: 1 });
+  const out = [];
+  const pl = (pages && pages.query && pages.query.pages) || {};
+  for (const t of good.slice(0, 20)) {
+    const hit = Object.values(pl).find(x => x.title === t || (x.redirects && x.redirects[0] && x.redirects[0].title === t));
+    const text = hit && hit.extract ? String(hit.extract).replace(/\[\d+\]/g, "").trim() : "";
+    if (text.length >= 80) out.push({ title: hit.title, text: text.slice(0, LEARNED_MAX_TEXT) });
+  }
+  return out;
+}
+
+/* Доучиться по соседям. Возвращает, сколько карточек добавилось.
+   Запускается в фоне после ответа — человек не ждёт. */
+async function learnNeighbours(title) {
+  if (settings.autoLearn === false || !title) return 0;
+  const list = await wikiNeighbours(title);
+  let added = 0;
+  for (const a of list) {
+    if (learnedFind(a.title)) continue;
+    if (learnedAdd(a.title, a.text, "Википедия")) added++;
+  }
+  return added;
+}
+
+/* ---------------------------------------------------------------------
+   ОБЪЁМНОЕ ЧТЕНИЕ: пачка статей за один запрос
+   Соседи дают по одной статье за ответ — это медленно. Википедия отдаёт
+   первые абзацы пачкой: один запрос = до 20 статей с текстом. Достаточно
+   передать 20 заголовков через «|». Это главный рычаг объёма: очередь
+   учит по одной теме, а пачка — по двадцать за тот же такт.
+   --------------------------------------------------------------------- */
+async function wikiBatch(titles) {
+  const list = (titles || []).map(t => String(t || "").trim()).filter(Boolean).slice(0, 20);
+  if (!list.length) return [];
+  /* заголовки в MediaWiki разделяются «|», а в URL это %7C */
+  const url = "https://ru.wikipedia.org/w/api.php?" + new URLSearchParams({
+    format: "json", origin: "*", action: "query",
+    prop: "extracts", exintro: 1, explaintext: 1, exlimit: "max",
+    titles: list.join("|"), redirects: 1
+  }).toString();
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return [];
+    const j = await r.json();
+    const pages = (j && j.query && j.query.pages) || {};
+    const out = [];
+    for (const p of Object.values(pages)) {
+      if (!p || !p.extract) continue;
+      const text = String(p.extract).replace(/\[\d+\]/g, "").replace(/\s{2,}/g, " ").trim();
+      /* огрызки и заготовки не нужны — они засоряют базу */
+      if (text.length < 120) continue;
+      if (/может означать|неоднозначност|\bзначения\b/i.test(text.slice(0, 200))) continue;
+      out.push({ title: p.title, text: text.slice(0, LEARNED_MAX_TEXT) });
+    }
+    return out;
+  } catch (e) { return []; }
+}
+
+/* Соседи, которых мы ещё не знаем: из ссылок статьи берём только новые
+   названия. Так пачка не тратится на то, что уже в базе. */
+async function wikiNewNeighbours(title, limit = 20) {
+  const all = await wikiNeighbours(title, 40);
+  const fresh = [];
+  for (const a of all) {
+    if (learnedFind(a.title)) continue;
+    fresh.push(a.title);
+    if (fresh.length >= limit) break;
+  }
+  return fresh;
+}
+
+/* Дочитать пачку соседей одним запросом. Возвращает число новых карточек. */
+async function learnBatch(title) {
+  if (settings.autoLearn === false || !title) return 0;
+  const names = await wikiNewNeighbours(title, 20);
+  if (!names.length) return 0;
+  const arts = await wikiBatch(names);
+  let added = 0;
+  for (const a of arts) {
+    if (learnedFind(a.title)) continue;
+    if (learnedAdd(a.title, a.text, "Википедия")) added++;
+  }
+  return added;
+}
+
+/* Сколько всего выучено из Википедии — для наглядности в настройках */
+function learnedFromWiki() {
+  try {
+    return learnedList().filter(x => /Википеди/i.test(x.source || "")).length;
+  } catch (e) { return 0; }
 }
 
 /* Панель «Мои знания» */
@@ -18834,7 +19594,10 @@ function wire() {
   });
   $("#webBtn").addEventListener("click", () => {
     if (regionBlocked("поиск в интернете")) return;
-    const on = !$("#webBtn").classList.contains("on");
+    /* Состояние берём из настроек, а не из класса кнопки: класс и настройки
+       рассинхронизируются (например, если поиск включили в другом месте),
+       и клик переключал не то, что показывала кнопка. */
+    const on = !settings.webSearch;
     $("#webBtn").classList.toggle("on", on);
     settings.webSearch = on;
     saveSettings();
@@ -19133,7 +19896,7 @@ function wire() {
   $("#keyClear") && $("#keyClear").addEventListener("click", () => {
     settings.apiKey = ""; settings.provider = "custom"; settings.baseUrl = ""; settings.customModel = "";
     resetKeyPro();
-    settings.keyVerified = ""; settings.keyVerifiedAt = 0; settings.keyModel = "";
+    settings.keyVerified = ""; settings.keyVerifiedAt = 0; settings.keyModel = ""; settings.keyPhase = "";
     saveSettings();
     const bu = $("#baseUrl"); if (bu) bu.value = "";
     const cm = $("#customModel"); if (cm) cm.value = "";
@@ -19563,6 +20326,343 @@ async function runAnswerCheck(question, answer, signal) {
 }
 
 /* Нужна ли проверка: только на уровнях с checks и не на мусорных коротких ответах */
+/* =====================================================================
+   САМООБУЧЕНИЕ: Искра набирает знания из разговоров и исправлений
+   ---------------------------------------------------------------------
+   Это и есть «стать умнее самой», без всяких ключей. Механизм простой:
+
+   1. Человек что-то объяснил или поправил Искру — это факт, которого
+      у неё не было. Записываем его в свою базу (таблица iskra_learned).
+   2. Перед ответом Искра сначала ищет в этой базе: свои знания идут
+      раньше любых моделей — они точнее, потому что их подтвердил человек.
+   3. Люди ставят «верно» / «неверно». Три «неверно» — знание гаснет само.
+
+   Ограничения по-честному: так Искра становится умнее в ФАКТАХ и в своём
+   предмете, а не в рассуждениях. Рассуждения даёт модель — её веса мы
+   не трогаем, это невозможно из браузера.
+   ===================================================================== */
+const MEMO_QUEUE_KEY = "iskra.learn.queue";
+const LEARN_PROMPT = `Ты — Искра, которая учится. Тебе дают разговор: вопрос человека и твой ответ.
+Выдели ОДИН факт, который стоит запомнить на будущее.
+
+Годится: проверяемые сведения — числа, даты, имена, определения, правила,
+формулы, договорённости из этого разговора («клиента зовут Игорь, платит по пятницам»).
+Не годится: болтовня, приветствия, твои рассуждения, догадки, вопросы.
+
+Если запоминать нечего — ответь ровно одним словом: НЕТ
+Если есть что запомнить — ответь двумя строками:
+ТЕМА: <короткое название, до 80 знаков>
+ФАКТ: <то, что надо запомнить, 1–3 предложения, до 500 знаков>`;
+
+function memoQueueLoad() {
+  try { const a = JSON.parse(localStorage.getItem(MEMO_QUEUE_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+function memoQueueSave(a) {
+  try { localStorage.setItem(MEMO_QUEUE_KEY, JSON.stringify((a || []).slice(-40))); } catch (e) {}
+}
+
+/* Запись знания на сервер. Без сети — в очередь, отправится позже. */
+async function learnRemember(topic, body, kind, source) {
+  const t = String(topic || "").trim();
+  const b = String(body || "").trim();
+  if (t.length < 3 || b.length < 40) return false;
+  if (!supabaseConfigured()) { const q = memoQueueLoad(); q.push({ t, b, k: kind || "fact", s: source || "чат" }); memoQueueSave(q); return false; }
+  try {
+    const r = await fetch(SB() + "/rest/v1/rpc/iskra_learn", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_CONFIG.anonKey,
+        Authorization: "Bearer " + SUPABASE_CONFIG.anonKey
+      },
+      body: JSON.stringify({ p_topic: t, p_body: b, p_kind: kind || "fact", p_source: source || "чат" }),
+      signal: AbortSignal.timeout(9000)
+    });
+    const j = await r.json().catch(() => null);
+    if (j && j.ok) { try { localStorage.setItem("iskra.learnedAt", String(Date.now())); } catch (e) {} return true; }
+    return false;
+  } catch (e) {
+    const q = memoQueueLoad(); q.push({ t, b, k: kind || "fact", s: source || "чат" }); memoQueueSave(q);
+    return false;
+  }
+}
+
+/* Отправить накопленное, когда сеть появилась */
+async function memoQueueFlush() {
+  const q = memoQueueLoad();
+  if (!q.length) return 0;
+  const left = [];
+  let sent = 0;
+  for (const it of q) {
+    const ok = await learnRemember(it.t, it.b, it.k, it.s);
+    if (ok) sent++; else left.push(it);
+  }
+  memoQueueSave(left);
+  return sent;
+}
+
+/* Достать из памяти то, что относится к вопросу */
+async function learnRecall(question) {
+  const q = String(question || "").trim();
+  if (q.length < 4 || !supabaseConfigured()) return [];
+  try {
+    const r = await fetch(SB() + "/rest/v1/rpc/iskra_recall", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_CONFIG.anonKey,
+        Authorization: "Bearer " + SUPABASE_CONFIG.anonKey
+      },
+      body: JSON.stringify({ q, lim: 4 }),
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!r.ok) return [];
+    const j = await r.json();
+    return Array.isArray(j) ? j : [];
+  } catch (e) { return []; }
+}
+
+/* Голос за знание: человек подтвердил или поймал на вранье */
+async function learnVote(topic, up) {
+  if (!supabaseConfigured()) return false;
+  try {
+    const r = await fetch(SB() + "/rest/v1/rpc/iskra_vote", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_CONFIG.anonKey,
+        Authorization: "Bearer " + SUPABASE_CONFIG.anonKey
+      },
+      body: JSON.stringify({ p_topic: topic, p_up: !!up }),
+      signal: AbortSignal.timeout(6000)
+    });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
+/* Разобрать ответ «ТЕМА:/ФАКТ:» от модели */
+function parseLearn(raw) {
+  const t = String(raw || "").trim();
+  if (!t || /^нет[\s.!)]*$/i.test(t)) return null;
+  const mt = t.match(/ТЕМА:\s*([^\n]+)/i);
+  const mf = t.match(/ФАКТ:\s*([\s\S]+)$/i);
+  if (!mt || !mf) return null;
+  const topic = mt[1].trim().replace(/[«»"]/g, "").slice(0, 120);
+  const body = mf[1].trim().slice(0, 600);
+  if (topic.length < 3 || body.length < 40) return null;
+  return { topic, body };
+}
+
+/* После ответа: вытащить из разговора то, что стоит запомнить.
+   Работает в фоне, человек этого не ждёт. Тихо: не получилось — не беда. */
+async function learnFromExchange(question, answer) {
+  const q = String(question || "").trim();
+  const a = String(answer || "").trim();
+  if (q.length < 12 || a.length < 80) return null;
+  /* Своё же «не знаю» и служебные ответы не запоминаем */
+  if (/не знаю|не нашла|не удалось|ошибка/i.test(a.slice(0, 120)) && a.length < 300) return null;
+  const payload = {
+    messages: [
+      { role: "system", content: LEARN_PROMPT },
+      { role: "user", content: "Вопрос:\n" + q + "\n\nМой ответ:\n" + a.slice(0, 2500) }
+    ],
+    stream: true,
+    temperature: 0.2,
+    max_tokens: 250
+  };
+  let out = "";
+  try { await askIskra(payload, (d) => { out += d; }, null); } catch (e) { return null; }
+  const got = parseLearn(out);
+  if (!got) return null;
+  await learnRemember(got.topic, got.body, "fact", "разговор");
+  return got;
+}
+
+/* Исправление от человека: он говорит, как правильно — это самое ценное знание.
+   Такое перебивает всё, что Искра думала раньше. */
+async function learnCorrection(question, correction) {
+  const q = String(question || "").trim();
+  const c = String(correction || "").trim();
+  if (c.length < 20) return null;
+  const topic = q.length >= 3 ? q.slice(0, 120) : c.slice(0, 80);
+  await learnRemember(topic, "Правильно: " + c, "correction", "исправление человека");
+  return { topic };
+}
+
+/* ---------- Цепочка размышления ----------
+   Самый дешёвый способ поднять интеллект без новой модели: заставить Искру
+   сначала решить задачу «на черновике», потом ответить по черновику.
+   Ошибка на этом шаге в разы меньше: модель не импровизирует по ходу ответа,
+   а уже держит разбор перед глазами.
+
+   Стоит один лишний вызов — поэтому только там, где это окупается:
+   сложные задачи и уровни «Умно», «Сильно», «Ультра». */
+
+const SCRATCH_PROMPT = `Ты — Искра на черновике. Тебе дают задачу. НЕ пиши ответ для человека.
+
+Разбери задачу вчерне, коротко и по делу:
+1. Что именно спрашивают — своими словами.
+2. Какие данные, условия и ограничения есть. Чего не хватает.
+3. План решения: шаги по порядку.
+4. Промежуточные результаты — числа посчитай здесь.
+5. Где можно ошибиться и как это проверить.
+
+Пиши для себя, кратко, без вступлений и без обращений к человеку. Больше 700 слов не надо.`;
+
+/* Нужен ли черновик: уровень просит думать и задача не пустяк */
+function scratchNeeded(question) {
+  const lv = powerLevel();
+  if (String(question || "").trim().length < 40) return false;
+  const hard = requestComplexity({ messages: [{ role: "user", content: String(question || "") }] }) === "hard";
+  /* «Обычно» тоже думает, но только на сложном. Раньше здесь стояла проверка
+     effort === "low" и отсекала «Обычно» сразу — до расчёта сложности,
+     и черновик на этом уровне не включался никогда. */
+  if (lv.id === "norm") return hard;
+  /* Ниже «Обычно» (Молния, Быстро) не думаем: они про скорость */
+  if (!lv.effort || lv.effort === "low") return false;
+  /* «Умно» и выше — думают всегда, и тем более на сложном */
+  return lv.precision >= 5 || hard;
+}
+
+/* Черновик. Возвращает текст или пустую строку (тогда отвечаем как обычно). */
+async function makeScratch(question, signal) {
+  const payload = {
+    messages: [
+      { role: "system", content: SCRATCH_PROMPT },
+      { role: "user", content: "Задача:\n" + String(question || "") }
+    ],
+    stream: true,
+    temperature: 0.3,
+    max_tokens: 1200
+  };
+  let out = "";
+  try { await askIskra(payload, (d) => { out += d; }, signal); } catch (e) { return ""; }
+  const t = String(out || "").trim();
+  if (t.length < 80) return "";
+  return t.slice(0, 3500);
+}
+
+/* ---------- Проверка фактов по базе (а не по памяти модели) ----------
+   Главная причина «глупости» Искры была не в модели: она отвечала по памяти,
+   а память у неё — чужие бесплатные шлюзы, которые врут на числах и датах.
+   Здесь мы берём готовый ответ и сверяем его с тем, что реально лежит в
+   своей базе и в Википедии. Расходится — переписываем (или прямо говорим,
+   что ответ неточен), не дожидаясь, пока человек поймает на вранье.
+
+   Работает бесплатно: база своя, Википедия открытая, токены не тратятся. */
+
+/* Числа из текста: 22 315 474, 1911, 3,5, 12%, $1.55. Дроби и годы тоже нужны. */
+function factNumbers(text) {
+  const out = new Set();
+  const t = String(text || "");
+  const re = /\d[\d\s.,'’]*\d|\d/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = m[0].replace(/[\s'’]/g, "").replace(/,/g, ".");
+    const n = Number(raw.replace(/\.$/, ""));
+    if (Number.isFinite(n) && raw.length <= 15) out.add(n);
+  }
+  return out;
+}
+
+/* Приводим число к «примерно» для сравнения: 22315474 против 22,3 млн
+   не должны считаться ошибкой, если записано по-разному в одном масштабе. */
+function sameNumber(a, b) {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  if (a === b) return true;
+  if (!a || !b) return false;
+  /* Годы и любые целые до 2100 сравниваем строго: 1911 и 1912 — разные годы.
+     Раньше 2%-допуск прощал разницу в год, и проверка не видела ошибку. */
+  const bothInt = Number.isInteger(a) && Number.isInteger(b);
+  if (bothInt && Math.max(Math.abs(a), Math.abs(b)) <= 2100) return false;
+  /* В крупных числах округление допустимо: 1 405 000 против 1 400 000 */
+  const big = Math.max(Math.abs(a), Math.abs(b));
+  const tol = big >= 100000 ? big * 0.02 : 0;
+  return Math.abs(a - b) <= tol;
+}
+
+const FACT_CHECK_PROMPT = `Ты — проверяющий фактов. Тебе дают ответ Искры и справку из открытых источников.
+
+Твоя задача: сверить ЧИСЛА и ДАТЫ в ответе со справкой.
+
+Правила:
+- Если число в ответе есть в справке (даже записано иначе: «22,3 млн» и «22 315 474») — это верно.
+- Если числа в ответе НЕТ в справке — это НЕ ошибка. Справка неполная, так бывает. Не трогай.
+- Ошибка — только когда справка прямо противоречит ответу: другое число на том же месте, другая дата, другая столица, другая валюта.
+- Если справка вообще не про этот вопрос — ответь: НЕТ СПРАВКИ
+
+Ответ строго одной из двух форм:
+НЕТ СПРАВКИ
+или
+ОШИБКА: <что именно неверно, одной строкой>
+ВЕРНО: <правильное значение из справки, одной строкой>`;
+
+/* Быстрая сверка без обращения к модели: если в ответе есть число, которого
+   нет в справке, и при этом справка содержит то же самое утверждение с другим
+   числом — это подозрительно и стоит отдать модели на проверку. Возвращает
+   true, когда проверка вообще нужна. */
+function factCheckWorthIt(question, answer, refBlock) {
+  const a = String(answer || "");
+  const ref = String(refBlock || "");
+  if (!a.trim() || !ref.trim()) return false;
+  if (a.length < 120) return false;
+  /* Справка должна быть про этот вопрос, иначе сверять нечего */
+  const qw = memoWords(question).filter(w => w.length > 3);
+  if (!qw.length) return false;
+  const refLow = ref.toLowerCase().replace(/ё/g, "е");
+  const hit = qw.filter(w => refLow.includes(String(w).slice(0, Math.max(4, w.length - 2)).toLowerCase().replace(/ё/g, "е"))).length;
+  if (hit / qw.length < 0.34) return false;
+  return true;
+}
+
+/* Справка для сверки: своя база + Википедия. Больше 6000 знаков не берём:
+   длинная справка не помогает, а мешает модели и жжёт контекст. */
+function factRefBlock(question) {
+  const parts = [];
+  try {
+    const kb = kbContext(question, 3);
+    if (kb.block) parts.push("СВОЯ БАЗА:\n" + String(kb.block).slice(0, 3000));
+  } catch (e) {}
+  try {
+    const ix = topicIndexContext(question);
+    if (ix) parts.push("ИНДЕКС ТЕМ:\n" + String(ix).slice(0, 1200));
+  } catch (e) {}
+  try {
+    /* Уже найденное в Википедии на этом же вопросе — самый точный источник */
+    const searched = _lastSearch && _lastSearch.snippets;
+    if (Array.isArray(searched) && searched.length) {
+      parts.push("ВИКИПЕДИЯ:\n" + searched.slice(0, 3)
+        .map(x => String(x.title || "") + " — " + String(x.text || "").slice(0, 900)).join("\n\n"));
+    }
+  } catch (e) {}
+  return parts.join("\n\n").slice(0, 6000);
+}
+
+/* Просим модель сверить ответ со справкой. Возвращает {wrong, truth} или null. */
+async function runFactCheck(question, answer, refBlock, signal) {
+  const payload = {
+    messages: [
+      { role: "system", content: FACT_CHECK_PROMPT },
+      {
+        role: "user",
+        content: "Вопрос:\n" + question + "\n\nОтвет Искры:\n" + answer +
+                 "\n\nСправка из открытых источников:\n" + refBlock
+      }
+    ],
+    stream: true,
+    temperature: 0,
+    max_tokens: 300
+  };
+  let out = "";
+  await askIskra(payload, (d) => { out += d; }, signal);
+  const t = String(out || "").trim();
+  if (/нет\s*справки/i.test(t)) return null;
+  const m = t.match(/ОШИБКА:\s*([^\n]+)/i);
+  if (!m) return null;
+  const v = t.match(/ВЕРНО:\s*([^\n]+)/i);
+  return { wrong: m[1].trim(), truth: v ? v[1].trim() : "" };
+}
+
 function selfCheckNeeded(question, answer) {
   const lv = powerLevel();
   if (!lv.checks) return 0;
@@ -20107,6 +21207,10 @@ document.addEventListener("DOMContentLoaded", () => {
      Поиск по общей базе при этом всегда идёт на сервере и находит любую тему. */
   try { sharedKbCountRefresh(); } catch (e) {}
   if (!sharedKbList().length) { try { sharedKbRefresh(); } catch (e) {} }
+  /* Индекс тем (страны, города, языки, элементы) раньше грузился только когда
+     человек открывал раздел «Страны». Из-за этого на обычный вопрос «сколько
+     живёт в Шанхае» справки не было никогда. Теперь подтягиваем в фоне сразу. */
+  try { topicIndexQuick(); } catch (e) {}
   /* Свои выученные темы: если localStorage пришлось урезать, полная копия
      приходит из IndexedDB. Очередь обучения продолжается после перезагрузки. */
   try { learnedBoot().catch(() => {}); } catch (e) {}
@@ -20202,10 +21306,23 @@ function walletAll() {
 function walletPersist(all) {
   try { localStorage.setItem(WALLET_KEY, JSON.stringify(all)); } catch (e) {}
 }
+/* Сколько бесплатных токенов дано и на какой срок — зависит от страны.
+   КНДР: 100 000 на месяц. Остальные: 10 000 на день. */
+function freeNorm() {
+  return isNorthKorea() ? SK_POLICY.freeTokens : FREE_TOKENS;
+}
+function freeResetFor(ts) {
+  if (!isNorthKorea()) return freeResetAt(ts);
+  const d = new Date(Number(ts) || Date.now());
+  d.setDate(d.getDate() + 30);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 function walletBlank() {
   return {
     plan: "free", planUntil: 0,
-    freeLeft: FREE_TOKENS, freeReset: freeResetAt(),
+    freeLeft: freeNorm(), freeReset: freeResetFor(),
     paid: 0, orders: [], log: [], spent: 0, planHistory: []
   };
 }
@@ -20217,15 +21334,16 @@ function walletState() {
   if (!Array.isArray(w.orders)) w.orders = [];
   if (!Array.isArray(w.log)) w.log = [];
   if (!Array.isArray(w.planHistory)) w.planHistory = [];
-  if (!Number.isFinite(Number(w.freeLeft))) w.freeLeft = FREE_TOKENS;
+  if (!Number.isFinite(Number(w.freeLeft))) w.freeLeft = freeNorm();
   if (!Number.isFinite(Number(w.paid))) w.paid = 0;
   if (!Number.isFinite(Number(w.spent))) w.spent = 0;
   if (!w.plan) w.plan = "free";
   /* Бесплатная норма возвращается каждый день. Остаток не сгорает:
-     доливаем до 10 000, а если человек не тратил — больше не станет. */
+     доливаем до нормы, а если человек не тратил — больше не станет.
+     Для КНДР норма другая: 100 000 на месяц. Остаток тоже не сгорает. */
   if (!w.freeReset || Date.now() >= Number(w.freeReset)) {
-    w.freeLeft = Math.max(Number(w.freeLeft) || 0, FREE_TOKENS);
-    w.freeReset = freeResetAt();
+    w.freeLeft = Math.max(Number(w.freeLeft) || 0, freeNorm());
+    w.freeReset = freeResetFor();
   }
   // срок тарифа кончился — возвращаемся на бесплатный
   if (w.plan !== "free" && Number(w.planUntil || 0) < Date.now()) {
@@ -20445,11 +21563,16 @@ function keyMark(key, status, body) {
   const all = keyHealthLoad();
   const bad = code === 401 || code === 403;
   const limit = code === 402 || code === 429 || code === 413 || code === 503;
+  /* Минутный лимит бесплатных моделей снимается через 60 секунд, а не через
+     полчаса. Уводить ключ на 30 минут из-за одного такого ответа — значит
+     держать человека без ключа, хотя тот полностью рабочий. */
+  const perMinute = code === 429 && body && /per.?minute|temporarily rate|upstream|too many/i.test(String(body));
+  const pause = bad ? 864e5 : (perMinute ? 60e3 : (limit ? 30 * 6e4 : 5 * 6e4));
   all[keyFp(k)] = {
     status: bad ? "bad" : (limit ? "limit" : "err"),
     code,
     at: Date.now(),
-    until: Date.now() + (bad ? 864e5 : (limit ? 30 * 6e4 : 5 * 6e4)),
+    until: Date.now() + pause,
     tail: k.slice(-4)
   };
   keyHealthSave(all);
@@ -20546,9 +21669,55 @@ function freeFirstOn() { return settings.freeFirst !== false; }
 /* Ответ из открытого источника без ключа и без токенов.
    Берём только когда статья действительно про этот вопрос: заголовок
    должен совпасть с ним по словам. Иначе — обычный путь через движки. */
+/* ---------------------------------------------------------------------
+   ОТВЕТ БЕЗ КЛЮЧА
+   Порядок источников — от самого дешёвого к самому свежему:
+     1) своя база (43 000 карточек + выученное + общая база) — 0 мс, 0 токенов;
+     2) база стран/городов — 0 мс, точные числа;
+     3) Википедия — бесплатно, но нужна сеть.
+   Раньше здесь была только Википедия, поэтому на «сколько живёт в Шанхае»
+   без интернета ответа не было вовсе, хотя число лежало в индексе.
+   --------------------------------------------------------------------- */
+function freeFromOwnBase(q) {
+  /* 1. точный факт из индекса: город, страна, язык, элемент */
+  try {
+    const hit = topicIndexFind(q);
+    if (hit && hit.text && hit.text.length > 40) {
+      return { title: hit.title, text: hit.text, sources: [{ title: hit.title, url: "" }], note: "Ответ из своей базы — ключ и токены не тратились." };
+    }
+  } catch (e) {}
+  /* 2. статья из своей базы: берём самую близкую карточку */
+  try {
+    const hits = kbSearch(q, 3);
+    if (hits.length) {
+      const top = hits[0];
+      /* проверяем, что карточка действительно про вопрос, а не про слово
+         «как» из служебных */
+      const qWords = memoWords(q).filter(w => w.length > 3);
+      const hay = (String(top.title || "") + " " + String(top.text || "").slice(0, 300)).toLowerCase();
+      const hitCount = qWords.filter(w => hay.includes(w.slice(0, Math.max(4, w.length - 2)))).length;
+      const ratio = qWords.length ? hitCount / qWords.length : 0;
+      if (ratio >= 0.5 && String(top.text || "").length >= 160) {
+        return {
+          title: top.title,
+          text: String(top.text).slice(0, 1400),
+          sources: [{ title: top.title, url: "" }],
+          note: "Ответ из своей базы — ключ и токены не тратились."
+        };
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 async function freeAnswerFor(text) {
   const q = String(text || "").trim();
   if (q.length < 6 || q.length > 220) return null;
+
+  /* Сначала своя база: она мгновенная и работает без сети */
+  const own = freeFromOwnBase(q);
+  if (own) return own;
+
   if (typeof shouldSearch !== "function" || !shouldSearch(q)) return null;
   let found = null;
   try { found = await wikiSearch(q); } catch (e) { return null; }
@@ -21233,12 +22402,17 @@ function payOrderNote(o) {
 function updateTokenChip() {
   const el = $("#tokenChip");
   if (!el) return;
-  if (hasOwnKey()) { el.hidden = true; return; }
+  /* Раньше чип прятался, если есть свой ключ. Человек не видел, что токены
+     Искры тратятся, и узнавал об этом только когда они кончались.
+     Теперь видно всегда: и с ключом, и без. */
   const left = walletLeft();
+  const own = hasOwnKey();
   el.hidden = false;
-  el.textContent = fmtTokens(left) + " ток.";
+  el.textContent = fmtTokens(left) + (own ? " ток. · свой ключ" : " ток.");
   el.classList.toggle("low", left < TOKEN_COST_MIN);
-  el.title = "Осталось токенов. Нажми, чтобы открыть тарифы";
+  el.title = own
+    ? "Осталось токенов Искры. Свой ключ подключён: запросы идут через него, токены Искры не тратятся. Нажми, чтобы открыть тарифы"
+    : "Осталось токенов. Нажми, чтобы открыть тарифы";
   const tag = $("#moreTokenTag");
   if (tag) tag.textContent = fmtTokens(left) + " ток.";
 }
@@ -21376,6 +22550,55 @@ function topicNorm(s) {
   return String(s || "").toLowerCase().replace(/ё/g, "е")
     .replace(/[^a-zа-я0-9 ]+/gi, " ").replace(/\s+/g, " ").trim();
 }
+
+/* ---------------------------------------------------------------------
+   ПАДЕЖИ В ПОИСКЕ ПО ИНДЕКСУ
+   Человек спрашивает «сколько людей живёт в Шанхае?», а в индексе запись
+   «Шанхай». Раньше сравнение шло по точной форме, падежи не совпадали,
+   и справки о городе не было ни на один живой вопрос. Отсекаем окончания:
+   Шанхае→шанха, Шанхая→шанха, Шанхай→шанха.
+
+   Правило осторожное: режем не больше двух букв и не трогаем короткие
+   слова, чтобы «язык» не превратился в «яз», а «Китай» — в «кит».
+   --------------------------------------------------------------------- */
+/* Общая основа двух слов: сколько первых букв у них совпадает.
+   Это надёжнее списка окончаний — в русском падежи меняют только хвост
+   (Шанхай/Шанхая/Шанхае, Москва/Москвы/Москве, Китай/Китая/Китае),
+   а начало слова остаётся. */
+function topicStem(w) {
+  return String(w || "");
+}
+function topicCommon(a, b) {
+  const x = topicNorm(a), y = topicNorm(b);
+  let i = 0;
+  while (i < x.length && i < y.length && x[i] === y[i]) i++;
+  return i;
+}
+
+/* Совпадает ли слово с названием с учётом падежа.
+   Требуем общее начало не короче 4 букв и не меньше 70 % длины названия:
+   «шанхае»/«шанхай» — 6 из 6, да; «языке»/«язык» — 4 из 4, да;
+   «людей»/«люди» — 4 из 4, да; а «пара»/«Париж» — 2 из 5, нет. */
+function topicMatchWord(word, name) {
+  const w = topicNorm(word), n = topicNorm(name);
+  if (!w || !n) return false;
+  if (w === n) return true;
+
+  /* 1) по общему началу: «шанхае»/«шанхай», «москве»/«москва» */
+  const common = topicCommon(w, n);
+  if (common >= Math.max(4, Math.ceil(n.length * 0.7))) return true;
+
+  /* 2) по основе без окончания: «японии»/«япония» → «япони»,
+     «китая»/«китай» → «кита». Русские падежи меняют только хвост,
+     поэтому основа должна совпасть почти целиком (не меньше 4 букв). */
+  const cut = (s) => s.replace(/(иями|ями|ами|ов|ев|ах|ях|ам|ям|ии|ия|ию|ей|ой|ом|ем|ую|ая|ое|ые|ый|ий|а|я|у|ю|е|ы|и|о|й|ь)$/i, "");
+  const sw = cut(w), sn = cut(n);
+  if (sw.length >= 4 && sn.length >= 4 && sw === sn) return true;
+
+  /* 3) одно слово целиком входит в другое: «китай»/«китайский» */
+  if (n.length >= 4 && (w.startsWith(n) || n.startsWith(w)) && Math.min(w.length, n.length) >= 4) return true;
+
+  return false;}
 function topicNum(n) {
   const x = Math.round(Number(n) || 0);
   return x.toLocaleString("ru-RU").replace(/,/g, " ");
@@ -21525,11 +22748,16 @@ function topicIndexFind(query) {
     }
   }
 
-  /* 2) страны: «Россия», «столица Японии» */
+  /* 2) страны: «Россия», «столица Японии», «валюта Китая» */
   for (const c of ix.countries || []) {
     const [iso, ru, capital, region, area, cur, curRu, phone, langs] = c;
     const n = topicNorm(ru);
-    if (n === q || words.some((w) => w === n) || (n.length > 4 && q.includes(n))) {
+    /* раньше здесь было сравнение только по точной форме — падежи
+       («Японии», «Китая») не находились вовсе, и вопросы «какая столица
+       Японии», «валюта Китая» оставались без ответа. */
+    if (n === q || words.some((w) => w === n)
+        || (n.length > 4 && q.includes(n))
+        || words.some((w) => w.length >= 4 && topicMatchWord(w, n))) {
       let text = ru + " — государство" + (region ? " в регионе " + region : "") + ".";
       if (capital) text += " Столица — " + capital + ".";
       if (area) text += " Площадь — " + topicNum(area) + " км².";
@@ -21550,6 +22778,10 @@ function topicIndexFind(query) {
     const forms = ru ? [topicNorm(ru), topicNorm(name)] : [topicNorm(name)];
     if (forms.includes(q)) { best = row; break; }
     if (!best && words.some((w) => forms.includes(w))) best = row;
+    /* падежная форма: «в Шанхае» → «Шанхай». Проверяем только когда
+       строк ещё немного не нашли, иначе перебор 30 000 городов
+       на каждом слове заметно тормозит поиск. */
+    if (!best && words.some((w) => w.length >= 5 && forms.some((f) => topicMatchWord(w, f)))) best = row;
   }
   if (best) {
     const d = topicCityText(ix, best);
@@ -21856,6 +23088,24 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="modal-body" id="rcBody"></div>
   </div>
 </div>
+<!-- Капча (КНДР): на каждый запрос, сложность случайная -->
+<div id="captchaModal" aria-hidden="true">
+  <div class="modal captcha-modal">
+    <h3 class="captcha-title">Проверка перед запросом</h3>
+    <p class="captcha-sub" id="captchaSub">Впиши символы с картинки — это займёт пару секунд.</p>
+    <div class="captcha-box" id="captchaBox" aria-label="Символы для ввода"></div>
+    <div class="captcha-dots" id="captchaDots"></div>
+    <input id="captchaInput" class="captcha-input" autocomplete="off" autocapitalize="off" spellcheck="false"
+           inputmode="text" placeholder="Символы" aria-label="Введи символы с картинки" />
+    <p class="captcha-err" id="captchaErr"></p>
+    <div class="captcha-actions">
+      <button class="btn ghost" id="captchaCancel" type="button">Отмена</button>
+      <button class="btn primary" id="captchaOk" type="button">Отправить</button>
+    </div>
+    <button class="captcha-refresh" id="captchaRefresh" type="button">Другое задание</button>
+  </div>
+</div>
+
 <div id="authModal" aria-hidden="true">
   <div class="auth-card">
     <div class="auth-side">

@@ -147,6 +147,24 @@ await test("справка из индекса попадает в систем�
   assert(!/ИНДЕКСА ТЕМ/.test(p2), "индекс влез в вопрос, где его нет");
 });
 
+await test("падежи: «в Шанхае» находит город «Шанхай»", () => {
+  /* Раньше сравнение шло по точной форме: «шанхае» ≠ «шанхай», и справки
+     о городе не было ни на один живой вопрос — только если написать
+     название ровно в именительном падеже. */
+  for (const q of ["сколько людей живёт в Шанхае?", "население Шанхая", "что за город Шанхай"]) {
+    const hit = j(`topicIndexFind(${JSON.stringify(q)})`);
+    assert(hit && /Шанхай/.test(hit.title), "не нашла город в «" + q + "»: " + JSON.stringify(hit));
+    assert(/22\s?315\s?474|22 315 474/.test(String(hit.text).replace(/\u00a0/g, " ").replace(/\u202f/g, " ")),
+      "неверное население: " + hit.text);
+  }
+  /* Падежная пара сходится, а случайные слова — нет */
+  assert(ev(`topicMatchWord("шанхае", "Шанхай")`) === true, "«Шанхае» не сошлось с «Шанхай»");
+  assert(ev(`topicMatchWord("шанхая", "Шанхай")`) === true, "«Шанхая» не сошлось с «Шанхай»");
+  assert(ev(`topicMatchWord("москве", "Москва")`) === true, "«Москве» не сошлось с «Москва»");
+  assert(ev(`topicMatchWord("пара", "Париж")`) === false, "«пара» ложно сошлось с «Париж»");
+  assert(ev(`topicMatchWord("сколько", "Шанхай")`) === false, "служебное слово ложно сошлось");
+});
+
 await test("обучение берёт факты из индекса", async () => {
   const r = await evAsync(`await learnCore("Шанхай").then(x => x && x.ok ? { ok: x.ok, title: x.title, text: x.text, note: x.note } : x)`);
   assert(r && r.ok, "не выучила: " + JSON.stringify(r));
