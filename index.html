@@ -13475,6 +13475,62 @@ function imgQuality() {
   return IMG_QUALITY.find(x => x.id === id) || IMG_QUALITY[0];
 }
 
+/* ---------- Качественные картинки (Nano Banana / GPT Image) ----------
+   Бесплатные движки рисуют слабо: 768 px, 24 шага, и это потолок — лучше они
+   не умеют. Настоящее качество даёт отдельная модель картинок. Рисует не
+   Claude (он картинки не делает), а Gemini Image или GPT Image — через наш
+   прокси, где ключ. Дорого не бывает: картинка стоит центы. */
+const IMG_PROXY = "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai";
+function imgProxyRequested() {
+  /* Качественные картинки — только когда человек сам этого хочет:
+     Pro-режим и не выбран «быстрый». Иначе не тратим деньги молча. */
+  try {
+    const o = genImageOpts();
+    if (!o.pro) return false;
+    return imgQuality().id !== "fast";
+  } catch (e) { return false; }
+}
+async function proxyImage(prompt, opts) {
+  const o = opts || genImageOpts();
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const t = setTimeout(() => { try { ctrl && ctrl.abort(); } catch (e) {} }, 90000);
+  try {
+    const r = await fetch(IMG_PROXY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "banana",
+        prompt,
+        /* пропорции берём из пресета, как их понимает модель */
+        /* Пропорции у модели задаются строкой вроде "16:9" — берём id пресета */
+        size: o.aspect && o.aspect.id ? o.aspect.id : "",
+        stream: false
+      }),
+      signal: ctrl ? ctrl.signal : undefined
+    });
+    let j = null;
+    try { j = await r.json(); } catch (e) { j = null; }
+    if (r.status === 503) {
+      /* Прокси ещё без ключа картинок — это не ошибка, идём на бесплатные. */
+      const e = new Error((j && j.error) || "картинки через ключ ещё не подключены");
+      e.kind = "no-quality";
+      throw e;
+    }
+    if (!r.ok) {
+      const e = new Error((j && j.error) || ("отказ " + r.status));
+      e.kind = r.status === 402 ? "img-limit" : "img-fail";
+      throw e;
+    }
+    const src = j && j.image;
+    if (!src) {
+      const e = new Error("модель не вернула картинку");
+      e.kind = "img-fail";
+      throw e;
+    }
+    return { src, model: (j && j.model) || "banana" };
+  } finally { clearTimeout(t); }
+}
+
 /* Свободный движок рисунков: чужие видеокарты, без регистрации и ключей. */
 const HORDE_API = "https://stablehorde.net/api/v2";
 async function hordeImage(prompt, opts, onNote) {
@@ -13818,6 +13874,27 @@ async function generateImage(prompt, attempt = 0) {
 
   const quality = imgQuality();
   const errors = [];
+
+  /* 0) Качественный движок через ключ: именно он даёт «как у людей» картинки.
+     Бесплатные ставят кап 768 px и 24 шага — выше этого они не умеют,
+     сколько промпт ни уточняй. Поэтому качество сначала просим у модели. */
+  if (imgProxyRequested()) {
+    try {
+      prog("Рисую качественно: " + (imgOpts.style ? imgOpts.style.name : "свой стиль") + "… до минуты");
+      const got = await proxyImage(finalPrompt, imgOpts);
+      showImage(got.src, "quality", "Искра · качественный движок · " +
+        String(got.model).split("/").pop() + (imgOpts.pro ? " · " + imgOpts.quality.name : ""));
+      return;
+    } catch (e) {
+      if (e && e.kind === "no-quality") {
+        errors.push("качественный движок ещё не подключён — рисую бесплатным");
+      } else if (e && e.kind === "img-limit") {
+        errors.push("на счёте кончились деньги — рисую бесплатным");
+      } else {
+        errors.push("качественный движок: " + ((e && (e.kind || e.message)) || "ошибка"));
+      }
+    }
+  }
 
   // 1) Свободный движок: без регистрации и ключа, рисунок без водяного знака
   if (quality.id !== "fast") {
