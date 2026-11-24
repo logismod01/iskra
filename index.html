@@ -3514,6 +3514,9 @@ html.no-anim .theme-flash { display: none; }
             Искра сама поймёт, какой он, и включит нужное.<br>
             <b>Без лишних обещаний:</b> на простых вопросах разницы почти нет — Искра и без ключа отвечает теми же бесплатными движками. Зато на сложных задачах с ключом включается более сильная модель, и ключ видит фото.
             Можно вставить <b>два ключа сразу</b> — по одному в строке: если первый упрётся в лимит, Искра сама возьмёт второй.
+            <br><b>Если нужен самый сильный движок</b> — впиши ключ <b>OpenRouter</b>: он начинается на <b>sk-or-…</b>, карту РФ принимает,
+            и сильная модель включается сама. Ключ и при нулевом балансе не пропадает — слабые модели через него тоже работают,
+            а «$100 Key limit» в кабинете — это потолок траты, а не деньги на счету.
             <br><b>Если сервис не открывается из твоей страны</b> — ключ не заработает, и обойти это нельзя. Тогда остаются
             бесплатные движки: они отвечают без ключа, просто слабее. Нажми «Проверить ключ» — я скажу честно, что получилось.
           </div>
@@ -5972,7 +5975,11 @@ async function discoverFreeModels(needVision) {
        отбрасывались. Теперь при живом ключе берём и их: у кого ключ, тот
        сознательно платит и хочет ум. */
     const paid = _openRouterPaid === true;
-    const cls = (id) => /claude/i.test(id) ? 0 : (/gpt-5|gpt-4o|o3|o4/i.test(id) ? 1 : 2);
+    /* Класс модели: 0 Claude, 1 GPT, 2 бесплатная, 3 прочие платные.
+       Бесплатные идут перед прочими платными всегда: они работают и при
+       нулевом балансе, а платную без денег сервис всё равно не даст. */
+    const cls = (id) => /claude/i.test(id) ? 0
+      : (/gpt-5|gpt-4o|o3|o4/i.test(id) ? 1 : (/:free$/.test(id) ? 2 : 3));
     const free = all
       .filter(m => m && typeof m.id === "string" && (/:free$/.test(m.id) || (paid && !/:free$/.test(m.id))))
       .map(m => ({
@@ -5998,6 +6005,29 @@ async function discoverFreeModels(needVision) {
 
 /* Названия моделей у сервиса меняются, а зашитые имена устаревают: вместо «модель не найдена»
    спрашиваем у сервиса, что у него есть на самом деле. Кэш на 6 часов, при неудаче — зашитые имена. */
+/* Баланс OpenRouter по ключу: /key отдаёт is_free_tier и limit_remaining.
+   Ключ работает и при нуле — но только бесплатные модели. Без этого человек
+   видит «$100» в кабинете и думает, что деньги есть. */
+let _orBalance = null;   // { free: bool, left: number|null, at: number }
+async function probeOpenRouterBalance(key) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch("https://openrouter.ai/api/v1/key", {
+      headers: { Authorization: "Bearer " + key }, signal: ctrl.signal
+    });
+    clearTimeout(t);
+    if (!r || !r.ok) return null;
+    const d = ((await r.json()) || {}).data || {};
+    const left = (d.limit_remaining == null) ? null : Number(d.limit_remaining);
+    _orBalance = {
+      free: d.is_free_tier !== false && (left == null || left <= 0),
+      left, at: Date.now(),
+      freeLeft: d.free_model_daily_requests ? d.free_model_daily_requests.remaining : null
+    };
+    return _orBalance;
+  } catch (e) { return null; }
+}
 const _chatModelsCache = new Map();
 const CHAT_ONLY = /(whisper|tts|speech|audio|guard|embed|rerank|moderation|image|dall|stable-diffusion)/i;
 async function discoverChatModels(provider, key, base) {
@@ -11610,7 +11640,11 @@ async function streamOnce(engine, payload, onDelta, signal) {
           err.message = "ключ не подошёл или кончился";
         }
       }
-      if (res.status === 402) err.message = "на этом ключе кончились деньги";
+      if (res.status === 402) {
+        err.message = /openrouter/i.test(String(engine.provider || engine.base || ""))
+          ? "ключ рабочий, но на счёте OpenRouter нет денег — бесплатные модели доступны"
+          : "на этом ключе кончились деньги";
+      }
       if (res.status === 404) err.message = "такой модели у сервиса нет";
       throw err;
     }
@@ -14136,6 +14170,12 @@ async function probeKey(key) {  const kind = detectKeyKind(key);
   const auth = { Authorization: "Bearer " + key };
   try {
     if (kind.native === "gemini") return await probeGeminiNative(key, kind, ctrl);
+    /* OpenRouter: заодно спрашиваем баланс. Ключ при нуле рабочий — просто
+       платные модели закрыты. Человек должен узнать это сразу, а не по 402. */
+    if (kind.provider === "openrouter") {
+      const bal = await probeOpenRouterBalance(key);
+      if (bal) { _openRouterPaid = !bal.free; _freeModelsCache = null; _freeModelsAt = 0; }
+    }
     /* 1. Ключ вообще принят? */
     let res;
     try {
@@ -14287,6 +14327,21 @@ async function testConnection() {
 
   /* Отдельно — сильная модель. Ключ без неё почти не меняет ум, поэтому
      человек должен видеть правду сразу, а не догадываться по ответам. */
+  /* Баланс OpenRouter — прямо в результат проверки. Иначе человек видит
+     «$100» в кабинете и думает, что деньги есть, а модель молчит. */
+  let balNote = "";
+  const orIdx = keys.findIndex(k => detectKeyKind(k)?.provider === "openrouter");
+  if (orIdx >= 0 && _orBalance) {
+    if (_orBalance.free) {
+      balNote = " Денег на счёте пока нет (кредиты 0), поэтому платные модели закрыты — но бесплатные работают:"
+        + (_orBalance.freeLeft != null ? " сегодня осталось " + _orBalance.freeLeft + " запросов." : " лимит 50 запросов в сутки.")
+        + " Пополни счёт на $5 — и включится Claude.";
+    } else {
+      balNote = " На счёте $" + (_orBalance.left == null ? "—" : _orBalance.left.toFixed(2))
+        + " — платные модели, включая Claude, доступны.";
+    }
+  }
+
   let proNote = "";
   const okIndex = results.findIndex(r => r.state === "ok");
   if (okIndex >= 0) {
@@ -14305,7 +14360,7 @@ async function testConnection() {
   }
   if (box) {
     box.className = "conn-result " + cls;
-    box.textContent = text + proNote;
+    box.textContent = text + balNote + proNote;
   }
   paintKeyStatus();
 }

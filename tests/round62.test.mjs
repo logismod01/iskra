@@ -80,6 +80,28 @@ t("401 про Claude не путает с ключом человека", () => 
   assert.ok(/Claude не принял ключ/.test(html));
 });
 
+console.log("5. Баланс OpenRouter виден человеку");
+t("/key читается: is_free_tier и limit_remaining", () => {
+  const src = html.slice(html.indexOf("async function probeOpenRouterBalance"));
+  const body = src.slice(0, 900);
+  assert.ok(/api\/v1\/key/.test(body), "должен спрашивать /key");
+  assert.ok(/is_free_tier/.test(body), "должен читать is_free_tier");
+  assert.ok(/limit_remaining/.test(body), "должен читать остаток");
+});
+t("бесплатные модели идут раньше прочих платных", () => {
+  const src = html.slice(html.indexOf("const cls = (id) =>"));
+  const body = src.slice(0, 300);
+  assert.ok(/:free\$\/\.test\(id\) \? 2 : 3/.test(body.replace(/\s+/g, " ")),
+    "бесплатная = 2, прочая платная = 3");
+});
+t("при нулевом балансе проверка говорит правду про $100", () => {
+  assert.ok(/Денег на счёте пока нет/.test(html));
+  assert.ok(/потолок траты, а не деньги на счету/.test(html), "в подсказке должно быть объяснение про Key limit");
+});
+t("402 от OpenRouter объясняет, что ключ рабочий", () => {
+  assert.ok(/на счёте OpenRouter нет денег/.test(html));
+});
+
 console.log(`\nИТОГ: ${pass} из ${pass + fail}`);
 try { w.close(); } catch (e) {}
 process.exit(fail ? 1 : 0);
