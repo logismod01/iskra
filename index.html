@@ -11550,7 +11550,15 @@ async function streamOnce(engine, payload, onDelta, signal) {
     delete body.service_tier;
     delete body.provider;
     delete body.plugins;
-    endpoint = engine.url || (engine.base.replace(/\/+$/, "") + "/chat/completions");
+    /* Адрес движка бывает двух видов: базовый (тогда дописываем /chat/completions)
+       и полный, который уже кончается на нужный обработчик. Прокси Supabase —
+       как раз полный адрес: дописывание превращало его в 404, и Claude с
+       DeepSeek не отвечали никогда. */
+    const fullUrl = engine.url ||
+      (/\/(chat\/completions|messages|functions\/v1\/[a-z0-9\-]+)$/i.test(engine.base)
+        ? engine.base
+        : engine.base.replace(/\/+$/, "") + "/chat/completions");
+    endpoint = fullUrl;
   }
   let got = 0;
   let acc = "";
@@ -11830,7 +11838,10 @@ async function askIskra(payload, onDelta, signal, onTry) {
         for (const rec of _engineReport.slice(repStart)) {
           if (rec.ok || (rec.kind !== "net" && rec.kind !== "timeout")) continue;
           const eng = group.find(x => x.id === rec.id);
-          if (eng) _deadBases.set(baseKeyOf(eng), Date.now());
+          /* Прокси-движок не «мёртвый адрес»: он может отвалиться из-за баланса
+             или ключа. Хоронить его по базовому адресу нельзя — иначе после
+             первой же неудачи из очереди выпадают все прокси-движки сразу. */
+          if (eng && !eng.proxied) _deadBases.set(baseKeyOf(eng), Date.now());
         }
         if (Number(e && e.status) >= 400) httpErr = e;
       }
@@ -22225,12 +22236,17 @@ function payOrderNote(o) {
 function updateTokenChip() {
   const el = $("#tokenChip");
   if (!el) return;
-  if (hasOwnKey()) { el.hidden = true; return; }
+  /* Раньше чип прятался, если есть свой ключ. Человек не видел, что токены
+     Искры тратятся, и узнавал об этом только когда они кончались.
+     Теперь видно всегда: и с ключом, и без. */
   const left = walletLeft();
+  const own = hasOwnKey();
   el.hidden = false;
-  el.textContent = fmtTokens(left) + " ток.";
+  el.textContent = fmtTokens(left) + (own ? " ток. · свой ключ" : " ток.");
   el.classList.toggle("low", left < TOKEN_COST_MIN);
-  el.title = "Осталось токенов. Нажми, чтобы открыть тарифы";
+  el.title = own
+    ? "Осталось токенов Искры. Свой ключ подключён: запросы идут через него, токены Искры не тратятся. Нажми, чтобы открыть тарифы"
+    : "Осталось токенов. Нажми, чтобы открыть тарифы";
   const tag = $("#moreTokenTag");
   if (tag) tag.textContent = fmtTokens(left) + " ток.";
 }
