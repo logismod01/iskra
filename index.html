@@ -5913,9 +5913,18 @@ function keyEngines() {
     });
   }
   let n = 0;
-  /* Свой ключ OpenRouter = человек готов платить, значит разрешаем и
-     платные модели (Claude, GPT). Без ключа — только бесплатные. */
-  try { _openRouterPaid = keys.some((k) => detectKeyKind(k)?.provider === "openrouter"); } catch (e) { _openRouterPaid = false; }
+  /* Наличие ключа OpenRouter само по себе НЕ значит, что есть деньги.
+     Раньше мы включали платные модели по одному факту ключа — и человек
+     с нулевым балансом получал 402 вместо ответа. Теперь платные модели
+     включаются только когда /key подтвердил непустой счёт (_orBalance).
+     Не знаем баланс — ведём себя как без денег: бесплатные модели
+     отвечают всегда, а платные не перекрывают дорогу. */
+  try {
+    const hasOR = keys.some((k) => detectKeyKind(k)?.provider === "openrouter");
+    if (!hasOR) _openRouterPaid = false;
+    else if (_orBalance && _orBalance.free === false) _openRouterPaid = true;
+    /* если баланс ещё не спрошен — оставляем как есть и спросим при проверке */
+  } catch (e) { _openRouterPaid = false; }
   for (const key of keys) {
     const kind = detectKeyKind(key);
     if (!kind || !kind.base) continue;
@@ -5955,6 +5964,18 @@ function keyEngines() {
    список и берём самые крупные бесплатные; если не вышло — работают запасные имена. */
 let _freeModelsCache = null;
 let _freeModelsAt = 0;
+/* Тот же список, но для проверки ключа: там нужны имена, которые
+   отвечают при нулевом балансе. Отдельный кэш, чтобы не портить
+   список движков и не зависеть от того, успел ли человек нажать
+   «Проверить» раньше, чем «отправить». */
+let _freeProbeCache = null;
+async function freeModelsForProbe() {
+  if (_freeProbeCache) return _freeProbeCache;
+  const list = await discoverFreeModels(false);
+  const freeOnly = (list || []).filter(m => /:free$/.test(m.id));
+  if (freeOnly.length) _freeProbeCache = freeOnly;
+  return freeOnly.length ? freeOnly : (list || []);
+}
 /* Платные модели OpenRouter разрешаем только когда ключ действительно есть:
    иначе бесплатные движки получат 402 на первом же запросе. */
 let _openRouterPaid = false;
@@ -8664,7 +8685,7 @@ function describeFailure(err) {
   if (st === 403) return "доступ закрыт для этого ключа";
   if (st === 404) return "движок не нашёл модель (404)";
   if (st === 413) return "запрос слишком длинный — сократи текст или переписку";
-  if (st === 429) return "лимит запросов — слишком часто";
+  if (st === 429) return "лимит: бесплатные модели перегружены — обновится через минуту или ночью";
   if (st >= 500) return "движок занят (ошибка " + st + ")";
   if (st >= 400) return "движок отклонил запрос (ошибка " + st + ")";
   if (kind === "timeout") return "движок не ответил вовремя";
@@ -11641,6 +11662,11 @@ async function streamOnce(engine, payload, onDelta, signal) {
         }
       }
       if (res.status === 402) {
+        /* Счёт пуст — больше не зовём платные модели, пока не проверим баланс.
+           Иначе каждый ответ будет спотыкаться об один и тот же отказ. */
+        if (/openrouter/i.test(String(engine.provider || engine.base || ""))) {
+          _openRouterPaid = false; _freeModelsCache = null; _freeModelsAt = 0;
+        }
         err.message = /openrouter/i.test(String(engine.provider || engine.base || ""))
           ? "ключ рабочий, но на счёте OpenRouter нет денег — бесплатные модели доступны"
           : "на этом ключе кончились деньги";
@@ -12002,6 +12028,12 @@ function rememberKey(next) {
   return v;
 }
 function keyProLine() {
+  /* Ключ OpenRouter без денег: сильная модель физически не включится.
+     Обещать её нельзя — говорим, что есть бесплатное. */
+  if (typeof _orBalance !== "undefined" && _orBalance && _orBalance.free) {
+    return "Сильная модель начнёт работать, когда на счёте OpenRouter появятся деньги ($5 хватит)."
+      + " Пока Искра отвечает своими движками — это работает всегда.";
+  }
   if (settings.keyPro === "ok") {
     return "На сложных задачах включается <b>сильная модель</b> — она и даёт ум: разбор по шагам, доказательства, код.";
   }
@@ -12014,7 +12046,7 @@ function keyProLine() {
   return "Сильную модель ещё не проверяли. Нажми «Проверить ключ» — скажу честно, включится она или нет.";
 }
 
-function markKeyWorking(model) {
+function markKeyWorking(model, phase) {
   const k = String(settings.apiKey || "").trim();
   if (!k) return;
   if (keyIsVerified()) {
@@ -12030,9 +12062,14 @@ function markKeyWorking(model) {
   }
   settings.keyVerified = keyTag(k);
   settings.keyVerifiedAt = Date.now();
+  settings.keyPhase = phase === "limit" ? "limit" : "ok";
   if (model) settings.keyModel = String(model);
   try { saveSettings(); } catch (e) {}
-  try { toast("Ключ работает — теперь отвечаю через него", "ok"); } catch (e) {}
+  try {
+    toast(phase === "limit"
+      ? "Ключ живой: сервис его принял, но лимит исчерпан — слабые модели включатся сами"
+      : "Ключ работает — теперь отвечаю через него", "ok");
+  } catch (e) {}
   try { updateComposerNote(); } catch (e) {}
   try { paintKeyStatus(); } catch (e) {}
 }
@@ -14174,7 +14211,10 @@ async function probeKey(key) {  const kind = detectKeyKind(key);
        платные модели закрыты. Человек должен узнать это сразу, а не по 402. */
     if (kind.provider === "openrouter") {
       const bal = await probeOpenRouterBalance(key);
-      if (bal) { _openRouterPaid = !bal.free; _freeModelsCache = null; _freeModelsAt = 0; }
+      if (bal) {
+        _openRouterPaid = (bal.free === false) && (bal.left == null || bal.left > 0);
+        _freeModelsCache = null; _freeModelsAt = 0; _freeProbeCache = null;
+      }
     }
     /* 1. Ключ вообще принят? */
     let res;
@@ -14189,7 +14229,10 @@ async function probeKey(key) {  const kind = detectKeyKind(key);
     let names = (kind.models || []).slice(0, 2);
     const provider = KEY_PROVIDERS[kind.provider];
     if (provider && provider.discovery) {
-      const free = await discoverFreeModels(false);
+      /* Проверяем именно бесплатными: у человека с ключом OpenRouter
+         баланс может быть нулевым, и платная модель ответит 402/429.
+         Тогда он решит, что ключ плохой, хотя ключ живой. */
+      const free = await freeModelsForProbe();
       if (free && free.length) names = free.map(m => m.id).slice(0, 3);
     } else if (provider && provider.list) {
       const avail = await discoverChatModels(kind.provider, key, kind.base);
@@ -14212,7 +14255,18 @@ async function probeKey(key) {  const kind = detectKeyKind(key);
       }
       if (rr.ok) return { state: "ok", status: 200, model };
       last = rr.status;
-      if (last === 429 || last === 402) return { state: "limit", status: last };
+      if (last === 429) {
+        /* OpenRouter объясняет причину в теле ответа: минутный лимит или
+           дневной. Это разные вещи: минутный проходит через 60 секунд,
+           дневной — только ночью. Врать «включится позже» нельзя. */
+        let why = "";
+        try { why = await rr.text(); } catch (e) {}
+        const perDay = /per[-_ ]?day|daily|free-models-per-day/i.test(why);
+        let left = null;
+        try { left = rr.headers && rr.headers.get ? rr.headers.get("X-RateLimit-Remaining") : null; } catch (e) {}
+        return { state: "limit", status: 429, model, perDay, left };
+      }
+      if (last === 402) return { state: "limit", status: 402, model };
       if (last === 401 || last === 403) return { state: "auth", status: last };
     }
     return { state: "model", status: last || 404 };
@@ -14227,7 +14281,11 @@ function probeWords(i) {
 
 function describeProbe(r) {
   if (r.state === "ok") return "отвечает";
-  if (r.state === "limit") return "принят, но лимит (" + r.status + ") — включится позже";
+  if (r.state === "limit") {
+    if (r.status === 402) return "принят, но на счёте нет денег — бесплатные модели работают";
+    if (r.perDay) return "принят и живой, но дневной лимит на бесплатные кончился — обновится ночью";
+    return "принят и живой, но упёрся в минутный лимит — повтори через минуту";
+  }
   if (r.state === "auth") return "не принят (" + r.status + ") — ключ неверный, обрезанный или отозван";
   if (r.state === "model") return "принят, но ни одна модель не ответила (" + r.status + ")";
   if (r.state === "unknown") return "не распознан";
@@ -14324,6 +14382,13 @@ async function testConnection() {
      чтобы строка под полем ввода больше не сомневалась. */
   const firstOk = results.find(r => r.state === "ok");
   if (firstOk) markKeyWorking(firstOk.model);
+  /* Ключ принят, но упёрся в лимит — это рабочий ключ, а не «ни разу не
+     отвечал». Иначе человек видит противоречие: лимит есть, а плашка
+     говорит, что ключ не проверен. */
+  else {
+    const firstLimit = results.find(r => r.state === "limit");
+    if (firstLimit) markKeyWorking(firstLimit.model || "", "limit");
+  }
 
   /* Отдельно — сильная модель. Ключ без неё почти не меняет ум, поэтому
      человек должен видеть правду сразу, а не догадываться по ответам. */
@@ -14375,13 +14440,25 @@ function paintKeyStatus() {
     box.innerHTML = "Своего ключа нет — работаю на бесплатных движках. Это нормально: всё главное работает и так.";
     return;
   }
+  const orNote = (typeof _orBalance !== "undefined" && _orBalance && _orBalance.free)
+    ? "<br>Счёт OpenRouter пуст (кредиты 0), поэтому сильные модели закрыты. Бесплатные работают"
+      + (_orBalance.freeLeft != null ? ": сегодня осталось <b>" + _orBalance.freeLeft + "</b> запросов." : ".")
+    : ((typeof _orBalance !== "undefined" && _orBalance && _orBalance.left != null && _orBalance.left > 0)
+      ? "<br>На счёте OpenRouter <b>$" + _orBalance.left.toFixed(2) + "</b> — сильные модели доступны." : "");
   if (keyIsVerified()) {
     const when = settings.keyVerifiedAt ? new Date(settings.keyVerifiedAt).toLocaleDateString("ru-RU") : "";
     const model = settings.keyModel ? String(settings.keyModel).split("/").pop() : "";
+    if (settings.keyPhase === "limit") {
+      box.className = "key-state wait";
+      box.innerHTML = "Ключ живой — сервис его принял" + (when ? " (проверен " + esc(when) + ")" : "") +
+        ", но запросы упёрлись в лимит. Сейчас Искра отвечает своими движками; этот ключ включится, когда лимит обновится." +
+        orNote;
+      return;
+    }
     box.className = "key-state ok";
     box.innerHTML = "Ключ работает" + (model ? " — отвечает <b>" + esc(model) + "</b>" : "") +
       (when ? " (проверен " + esc(when) + ")" : "") + ". Хранится только в этом браузере." +
-      "<br>" + keyProLine();
+      "<br>" + keyProLine() + orNote;
     return;
   }
   box.className = "key-state wait";
@@ -19819,7 +19896,7 @@ function wire() {
   $("#keyClear") && $("#keyClear").addEventListener("click", () => {
     settings.apiKey = ""; settings.provider = "custom"; settings.baseUrl = ""; settings.customModel = "";
     resetKeyPro();
-    settings.keyVerified = ""; settings.keyVerifiedAt = 0; settings.keyModel = "";
+    settings.keyVerified = ""; settings.keyVerifiedAt = 0; settings.keyModel = ""; settings.keyPhase = "";
     saveSettings();
     const bu = $("#baseUrl"); if (bu) bu.value = "";
     const cm = $("#customModel"); if (cm) cm.value = "";
@@ -21486,11 +21563,16 @@ function keyMark(key, status, body) {
   const all = keyHealthLoad();
   const bad = code === 401 || code === 403;
   const limit = code === 402 || code === 429 || code === 413 || code === 503;
+  /* Минутный лимит бесплатных моделей снимается через 60 секунд, а не через
+     полчаса. Уводить ключ на 30 минут из-за одного такого ответа — значит
+     держать человека без ключа, хотя тот полностью рабочий. */
+  const perMinute = code === 429 && body && /per.?minute|temporarily rate|upstream|too many/i.test(String(body));
+  const pause = bad ? 864e5 : (perMinute ? 60e3 : (limit ? 30 * 6e4 : 5 * 6e4));
   all[keyFp(k)] = {
     status: bad ? "bad" : (limit ? "limit" : "err"),
     code,
     at: Date.now(),
-    until: Date.now() + (bad ? 864e5 : (limit ? 30 * 6e4 : 5 * 6e4)),
+    until: Date.now() + pause,
     tail: k.slice(-4)
   };
   keyHealthSave(all);

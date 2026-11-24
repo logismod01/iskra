@@ -55,9 +55,14 @@ t("со своим ключом платные разрешены", () => {
     "с ключом должны браться и платные");
   ev("_openRouterPaid = false");
 });
-t("флаг ставится по ключу OpenRouter в настройках", () => {
-  const src = html.slice(html.indexOf("_openRouterPaid = keys.some"));
-  assert.ok(/provider === "openrouter"/.test(src.slice(0, 200)));
+t("платные модели включаются только по подтверждённому балансу", () => {
+  /* Ключ сам по себе НЕ включает платные модели: у человека может быть
+     $0 на счету, и тогда платная модель перекроет дорогу бесплатной. */
+  const src = html.slice(html.indexOf("const hasOR = keys.some"));
+  const body = src.slice(0, 400);
+  assert.ok(/hasOR/.test(body), "должен распознавать ключ OpenRouter");
+  assert.ok(/_orBalance && _orBalance\.free === false/.test(body),
+    "платные — только когда баланс подтверждён и не пуст");
 });
 
 console.log("3. Claude первым в списке");
@@ -100,6 +105,16 @@ t("при нулевом балансе проверка говорит прав
 });
 t("402 от OpenRouter объясняет, что ключ рабочий", () => {
   assert.ok(/на счёте OpenRouter нет денег/.test(html));
+});
+
+console.log("6. Ключ без денег не ломает ответы");
+t("402 от OpenRouter выключает платные модели до проверки баланса", () => {
+  const src = html.slice(html.indexOf("if (res.status === 402) {"));
+  const body = src.slice(0, 420);
+  assert.ok(/_openRouterPaid = false/.test(body), "402 должен гасить платные модели");
+});
+t("минутный лимит не уводит ключ в паузу на полчаса", () => {
+  assert.ok(/perMinute \? 60e3/.test(html), "429 за минуту — пауза 60 секунд");
 });
 
 console.log(`\nИТОГ: ${pass} из ${pass + fail}`);
