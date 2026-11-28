@@ -13475,6 +13475,123 @@ function imgQuality() {
   return IMG_QUALITY.find(x => x.id === id) || IMG_QUALITY[0];
 }
 
+/* ---------- Качественные картинки (Nano Banana / GPT Image) ----------
+   Бесплатные движки рисуют слабо: 768 px, 24 шага, и это потолок — лучше они
+   не умеют. Настоящее качество даёт отдельная модель картинок. Рисует не
+   Claude (он картинки не делает), а Gemini Image или GPT Image — через наш
+   прокси, где ключ. Дорого не бывает: картинка стоит центы. */
+const IMG_PROXY = "https://txrcessykslejwkeyfdb.supabase.co/functions/v1/iskra-ai";
+function imgProxyRequested() {
+  /* Качественные картинки — только когда человек сам этого хочет:
+     Pro-режим и не выбран «быстрый». Иначе не тратим деньги молча. */
+  try {
+    const o = genImageOpts();
+    if (!o.pro) return false;
+    return imgQuality().id !== "fast";
+  } catch (e) { return false; }
+}
+/* Ключ OpenRouter самого человека, если он его вписал. С ним рисуем
+   напрямую в OpenRouter — сервер не нужен, и картинки начинают работать
+   сразу после пополнения счёта, без всяких секретов. */
+function ownOpenRouterKey() {
+  try {
+    const keys = parseKeys(settings.apiKey);
+    return keys.find(k => (detectKeyKind(k) || {}).provider === "openrouter") || "";
+  } catch (e) { return ""; }
+}
+async function ownKeyImage(prompt, opts) {
+  const key = ownOpenRouterKey();
+  if (!key) { const e = new Error("нет ключа OpenRouter"); e.kind = "no-quality"; throw e; }
+  const o = opts || genImageOpts();
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = setTimeout(() => { try { ctrl && ctrl.abort(); } catch (e) {} }, 90000);
+  try {
+    const body = {
+      model: "google/gemini-2.5-flash-image",
+      messages: [{ role: "user", content: prompt }],
+      modalities: ["image", "text"],
+      stream: false
+    };
+    if (o.aspect && o.aspect.id) body.image_config = { aspect_ratio: o.aspect.id };
+    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + key,
+        "HTTP-Referer": "https://logismod01.github.io",
+        "X-Title": "Iskra"
+      },
+      body: JSON.stringify(body),
+      signal: ctrl ? ctrl.signal : undefined
+    });
+    let j = null;
+    try { j = await r.json(); } catch (e) { j = null; }
+    if (r.status === 402) {
+      const e = new Error("на счёте OpenRouter нет денег");
+      e.kind = "img-limit"; throw e;
+    }
+    if (!r.ok) {
+      const msg = (j && j.error && (j.error.message || j.error)) || ("отказ " + r.status);
+      const e = new Error(String(msg));
+      e.kind = (/not found|no endpoints|unsupported/i.test(String(msg))) ? "no-quality" : "img-fail";
+      throw e;
+    }
+    const msg0 = j && j.choices && j.choices[0] && j.choices[0].message;
+    const parts = Array.isArray(msg0 && msg0.images) ? msg0.images : [];
+    const first = parts[0];
+    const src = (first && ((first.image_url && first.image_url.url) || first.url)) || "";
+    if (!src) { const e = new Error("модель не вернула картинку"); e.kind = "img-fail"; throw e; }
+    return { src, model: "google/gemini-2.5-flash-image" };
+  } catch (e) {
+    if (e && e.name === "AbortError") { const x = new Error("не успела за 90 секунд"); x.kind = "img-fail"; throw x; }
+    throw e;
+  } finally { clearTimeout(timer); }
+}
+
+async function proxyImage(prompt, opts) {
+  /* Сначала — своим ключом, если он есть. Прокси остаётся запасным путём
+     для тех, у кого ключ лежит на сервере. */
+  if (ownOpenRouterKey()) return ownKeyImage(prompt, opts);
+  const o = opts || genImageOpts();
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const t = setTimeout(() => { try { ctrl && ctrl.abort(); } catch (e) {} }, 90000);
+  try {
+    const r = await fetch(IMG_PROXY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "banana",
+        prompt,
+        /* пропорции берём из пресета, как их понимает модель */
+        /* Пропорции у модели задаются строкой вроде "16:9" — берём id пресета */
+        size: o.aspect && o.aspect.id ? o.aspect.id : "",
+        stream: false
+      }),
+      signal: ctrl ? ctrl.signal : undefined
+    });
+    let j = null;
+    try { j = await r.json(); } catch (e) { j = null; }
+    if (r.status === 503) {
+      /* Прокси ещё без ключа картинок — это не ошибка, идём на бесплатные. */
+      const e = new Error((j && j.error) || "картинки через ключ ещё не подключены");
+      e.kind = "no-quality";
+      throw e;
+    }
+    if (!r.ok) {
+      const e = new Error((j && j.error) || ("отказ " + r.status));
+      e.kind = r.status === 402 ? "img-limit" : "img-fail";
+      throw e;
+    }
+    const src = j && j.image;
+    if (!src) {
+      const e = new Error("модель не вернула картинку");
+      e.kind = "img-fail";
+      throw e;
+    }
+    return { src, model: (j && j.model) || "banana" };
+  } finally { clearTimeout(t); }
+}
+
 /* Свободный движок рисунков: чужие видеокарты, без регистрации и ключей. */
 const HORDE_API = "https://stablehorde.net/api/v2";
 async function hordeImage(prompt, opts, onNote) {
@@ -13818,6 +13935,27 @@ async function generateImage(prompt, attempt = 0) {
 
   const quality = imgQuality();
   const errors = [];
+
+  /* 0) Качественный движок через ключ: именно он даёт «как у людей» картинки.
+     Бесплатные ставят кап 768 px и 24 шага — выше этого они не умеют,
+     сколько промпт ни уточняй. Поэтому качество сначала просим у модели. */
+  if (imgProxyRequested()) {
+    try {
+      prog("Рисую качественно: " + (imgOpts.style ? imgOpts.style.name : "свой стиль") + "… до минуты");
+      const got = await proxyImage(finalPrompt, imgOpts);
+      showImage(got.src, "quality", "Искра · качественный движок · " +
+        String(got.model).split("/").pop() + (imgOpts.pro ? " · " + imgOpts.quality.name : ""));
+      return;
+    } catch (e) {
+      if (e && e.kind === "no-quality") {
+        errors.push("качественный движок ещё не подключён — рисую бесплатным");
+      } else if (e && e.kind === "img-limit") {
+        errors.push("на счёте кончились деньги — рисую бесплатным");
+      } else {
+        errors.push("качественный движок: " + ((e && (e.kind || e.message)) || "ошибка"));
+      }
+    }
+  }
 
   // 1) Свободный движок: без регистрации и ключа, рисунок без водяного знака
   if (quality.id !== "fast") {
